@@ -1,0 +1,4 @@
+{
+  "title": { "en": "Child lock !{{is|is not}} enabled", "de": "Kindersicherung !{{ist|ist nicht}} aktiv" },
+  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
+}

@@ -1,0 +1,4 @@
+{
+  "title": { "en": "Mower docked at station", "de": "Mähroboter an Ladestation" },
+  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
+}

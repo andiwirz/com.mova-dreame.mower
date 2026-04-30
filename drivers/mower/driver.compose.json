@@ -1,0 +1,91 @@
+{
+  "name": {
+    "en": "Robotic Lawn Mower",
+    "de": "Mähroboter"
+  },
+  "class": "lawnmower",
+  "capabilities": [
+    "mower_status",
+    "mower_mode",
+    "mower_progress",
+    "charging_status",
+    "measure_battery",
+    "alarm_generic",
+    "alarm_obstacle",
+    "alarm_tilt",
+    "mower_task_status",
+    "consumable_blade",
+    "consumable_brush",
+    "consumable_robot",
+    "child_lock",
+    "dnd_enabled",
+    "mower_error_code"
+  ],
+  "capabilitiesOptions": {
+    "alarm_generic": {
+      "title": { "en": "Error", "de": "Fehler" }
+    },
+    "measure_battery": {
+      "title": { "en": "Battery", "de": "Akku" }
+    },
+    "mower_error_code": {
+      "title": { "en": "Error Code", "de": "Fehlercode" },
+      "preventInsights": false
+    }
+  },
+  "energy": {
+    "batteries": ["INTERNAL"]
+  },
+  "images": {
+    "small": "/drivers/mower/assets/images/small.png",
+    "large": "/drivers/mower/assets/images/large.png"
+  },
+  "pair": [
+    { "id": "pair" }
+  ],
+  "settings": [
+    {
+      "type": "group",
+      "label": { "en": "Account", "de": "Konto" },
+      "children": [
+        {
+          "id": "username",
+          "type": "text",
+          "label": { "en": "Email", "de": "E-Mail" },
+          "value": ""
+        },
+        {
+          "id": "brand",
+          "type": "text",
+          "label": { "en": "Brand", "de": "Marke" },
+          "value": "dreame"
+        },
+        {
+          "id": "region",
+          "type": "text",
+          "label": { "en": "Region", "de": "Region" },
+          "value": "eu"
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": { "en": "Connection", "de": "Verbindung" },
+      "children": [
+        {
+          "id": "poll_interval",
+          "type": "number",
+          "label": { "en": "Poll Interval (seconds)", "de": "Abfrageintervall (Sekunden)" },
+          "value": 30,
+          "min": 10,
+          "max": 300,
+          "step": 5,
+          "hint": {
+            "en": "How often the mower status is polled.",
+            "de": "Wie oft der Status abgefragt wird."
+          }
+        }
+      ]
+    }
+  ]
+}

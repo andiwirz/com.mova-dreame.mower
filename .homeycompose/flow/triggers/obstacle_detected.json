@@ -1,0 +1,4 @@
+{
+  "title": { "en": "Obstacle detected", "de": "Hindernis erkannt" },
+  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
+}

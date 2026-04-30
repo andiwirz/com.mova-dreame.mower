@@ -1,0 +1,15 @@
+{
+  "title": { "en": "Set Do Not Disturb", "de": "Nicht stören setzen" },
+  "titleFormatted": { "en": "Turn Do Not Disturb [[enabled]]", "de": "Nicht stören [[enabled]]" },
+  "args": [
+    { "name": "device", "type": "device", "filter": "driver_id=mower" },
+    {
+      "name": "enabled", "type": "dropdown",
+      "title": { "en": "State", "de": "Status" },
+      "values": [
+        { "id": "true",  "label": { "en": "On",  "de": "An"  } },
+        { "id": "false", "label": { "en": "Off", "de": "Aus" } }
+      ]
+    }
+  ]
+}

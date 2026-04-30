@@ -1,0 +1,1221 @@
+{
+  "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
+  "id": "com.mova-dreame.mower",
+  "version": "1.0.0",
+  "compatibility": ">=12.0.0",
+  "sdk": 3,
+  "name": {
+    "en": "MOVA & Dreame Mower",
+    "de": "MOVA & Dreame Mähroboter"
+  },
+  "description": {
+    "en": "Control your MOVA and Dreame robotic lawn mowers from Homey",
+    "de": "Steuere deinen MOVA und Dreame Mähroboter mit Homey"
+  },
+  "brandColor": "#00A8E0",
+  "category": [
+    "appliances"
+  ],
+  "permissions": [],
+  "images": {
+    "small": "/assets/images/small.png",
+    "large": "/assets/images/large.png"
+  },
+  "author": {
+    "name": "Andi Wirz",
+    "email": "andi@wirzfamily.ch"
+  },
+  "source": "https://github.com/andiwirz/com.mova-dreame.mower",
+  "bugs": {
+    "url": "https://github.com/andiwirz/com.mova-dreame.mower/issues"
+  },
+  "changelog": {
+    "1.0.0": {
+      "en": "Initial release.",
+      "de": "Erstveröffentlichung."
+    }
+  },
+  "flow": {
+    "triggers": [
+      {
+        "title": {
+          "en": "Mower battery is low",
+          "de": "Mähroboter Akku ist niedrig"
+        },
+        "titleFormatted": {
+          "en": "Mower battery drops below [[threshold]]%",
+          "de": "Mähroboter Akku fällt unter [[threshold]]%"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "threshold",
+            "type": "number",
+            "title": {
+              "en": "Below (%)",
+              "de": "Unter (%)"
+            },
+            "min": 1,
+            "max": 100,
+            "step": 1,
+            "placeholder": {
+              "en": "20",
+              "de": "20"
+            }
+          }
+        ],
+        "id": "battery_low"
+      },
+      {
+        "title": {
+          "en": "Charging status changed",
+          "de": "Ladestatus geändert"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "tokens": [
+          {
+            "name": "status",
+            "type": "string",
+            "title": {
+              "en": "Charging Status",
+              "de": "Ladestatus"
+            }
+          }
+        ],
+        "id": "charging_status_changed"
+      },
+      {
+        "title": {
+          "en": "Consumable health is low",
+          "de": "Verbrauchsmaterial niedrig"
+        },
+        "titleFormatted": {
+          "en": "[[consumable]] health drops below [[threshold]]%",
+          "de": "[[consumable]] unter [[threshold]]%"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "consumable",
+            "type": "dropdown",
+            "title": {
+              "en": "Consumable",
+              "de": "Verbrauchsmaterial"
+            },
+            "values": [
+              {
+                "id": "blade",
+                "label": {
+                  "en": "Blade",
+                  "de": "Klinge"
+                }
+              },
+              {
+                "id": "brush",
+                "label": {
+                  "en": "Brush",
+                  "de": "Bürste"
+                }
+              },
+              {
+                "id": "robot",
+                "label": {
+                  "en": "Robot",
+                  "de": "Roboter"
+                }
+              }
+            ]
+          },
+          {
+            "name": "threshold",
+            "type": "number",
+            "title": {
+              "en": "Below (%)",
+              "de": "Unter (%)"
+            },
+            "min": 1,
+            "max": 100,
+            "step": 5,
+            "placeholder": {
+              "en": "20",
+              "de": "20"
+            }
+          }
+        ],
+        "id": "consumable_low"
+      },
+      {
+        "title": {
+          "en": "Mower docked at station",
+          "de": "Mähroboter an Ladestation"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "mower_docked"
+      },
+      {
+        "title": {
+          "en": "Mower error occurred",
+          "de": "Mähroboter Fehler aufgetreten"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "tokens": [
+          {
+            "name": "error_code",
+            "type": "number",
+            "title": {
+              "en": "Error Code",
+              "de": "Fehlercode"
+            }
+          }
+        ],
+        "id": "mower_error"
+      },
+      {
+        "title": {
+          "en": "Mower status changed",
+          "de": "Mähroboter Status geändert"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "tokens": [
+          {
+            "name": "status",
+            "type": "string",
+            "title": {
+              "en": "Status",
+              "de": "Status"
+            }
+          }
+        ],
+        "id": "mower_status_changed"
+      },
+      {
+        "title": {
+          "en": "Mower tilted",
+          "de": "Mähroboter gekippt"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "mower_tilted"
+      },
+      {
+        "title": {
+          "en": "Mowing completed",
+          "de": "Mähen abgeschlossen"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "mowing_completed"
+      },
+      {
+        "title": {
+          "en": "Obstacle detected",
+          "de": "Hindernis erkannt"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "obstacle_detected"
+      }
+    ],
+    "conditions": [
+      {
+        "title": {
+          "en": "Mower !{{is|is not}} charging",
+          "de": "Mähroboter !{{lädt|lädt nicht}}"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "is_charging"
+      },
+      {
+        "title": {
+          "en": "Child lock !{{is|is not}} enabled",
+          "de": "Kindersicherung !{{ist|ist nicht}} aktiv"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "is_child_locked"
+      },
+      {
+        "title": {
+          "en": "Mower !{{is|is not}} docked",
+          "de": "Mähroboter !{{ist|ist nicht}} gedockt"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "is_docked"
+      },
+      {
+        "title": {
+          "en": "Mower !{{is|is not}} mowing",
+          "de": "Mähroboter mäht !{{gerade|gerade nicht}}"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "is_mowing"
+      },
+      {
+        "title": {
+          "en": "Mower !{{has|has no}} error",
+          "de": "Mähroboter hat !{{einen|keinen}} Fehler"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "mower_has_error"
+      },
+      {
+        "title": {
+          "en": "Mowing mode !{{is|is not}}",
+          "de": "Mähmodus !{{ist|ist nicht}}"
+        },
+        "titleFormatted": {
+          "en": "Mowing mode !{{is|is not}} [[mode]]",
+          "de": "Mähmodus !{{ist|ist nicht}} [[mode]]"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "mode",
+            "type": "dropdown",
+            "title": {
+              "en": "Mode",
+              "de": "Modus"
+            },
+            "values": [
+              {
+                "id": "all_area",
+                "label": {
+                  "en": "All Area",
+                  "de": "Gesamtfläche"
+                }
+              },
+              {
+                "id": "edge",
+                "label": {
+                  "en": "Edge",
+                  "de": "Kante"
+                }
+              },
+              {
+                "id": "zone",
+                "label": {
+                  "en": "Zone",
+                  "de": "Zone"
+                }
+              },
+              {
+                "id": "spot",
+                "label": {
+                  "en": "Spot",
+                  "de": "Punkt"
+                }
+              }
+            ]
+          }
+        ],
+        "id": "mowing_mode_is"
+      }
+    ],
+    "actions": [
+      {
+        "title": {
+          "en": "Find mower (audible alert)",
+          "de": "Mähroboter suchen (Signalton)"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "find_bot"
+      },
+      {
+        "title": {
+          "en": "Pause mowing",
+          "de": "Mähen pausieren"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "pause_mowing"
+      },
+      {
+        "title": {
+          "en": "Reset consumable counter",
+          "de": "Verbrauchsmaterial zurücksetzen"
+        },
+        "titleFormatted": {
+          "en": "Reset [[consumable]] counter",
+          "de": "[[consumable]] zurücksetzen"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "consumable",
+            "type": "dropdown",
+            "title": {
+              "en": "Consumable",
+              "de": "Verbrauchsmaterial"
+            },
+            "values": [
+              {
+                "id": "blade",
+                "label": {
+                  "en": "Blade",
+                  "de": "Klinge"
+                }
+              },
+              {
+                "id": "brush",
+                "label": {
+                  "en": "Brush",
+                  "de": "Bürste"
+                }
+              },
+              {
+                "id": "robot",
+                "label": {
+                  "en": "Robot",
+                  "de": "Roboter"
+                }
+              }
+            ]
+          }
+        ],
+        "id": "reset_consumable"
+      },
+      {
+        "title": {
+          "en": "Return to dock",
+          "de": "Zur Ladestation zurückkehren"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "return_to_dock"
+      },
+      {
+        "title": {
+          "en": "Set child lock",
+          "de": "Kindersicherung setzen"
+        },
+        "titleFormatted": {
+          "en": "Turn child lock [[enabled]]",
+          "de": "Kindersicherung [[enabled]]"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "enabled",
+            "type": "dropdown",
+            "title": {
+              "en": "State",
+              "de": "Status"
+            },
+            "values": [
+              {
+                "id": "true",
+                "label": {
+                  "en": "On",
+                  "de": "An"
+                }
+              },
+              {
+                "id": "false",
+                "label": {
+                  "en": "Off",
+                  "de": "Aus"
+                }
+              }
+            ]
+          }
+        ],
+        "id": "set_child_lock"
+      },
+      {
+        "title": {
+          "en": "Set Do Not Disturb",
+          "de": "Nicht stören setzen"
+        },
+        "titleFormatted": {
+          "en": "Turn Do Not Disturb [[enabled]]",
+          "de": "Nicht stören [[enabled]]"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "enabled",
+            "type": "dropdown",
+            "title": {
+              "en": "State",
+              "de": "Status"
+            },
+            "values": [
+              {
+                "id": "true",
+                "label": {
+                  "en": "On",
+                  "de": "An"
+                }
+              },
+              {
+                "id": "false",
+                "label": {
+                  "en": "Off",
+                  "de": "Aus"
+                }
+              }
+            ]
+          }
+        ],
+        "id": "set_dnd"
+      },
+      {
+        "title": {
+          "en": "Set mowing mode",
+          "de": "Mähmodus setzen"
+        },
+        "titleFormatted": {
+          "en": "Set mowing mode to [[mode]]",
+          "de": "Mähmodus auf [[mode]] setzen"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "mode",
+            "type": "dropdown",
+            "title": {
+              "en": "Mode",
+              "de": "Modus"
+            },
+            "values": [
+              {
+                "id": "all_area",
+                "label": {
+                  "en": "All Area",
+                  "de": "Gesamtfläche"
+                }
+              },
+              {
+                "id": "edge",
+                "label": {
+                  "en": "Edge",
+                  "de": "Kante"
+                }
+              },
+              {
+                "id": "zone",
+                "label": {
+                  "en": "Zone",
+                  "de": "Zone"
+                }
+              },
+              {
+                "id": "spot",
+                "label": {
+                  "en": "Spot",
+                  "de": "Punkt"
+                }
+              }
+            ]
+          }
+        ],
+        "id": "set_mowing_mode"
+      },
+      {
+        "title": {
+          "en": "Start edge mowing",
+          "de": "Kantenmähen starten"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "start_edge_mowing"
+      },
+      {
+        "title": {
+          "en": "Start mowing",
+          "de": "Mähen starten"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "start_mowing"
+      },
+      {
+        "title": {
+          "en": "Start spot mowing",
+          "de": "Punktmähen starten"
+        },
+        "titleFormatted": {
+          "en": "Start mowing spots [[spots]]",
+          "de": "Punkte [[spots]] mähen"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "spots",
+            "type": "text",
+            "title": {
+              "en": "Spot IDs (comma-separated)",
+              "de": "Punkt-IDs (kommagetrennt)"
+            },
+            "placeholder": {
+              "en": "1,2",
+              "de": "1,2"
+            }
+          }
+        ],
+        "id": "start_spot_mowing"
+      },
+      {
+        "title": {
+          "en": "Start zone mowing",
+          "de": "Zonenmähen starten"
+        },
+        "titleFormatted": {
+          "en": "Start mowing zones [[zones]]",
+          "de": "Zonen [[zones]] mähen"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "zones",
+            "type": "text",
+            "title": {
+              "en": "Zone IDs (comma-separated)",
+              "de": "Zonen-IDs (kommagetrennt)"
+            },
+            "placeholder": {
+              "en": "1,2,3",
+              "de": "1,2,3"
+            }
+          }
+        ],
+        "id": "start_zone_mowing"
+      },
+      {
+        "title": {
+          "en": "Stop mowing",
+          "de": "Mähen stoppen"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "stop_mowing"
+      },
+      {
+        "title": {
+          "en": "Clear recoverable error",
+          "de": "Behebbaren Fehler quittieren"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "suppress_fault"
+      }
+    ]
+  },
+  "drivers": [
+    {
+      "name": {
+        "en": "Robotic Lawn Mower",
+        "de": "Mähroboter"
+      },
+      "class": "lawnmower",
+      "capabilities": [
+        "mower_status",
+        "mower_mode",
+        "mower_progress",
+        "charging_status",
+        "measure_battery",
+        "alarm_generic",
+        "alarm_obstacle",
+        "alarm_tilt",
+        "mower_task_status",
+        "consumable_blade",
+        "consumable_brush",
+        "consumable_robot",
+        "child_lock",
+        "dnd_enabled",
+        "mower_error_code"
+      ],
+      "capabilitiesOptions": {
+        "alarm_generic": {
+          "title": {
+            "en": "Error",
+            "de": "Fehler"
+          }
+        },
+        "measure_battery": {
+          "title": {
+            "en": "Battery",
+            "de": "Akku"
+          }
+        },
+        "mower_error_code": {
+          "title": {
+            "en": "Error Code",
+            "de": "Fehlercode"
+          },
+          "preventInsights": false
+        }
+      },
+      "energy": {
+        "batteries": [
+          "INTERNAL"
+        ]
+      },
+      "images": {
+        "small": "/drivers/mower/assets/images/small.png",
+        "large": "/drivers/mower/assets/images/large.png"
+      },
+      "pair": [
+        {
+          "id": "pair"
+        }
+      ],
+      "settings": [
+        {
+          "type": "group",
+          "label": {
+            "en": "Account",
+            "de": "Konto"
+          },
+          "children": [
+            {
+              "id": "username",
+              "type": "text",
+              "label": {
+                "en": "Email",
+                "de": "E-Mail"
+              },
+              "value": ""
+            },
+            {
+              "id": "brand",
+              "type": "text",
+              "label": {
+                "en": "Brand",
+                "de": "Marke"
+              },
+              "value": "dreame"
+            },
+            {
+              "id": "region",
+              "type": "text",
+              "label": {
+                "en": "Region",
+                "de": "Region"
+              },
+              "value": "eu"
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Connection",
+            "de": "Verbindung"
+          },
+          "children": [
+            {
+              "id": "poll_interval",
+              "type": "number",
+              "label": {
+                "en": "Poll Interval (seconds)",
+                "de": "Abfrageintervall (Sekunden)"
+              },
+              "value": 30,
+              "min": 10,
+              "max": 300,
+              "step": 5,
+              "hint": {
+                "en": "How often the mower status is polled.",
+                "de": "Wie oft der Status abgefragt wird."
+              }
+            }
+          ]
+        }
+      ],
+      "id": "mower"
+    }
+  ],
+  "capabilities": {
+    "alarm_obstacle": {
+      "type": "boolean",
+      "title": {
+        "en": "Obstacle Detected",
+        "de": "Hindernis erkannt"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/alarm_obstacle.svg"
+    },
+    "alarm_tilt": {
+      "type": "boolean",
+      "title": {
+        "en": "Mower Tilted",
+        "de": "Mähroboter gekippt"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/alarm_tilt.svg"
+    },
+    "charging_status": {
+      "type": "enum",
+      "title": {
+        "en": "Charging Status",
+        "de": "Ladestatus"
+      },
+      "values": [
+        {
+          "id": "not_docked",
+          "title": {
+            "en": "Not Docked",
+            "de": "Nicht angedockt"
+          }
+        },
+        {
+          "id": "charging",
+          "title": {
+            "en": "Charging",
+            "de": "Lädt"
+          }
+        },
+        {
+          "id": "not_charging",
+          "title": {
+            "en": "Docked (Standby)",
+            "de": "Angedockt (Standby)"
+          }
+        },
+        {
+          "id": "docked",
+          "title": {
+            "en": "Fully Charged",
+            "de": "Vollständig geladen"
+          }
+        },
+        {
+          "id": "returning",
+          "title": {
+            "en": "Returning to Charge",
+            "de": "Kehrt zurück"
+          }
+        },
+        {
+          "id": "paused_cold",
+          "title": {
+            "en": "Charging Paused (Cold)",
+            "de": "Laden pausiert (Kälte)"
+          }
+        }
+      ],
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/charging_status.svg"
+    },
+    "child_lock": {
+      "type": "boolean",
+      "title": {
+        "en": "Child Lock",
+        "de": "Kindersicherung"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "toggle",
+      "icon": "/assets/capabilities/child_lock.svg"
+    },
+    "consumable_blade": {
+      "type": "number",
+      "title": {
+        "en": "Blade Health",
+        "de": "Klingengesundheit"
+      },
+      "units": {
+        "en": "%",
+        "de": "%"
+      },
+      "decimals": 0,
+      "min": 0,
+      "max": 100,
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/consumable.svg"
+    },
+    "consumable_brush": {
+      "type": "number",
+      "title": {
+        "en": "Brush Health",
+        "de": "Bürstengesundheit"
+      },
+      "units": {
+        "en": "%",
+        "de": "%"
+      },
+      "decimals": 0,
+      "min": 0,
+      "max": 100,
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/consumable.svg"
+    },
+    "consumable_robot": {
+      "type": "number",
+      "title": {
+        "en": "Robot Health",
+        "de": "Robotergesundheit"
+      },
+      "units": {
+        "en": "%",
+        "de": "%"
+      },
+      "decimals": 0,
+      "min": 0,
+      "max": 100,
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/consumable.svg"
+    },
+    "dnd_enabled": {
+      "type": "boolean",
+      "title": {
+        "en": "Do Not Disturb",
+        "de": "Nicht stören"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "toggle",
+      "icon": "/assets/capabilities/dnd_enabled.svg"
+    },
+    "mower_error_code": {
+      "type": "number",
+      "title": {
+        "en": "Error Code",
+        "de": "Fehlercode"
+      },
+      "decimals": 0,
+      "min": 0,
+      "max": 9999,
+      "getable": true,
+      "setable": false,
+      "uiComponent": null,
+      "icon": "/assets/capabilities/mower_status.svg"
+    },
+    "mower_mode": {
+      "type": "enum",
+      "title": {
+        "en": "Mowing Mode",
+        "de": "Mähmodus"
+      },
+      "values": [
+        {
+          "id": "all_area",
+          "title": {
+            "en": "All Area",
+            "de": "Gesamtfläche"
+          }
+        },
+        {
+          "id": "edge",
+          "title": {
+            "en": "Edge",
+            "de": "Kante"
+          }
+        },
+        {
+          "id": "zone",
+          "title": {
+            "en": "Zone",
+            "de": "Zone"
+          }
+        },
+        {
+          "id": "spot",
+          "title": {
+            "en": "Spot",
+            "de": "Punkt"
+          }
+        }
+      ],
+      "getable": true,
+      "setable": true,
+      "uiComponent": "picker",
+      "icon": "/assets/capabilities/mower_mode.svg"
+    },
+    "mower_progress": {
+      "type": "number",
+      "title": {
+        "en": "Mowing Progress",
+        "de": "Mähfortschritt"
+      },
+      "units": {
+        "en": "%",
+        "de": "%"
+      },
+      "decimals": 0,
+      "min": 0,
+      "max": 100,
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/mower_progress.svg"
+    },
+    "mower_status": {
+      "type": "enum",
+      "title": {
+        "en": "Mower Status",
+        "de": "Mähroboter Status"
+      },
+      "values": [
+        {
+          "id": "idle",
+          "title": {
+            "en": "Idle",
+            "de": "Bereit"
+          }
+        },
+        {
+          "id": "mowing",
+          "title": {
+            "en": "Mowing",
+            "de": "Mähen"
+          }
+        },
+        {
+          "id": "standby",
+          "title": {
+            "en": "Standby",
+            "de": "Standby"
+          }
+        },
+        {
+          "id": "paused",
+          "title": {
+            "en": "Paused",
+            "de": "Pausiert"
+          }
+        },
+        {
+          "id": "error",
+          "title": {
+            "en": "Error",
+            "de": "Fehler"
+          }
+        },
+        {
+          "id": "returning",
+          "title": {
+            "en": "Returning to Dock",
+            "de": "Kehrt zurück"
+          }
+        },
+        {
+          "id": "charging",
+          "title": {
+            "en": "Charging",
+            "de": "Lädt"
+          }
+        },
+        {
+          "id": "mapping",
+          "title": {
+            "en": "Mapping",
+            "de": "Kartierung"
+          }
+        },
+        {
+          "id": "docked",
+          "title": {
+            "en": "Docked",
+            "de": "Gedockt"
+          }
+        },
+        {
+          "id": "updating",
+          "title": {
+            "en": "Updating",
+            "de": "Aktualisierung"
+          }
+        }
+      ],
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/mower_status.svg"
+    },
+    "mower_task_status": {
+      "type": "enum",
+      "title": {
+        "en": "Task Status",
+        "de": "Aufgabenstatus"
+      },
+      "values": [
+        {
+          "id": "inactive",
+          "title": {
+            "en": "Inactive",
+            "de": "Inaktiv"
+          }
+        },
+        {
+          "id": "active",
+          "title": {
+            "en": "Active",
+            "de": "Aktiv"
+          }
+        },
+        {
+          "id": "paused",
+          "title": {
+            "en": "Paused",
+            "de": "Pausiert"
+          }
+        },
+        {
+          "id": "recharging",
+          "title": {
+            "en": "Recharging",
+            "de": "Lädt nach"
+          }
+        }
+      ],
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/mower_status.svg"
+    }
+  }
+}

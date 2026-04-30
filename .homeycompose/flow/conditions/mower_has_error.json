@@ -1,0 +1,4 @@
+{
+  "title": { "en": "Mower !{{has|has no}} error", "de": "Mähroboter hat !{{einen|keinen}} Fehler" },
+  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
+}

@@ -1,0 +1,4 @@
+{
+  "title": { "en": "Return to dock", "de": "Zur Ladestation zurückkehren" },
+  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
+}

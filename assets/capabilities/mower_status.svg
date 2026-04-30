@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Mower body (rounded rectangle) -->
+  <rect x="3" y="10" width="18" height="8" rx="3"/>
+  <!-- Blade indicator (center circle) -->
+  <circle cx="12" cy="14" r="2"/>
+  <!-- Wheels -->
+  <circle cx="6"  cy="18" r="1.5"/>
+  <circle cx="18" cy="18" r="1.5"/>
+  <!-- Antenna / signal -->
+  <path d="M12 10V7"/>
+  <path d="M9.5 8.5 Q12 6 14.5 8.5"/>
+</svg>

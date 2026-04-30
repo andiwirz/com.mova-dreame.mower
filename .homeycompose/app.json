@@ -1,0 +1,35 @@
+{
+  "id": "com.mova-dreame.mower",
+  "version": "1.0.0",
+  "compatibility": ">=12.0.0",
+  "sdk": 3,
+  "name": {
+    "en": "MOVA & Dreame Mower",
+    "de": "MOVA & Dreame Mähroboter"
+  },
+  "description": {
+    "en": "Control your MOVA and Dreame robotic lawn mowers from Homey",
+    "de": "Steuere deinen MOVA und Dreame Mähroboter mit Homey"
+  },
+  "brandColor": "#00A8E0",
+  "category": ["appliances"],
+  "permissions": [],
+  "images": {
+    "small": "/assets/images/small.png",
+    "large": "/assets/images/large.png"
+  },
+  "author": {
+    "name": "Andi Wirz",
+    "email": "andi@wirzfamily.ch"
+  },
+  "source": "https://github.com/andiwirz/com.mova-dreame.mower",
+  "bugs": {
+    "url": "https://github.com/andiwirz/com.mova-dreame.mower/issues"
+  },
+  "changelog": {
+    "1.0.0": {
+      "en": "Initial release.",
+      "de": "Erstveröffentlichung."
+    }
+  }
+}

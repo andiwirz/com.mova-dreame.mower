@@ -1,0 +1,12 @@
+{
+  "type": "number",
+  "title": { "en": "Robot Health", "de": "Robotergesundheit" },
+  "units": { "en": "%", "de": "%" },
+  "decimals": 0,
+  "min": 0,
+  "max": 100,
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "icon": "/assets/capabilities/consumable.svg"
+}

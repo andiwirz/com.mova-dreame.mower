@@ -1,0 +1,17 @@
+{
+  "title": { "en": "Set mowing mode", "de": "Mähmodus setzen" },
+  "titleFormatted": { "en": "Set mowing mode to [[mode]]", "de": "Mähmodus auf [[mode]] setzen" },
+  "args": [
+    { "name": "device", "type": "device", "filter": "driver_id=mower" },
+    {
+      "name": "mode", "type": "dropdown",
+      "title": { "en": "Mode", "de": "Modus" },
+      "values": [
+        { "id": "all_area", "label": { "en": "All Area",  "de": "Gesamtfläche" } },
+        { "id": "edge",     "label": { "en": "Edge",      "de": "Kante"        } },
+        { "id": "zone",     "label": { "en": "Zone",      "de": "Zone"         } },
+        { "id": "spot",     "label": { "en": "Spot",      "de": "Punkt"        } }
+      ]
+    }
+  ]
+}

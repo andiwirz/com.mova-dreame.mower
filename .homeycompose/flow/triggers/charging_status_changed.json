@@ -1,0 +1,7 @@
+{
+  "title": { "en": "Charging status changed", "de": "Ladestatus geändert" },
+  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }],
+  "tokens": [
+    { "name": "status", "type": "string", "title": { "en": "Charging Status", "de": "Ladestatus" } }
+  ]
+}

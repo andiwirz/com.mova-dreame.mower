@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #fff;
+      color: #1a1a1a;
+      padding: 24px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 24px;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #444;
+      margin-bottom: 6px;
+    }
+
+    select, input[type="email"], input[type="password"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      font-size: 15px;
+      background: #fafafa;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    select:focus, input:focus {
+      border-color: #00A8E0;
+      background: #fff;
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .row .field {
+      flex: 1;
+    }
+
+    button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: #00A8E0;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.15s, opacity 0.15s;
+    }
+
+    button:hover  { background: #0091c2; }
+    button:active { background: #0080ab; }
+    button:disabled { opacity: 0.5; cursor: default; }
+
+    .error {
+      background: #fff0f0;
+      border: 1px solid #ffcdd2;
+      border-radius: 8px;
+      color: #c62828;
+      font-size: 13px;
+      padding: 10px 12px;
+      margin-top: 12px;
+    }
+
+    .hidden { display: none !important; }
+
+    /* Device list */
+    .device-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .device-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 14px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .device-card:hover {
+      border-color: #00A8E0;
+      background: #f0faff;
+    }
+
+    .device-icon {
+      width: 40px;
+      height: 40px;
+      background: #e8f5fe;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .device-icon svg {
+      width: 22px;
+      height: 22px;
+      stroke: #00A8E0;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .device-info { flex: 1; }
+    .device-name { font-size: 15px; font-weight: 600; }
+    .device-model { font-size: 12px; color: #888; margin-top: 2px; }
+
+    .add-arrow {
+      color: #00A8E0;
+      font-size: 20px;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2.5px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .hint {
+      font-size: 12px;
+      color: #999;
+      margin-top: 4px;
+    }
+
+    #step-devices h2 { margin-bottom: 4px; }
+
+    .back-btn {
+      background: none;
+      color: #666;
+      border: 1.5px solid #ddd;
+      margin-bottom: 12px;
+    }
+
+    .back-btn:hover { background: #f5f5f5; color: #333; }
+  </style>
+</head>
+<body>
+
+  <!-- ── Step 1: Login ─────────────────────────────────────────────────── -->
+  <div id="step-login">
+    <h2 id="title-login">Connect Your Mower</h2>
+    <p class="subtitle" id="subtitle-login">Enter your MOVA or Dreame app credentials</p>
+
+    <div class="row">
+      <div class="field">
+        <label id="lbl-brand">Brand</label>
+        <select id="brand">
+          <option value="dreame">Dreame</option>
+          <option value="mova">MOVA</option>
+        </select>
+      </div>
+      <div class="field">
+        <label id="lbl-region">Region</label>
+        <select id="region">
+          <option value="eu">Europe (EU)</option>
+          <option value="us">USA (US)</option>
+          <option value="cn">China (CN)</option>
+          <option value="sg">Asia (SG)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label id="lbl-email">Email</label>
+      <input type="email" id="username" autocomplete="email" />
+    </div>
+
+    <div class="field">
+      <label id="lbl-password">Password</label>
+      <input type="password" id="password" autocomplete="current-password" />
+    </div>
+
+    <div id="error-login" class="error hidden"></div>
+
+    <button id="btn-login" onclick="onLogin()">Sign In & Find Mowers</button>
+  </div>
+
+  <!-- ── Step 2: Device list ───────────────────────────────────────────── -->
+  <div id="step-devices" class="hidden">
+    <button class="back-btn" onclick="showLogin()">← Back</button>
+    <h2 id="title-devices">Select Your Mower</h2>
+    <p class="subtitle" id="subtitle-devices">Tap a mower to add it to Homey</p>
+    <div id="device-list" class="device-list"></div>
+    <div id="error-devices" class="error hidden"></div>
+  </div>
+
+  <script>
+    // ── i18n (fall back to embedded English strings) ────────────────────────
+
+    const i18n = {
+      'pair.title':             'Connect Your Mower',
+      'pair.subtitle':          'Enter your MOVA or Dreame app credentials',
+      'pair.brand_label':       'Brand',
+      'pair.region_label':      'Region',
+      'pair.email_label':       'Email',
+      'pair.password_label':    'Password',
+      'pair.login_button':      'Sign In & Find Mowers',
+      'pair.searching':         'Searching for mowers…',
+      'pair.select_device':     'Select Your Mower',
+      'pair.select_device_hint':'Tap a mower to add it to Homey',
+      'pair.error_generic':     'Something went wrong. Please try again.',
+      'pair.error_login':       'Login failed. Check your credentials.',
+    };
+
+    function t(key) {
+      try { return Homey.__(key) || i18n[key] || key; } catch { return i18n[key] || key; }
+    }
+
+    // ── UI helpers ─────────────────────────────────────────────────────────
+
+    function showEl(id)  { document.getElementById(id).classList.remove('hidden'); }
+    function hideEl(id)  { document.getElementById(id).classList.add('hidden'); }
+    function setText(id, text) { document.getElementById(id).textContent = text; }
+
+    function showError(containerId, msg) {
+      const el = document.getElementById(containerId);
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+
+    function hideError(containerId) {
+      document.getElementById(containerId).classList.add('hidden');
+    }
+
+    function setLoading(btnId, loading, label) {
+      const btn = document.getElementById(btnId);
+      if (loading) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> ' + label;
+      } else {
+        btn.disabled = false;
+        btn.textContent = label;
+      }
+    }
+
+    function showLogin() {
+      hideEl('step-devices');
+      showEl('step-login');
+    }
+
+    // ── Stored credentials (filled after successful login) ─────────────────
+
+    let deviceList = [];
+
+    // ── Step 1: Login ──────────────────────────────────────────────────────
+
+    async function onLogin() {
+      hideError('error-login');
+
+      const brand    = document.getElementById('brand').value;
+      const region   = document.getElementById('region').value;
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!username || !password) {
+        showError('error-login', 'Please enter your email and password.');
+        return;
+      }
+
+      setLoading('btn-login', true, t('pair.searching'));
+
+      try {
+        const result = await Homey.emit('login', { brand, region, username, password });
+        deviceList = result.devices || [];
+        showDevices(deviceList);
+      } catch (err) {
+        showError('error-login', err.message || t('pair.error_login'));
+      } finally {
+        setLoading('btn-login', false, t('pair.login_button'));
+      }
+    }
+
+    // ── Step 2: Device list ────────────────────────────────────────────────
+
+    function showDevices(devices) {
+      hideEl('step-login');
+      showEl('step-devices');
+      hideError('error-devices');
+
+      const list = document.getElementById('device-list');
+      list.innerHTML = '';
+
+      devices.forEach((device) => {
+        const card = document.createElement('div');
+        card.className = 'device-card';
+        card.innerHTML = `
+          <div class="device-icon">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M8 12h8M12 8l4 4-4 4"/>
+            </svg>
+          </div>
+          <div class="device-info">
+            <div class="device-name">${escapeHtml(device.name)}</div>
+            <div class="device-model">${escapeHtml(device.model)}</div>
+          </div>
+          <span class="add-arrow">›</span>
+        `;
+        card.onclick = () => addDevice(device);
+        list.appendChild(card);
+      });
+    }
+
+    async function addDevice(device) {
+      hideError('error-devices');
+
+      // Get full device object with credentials from driver
+      let deviceObj;
+      try {
+        deviceObj = await Homey.emit('get_credentials', { did: device.did });
+      } catch (err) {
+        showError('error-devices', err.message || t('pair.error_generic'));
+        return;
+      }
+
+      try {
+        await Homey.createDevice(deviceObj);
+        await Homey.done();
+      } catch (err) {
+        showError('error-devices', err.message || t('pair.error_generic'));
+      }
+    }
+
+    function escapeHtml(str) {
+      const d = document.createElement('div');
+      d.textContent = String(str || '');
+      return d.innerHTML;
+    }
+
+    // ── Apply i18n on load ─────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+      setText('title-login',    t('pair.title'));
+      setText('subtitle-login', t('pair.subtitle'));
+      setText('lbl-brand',      t('pair.brand_label'));
+      setText('lbl-region',     t('pair.region_label'));
+      setText('lbl-email',      t('pair.email_label'));
+      setText('lbl-password',   t('pair.password_label'));
+      document.getElementById('btn-login').textContent = t('pair.login_button');
+      setText('title-devices',    t('pair.select_device'));
+      setText('subtitle-devices', t('pair.select_device_hint'));
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "type": "enum",
+  "title": {
+    "en": "Mower Status",
+    "de": "Mähroboter Status"
+  },
+  "values": [
+    { "id": "idle",      "title": { "en": "Idle",               "de": "Bereit"          } },
+    { "id": "mowing",    "title": { "en": "Mowing",             "de": "Mähen"           } },
+    { "id": "standby",   "title": { "en": "Standby",            "de": "Standby"         } },
+    { "id": "paused",    "title": { "en": "Paused",             "de": "Pausiert"        } },
+    { "id": "error",     "title": { "en": "Error",              "de": "Fehler"          } },
+    { "id": "returning", "title": { "en": "Returning to Dock",  "de": "Kehrt zurück"    } },
+    { "id": "charging",  "title": { "en": "Charging",           "de": "Lädt"            } },
+    { "id": "mapping",   "title": { "en": "Mapping",            "de": "Kartierung"      } },
+    { "id": "docked",    "title": { "en": "Docked",             "de": "Gedockt"         } },
+    { "id": "updating",  "title": { "en": "Updating",           "de": "Aktualisierung"  } }
+  ],
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "icon": "/assets/capabilities/mower_status.svg"
+}

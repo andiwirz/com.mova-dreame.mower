@@ -1,0 +1,8 @@
+{
+  "type": "boolean",
+  "title": { "en": "Obstacle Detected", "de": "Hindernis erkannt" },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "icon": "/assets/capabilities/alarm_obstacle.svg"
+}

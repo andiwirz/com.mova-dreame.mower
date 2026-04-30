@@ -1,0 +1,4 @@
+{
+  "title": { "en": "Mower !{{is|is not}} docked", "de": "Mähroboter !{{ist|ist nicht}} gedockt" },
+  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
+}

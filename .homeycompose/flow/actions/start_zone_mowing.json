@@ -1,0 +1,12 @@
+{
+  "title": { "en": "Start zone mowing", "de": "Zonenmähen starten" },
+  "titleFormatted": { "en": "Start mowing zones [[zones]]", "de": "Zonen [[zones]] mähen" },
+  "args": [
+    { "name": "device", "type": "device", "filter": "driver_id=mower" },
+    {
+      "name": "zones", "type": "text",
+      "title": { "en": "Zone IDs (comma-separated)", "de": "Zonen-IDs (kommagetrennt)" },
+      "placeholder": { "en": "1,2,3", "de": "1,2,3" }
+    }
+  ]
+}

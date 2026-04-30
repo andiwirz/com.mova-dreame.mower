@@ -1,0 +1,25 @@
+{
+  "name": "com.mova-dreame.mower",
+  "version": "1.0.0",
+  "description": "Control MOVA and Dreame robotic lawn mowers from Homey",
+  "main": "app.js",
+  "scripts": {
+    "start": "homey app run"
+  },
+  "keywords": [
+    "homey",
+    "mower",
+    "dreame",
+    "mova",
+    "robotic",
+    "lawn"
+  ],
+  "author": "Andi Wirz <andi@wirzfamily.ch>",
+  "license": "MIT",
+  "dependencies": {
+    "node-fetch": "2.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

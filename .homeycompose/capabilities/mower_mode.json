@@ -1,0 +1,14 @@
+{
+  "type": "enum",
+  "title": { "en": "Mowing Mode", "de": "Mähmodus" },
+  "values": [
+    { "id": "all_area", "title": { "en": "All Area",  "de": "Gesamtfläche" } },
+    { "id": "edge",     "title": { "en": "Edge",      "de": "Kante"        } },
+    { "id": "zone",     "title": { "en": "Zone",      "de": "Zone"         } },
+    { "id": "spot",     "title": { "en": "Spot",      "de": "Punkt"        } }
+  ],
+  "getable": true,
+  "setable": true,
+  "uiComponent": "picker",
+  "icon": "/assets/capabilities/mower_mode.svg"
+}

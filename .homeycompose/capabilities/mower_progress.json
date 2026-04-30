@@ -1,0 +1,12 @@
+{
+  "type": "number",
+  "title": { "en": "Mowing Progress", "de": "Mähfortschritt" },
+  "units": { "en": "%", "de": "%" },
+  "decimals": 0,
+  "min": 0,
+  "max": 100,
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "icon": "/assets/capabilities/mower_progress.svg"
+}

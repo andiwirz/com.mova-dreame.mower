@@ -1,0 +1,12 @@
+{
+  "title": { "en": "Start spot mowing", "de": "Punktmähen starten" },
+  "titleFormatted": { "en": "Start mowing spots [[spots]]", "de": "Punkte [[spots]] mähen" },
+  "args": [
+    { "name": "device", "type": "device", "filter": "driver_id=mower" },
+    {
+      "name": "spots", "type": "text",
+      "title": { "en": "Spot IDs (comma-separated)", "de": "Punkt-IDs (kommagetrennt)" },
+      "placeholder": { "en": "1,2", "de": "1,2" }
+    }
+  ]
+}

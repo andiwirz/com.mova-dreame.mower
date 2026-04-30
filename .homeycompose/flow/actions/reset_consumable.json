@@ -1,0 +1,16 @@
+{
+  "title": { "en": "Reset consumable counter", "de": "Verbrauchsmaterial zurücksetzen" },
+  "titleFormatted": { "en": "Reset [[consumable]] counter", "de": "[[consumable]] zurücksetzen" },
+  "args": [
+    { "name": "device", "type": "device", "filter": "driver_id=mower" },
+    {
+      "name": "consumable", "type": "dropdown",
+      "title": { "en": "Consumable", "de": "Verbrauchsmaterial" },
+      "values": [
+        { "id": "blade", "label": { "en": "Blade",  "de": "Klinge"  } },
+        { "id": "brush", "label": { "en": "Brush",  "de": "Bürste"  } },
+        { "id": "robot", "label": { "en": "Robot",  "de": "Roboter" } }
+      ]
+    }
+  ]
+}

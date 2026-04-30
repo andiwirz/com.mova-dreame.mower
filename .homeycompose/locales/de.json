@@ -1,0 +1,46 @@
+{
+  "pair": {
+    "title": "MOVA / Dreame Konto verbinden",
+    "subtitle": "App-Konto Zugangsdaten eingeben",
+    "brand_label": "Marke",
+    "region_label": "Region",
+    "email_label": "E-Mail",
+    "password_label": "Passwort",
+    "login_button": "Anmelden & Mäher suchen",
+    "searching": "Suche nach Mährobotern…",
+    "select_device": "Mähroboter auswählen",
+    "select_device_hint": "Tippe auf einen Mähroboter um ihn hinzuzufügen",
+    "error_no_devices": "Keine Mähroboter in diesem Konto gefunden.",
+    "error_login": "Anmeldung fehlgeschlagen. Zugangsdaten prüfen.",
+    "error_generic": "Etwas ist schiefgelaufen. Bitte nochmals versuchen."
+  },
+  "settings": {
+    "account_group": "Konto",
+    "connection_group": "Verbindung",
+    "username_label": "E-Mail",
+    "brand_label": "Marke",
+    "region_label": "Region",
+    "poll_interval_label": "Abfrageintervall (Sekunden)",
+    "poll_interval_hint": "Wie oft der Status abgefragt wird (10–300 Sekunden)"
+  },
+  "status": {
+    "idle": "Bereit", "mowing": "Mähen", "standby": "Standby",
+    "paused": "Pausiert", "error": "Fehler", "returning": "Kehrt zurück",
+    "charging": "Lädt", "mapping": "Kartierung", "docked": "Gedockt", "updating": "Aktualisierung"
+  },
+  "charging_status": {
+    "not_docked": "Nicht angedockt", "charging": "Lädt", "not_charging": "Angedockt (Standby)",
+    "docked": "Vollständig geladen", "returning": "Kehrt zurück", "paused_cold": "Pausiert (Kälte)"
+  },
+  "mower_mode": {
+    "all_area": "Gesamtfläche", "edge": "Kante", "zone": "Zone", "spot": "Punkt"
+  },
+  "task_status": {
+    "inactive": "Inaktiv", "active": "Aktiv", "paused": "Pausiert", "recharging": "Lädt nach"
+  },
+  "error": {
+    "unreachable": "Mähroboter nicht erreichbar",
+    "device_offline": "Mähroboter ist offline",
+    "auth_failed": "Authentifizierung fehlgeschlagen — Gerät neu hinzufügen"
+  }
+}

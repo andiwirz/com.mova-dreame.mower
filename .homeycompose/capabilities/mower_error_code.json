@@ -1,0 +1,11 @@
+{
+  "type": "number",
+  "title": { "en": "Error Code", "de": "Fehlercode" },
+  "decimals": 0,
+  "min": 0,
+  "max": 9999,
+  "getable": true,
+  "setable": false,
+  "uiComponent": null,
+  "icon": "/assets/capabilities/mower_status.svg"
+}

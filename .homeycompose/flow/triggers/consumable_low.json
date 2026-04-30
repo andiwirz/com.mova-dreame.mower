@@ -1,0 +1,22 @@
+{
+  "title": { "en": "Consumable health is low", "de": "Verbrauchsmaterial niedrig" },
+  "titleFormatted": { "en": "[[consumable]] health drops below [[threshold]]%", "de": "[[consumable]] unter [[threshold]]%" },
+  "args": [
+    { "name": "device", "type": "device", "filter": "driver_id=mower" },
+    {
+      "name": "consumable", "type": "dropdown",
+      "title": { "en": "Consumable", "de": "Verbrauchsmaterial" },
+      "values": [
+        { "id": "blade", "label": { "en": "Blade",  "de": "Klinge"  } },
+        { "id": "brush", "label": { "en": "Brush",  "de": "Bürste"  } },
+        { "id": "robot", "label": { "en": "Robot",  "de": "Roboter" } }
+      ]
+    },
+    {
+      "name": "threshold", "type": "number",
+      "title": { "en": "Below (%)", "de": "Unter (%)" },
+      "min": 1, "max": 100, "step": 5,
+      "placeholder": { "en": "20", "de": "20" }
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "pair": {
+    "title": "Connect MOVA / Dreame Account",
+    "subtitle": "Enter your app account credentials",
+    "brand_label": "Brand",
+    "brand_dreame": "Dreame",
+    "brand_mova": "MOVA",
+    "region_label": "Region",
+    "region_eu": "Europe (EU)",
+    "region_us": "USA (US)",
+    "region_cn": "China (CN)",
+    "region_sg": "Asia (SG)",
+    "email_label": "Email",
+    "email_placeholder": "you@example.com",
+    "password_label": "Password",
+    "login_button": "Sign In & Find Mowers",
+    "searching": "Searching for mowers…",
+    "select_device": "Select Your Mower",
+    "select_device_hint": "Tap a mower to add it to Homey",
+    "add_button": "Add",
+    "done_button": "Done",
+    "error_no_devices": "No robotic mowers found in this account.",
+    "error_login": "Login failed. Check your credentials.",
+    "error_generic": "Something went wrong. Please try again."
+  },
+  "settings": {
+    "account_group": "Account",
+    "connection_group": "Connection",
+    "username_label": "Email",
+    "brand_label": "Brand",
+    "region_label": "Region",
+    "poll_interval_label": "Poll interval (seconds)",
+    "poll_interval_hint": "How often the mower status is updated (10–300 seconds)"
+  },
+  "status": {
+    "idle": "Idle",
+    "mowing": "Mowing",
+    "standby": "Standby",
+    "paused": "Paused",
+    "error": "Error",
+    "returning": "Returning to dock",
+    "charging": "Charging",
+    "mapping": "Mapping",
+    "docked": "Docked",
+    "updating": "Updating"
+  },
+  "error": {
+    "unreachable": "Mower unreachable",
+    "device_offline": "Mower is offline",
+    "auth_failed": "Authentication failed — re-add the device"
+  },
+  "charging_status": {
+    "not_docked": "Not docked",
+    "charging": "Charging",
+    "not_charging": "Docked (standby)",
+    "docked": "Fully charged",
+    "returning": "Returning",
+    "paused_cold": "Paused (cold)"
+  },
+  "mower_mode": {
+    "all_area": "All Area",
+    "edge": "Edge",
+    "zone": "Zone",
+    "spot": "Spot"
+  },
+  "task_status": {
+    "inactive": "Inactive",
+    "active": "Active",
+    "paused": "Paused",
+    "recharging": "Recharging"
+  }
+}

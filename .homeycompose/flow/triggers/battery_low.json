@@ -1,0 +1,13 @@
+{
+  "title": { "en": "Mower battery is low", "de": "Mähroboter Akku ist niedrig" },
+  "titleFormatted": { "en": "Mower battery drops below [[threshold]]%", "de": "Mähroboter Akku fällt unter [[threshold]]%" },
+  "args": [
+    { "name": "device", "type": "device", "filter": "driver_id=mower" },
+    {
+      "name": "threshold", "type": "number",
+      "title": { "en": "Below (%)", "de": "Unter (%)" },
+      "min": 1, "max": 100, "step": 1,
+      "placeholder": { "en": "20", "de": "20" }
+    }
+  ]
+}

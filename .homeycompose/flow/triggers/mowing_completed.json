@@ -1,0 +1,4 @@
+{
+  "title": { "en": "Mowing completed", "de": "Mähen abgeschlossen" },
+  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
+}

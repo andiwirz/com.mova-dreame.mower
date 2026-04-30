@@ -1,0 +1,4 @@
+{
+  "title": { "en": "Mower !{{is|is not}} mowing", "de": "Mähroboter mäht !{{gerade|gerade nicht}}" },
+  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
+}

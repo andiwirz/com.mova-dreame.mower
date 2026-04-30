@@ -1,0 +1,4 @@
+{
+  "title": { "en": "Clear recoverable error", "de": "Behebbaren Fehler quittieren" },
+  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
+}
