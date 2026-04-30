@@ -8,8 +8,8 @@
     "de": "MOVA & Dreame Mähroboter"
   },
   "description": {
-    "en": "Control your MOVA and Dreame robotic lawn mowers from Homey",
-    "de": "Steuere deinen MOVA und Dreame Mähroboter mit Homey"
+    "en": "Bring your MOVA or Dreame lawn mower into your smart home automations",
+    "de": "Integriere deinen MOVA oder Dreame Mähroboter in deine Smart-Home-Automationen"
   },
   "brandColor": "#00A8E0",
   "category": ["appliances"],

@@ -1,0 +1,3 @@
+MOVA & Dreame Mower integriert deinen Mähroboter in Homey und gibt dir die vollständige Kontrolle über deinen Mähalltag. Überwache Akkustand, Ladestatus, Mähfortschritt und Verbrauchsmaterial in Echtzeit — und erhalte sofortige Benachrichtigungen wenn dein Mähroboter auf ein Hindernis trifft, umkippt oder zur Ladestation zurückkehrt.
+
+Leistungsstarke Flow-Karten ermöglichen dir die vollständige Automatisierung deiner Gartenpflege: Starte Zonen- oder Punktmähen abhängig vom Wetter, richte ruhige Stunden mit der Nicht-stören-Funktion ein, steuere die Kindersicherung aus der Ferne und erhalte rechtzeitige Erinnerungen wenn Klinge oder Bürste ausgetauscht werden müssen. Die Integration unterstützt MOVA- und Dreame-Mähroboter in den Regionen Europa, China und Nordamerika.

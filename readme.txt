@@ -1,0 +1,3 @@
+MOVA & Dreame Mower integrates your robotic lawn mower into Homey, giving you full control over every aspect of your mowing routine. Monitor battery level, charging status, mowing progress, and consumable health in real time — and get instant notifications when your mower encounters an obstacle, tips over, or returns to its dock.
+
+Powerful flow cards let you automate your garden care: start zone or spot mowing based on weather conditions, set quiet hours with Do Not Disturb, control the child lock remotely, and receive timely reminders when the blade or brush is due for replacement. The integration supports both MOVA and Dreame mowers across European, Chinese, and North American cloud regions.

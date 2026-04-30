@@ -9,8 +9,8 @@
     "de": "MOVA & Dreame Mähroboter"
   },
   "description": {
-    "en": "Control your MOVA and Dreame robotic lawn mowers from Homey",
-    "de": "Steuere deinen MOVA und Dreame Mähroboter mit Homey"
+    "en": "Bring your MOVA or Dreame lawn mower into your smart home automations",
+    "de": "Integriere deinen MOVA oder Dreame Mähroboter in deine Smart-Home-Automationen"
   },
   "brandColor": "#00A8E0",
   "category": [
@@ -45,6 +45,10 @@
         "titleFormatted": {
           "en": "Mower battery drops below [[threshold]]%",
           "de": "Mähroboter Akku fällt unter [[threshold]]%"
+        },
+        "hint": {
+          "en": "Triggers once per mowing session when the battery drops below the set percentage.",
+          "de": "Wird einmalig pro Mähvorgang ausgelöst wenn der Akkustand unter den eingestellten Prozentsatz fällt."
         },
         "args": [
           {
@@ -102,6 +106,10 @@
         "titleFormatted": {
           "en": "[[consumable]] health drops below [[threshold]]%",
           "de": "[[consumable]] unter [[threshold]]%"
+        },
+        "hint": {
+          "en": "Triggers once when the remaining health of the selected part falls below the threshold. Use this to get a timely replacement reminder.",
+          "de": "Wird einmalig ausgelöst wenn die verbleibende Lebensdauer des Teils unter den Schwellenwert fällt. Ideal als Erinnerung zum rechtzeitigen Austausch."
         },
         "args": [
           {
@@ -429,6 +437,10 @@
           "en": "Reset [[consumable]] counter",
           "de": "[[consumable]] zurücksetzen"
         },
+        "hint": {
+          "en": "Resets the usage counter for the selected part after a replacement. Only use this after physically replacing the part.",
+          "de": "Setzt den Betriebsstundenzähler nach einem Austausch zurück. Nur nach dem physischen Austausch des Teils verwenden."
+        },
         "args": [
           {
             "name": "device",
@@ -533,6 +545,10 @@
         "titleFormatted": {
           "en": "Turn Do Not Disturb [[enabled]]",
           "de": "Nicht stören [[enabled]]"
+        },
+        "hint": {
+          "en": "Do Not Disturb prevents the mower from starting automatically during quiet hours (e.g. at night).",
+          "de": "Nicht stören verhindert, dass der Mähroboter in ruhigen Stunden (z.B. nachts) automatisch startet."
         },
         "args": [
           {
@@ -660,6 +676,10 @@
           "en": "Start mowing spots [[spots]]",
           "de": "Punkte [[spots]] mähen"
         },
+        "hint": {
+          "en": "Enter the spot IDs as configured in the MOVA or Dreame app, separated by commas (e.g. 1,2).",
+          "de": "Punkt-IDs wie in der MOVA- oder Dreame-App vergeben, kommagetrennt (z.B. 1,2)."
+        },
         "args": [
           {
             "name": "device",
@@ -689,6 +709,10 @@
         "titleFormatted": {
           "en": "Start mowing zones [[zones]]",
           "de": "Zonen [[zones]] mähen"
+        },
+        "hint": {
+          "en": "Enter the zone IDs as configured in the MOVA or Dreame app, separated by commas (e.g. 1,2,3).",
+          "de": "Zonen-IDs wie in der MOVA- oder Dreame-App vergeben, kommagetrennt (z.B. 1,2,3)."
         },
         "args": [
           {
@@ -729,6 +753,10 @@
         "title": {
           "en": "Clear recoverable error",
           "de": "Behebbaren Fehler quittieren"
+        },
+        "hint": {
+          "en": "Dismisses a recoverable error so the mower can resume operation. Only works if the underlying issue (e.g. stuck wheel) has been resolved.",
+          "de": "Quittiert einen behebbaren Fehler damit der Mähroboter weitermähen kann. Funktioniert nur wenn die Ursache (z.B. eingeklemmtes Rad) beseitigt wurde."
         },
         "args": [
           {
