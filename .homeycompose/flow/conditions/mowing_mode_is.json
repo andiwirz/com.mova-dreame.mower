@@ -7,10 +7,11 @@
       "name": "mode", "type": "dropdown",
       "title": { "en": "Mode", "de": "Modus" },
       "values": [
-        { "id": "all_area", "label": { "en": "All Area",  "de": "Gesamtfläche" } },
-        { "id": "edge",     "label": { "en": "Edge",      "de": "Kante"        } },
-        { "id": "zone",     "label": { "en": "Zone",      "de": "Zone"         } },
-        { "id": "spot",     "label": { "en": "Spot",      "de": "Punkt"        } }
+        { "id": "all_area", "label": { "en": "All Area",  "de": "Alle"    } },
+        { "id": "zone",     "label": { "en": "Zone",      "de": "Zone"    } },
+        { "id": "edge",     "label": { "en": "Edge",      "de": "Kante"   } },
+        { "id": "spot",     "label": { "en": "Spot",      "de": "Spot"    } },
+        { "id": "manual",   "label": { "en": "Manual",    "de": "Manuell" } }
       ]
     }
   ]

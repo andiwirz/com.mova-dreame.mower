@@ -1,0 +1,5 @@
+{
+  "title": { "en": "Firmware update available", "de": "Firmware-Update verfügbar" },
+  "hint": { "en": "Fires when a new firmware update is available for the mower.", "de": "Wird ausgelöst, wenn ein neues Firmware-Update für den Mähroboter verfügbar ist." },
+  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
+}

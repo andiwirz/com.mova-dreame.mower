@@ -1,0 +1,10 @@
+{
+  "type": "number",
+  "title": { "en": "Total Mow Sessions", "de": "Mähvorgänge gesamt" },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "decimals": 0,
+  "min": 0,
+  "icon": "/assets/capabilities/meter_count_total.svg"
+}

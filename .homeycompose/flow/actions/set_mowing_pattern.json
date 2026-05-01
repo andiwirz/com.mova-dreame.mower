@@ -1,0 +1,15 @@
+{
+  "title": { "en": "Set mowing pattern", "de": "Mähmuster setzen" },
+  "titleFormatted": { "en": "Set mowing pattern to [[pattern]]", "de": "Mähmuster auf [[pattern]] setzen" },
+  "args": [
+    { "name": "device", "type": "device", "filter": "driver_id=mower" },
+    {
+      "name": "pattern", "type": "dropdown",
+      "title": { "en": "Pattern", "de": "Muster" },
+      "values": [
+        { "id": "zigzag",       "label": { "en": "Zig-Zag",     "de": "Zick-Zack"   } },
+        { "id": "checkerboard", "label": { "en": "Checkerboard", "de": "Schachbrett" } }
+      ]
+    }
+  ]
+}

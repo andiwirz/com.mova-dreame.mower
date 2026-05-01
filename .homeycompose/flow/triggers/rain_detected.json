@@ -1,0 +1,5 @@
+{
+  "title": { "en": "Rain detected", "de": "Regen erkannt" },
+  "hint": { "en": "Fires when the mower detects rain and pauses mowing.", "de": "Wird ausgelöst, wenn der Mähroboter Regen erkennt und den Mähvorgang pausiert." },
+  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
+}

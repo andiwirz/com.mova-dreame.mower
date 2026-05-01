@@ -18,7 +18,9 @@ class MowerDriver extends Homey.Driver {
       .registerRunListener(({ device }) => device.cmdStartMowing());
 
     flow.getActionCard('start_zone_mowing')
-      .registerRunListener(({ device, zones }) => device.cmdStartZoneMowing(zones));
+      .registerRunListener(({ device, zones, passes }) =>
+        device.cmdStartZoneMowing(zones, passes ?? 1),
+      );
 
     flow.getActionCard('start_edge_mowing')
       .registerRunListener(({ device }) => device.cmdStartEdgeMowing());
@@ -37,6 +39,22 @@ class MowerDriver extends Homey.Driver {
 
     flow.getActionCard('set_mowing_mode')
       .registerRunListener(({ device, mode }) => device.cmdSetMowingMode(mode));
+
+    flow.getActionCard('set_mowing_speed')
+      .registerRunListener(({ device, speed }) => device.cmdSetMowingSpeed(speed));
+
+    flow.getActionCard('set_mowing_pattern')
+      .registerRunListener(({ device, pattern }) => device.cmdSetMowingPattern(pattern));
+
+    flow.getActionCard('set_rain_protection')
+      .registerRunListener(({ device, enabled }) =>
+        device.cmdSetRainProtection(enabled === 'true'),
+      );
+
+    flow.getActionCard('set_night_mode')
+      .registerRunListener(({ device, enabled }) =>
+        device.cmdSetNightMode(enabled === 'true'),
+      );
 
     flow.getActionCard('find_bot')
       .registerRunListener(({ device }) => device.cmdFindBot());
@@ -92,6 +110,26 @@ class MowerDriver extends Homey.Driver {
         device.getCapabilityValue('mower_mode') === mode,
       );
 
+    flow.getConditionCard('mowing_pattern_is')
+      .registerRunListener(({ device, pattern }) =>
+        device.getCapabilityValue('mower_pattern') === pattern,
+      );
+
+    flow.getConditionCard('mowing_speed_is')
+      .registerRunListener(({ device, speed }) =>
+        device.getCapabilityValue('mowing_speed') === speed,
+      );
+
+    flow.getConditionCard('rain_protection_is_enabled')
+      .registerRunListener(({ device }) =>
+        device.getCapabilityValue('rain_protection') === true,
+      );
+
+    flow.getConditionCard('night_mode_is_enabled')
+      .registerRunListener(({ device }) =>
+        device.getCapabilityValue('night_mode') === true,
+      );
+
     // ─── Trigger run-listeners (for arg-filtered triggers) ────────────────────
 
     flow.getDeviceTriggerCard('battery_low')
@@ -119,7 +157,7 @@ class MowerDriver extends Homey.Driver {
       const all = await api.getDevices();
       discoveredDevices = all.filter((d) => {
         if (!d || !d.model) return false;
-        return d.model.toLowerCase().includes('mower') || d.model.toLowerCase().includes('mow');
+        return d.model.toLowerCase().includes('mow');
       });
 
       if (discoveredDevices.length === 0) {
@@ -149,11 +187,13 @@ class MowerDriver extends Homey.Driver {
           token_expiry:  tokens.tokenExpiry,
           brand:         api.getBrand(),
           region:        api.getRegion(),
+          model:         device.model || '',
         },
         settings: {
           username:      api.getUsername(),
           brand:         api.getBrand(),
           region:        api.getRegion(),
+          device_model:  device.model || '',
           poll_interval: 30,
         },
       };

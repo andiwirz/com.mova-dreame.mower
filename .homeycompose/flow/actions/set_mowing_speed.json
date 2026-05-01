@@ -1,0 +1,17 @@
+{
+  "title": { "en": "Set mowing speed", "de": "Mähgeschwindigkeit setzen" },
+  "titleFormatted": { "en": "Set mowing speed to [[speed]]", "de": "Mähgeschwindigkeit auf [[speed]] setzen" },
+  "hint": { "en": "Change the mowing speed. Slow reduces noise; fast maximises coverage.", "de": "Mähgeschwindigkeit ändern. Langsam reduziert die Lautstärke, Schnell maximiert die Flächenleistung." },
+  "args": [
+    { "name": "device", "type": "device", "filter": "driver_id=mower" },
+    {
+      "name": "speed",
+      "type": "dropdown",
+      "values": [
+        { "id": "slow",   "label": { "en": "Slow",   "de": "Langsam" } },
+        { "id": "normal", "label": { "en": "Normal",  "de": "Normal"  } },
+        { "id": "fast",   "label": { "en": "Fast",    "de": "Schnell" } }
+      ]
+    }
+  ]
+}

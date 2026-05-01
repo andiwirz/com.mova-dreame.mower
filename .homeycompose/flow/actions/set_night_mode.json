@@ -1,0 +1,16 @@
+{
+  "title": { "en": "Set night mode", "de": "Nachtmodus setzen" },
+  "titleFormatted": { "en": "Set night mode to [[enabled]]", "de": "Nachtmodus auf [[enabled]] setzen" },
+  "hint": { "en": "Enable or disable night mode (reduced noise operation).", "de": "Nachtmodus aktivieren oder deaktivieren (leiser Betrieb)." },
+  "args": [
+    { "name": "device", "type": "device", "filter": "driver_id=mower" },
+    {
+      "name": "enabled",
+      "type": "dropdown",
+      "values": [
+        { "id": "true",  "label": { "en": "On",  "de": "Ein" } },
+        { "id": "false", "label": { "en": "Off", "de": "Aus" } }
+      ]
+    }
+  ]
+}

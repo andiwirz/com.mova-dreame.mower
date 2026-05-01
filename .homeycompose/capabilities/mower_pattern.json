@@ -1,0 +1,12 @@
+{
+  "type": "enum",
+  "title": { "en": "Mowing Pattern", "de": "Mähmuster" },
+  "values": [
+    { "id": "zigzag",       "title": { "en": "Zig-Zag",      "de": "Zick-Zack"    } },
+    { "id": "checkerboard", "title": { "en": "Checkerboard",  "de": "Schachbrett"  } }
+  ],
+  "getable": true,
+  "setable": true,
+  "uiComponent": "picker",
+  "icon": "/assets/capabilities/mower_pattern.svg"
+}

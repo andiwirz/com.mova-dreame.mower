@@ -1,6 +1,6 @@
 {
   "id": "com.mova-dreame.mower",
-  "version": "1.0.0",
+  "version": "0.0.5",
   "compatibility": ">=12.0.0",
   "sdk": 3,
   "name": {
@@ -11,7 +11,7 @@
     "en": "Bring your MOVA or Dreame lawn mower into your smart home automations",
     "de": "Integriere deinen MOVA oder Dreame Mähroboter in deine Smart-Home-Automationen"
   },
-  "brandColor": "#00A8E0",
+  "brandColor": "#000000",
   "category": ["appliances"],
   "permissions": [],
   "images": {
@@ -26,10 +26,36 @@
   "bugs": {
     "url": "https://github.com/andiwirz/com.mova-dreame.mower/issues"
   },
+  "api": {
+    "getDevices": {
+      "method": "GET",
+      "path": "/getDevices"
+    },
+    "pollDevice": {
+      "method": "GET",
+      "path": "/pollDevice"
+    }
+  },
   "changelog": {
-    "1.0.0": {
-      "en": "Initial release.",
-      "de": "Erstveröffentlichung."
+    "0.0.1": {
+      "en": "Initial version.",
+      "de": "Erste Version."
+    },
+    "0.0.2": {
+      "en": "Fixed app settings page not loading.",
+      "de": "App-Einstellungsseite lädt jetzt korrekt."
+    },
+    "0.0.3": {
+      "en": "Corrected device code descriptions and alarm triggers based on official Dreame mower API. Added extended status codes.",
+      "de": "Gerätecodes und Alarm-Auslöser anhand der offiziellen Dreame Mäher-API korrigiert. Erweiterte Statuscodes hinzugefügt."
+    },
+    "0.0.4": {
+      "en": "Updated status codes 7–16 based on ioBroker adapter. Fixed total area and total time properties (siid 12).",
+      "de": "Statuscodes 7–16 anhand des ioBroker-Adapters aktualisiert. Gesamtfläche und Gesamtlaufzeit (siid 12) korrigiert."
+    },
+    "0.0.5": {
+      "en": "Added frost protection, grass protection, anti-theft, collision avoidance, smart charging, mow efficiency mode, edge mowing and total session count.",
+      "de": "Frostschutz, Rasenschutz, Diebstahlschutz, Kollisionsvermeidung, Smart-Laden, Mähmodus, Kantenmähen und Gesamtanzahl Mähvorgänge hinzugefügt."
     }
   }
 }

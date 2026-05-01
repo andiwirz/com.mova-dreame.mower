@@ -1,0 +1,13 @@
+{
+  "type": "enum",
+  "title": { "en": "Mowing Speed", "de": "Mähgeschwindigkeit" },
+  "values": [
+    { "id": "slow",   "title": { "en": "Slow",   "de": "Langsam" } },
+    { "id": "normal", "title": { "en": "Normal",  "de": "Normal"  } },
+    { "id": "fast",   "title": { "en": "Fast",    "de": "Schnell" } }
+  ],
+  "getable": true,
+  "setable": true,
+  "uiComponent": "picker",
+  "icon": "/assets/capabilities/mowing_speed.svg"
+}

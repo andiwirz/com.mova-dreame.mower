@@ -1,0 +1,11 @@
+{
+  "type": "number",
+  "title": { "en": "Total Mowing Time", "de": "Gesamte Mähzeit" },
+  "units": { "en": "h", "de": "Std." },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "decimals": 1,
+  "min": 0,
+  "icon": "/assets/capabilities/meter_time_total.svg"
+}

@@ -1,5 +1,22 @@
 {
-  "1.0.0": {
-    "en": "initial version"
+  "0.0.1": {
+    "en": "Initial version.",
+    "de": "Erste Version."
+  },
+  "0.0.2": {
+    "en": "Fixed app settings page not loading.",
+    "de": "App-Einstellungsseite lädt jetzt korrekt."
+  },
+  "0.0.3": {
+    "en": "Corrected device code descriptions and alarm triggers based on official Dreame mower API. Added extended status codes.",
+    "de": "Gerätecodes und Alarm-Auslöser anhand der offiziellen Dreame Mäher-API korrigiert. Erweiterte Statuscodes hinzugefügt."
+  },
+  "0.0.4": {
+    "en": "Updated status codes 7–16 based on ioBroker adapter. Fixed total area and total time properties (siid 12).",
+    "de": "Statuscodes 7–16 anhand des ioBroker-Adapters aktualisiert. Gesamtfläche und Gesamtlaufzeit (siid 12) korrigiert."
+  },
+  "0.0.5": {
+    "en": "Added frost protection, grass protection, anti-theft, collision avoidance, smart charging, mow efficiency mode, edge mowing and total session count.",
+    "de": "Frostschutz, Rasenschutz, Diebstahlschutz, Kollisionsvermeidung, Smart-Laden, Mähmodus, Kantenmähen und Gesamtanzahl Mähvorgänge hinzugefügt."
   }
 }

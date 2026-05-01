@@ -1,0 +1,11 @@
+{
+  "type": "number",
+  "title": { "en": "Session Duration", "de": "Sitzungsdauer" },
+  "units": { "en": "min", "de": "min" },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "decimals": 0,
+  "min": 0,
+  "icon": "/assets/capabilities/measure_duration.svg"
+}

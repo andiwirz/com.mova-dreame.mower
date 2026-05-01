@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug — MOVA & Dreame Mower</title>
+  <script type="text/javascript" src="/homey.js" data-origin="settings"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      background: #f5f5f5;
+      color: #1a1a1a;
+    }
+
+    header {
+      background: #000;
+      color: #fff;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    header h1 { font-size: 16px; font-weight: 600; }
+    header span { font-size: 12px; opacity: .5; }
+
+    .toolbar {
+      background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    select, button {
+      height: 36px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      padding: 0 14px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    select { background: #fff; min-width: 220px; }
+
+    button {
+      background: #000;
+      color: #fff;
+      border-color: #000;
+      font-weight: 600;
+      transition: opacity .15s;
+    }
+    button:disabled { opacity: .4; cursor: default; }
+    button.secondary {
+      background: #fff;
+      color: #333;
+      border-color: #ccc;
+      font-weight: 400;
+    }
+
+    .auto-refresh {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #555;
+      margin-left: auto;
+    }
+    .auto-refresh input { cursor: pointer; }
+
+    .timestamp {
+      font-size: 12px;
+      color: #888;
+      padding: 8px 20px;
+      background: #fff;
+      border-bottom: 1px solid #eee;
+      min-height: 32px;
+    }
+    .timestamp.error { color: #c0392b; }
+
+    .content { padding: 20px; }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+    }
+    .tab {
+      padding: 6px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: #555;
+      background: #e8e8e8;
+      border: none;
+      transition: background .15s;
+    }
+    .tab.active { background: #000; color: #fff; }
+
+    /* ── Table ── */
+    .prop-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    }
+    .prop-table th {
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: #888;
+      background: #fafafa;
+      border-bottom: 1px solid #eee;
+    }
+    .prop-table td {
+      padding: 9px 14px;
+      border-bottom: 1px solid #f0f0f0;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      vertical-align: middle;
+    }
+    .prop-table tr:last-child td { border-bottom: none; }
+    .prop-table tr:hover td { background: #fafafa; }
+
+    .prop-table tr.ok td { }
+    .prop-table tr.err td { background: #fff5f5; }
+    .prop-table tr.err td:first-child { border-left: 3px solid #e74c3c; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge.ok  { background: #e8f8ed; color: #27ae60; }
+    .badge.err { background: #fde8e8; color: #c0392b; }
+
+    .prop-name { color: #555; font-size: 12px; }
+    .prop-value { color: #1a1a1a; word-break: break-all; }
+    .prop-value.long { font-size: 11px; color: #555; }
+
+    /* ── Raw JSON ── */
+    .json-wrap {
+      background: #1a1a1a;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,.15);
+    }
+    .json-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      padding: 8px 12px;
+      background: #111;
+      border-bottom: 1px solid #333;
+    }
+    pre {
+      padding: 16px;
+      color: #e0e0e0;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: #aaa;
+      font-size: 14px;
+    }
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid #ccc;
+      border-top-color: #000;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* syntax highlighting helpers */
+    .jk { color: #9cdcfe; }   /* key */
+    .js { color: #ce9178; }   /* string value */
+    .jn { color: #b5cea8; }   /* number */
+    .jb { color: #569cd6; }   /* bool/null */
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🔍 Debug Console</h1>
+  <span>MOVA &amp; Dreame Mower</span>
+</header>
+
+<div class="toolbar">
+  <select id="deviceSelect" onchange="onDeviceChange()">
+    <option value="">— Select device —</option>
+  </select>
+  <button id="pollBtn" onclick="doPoll()" disabled>Poll Now</button>
+  <button class="secondary" onclick="copyJson()" id="copyBtn" disabled>Copy JSON</button>
+  <label class="auto-refresh">
+    <input type="checkbox" id="autoRefresh" onchange="toggleAutoRefresh()">
+    Auto-refresh every
+    <select id="autoInterval" style="min-width:0;width:80px">
+      <option value="10">10 s</option>
+      <option value="30" selected>30 s</option>
+      <option value="60">60 s</option>
+    </select>
+  </label>
+</div>
+
+<div class="timestamp" id="timestamp">Select a device and press Poll Now.</div>
+
+<div class="content">
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('table', this)">Properties</button>
+    <button class="tab" onclick="showTab('json', this)">Raw JSON</button>
+  </div>
+
+  <div id="tabTable">
+    <div class="empty" id="emptyMsg">No data yet.</div>
+    <table class="prop-table" id="propTable" style="display:none">
+      <thead>
+        <tr>
+          <th>siid</th>
+          <th>piid</th>
+          <th>Name</th>
+          <th>Value</th>
+          <th>Code</th>
+        </tr>
+      </thead>
+      <tbody id="propBody"></tbody>
+    </table>
+  </div>
+
+  <div id="tabJson" style="display:none">
+    <div class="json-wrap">
+      <div class="json-toolbar">
+        <button class="secondary" onclick="copyJson()" style="height:28px;font-size:12px">Copy</button>
+      </div>
+      <pre id="jsonOut">No data yet.</pre>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Known property names ────────────────────────────────────────────────────
+  // siid:piid → property name
+  // Sources: antondaubert/dreame-mower + bhuebschen/dreame-mower HA integrations
+  // ⚠ Entries marked (?) are unverified on real hardware — use this console to find correct values
+  const PROP_NAMES = {
+    // siid 1 — Firmware / Connectivity (verified via antondaubert)
+    '1:1':   'TELEMETRY',
+    '1:2':   'FIRMWARE_INSTALL_STATE',
+    '1:3':   'FIRMWARE_DOWNLOAD_PROGRESS',
+    '1:4':   'POSE_COVERAGE',
+    // siid 2 — Core mower control (verified via antondaubert)
+    '2:1':   'STATUS',
+    '2:2':   'DEVICE_CODE',
+    '2:4':   'MOWING_SPEED (?)',
+    '2:6':   'BORDER_FIRST (?)',
+    '2:7':   'OBSTACLE_AVOIDANCE (?)',
+    '2:50':  'SCHEDULING_TASK',
+    '2:51':  'SETTINGS_CHANGE',
+    '2:52':  'SCHEDULING_SUMMARY',
+    '2:56':  'MOWER_CONTROL_STATUS',
+    '2:57':  'POWER_STATE',
+    '2:109': 'CUTTING_HEIGHT (?)',
+    '2:110': 'AUTO_RESUME (?)',
+    '2:111': 'MOWING_PATTERN (?)',
+    '2:112': 'RAIN_PROTECTION (?)',
+    '2:113': 'NIGHT_MODE (?)',
+    '2:114': 'VOLUME (?)',
+    // siid 3 — Battery (verified via antondaubert)
+    '3:1':   'BATTERY',
+    '3:2':   'CHARGING_STATUS',
+    '3:3':   'OFF_PEAK_CHARGING',
+    '3:10':  'RETURN_BATTERY_THRESHOLD (?)',
+    '3:11':  'RESUME_BATTERY_THRESHOLD (?)',
+    // siid 4 — Task session stats (verified via antondaubert)
+    '4:1':   'SESSION_PROGRESS_%',
+    '4:2':   'SESSION_DURATION_min',
+    '4:3':   'SESSION_AREA_sqm',
+    '4:8':   'SESSION_START_TIMESTAMP',
+    '4:13':  'SESSION_CHARGING_EVENTS',
+    // siid 5 — Actions / Task status
+    '5:100': 'TASK_STATUS',
+    '5:104': 'TASK_STATUS (?)',
+    '5:105': 'CONSUMABLE_BLADE (?)',
+    '5:106': 'CONSUMABLE_BRUSH (?)',
+    '5:107': 'CONSUMABLE_ROBOT (?)',
+    // siid 5 DND (bhuebschen)
+    '5:1':   'DND',
+    '5:2':   'DND_START',
+    '5:3':   'DND_END',
+    // siid 7 — Voice / Volume (bhuebschen)
+    '7:1':   'VOLUME',
+    '7:3':   'VOICE_CHANGE_STATUS',
+    // siid 9 — Blade consumable (bhuebschen)
+    '9:1':   'BLADES_TIME_LEFT_min',
+    '9:2':   'BLADES_LIFE_%',
+    // siid 10 — Side brush (bhuebschen)
+    '10:1':  'SIDE_BRUSH_TIME_LEFT_min',
+    '10:2':  'SIDE_BRUSH_LIFE_%',
+    // siid 12 — Total statistics (bhuebschen)
+    '12:1':  'FIRST_CLEAN_DATE',
+    '12:2':  'TOTAL_TIME_min',
+    '12:3':  'TOTAL_CLEAN_COUNT',
+    '12:4':  'TOTAL_AREA_sqm',
+    // siid 13 — Map saving / Total stats (our mapping — unverified)
+    '13:1':  'TOTAL_AREA (?)',
+    '13:2':  'TOTAL_TIME (?)',
+  };
+
+  // ── State ───────────────────────────────────────────────────────────────────
+  let _Homey        = null;
+  let lastData      = null;
+  let autoTimer     = null;
+  let activeTab     = 'table';
+
+  // ── Init — called by Homey when the SDK is ready ────────────────────────────
+  // eslint-disable-next-line no-unused-vars
+  function onHomeyReady(Homey) {
+    _Homey = Homey;
+    Homey.ready();
+
+    Homey.api('GET', '/getDevices', null, (err, devices) => {
+      if (err || !devices) return setStatus('Failed to load devices: ' + (err?.message || err), true);
+      const sel = document.getElementById('deviceSelect');
+      devices.forEach((d) => {
+        const opt = document.createElement('option');
+        opt.value = d.id;
+        opt.textContent = d.name + (d.model ? ` (${d.model})` : '') + (d.available ? '' : ' — offline');
+        sel.appendChild(opt);
+      });
+      if (devices.length === 1) {
+        sel.value = devices[0].id;
+        onDeviceChange();
+      }
+    });
+  }
+
+  // ── Device selection ────────────────────────────────────────────────────────
+  function onDeviceChange() {
+    const has = !!document.getElementById('deviceSelect').value;
+    document.getElementById('pollBtn').disabled  = !has;
+    document.getElementById('copyBtn').disabled  = true;
+    lastData = null;
+    clearTable();
+    setStatus(has ? 'Press Poll Now to fetch data.' : 'Select a device.');
+  }
+
+  // ── Poll ────────────────────────────────────────────────────────────────────
+  function doPoll() {
+    const deviceId = document.getElementById('deviceSelect').value;
+    if (!deviceId) return;
+
+    const btn = document.getElementById('pollBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Polling…';
+    setStatus('Polling device…');
+
+    _Homey.api('GET', '/pollDevice?deviceId=' + encodeURIComponent(deviceId), null, (err, data) => {
+      btn.disabled = false;
+      btn.textContent = 'Poll Now';
+
+      if (err || !data) {
+        setStatus('Poll failed: ' + (err?.message || err || 'unknown error'), true);
+        return;
+      }
+
+      lastData = data;
+      document.getElementById('copyBtn').disabled = false;
+      renderTable(data.properties);
+      renderJson(data);
+      setStatus(`Last poll: ${formatTs(data.timestamp)} — ${data.properties.length} properties received`);
+    });
+  }
+
+  // ── Render table ────────────────────────────────────────────────────────────
+  function clearTable() {
+    document.getElementById('propTable').style.display = 'none';
+    document.getElementById('emptyMsg').style.display  = 'block';
+    document.getElementById('jsonOut').textContent     = 'No data yet.';
+  }
+
+  function renderTable(props) {
+    const body = document.getElementById('propBody');
+    body.innerHTML = '';
+
+    // Sort by siid then piid
+    const sorted = [...props].sort((a, b) => a.siid - b.siid || a.piid - b.piid);
+
+    sorted.forEach((p) => {
+      const key  = `${p.siid}:${p.piid}`;
+      const name = PROP_NAMES[key] || '';
+      const ok   = p.code === 0;
+      const val  = p.value;
+      const valStr = val === undefined ? '—' : (typeof val === 'object' ? JSON.stringify(val) : String(val));
+      const isLong = valStr.length > 60;
+
+      const tr = document.createElement('tr');
+      tr.className = ok ? 'ok' : 'err';
+      tr.innerHTML = `
+        <td>${p.siid}</td>
+        <td>${p.piid}</td>
+        <td><span class="prop-name">${name}</span></td>
+        <td><span class="prop-value${isLong ? ' long' : ''}" title="${escHtml(valStr)}">${escHtml(isLong ? valStr.slice(0, 80) + '…' : valStr)}</span></td>
+        <td><span class="badge ${ok ? 'ok' : 'err'}">${p.code}</span></td>
+      `;
+      body.appendChild(tr);
+    });
+
+    document.getElementById('emptyMsg').style.display  = 'none';
+    document.getElementById('propTable').style.display = 'table';
+  }
+
+  // ── Render JSON ─────────────────────────────────────────────────────────────
+  function renderJson(data) {
+    document.getElementById('jsonOut').textContent = JSON.stringify(data, null, 2);
+  }
+
+  // ── Tabs ────────────────────────────────────────────────────────────────────
+  function showTab(tab, el) {
+    activeTab = tab;
+    document.getElementById('tabTable').style.display = tab === 'table' ? 'block' : 'none';
+    document.getElementById('tabJson').style.display  = tab === 'json'  ? 'block' : 'none';
+    document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // ── Auto-refresh ────────────────────────────────────────────────────────────
+  function toggleAutoRefresh() {
+    if (document.getElementById('autoRefresh').checked) {
+      scheduleAuto();
+    } else {
+      clearTimeout(autoTimer);
+      autoTimer = null;
+    }
+  }
+
+  function scheduleAuto() {
+    clearTimeout(autoTimer);
+    const secs = parseInt(document.getElementById('autoInterval').value, 10);
+    autoTimer = setTimeout(() => {
+      if (document.getElementById('deviceSelect').value) doPoll();
+      if (document.getElementById('autoRefresh').checked) scheduleAuto();
+    }, secs * 1000);
+  }
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+  function setStatus(msg, isError = false) {
+    const el = document.getElementById('timestamp');
+    el.textContent = msg;
+    el.className = 'timestamp' + (isError ? ' error' : '');
+  }
+
+  function formatTs(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleTimeString() + ', ' + d.toLocaleDateString();
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function copyJson() {
+    if (!lastData) return;
+    const text = JSON.stringify(lastData, null, 2);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => flashCopy());
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      flashCopy();
+    }
+  }
+
+  function flashCopy() {
+    const btn = document.getElementById('copyBtn');
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied';
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+  }
+</script>
+</body>
+</html>

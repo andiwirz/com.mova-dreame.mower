@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -249,6 +249,7 @@
       'pair.select_device_hint':'Tap a mower to add it to Homey',
       'pair.error_generic':     'Something went wrong. Please try again.',
       'pair.error_login':       'Login failed. Check your credentials.',
+      'pair.error_empty_fields':'Please enter your email and password.',
     };
 
     function t(key) {
@@ -302,7 +303,7 @@
       const password = document.getElementById('password').value;
 
       if (!username || !password) {
-        showError('error-login', 'Please enter your email and password.');
+        showError('error-login', t('pair.error_empty_fields'));
         return;
       }
 

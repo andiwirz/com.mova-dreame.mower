@@ -1,0 +1,8 @@
+{
+  "type": "boolean",
+  "title": { "en": "Grass Protection", "de": "Rasenschutz" },
+  "getable": true,
+  "setable": true,
+  "uiComponent": "toggle",
+  "icon": "/assets/capabilities/grass_protection.svg"
+}

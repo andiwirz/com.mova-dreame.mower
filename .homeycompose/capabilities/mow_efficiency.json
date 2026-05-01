@@ -1,0 +1,12 @@
+{
+  "type": "enum",
+  "title": { "en": "Mow Mode", "de": "Mähmodus" },
+  "values": [
+    { "id": "standard",  "title": { "en": "Standard",  "de": "Standard"  } },
+    { "id": "efficient", "title": { "en": "Efficient",  "de": "Effizient" } }
+  ],
+  "getable": true,
+  "setable": true,
+  "uiComponent": "picker",
+  "icon": "/assets/capabilities/mow_efficiency.svg"
+}

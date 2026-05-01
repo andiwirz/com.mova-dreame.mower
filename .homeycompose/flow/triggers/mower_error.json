@@ -2,6 +2,7 @@
   "title": { "en": "Mower error occurred", "de": "Mähroboter Fehler aufgetreten" },
   "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }],
   "tokens": [
-    { "name": "error_code", "type": "number", "title": { "en": "Error Code", "de": "Fehlercode" } }
+    { "name": "error_code",        "type": "number", "title": { "en": "Error Code",        "de": "Fehlercode"       } },
+    { "name": "error_description", "type": "string", "title": { "en": "Error Description", "de": "Fehlerbeschreibung" } }
   ]
 }
