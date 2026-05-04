@@ -1,5 +1,0 @@
-{
-  "title": { "en": "Mower was lifted", "de": "Mähroboter wurde angehoben" },
-  "hint": { "en": "Fires when the mower detects it has been lifted off the ground.", "de": "Wird ausgelöst, wenn der Mähroboter erkennt, dass er angehoben wurde." },
-  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
-}

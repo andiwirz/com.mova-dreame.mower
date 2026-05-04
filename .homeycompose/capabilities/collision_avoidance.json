@@ -2,7 +2,7 @@
   "type": "boolean",
   "title": { "en": "Collision Avoidance", "de": "Kollisionsvermeidung" },
   "getable": true,
-  "setable": true,
-  "uiComponent": "toggle",
+  "setable": false,
+  "uiComponent": "sensor",
   "icon": "/assets/capabilities/collision_avoidance.svg"
 }

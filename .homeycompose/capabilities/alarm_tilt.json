@@ -1,8 +1,7 @@
 {
   "type": "boolean",
-  "title": { "en": "Mower Tilted", "de": "Mähroboter gekippt" },
+  "title": { "en": "Tilted", "de": "Gekippt" },
   "getable": true,
   "setable": false,
-  "uiComponent": "sensor",
-  "icon": "/assets/capabilities/alarm_tilt.svg"
+  "uiComponent": "sensor"
 }

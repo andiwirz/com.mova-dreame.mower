@@ -1,6 +1,6 @@
 {
   "type": "boolean",
-  "title": { "en": "Obstacle", "de": "Hindernis" },
+  "title": { "en": "Docked", "de": "Angedockt" },
   "getable": true,
   "setable": false,
   "uiComponent": "sensor"

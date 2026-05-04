@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Debug — MOVA & Dreame Mower</title>
+  <title>Debug — MOVA &amp; Dreame Mower</title>
   <script type="text/javascript" src="/homey.js" data-origin="settings"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -26,6 +26,27 @@
     header h1 { font-size: 16px; font-weight: 600; }
     header span { font-size: 12px; opacity: .5; }
 
+    /* ── Top navigation ── */
+    .top-nav {
+      display: flex;
+      background: #111;
+      border-bottom: 1px solid #333;
+    }
+    .top-nav button {
+      padding: 12px 20px;
+      background: none;
+      border: none;
+      color: #aaa;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .top-nav button:hover { color: #fff; }
+    .top-nav button.active { color: #fff; border-bottom-color: #00A8E0; }
+
+    /* ── Shared toolbar ── */
     .toolbar {
       background: #fff;
       border-bottom: 1px solid #e0e0e0;
@@ -61,6 +82,11 @@
       border-color: #ccc;
       font-weight: 400;
     }
+    button.blue {
+      background: #00A8E0;
+      border-color: #00A8E0;
+    }
+    button.blue:hover:not(:disabled) { background: #0091c2; border-color: #0091c2; }
 
     .auto-refresh {
       display: flex;
@@ -132,8 +158,6 @@
     }
     .prop-table tr:last-child td { border-bottom: none; }
     .prop-table tr:hover td { background: #fafafa; }
-
-    .prop-table tr.ok td { }
     .prop-table tr.err td { background: #fff5f5; }
     .prop-table tr.err td:first-child { border-left: 3px solid #e74c3c; }
 
@@ -151,7 +175,7 @@
     .prop-value { color: #1a1a1a; word-break: break-all; }
     .prop-value.long { font-size: 11px; color: #555; }
 
-    /* ── Raw JSON ── */
+    /* ── Raw JSON block ── */
     .json-wrap {
       background: #1a1a1a;
       border-radius: 8px;
@@ -160,11 +184,14 @@
     }
     .json-toolbar {
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
+      align-items: center;
       padding: 8px 12px;
       background: #111;
       border-bottom: 1px solid #333;
+      gap: 8px;
     }
+    .json-toolbar span { font-size: 12px; color: #888; }
     pre {
       padding: 16px;
       color: #e0e0e0;
@@ -194,13 +221,88 @@
       vertical-align: middle;
       margin-right: 6px;
     }
+    .spinner.white { border-color: rgba(255,255,255,.4); border-top-color: #fff; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* syntax highlighting helpers */
-    .jk { color: #9cdcfe; }   /* key */
-    .js { color: #ce9178; }   /* string value */
-    .jn { color: #b5cea8; }   /* number */
-    .jb { color: #569cd6; }   /* bool/null */
+    /* ── Discover section ── */
+    .discover-wrap {
+      max-width: 560px;
+      margin: 24px auto;
+      padding: 0 20px;
+    }
+    .discover-card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .discover-card h2 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .discover-card p {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 18px;
+      line-height: 1.5;
+    }
+    .dis-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .dis-field { flex: 1; }
+    .dis-field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: #888;
+      margin-bottom: 5px;
+    }
+    .dis-field select,
+    .dis-field input {
+      width: 100%;
+      height: 38px;
+      border: 1.5px solid #ddd;
+      border-radius: 7px;
+      padding: 0 12px;
+      font-size: 14px;
+      background: #fafafa;
+      outline: none;
+      transition: border-color .15s;
+      min-width: 0;
+    }
+    .dis-field select:focus,
+    .dis-field input:focus {
+      border-color: #00A8E0;
+      background: #fff;
+    }
+    .dis-error {
+      background: #fff0f0;
+      border: 1px solid #ffcdd2;
+      border-radius: 7px;
+      color: #c62828;
+      font-size: 13px;
+      padding: 10px 12px;
+      margin-top: 12px;
+    }
+    .dis-btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      align-items: center;
+    }
+    .dis-btn-row button { height: 38px; }
+    .dis-hint {
+      font-size: 12px;
+      color: #999;
+      margin-top: 14px;
+      line-height: 1.5;
+    }
   </style>
 </head>
 <body>
@@ -210,134 +312,159 @@
   <span>MOVA &amp; Dreame Mower</span>
 </header>
 
-<div class="toolbar">
-  <select id="deviceSelect" onchange="onDeviceChange()">
-    <option value="">— Select device —</option>
-  </select>
-  <button id="pollBtn" onclick="doPoll()" disabled>Poll Now</button>
-  <button class="secondary" onclick="copyJson()" id="copyBtn" disabled>Copy JSON</button>
-  <label class="auto-refresh">
-    <input type="checkbox" id="autoRefresh" onchange="toggleAutoRefresh()">
-    Auto-refresh every
-    <select id="autoInterval" style="min-width:0;width:80px">
-      <option value="10">10 s</option>
-      <option value="30" selected>30 s</option>
-      <option value="60">60 s</option>
+<!-- ── Top navigation ──────────────────────────────────────────────────── -->
+<nav class="top-nav">
+  <button class="active" data-section="poll"     onclick="showSection('poll',    this)">Device Poll</button>
+  <button               data-section="discover"  onclick="showSection('discover', this)">Discover Devices</button>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION: Device Poll                                                    -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div id="section-poll">
+
+  <div class="toolbar">
+    <select id="deviceSelect" onchange="onDeviceChange()">
+      <option value="">— Select device —</option>
     </select>
-  </label>
-</div>
-
-<div class="timestamp" id="timestamp">Select a device and press Poll Now.</div>
-
-<div class="content">
-  <div class="tabs">
-    <button class="tab active" onclick="showTab('table', this)">Properties</button>
-    <button class="tab" onclick="showTab('json', this)">Raw JSON</button>
+    <button id="pollBtn" onclick="doPoll()" disabled>Poll Now</button>
+    <button class="secondary" onclick="copyPollJson()" id="copyBtn" disabled>Copy JSON</button>
+    <label class="auto-refresh">
+      <input type="checkbox" id="autoRefresh" onchange="toggleAutoRefresh()">
+      Auto-refresh every
+      <select id="autoInterval" style="min-width:0;width:80px">
+        <option value="10">10 s</option>
+        <option value="30" selected>30 s</option>
+        <option value="60">60 s</option>
+      </select>
+    </label>
   </div>
 
-  <div id="tabTable">
-    <div class="empty" id="emptyMsg">No data yet.</div>
-    <table class="prop-table" id="propTable" style="display:none">
-      <thead>
-        <tr>
-          <th>siid</th>
-          <th>piid</th>
-          <th>Name</th>
-          <th>Value</th>
-          <th>Code</th>
-        </tr>
-      </thead>
-      <tbody id="propBody"></tbody>
-    </table>
-  </div>
+  <div class="timestamp" id="timestamp">Select a device and press Poll Now.</div>
 
-  <div id="tabJson" style="display:none">
-    <div class="json-wrap">
-      <div class="json-toolbar">
-        <button class="secondary" onclick="copyJson()" style="height:28px;font-size:12px">Copy</button>
+  <div class="content">
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('table', this)">Properties</button>
+      <button class="tab" onclick="showTab('json', this)">Raw JSON</button>
+    </div>
+
+    <div id="tabTable">
+      <div class="empty" id="emptyMsg">No data yet.</div>
+
+      <!-- MOVA key-value properties -->
+      <table class="prop-table" id="kvTable" style="display:none;margin-top:12px">
+        <thead>
+          <tr><th colspan="2">Device Data (MOVA / v2 format)</th></tr>
+          <tr><th>Key</th><th>Value</th></tr>
+        </thead>
+        <tbody id="kvBody"></tbody>
+      </table>
+
+      <!-- Device-list status fields (battery, latestStatus, online, …) -->
+      <table class="prop-table" id="statusTable" style="display:none;margin-top:12px">
+        <thead>
+          <tr><th colspan="2">Device List Status</th></tr>
+          <tr><th>Field</th><th>Value</th></tr>
+        </thead>
+        <tbody id="statusBody"></tbody>
+      </table>
+    </div>
+
+    <div id="tabJson" style="display:none">
+      <div class="json-wrap">
+        <div class="json-toolbar">
+          <span>Poll response</span>
+          <button class="secondary" onclick="copyPollJson()" style="height:28px;font-size:12px">Copy</button>
+        </div>
+        <pre id="jsonOut">No data yet.</pre>
       </div>
-      <pre id="jsonOut">No data yet.</pre>
     </div>
   </div>
-</div>
+
+</div><!-- /section-poll -->
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION: Discover Devices                                               -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div id="section-discover" style="display:none">
+  <div class="discover-wrap">
+
+    <div class="discover-card">
+      <h2>Discover Devices</h2>
+      <p>
+        Connect to the MOVA / Dreame cloud and fetch the raw device list.
+        Copy the result and send it to the developer to help diagnose pairing problems.
+      </p>
+
+      <div class="dis-row">
+        <div class="dis-field">
+          <label>Brand</label>
+          <select id="dis-brand">
+            <option value="dreame">Dreame</option>
+            <option value="mova">MOVA</option>
+          </select>
+        </div>
+        <div class="dis-field">
+          <label>Region</label>
+          <select id="dis-region">
+            <option value="eu">Europe (EU)</option>
+            <option value="us">USA (US)</option>
+            <option value="cn">China (CN)</option>
+            <option value="sg">Asia (SG)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="dis-row">
+        <div class="dis-field">
+          <label>Email</label>
+          <input type="email" id="dis-email" autocomplete="email" placeholder="you@example.com" />
+        </div>
+      </div>
+
+      <div class="dis-row">
+        <div class="dis-field">
+          <label>Password</label>
+          <input type="password" id="dis-password" autocomplete="current-password" placeholder="••••••••" />
+        </div>
+      </div>
+
+      <div id="dis-error" class="dis-error" style="display:none"></div>
+
+      <div class="dis-btn-row">
+        <button class="blue" id="dis-btn" onclick="doDiscover()">Fetch Device List</button>
+        <button class="secondary" id="dis-copy" onclick="copyDiscoverJson()" disabled>Copy JSON</button>
+      </div>
+
+      <p class="dis-hint">
+        Your credentials are sent directly to the MOVA / Dreame cloud and are not stored.
+        The raw response is shown below — copy and paste it into a GitHub issue or support message.
+      </p>
+    </div>
+
+    <!-- Result -->
+    <div id="dis-result" style="display:none">
+      <div class="json-wrap">
+        <div class="json-toolbar">
+          <span id="dis-result-label">Raw API response</span>
+          <button class="secondary" onclick="copyDiscoverJson()" style="height:28px;font-size:12px">Copy</button>
+        </div>
+        <pre id="dis-json">—</pre>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /section-discover -->
 
 <script>
-  // ── Known property names ────────────────────────────────────────────────────
-  // siid:piid → property name
-  // Sources: antondaubert/dreame-mower + bhuebschen/dreame-mower HA integrations
-  // ⚠ Entries marked (?) are unverified on real hardware — use this console to find correct values
-  const PROP_NAMES = {
-    // siid 1 — Firmware / Connectivity (verified via antondaubert)
-    '1:1':   'TELEMETRY',
-    '1:2':   'FIRMWARE_INSTALL_STATE',
-    '1:3':   'FIRMWARE_DOWNLOAD_PROGRESS',
-    '1:4':   'POSE_COVERAGE',
-    // siid 2 — Core mower control (verified via antondaubert)
-    '2:1':   'STATUS',
-    '2:2':   'DEVICE_CODE',
-    '2:4':   'MOWING_SPEED (?)',
-    '2:6':   'BORDER_FIRST (?)',
-    '2:7':   'OBSTACLE_AVOIDANCE (?)',
-    '2:50':  'SCHEDULING_TASK',
-    '2:51':  'SETTINGS_CHANGE',
-    '2:52':  'SCHEDULING_SUMMARY',
-    '2:56':  'MOWER_CONTROL_STATUS',
-    '2:57':  'POWER_STATE',
-    '2:109': 'CUTTING_HEIGHT (?)',
-    '2:110': 'AUTO_RESUME (?)',
-    '2:111': 'MOWING_PATTERN (?)',
-    '2:112': 'RAIN_PROTECTION (?)',
-    '2:113': 'NIGHT_MODE (?)',
-    '2:114': 'VOLUME (?)',
-    // siid 3 — Battery (verified via antondaubert)
-    '3:1':   'BATTERY',
-    '3:2':   'CHARGING_STATUS',
-    '3:3':   'OFF_PEAK_CHARGING',
-    '3:10':  'RETURN_BATTERY_THRESHOLD (?)',
-    '3:11':  'RESUME_BATTERY_THRESHOLD (?)',
-    // siid 4 — Task session stats (verified via antondaubert)
-    '4:1':   'SESSION_PROGRESS_%',
-    '4:2':   'SESSION_DURATION_min',
-    '4:3':   'SESSION_AREA_sqm',
-    '4:8':   'SESSION_START_TIMESTAMP',
-    '4:13':  'SESSION_CHARGING_EVENTS',
-    // siid 5 — Actions / Task status
-    '5:100': 'TASK_STATUS',
-    '5:104': 'TASK_STATUS (?)',
-    '5:105': 'CONSUMABLE_BLADE (?)',
-    '5:106': 'CONSUMABLE_BRUSH (?)',
-    '5:107': 'CONSUMABLE_ROBOT (?)',
-    // siid 5 DND (bhuebschen)
-    '5:1':   'DND',
-    '5:2':   'DND_START',
-    '5:3':   'DND_END',
-    // siid 7 — Voice / Volume (bhuebschen)
-    '7:1':   'VOLUME',
-    '7:3':   'VOICE_CHANGE_STATUS',
-    // siid 9 — Blade consumable (bhuebschen)
-    '9:1':   'BLADES_TIME_LEFT_min',
-    '9:2':   'BLADES_LIFE_%',
-    // siid 10 — Side brush (bhuebschen)
-    '10:1':  'SIDE_BRUSH_TIME_LEFT_min',
-    '10:2':  'SIDE_BRUSH_LIFE_%',
-    // siid 12 — Total statistics (bhuebschen)
-    '12:1':  'FIRST_CLEAN_DATE',
-    '12:2':  'TOTAL_TIME_min',
-    '12:3':  'TOTAL_CLEAN_COUNT',
-    '12:4':  'TOTAL_AREA_sqm',
-    // siid 13 — Map saving / Total stats (our mapping — unverified)
-    '13:1':  'TOTAL_AREA (?)',
-    '13:2':  'TOTAL_TIME (?)',
-  };
-
   // ── State ───────────────────────────────────────────────────────────────────
-  let _Homey        = null;
-  let lastData      = null;
-  let autoTimer     = null;
-  let activeTab     = 'table';
+  let _Homey       = null;
+  let lastPollData = null;
+  let lastDiscover = null;
+  let autoTimer    = null;
+  let activeTab    = 'table';
 
-  // ── Init — called by Homey when the SDK is ready ────────────────────────────
-  // eslint-disable-next-line no-unused-vars
+  // ── Init ────────────────────────────────────────────────────────────────────
   function onHomeyReady(Homey) {
     _Homey = Homey;
     Homey.ready();
@@ -358,12 +485,20 @@
     });
   }
 
-  // ── Device selection ────────────────────────────────────────────────────────
+  // ── Top-level navigation ────────────────────────────────────────────────────
+  function showSection(name, el) {
+    document.getElementById('section-poll').style.display     = name === 'poll'     ? 'block' : 'none';
+    document.getElementById('section-discover').style.display = name === 'discover' ? 'block' : 'none';
+    document.querySelectorAll('.top-nav button').forEach((b) => b.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // ── Device selection (poll) ─────────────────────────────────────────────────
   function onDeviceChange() {
     const has = !!document.getElementById('deviceSelect').value;
-    document.getElementById('pollBtn').disabled  = !has;
-    document.getElementById('copyBtn').disabled  = true;
-    lastData = null;
+    document.getElementById('pollBtn').disabled = !has;
+    document.getElementById('copyBtn').disabled = true;
+    lastPollData = null;
     clearTable();
     setStatus(has ? 'Press Poll Now to fetch data.' : 'Select a device.');
   }
@@ -387,58 +522,74 @@
         return;
       }
 
-      lastData = data;
+      lastPollData = data;
       document.getElementById('copyBtn').disabled = false;
-      renderTable(data.properties);
+      renderTable(data);
       renderJson(data);
-      setStatus(`Last poll: ${formatTs(data.timestamp)} — ${data.properties.length} properties received`);
+      const rawData = (data.rawResponse || {}).data;
+      const propCount = Array.isArray(rawData) ? rawData.length
+        : (rawData && typeof rawData === 'object' ? Object.keys(rawData).length : 0);
+      setStatus(`Last poll: ${formatTs(data.timestamp)} — ${propCount} properties received`);
     });
   }
 
-  // ── Render table ────────────────────────────────────────────────────────────
+  // ── Render table ─────────────────────────────────────────────────────────────
   function clearTable() {
-    document.getElementById('propTable').style.display = 'none';
-    document.getElementById('emptyMsg').style.display  = 'block';
-    document.getElementById('jsonOut').textContent     = 'No data yet.';
+    document.getElementById('kvTable').style.display     = 'none';
+    document.getElementById('statusTable').style.display = 'none';
+    document.getElementById('emptyMsg').style.display    = 'block';
+    document.getElementById('jsonOut').textContent       = 'No data yet.';
   }
 
-  function renderTable(props) {
-    const body = document.getElementById('propBody');
-    body.innerHTML = '';
+  function renderTable(data) {
+    const rawData      = (data.rawResponse || {}).data;
+    const deviceStatus = data.deviceStatus;
+    let anyData = false;
 
-    // Sort by siid then piid
-    const sorted = [...props].sort((a, b) => a.siid - b.siid || a.piid - b.piid);
+    if (rawData && typeof rawData === 'object' && !rawData.error) {
+      // ── MOVA key-value object ───────────────────────────────────────────────
+      const body = document.getElementById('kvBody');
+      body.innerHTML = '';
+      Object.entries(rawData).sort(([a], [b]) => a.localeCompare(b)).forEach(([k, v]) => {
+        const valStr = typeof v === 'object' ? JSON.stringify(v) : String(v);
+        const isLong = valStr.length > 80;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><span class="prop-name">${escHtml(k)}</span></td>
+          <td><span class="prop-value${isLong ? ' long' : ''}" title="${escHtml(valStr)}">${escHtml(isLong ? valStr.slice(0, 100) + '…' : valStr)}</span></td>
+        `;
+        body.appendChild(tr);
+      });
+      document.getElementById('kvTable').style.display = 'table';
+      anyData = true;
+    }
 
-    sorted.forEach((p) => {
-      const key  = `${p.siid}:${p.piid}`;
-      const name = PROP_NAMES[key] || '';
-      const ok   = p.code === 0;
-      const val  = p.value;
-      const valStr = val === undefined ? '—' : (typeof val === 'object' ? JSON.stringify(val) : String(val));
-      const isLong = valStr.length > 60;
+    // ── Device-list status (always shown if present) ───────────────────────────
+    if (deviceStatus && !deviceStatus.error) {
+      const body = document.getElementById('statusBody');
+      body.innerHTML = '';
+      Object.entries(deviceStatus).forEach(([k, v]) => {
+        if (typeof v === 'object' && v !== null) return; // skip nested objects
+        const valStr = String(v);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><span class="prop-name">${escHtml(k)}</span></td>
+          <td><span class="prop-value">${escHtml(valStr)}</span></td>
+        `;
+        body.appendChild(tr);
+      });
+      document.getElementById('statusTable').style.display = 'table';
+      anyData = true;
+    }
 
-      const tr = document.createElement('tr');
-      tr.className = ok ? 'ok' : 'err';
-      tr.innerHTML = `
-        <td>${p.siid}</td>
-        <td>${p.piid}</td>
-        <td><span class="prop-name">${name}</span></td>
-        <td><span class="prop-value${isLong ? ' long' : ''}" title="${escHtml(valStr)}">${escHtml(isLong ? valStr.slice(0, 80) + '…' : valStr)}</span></td>
-        <td><span class="badge ${ok ? 'ok' : 'err'}">${p.code}</span></td>
-      `;
-      body.appendChild(tr);
-    });
-
-    document.getElementById('emptyMsg').style.display  = 'none';
-    document.getElementById('propTable').style.display = 'table';
+    document.getElementById('emptyMsg').style.display = anyData ? 'none' : 'block';
   }
 
-  // ── Render JSON ─────────────────────────────────────────────────────────────
   function renderJson(data) {
     document.getElementById('jsonOut').textContent = JSON.stringify(data, null, 2);
   }
 
-  // ── Tabs ────────────────────────────────────────────────────────────────────
+  // ── Tabs ─────────────────────────────────────────────────────────────────────
   function showTab(tab, el) {
     activeTab = tab;
     document.getElementById('tabTable').style.display = tab === 'table' ? 'block' : 'none';
@@ -447,7 +598,7 @@
     el.classList.add('active');
   }
 
-  // ── Auto-refresh ────────────────────────────────────────────────────────────
+  // ── Auto-refresh ─────────────────────────────────────────────────────────────
   function toggleAutoRefresh() {
     if (document.getElementById('autoRefresh').checked) {
       scheduleAuto();
@@ -466,7 +617,77 @@
     }, secs * 1000);
   }
 
-  // ── Helpers ─────────────────────────────────────────────────────────────────
+  // ── Discover Devices ─────────────────────────────────────────────────────────
+  function doDiscover() {
+    const brand    = document.getElementById('dis-brand').value;
+    const region   = document.getElementById('dis-region').value;
+    const username = document.getElementById('dis-email').value.trim();
+    const password = document.getElementById('dis-password').value;
+
+    hideDisError();
+
+    if (!username || !password) {
+      showDisError('Please enter your email and password.');
+      return;
+    }
+
+    const btn = document.getElementById('dis-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner white"></span>Fetching…';
+    document.getElementById('dis-copy').disabled = true;
+    document.getElementById('dis-result').style.display = 'none';
+
+    // Discovery is tunnelled through the existing /pollDevice route to avoid a
+    // Homey routing-table restart requirement.  deviceId=__discover__ is the trigger.
+    const qs = `deviceId=__discover__&brand=${encodeURIComponent(brand)}&region=${encodeURIComponent(region)}&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
+    _Homey.api('GET', `/pollDevice?${qs}`, null, (err, data) => {
+      btn.disabled = false;
+      btn.textContent = 'Fetch Device List';
+
+      if (err) {
+        showDisError(err.message || 'Request failed. Check your credentials and try again.');
+        return;
+      }
+
+      lastDiscover = data;
+      const json = JSON.stringify(data, null, 2);
+      document.getElementById('dis-json').textContent = json;
+
+      // Show a summary in the toolbar label
+      const count = countDevices(data);
+      document.getElementById('dis-result-label').textContent =
+        `Raw API response — ${count} device${count !== 1 ? 's' : ''} found`;
+
+      document.getElementById('dis-result').style.display = 'block';
+      document.getElementById('dis-copy').disabled = false;
+    });
+  }
+
+  function countDevices(data) {
+    try {
+      // Support the known response shape and fall back gracefully
+      const d = data.data || {};
+      const list = (d.page && d.page.records) || d.list || d.records || d.devices || d.items;
+      return Array.isArray(list) ? list.length : 0;
+    } catch { return 0; }
+  }
+
+  function showDisError(msg) {
+    const el = document.getElementById('dis-error');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function hideDisError() {
+    document.getElementById('dis-error').style.display = 'none';
+  }
+
+  function copyDiscoverJson() {
+    if (!lastDiscover) return;
+    copyText(JSON.stringify(lastDiscover, null, 2), document.getElementById('dis-copy'));
+  }
+
+  // ── Shared helpers ───────────────────────────────────────────────────────────
   function setStatus(msg, isError = false) {
     const el = document.getElementById('timestamp');
     el.textContent = msg;
@@ -483,27 +704,63 @@
     return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  function copyJson() {
-    if (!lastData) return;
-    const text = JSON.stringify(lastData, null, 2);
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(() => flashCopy());
-    } else {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-      flashCopy();
+  function copyText(text, btn) {
+    const orig = btn.textContent;
+    const done = () => { btn.textContent = '✓ Copied'; setTimeout(() => { btn.textContent = orig; }, 1500); };
+
+    // Tier 1: modern async clipboard API
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => legacyCopy(text, btn, done));
+      return;
     }
+    legacyCopy(text, btn, done);
   }
 
-  function flashCopy() {
-    const btn = document.getElementById('copyBtn');
-    const orig = btn.textContent;
-    btn.textContent = '✓ Copied';
-    setTimeout(() => { btn.textContent = orig; }, 1500);
+  function legacyCopy(text, btn, done) {
+    // Tier 2: execCommand (works in most WebViews)
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;top:0;left:0;width:2em;height:2em;padding:0;border:none;outline:none;background:transparent;opacity:0;';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      if (ok) { done(); return; }
+    } catch (_) {}
+
+    // Tier 3: show modal so the user can manually select-all and copy
+    showCopyModal(text);
+  }
+
+  function showCopyModal(text) {
+    let overlay = document.getElementById('copy-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'copy-overlay';
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:9999;';
+      overlay.innerHTML = `
+        <div style="background:#fff;border-radius:10px;padding:20px;width:90%;max-width:520px;max-height:82vh;display:flex;flex-direction:column;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.25);">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <strong style="font-size:14px;">Copy JSON</strong>
+            <button onclick="document.getElementById('copy-overlay').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;height:auto;width:auto;padding:0 4px;line-height:1;">✕</button>
+          </div>
+          <p style="font-size:12px;color:#777;margin:0;">Press <kbd style="background:#f0f0f0;border:1px solid #ccc;border-radius:3px;padding:1px 5px;">Ctrl+A</kbd> then <kbd style="background:#f0f0f0;border:1px solid #ccc;border-radius:3px;padding:1px 5px;">Ctrl+C</kbd> to copy:</p>
+          <textarea id="copy-modal-ta" style="flex:1;min-height:220px;font-family:monospace;font-size:11px;line-height:1.5;border:1px solid #ddd;border-radius:6px;padding:10px;resize:none;color:#1a1a1a;" readonly></textarea>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    }
+    document.getElementById('copy-modal-ta').value = text;
+    overlay.style.display = 'flex';
+    setTimeout(() => { const ta = document.getElementById('copy-modal-ta'); ta.focus(); ta.select(); }, 60);
+  }
+
+  function copyPollJson() {
+    if (!lastPollData) return;
+    copyText(JSON.stringify(lastPollData, null, 2), document.getElementById('copyBtn'));
   }
 </script>
 </body>

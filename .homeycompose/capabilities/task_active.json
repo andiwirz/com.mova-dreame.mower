@@ -1,6 +1,6 @@
 {
   "type": "boolean",
-  "title": { "en": "Obstacle", "de": "Hindernis" },
+  "title": { "en": "Task Active", "de": "Aufgabe aktiv" },
   "getable": true,
   "setable": false,
   "uiComponent": "sensor"

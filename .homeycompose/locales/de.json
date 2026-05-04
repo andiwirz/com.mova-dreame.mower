@@ -54,11 +54,13 @@
   "status": {
     "idle": "Bereit", "mowing": "Mähen", "standby": "Standby",
     "paused": "Pausiert", "error": "Fehler", "returning": "Kehrt zurück",
-    "charging": "Lädt", "mapping": "Kartierung", "docked": "Gedockt", "updating": "Aktualisierung"
+    "charging": "Lädt", "mapping": "Kartierung", "docked": "Gedockt", "updating": "Aktualisierung",
+    "remote_control": "Fernsteuerung"
   },
   "charging_status": {
     "not_docked": "Nicht angedockt", "charging": "Lädt", "not_charging": "Angedockt (Standby)",
-    "docked": "Vollständig geladen", "returning": "Kehrt zurück", "paused_cold": "Pausiert (Kälte)"
+    "charging_completed": "Vollständig geladen", "docked": "Vollständig geladen (alt)",
+    "returning": "Kehrt zurück", "paused_cold": "Pausiert (Kälte)"
   },
   "mower_mode": {
     "all_area": "Alle", "zone": "Zone", "edge": "Kante", "spot": "Spot", "manual": "Manuell"

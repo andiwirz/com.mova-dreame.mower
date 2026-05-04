@@ -1,0 +1,11 @@
+{
+  "type": "boolean",
+  "title": { "en": "Start Mowing", "de": "Mähen starten" },
+  "getable": true,
+  "setable": true,
+  "uiComponent": "button",
+  "hint": {
+    "en": "Starts full-area mowing → sendAction(5, 1)",
+    "de": "Startet das Mähen der gesamten Fläche → sendAction(5, 1)"
+  }
+}

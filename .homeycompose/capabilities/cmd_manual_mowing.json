@@ -1,0 +1,11 @@
+{
+  "type": "boolean",
+  "title": { "en": "Manual", "de": "Manuell" },
+  "getable": true,
+  "setable": true,
+  "uiComponent": "button",
+  "hint": {
+    "en": "Activates remote-control (manual) mode → sendAction(5, 7)",
+    "de": "Aktiviert den Fernsteuerungsmodus → sendAction(5, 7)"
+  }
+}

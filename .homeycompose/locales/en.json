@@ -54,11 +54,13 @@
   "status": {
     "idle": "Idle", "mowing": "Mowing", "standby": "Standby",
     "paused": "Paused", "error": "Error", "returning": "Returning to dock",
-    "charging": "Charging", "mapping": "Mapping", "docked": "Docked", "updating": "Updating"
+    "charging": "Charging", "mapping": "Mapping", "docked": "Docked", "updating": "Updating",
+    "remote_control": "Remote Control"
   },
   "charging_status": {
     "not_docked": "Not docked", "charging": "Charging", "not_charging": "Docked (standby)",
-    "docked": "Fully charged", "returning": "Returning", "paused_cold": "Paused (cold)"
+    "charging_completed": "Fully charged", "docked": "Fully charged (legacy)",
+    "returning": "Returning", "paused_cold": "Paused (cold)"
   },
   "mower_mode": {
     "all_area": "All Area", "zone": "Zone", "edge": "Edge", "spot": "Spot", "manual": "Manual"

@@ -1,0 +1,11 @@
+{
+  "type": "boolean",
+  "title": { "en": "Return to Station", "de": "Zurück zur Station" },
+  "getable": true,
+  "setable": true,
+  "uiComponent": "button",
+  "hint": {
+    "en": "Sends the mower back to the charging station → dock()",
+    "de": "Schickt den Mähroboter zurück zur Ladestation → dock()"
+  }
+}

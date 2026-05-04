@@ -1,0 +1,11 @@
+{
+  "type": "boolean",
+  "title": { "en": "Edge Mowing", "de": "Kantenmähen" },
+  "getable": true,
+  "setable": true,
+  "uiComponent": "button",
+  "hint": {
+    "en": "Starts edge mowing along map boundaries → sendAction(2, 50, {m:'a', o:101, d:{edge:[[0,0]]}})",
+    "de": "Startet Kantenmähen entlang der Kartengrenzen → sendAction(2, 50, {m:'a', o:101, d:{edge:[[0,0]]}})"
+  }
+}

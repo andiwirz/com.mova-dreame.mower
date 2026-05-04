@@ -1,8 +1,0 @@
-{
-  "type": "boolean",
-  "title": { "en": "Rain Protection", "de": "Regenschutz" },
-  "getable": true,
-  "setable": true,
-  "uiComponent": "toggle",
-  "icon": "/assets/capabilities/rain_protection.svg"
-}

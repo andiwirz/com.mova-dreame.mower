@@ -2,7 +2,7 @@
   "type": "boolean",
   "title": { "en": "Child Lock", "de": "Kindersicherung" },
   "getable": true,
-  "setable": true,
-  "uiComponent": "toggle",
+  "setable": false,
+  "uiComponent": "sensor",
   "icon": "/assets/capabilities/child_lock.svg"
 }

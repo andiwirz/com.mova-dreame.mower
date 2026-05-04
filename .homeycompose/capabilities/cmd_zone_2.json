@@ -1,0 +1,11 @@
+{
+  "type": "boolean",
+  "title": { "en": "Mow Zone 2 (TBD)", "de": "Zone 2 mähen (TBD)" },
+  "getable": true,
+  "setable": true,
+  "uiComponent": "button",
+  "hint": {
+    "en": "Starts zone mowing for segment ID 2 → sendAction(2, 50, {m:'a', o:102, d:{segments:[2]}})",
+    "de": "Startet Zonenmähen für Segment-ID 2 → sendAction(2, 50, {m:'a', o:102, d:{segments:[2]}})"
+  }
+}

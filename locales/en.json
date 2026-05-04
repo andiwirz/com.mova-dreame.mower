@@ -70,7 +70,8 @@
     "charging": "Charging",
     "mapping": "Mapping",
     "docked": "Docked",
-    "updating": "Updating"
+    "updating": "Updating",
+    "remote_control": "Remote Control"
   },
   "error": {
     "unreachable": "Mower unreachable",
@@ -83,9 +84,10 @@
     "not_docked": "Not docked",
     "charging": "Charging",
     "not_charging": "Docked (standby)",
-    "docked": "Fully charged",
+    "docked": "Fully charged (legacy)",
     "returning": "Returning",
-    "paused_cold": "Paused (cold)"
+    "paused_cold": "Paused (cold)",
+    "charging_completed": "Fully charged"
   },
   "mower_mode": {
     "all_area": "All Area",

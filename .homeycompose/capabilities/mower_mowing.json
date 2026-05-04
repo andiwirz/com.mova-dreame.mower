@@ -1,6 +1,6 @@
 {
   "type": "boolean",
-  "title": { "en": "Obstacle", "de": "Hindernis" },
+  "title": { "en": "Mowing", "de": "Mähen" },
   "getable": true,
   "setable": false,
   "uiComponent": "sensor"

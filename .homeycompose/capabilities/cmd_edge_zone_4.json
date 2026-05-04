@@ -1,0 +1,7 @@
+{
+  "type": "boolean",
+  "title": { "en": "Edge Mowing Zone 4", "de": "Kantenmähen Zone 4" },
+  "getable": true,
+  "setable": true,
+  "uiComponent": "button"
+}

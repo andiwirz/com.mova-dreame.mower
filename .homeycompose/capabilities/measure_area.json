@@ -1,11 +1,9 @@
 {
   "type": "number",
   "title": { "en": "Mowed Area", "de": "Gemähte Fläche" },
-  "units": { "en": "m²", "de": "m²" },
+  "units": "m²",
+  "decimals": 0,
   "getable": true,
   "setable": false,
-  "uiComponent": "sensor",
-  "decimals": 0,
-  "min": 0,
-  "icon": "/assets/capabilities/measure_area.svg"
+  "uiComponent": "sensor"
 }

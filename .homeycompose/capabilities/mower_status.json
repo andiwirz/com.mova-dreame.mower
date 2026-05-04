@@ -14,7 +14,8 @@
     { "id": "charging",  "title": { "en": "Charging",           "de": "Lädt"            } },
     { "id": "mapping",   "title": { "en": "Mapping",            "de": "Kartierung"      } },
     { "id": "docked",    "title": { "en": "Docked",             "de": "Gedockt"         } },
-    { "id": "updating",  "title": { "en": "Updating",           "de": "Aktualisierung"  } }
+    { "id": "updating",        "title": { "en": "Updating",        "de": "Aktualisierung"   } },
+    { "id": "remote_control",  "title": { "en": "Remote Control",  "de": "Fernsteuerung"    } }
   ],
   "getable": true,
   "setable": false,

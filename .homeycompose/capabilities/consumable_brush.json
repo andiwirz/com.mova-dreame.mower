@@ -1,12 +1,11 @@
 {
   "type": "number",
   "title": { "en": "Brush Health", "de": "Bürstengesundheit" },
-  "units": { "en": "%", "de": "%" },
-  "decimals": 0,
+  "units": "%",
   "min": 0,
   "max": 100,
+  "decimals": 0,
   "getable": true,
   "setable": false,
-  "uiComponent": "sensor",
-  "icon": "/assets/capabilities/consumable.svg"
+  "uiComponent": "sensor"
 }

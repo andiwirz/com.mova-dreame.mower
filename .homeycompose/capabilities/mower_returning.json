@@ -1,6 +1,6 @@
 {
   "type": "boolean",
-  "title": { "en": "Obstacle", "de": "Hindernis" },
+  "title": { "en": "Returning", "de": "Kehrt zurück" },
   "getable": true,
   "setable": false,
   "uiComponent": "sensor"

@@ -3,6 +3,5 @@
   "title": { "en": "Lifted", "de": "Angehoben" },
   "getable": true,
   "setable": false,
-  "uiComponent": "sensor",
-  "icon": "/assets/capabilities/alarm_lift.svg"
+  "uiComponent": "sensor"
 }

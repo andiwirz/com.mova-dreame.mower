@@ -1,4 +1,0 @@
-{
-  "title": { "en": "Rain protection !{{is|is not}} enabled", "de": "Regenschutz !{{ist|ist nicht}} aktiv" },
-  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
-}

@@ -2,12 +2,13 @@
   "type": "enum",
   "title": { "en": "Charging Status", "de": "Ladestatus" },
   "values": [
-    { "id": "not_docked",    "title": { "en": "Not Docked",               "de": "Nicht angedockt"  } },
-    { "id": "charging",      "title": { "en": "Charging",                 "de": "Lädt"             } },
-    { "id": "not_charging",  "title": { "en": "Docked (Standby)",         "de": "Angedockt (Standby)" } },
-    { "id": "docked",        "title": { "en": "Fully Charged",            "de": "Vollständig geladen" } },
-    { "id": "returning",     "title": { "en": "Returning to Charge",      "de": "Kehrt zurück"     } },
-    { "id": "paused_cold",   "title": { "en": "Charging Paused (Cold)",   "de": "Laden pausiert (Kälte)" } }
+    { "id": "not_docked",          "title": { "en": "Not Docked",               "de": "Nicht angedockt"       } },
+    { "id": "charging",            "title": { "en": "Charging",                 "de": "Lädt"                  } },
+    { "id": "not_charging",        "title": { "en": "Docked (Standby)",         "de": "Angedockt (Standby)"   } },
+    { "id": "charging_completed",  "title": { "en": "Fully Charged",            "de": "Vollständig geladen"   } },
+    { "id": "docked",              "title": { "en": "Fully Charged (legacy)",   "de": "Vollständig geladen (alt)" } },
+    { "id": "returning",           "title": { "en": "Returning to Charge",      "de": "Kehrt zurück"          } },
+    { "id": "paused_cold",         "title": { "en": "Charging Paused (Cold)",   "de": "Laden pausiert (Kälte)" } }
   ],
   "getable": true,
   "setable": false,

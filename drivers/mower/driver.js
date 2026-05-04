@@ -40,42 +40,11 @@ class MowerDriver extends Homey.Driver {
     flow.getActionCard('set_mowing_mode')
       .registerRunListener(({ device, mode }) => device.cmdSetMowingMode(mode));
 
-    flow.getActionCard('set_mowing_speed')
-      .registerRunListener(({ device, speed }) => device.cmdSetMowingSpeed(speed));
-
-    flow.getActionCard('set_mowing_pattern')
-      .registerRunListener(({ device, pattern }) => device.cmdSetMowingPattern(pattern));
-
-    flow.getActionCard('set_rain_protection')
-      .registerRunListener(({ device, enabled }) =>
-        device.cmdSetRainProtection(enabled === 'true'),
-      );
-
-    flow.getActionCard('set_night_mode')
-      .registerRunListener(({ device, enabled }) =>
-        device.cmdSetNightMode(enabled === 'true'),
-      );
-
     flow.getActionCard('find_bot')
       .registerRunListener(({ device }) => device.cmdFindBot());
 
     flow.getActionCard('suppress_fault')
       .registerRunListener(({ device }) => device.cmdSuppressFault());
-
-    flow.getActionCard('set_child_lock')
-      .registerRunListener(({ device, enabled }) =>
-        device.cmdSetChildLock(enabled === 'true'),
-      );
-
-    flow.getActionCard('set_dnd')
-      .registerRunListener(({ device, enabled }) =>
-        device.cmdSetDND(enabled === 'true'),
-      );
-
-    flow.getActionCard('reset_consumable')
-      .registerRunListener(({ device, consumable }) =>
-        device.cmdResetConsumable(consumable),
-      );
 
     // ─── Conditions ───────────────────────────────────────────────────────────
 
@@ -87,7 +56,7 @@ class MowerDriver extends Homey.Driver {
     flow.getConditionCard('is_docked')
       .registerRunListener(({ device }) => {
         const s = device.getCapabilityValue('mower_status');
-        return s === 'docked' || s === 'charging';
+        return s === 'docked' || s === 'charging' || s === 'charging_completed';
       });
 
     flow.getConditionCard('is_charging')
@@ -100,34 +69,9 @@ class MowerDriver extends Homey.Driver {
         device.getCapabilityValue('alarm_generic') === true,
       );
 
-    flow.getConditionCard('is_child_locked')
-      .registerRunListener(({ device }) =>
-        device.getCapabilityValue('child_lock') === true,
-      );
-
     flow.getConditionCard('mowing_mode_is')
       .registerRunListener(({ device, mode }) =>
         device.getCapabilityValue('mower_mode') === mode,
-      );
-
-    flow.getConditionCard('mowing_pattern_is')
-      .registerRunListener(({ device, pattern }) =>
-        device.getCapabilityValue('mower_pattern') === pattern,
-      );
-
-    flow.getConditionCard('mowing_speed_is')
-      .registerRunListener(({ device, speed }) =>
-        device.getCapabilityValue('mowing_speed') === speed,
-      );
-
-    flow.getConditionCard('rain_protection_is_enabled')
-      .registerRunListener(({ device }) =>
-        device.getCapabilityValue('rain_protection') === true,
-      );
-
-    flow.getConditionCard('night_mode_is_enabled')
-      .registerRunListener(({ device }) =>
-        device.getCapabilityValue('night_mode') === true,
       );
 
     // ─── Trigger run-listeners (for arg-filtered triggers) ────────────────────
@@ -136,12 +80,6 @@ class MowerDriver extends Homey.Driver {
       .registerRunListener(({ device, threshold }) =>
         device.getCapabilityValue('measure_battery') < threshold,
       );
-
-    flow.getDeviceTriggerCard('consumable_low')
-      .registerRunListener(({ device, consumable, threshold }) => {
-        const capId = `consumable_${consumable}`;
-        return device.getCapabilityValue(capId) < threshold;
-      });
   }
 
   // ─── Pairing ───────────────────────────────────────────────────────────────
@@ -151,14 +89,33 @@ class MowerDriver extends Homey.Driver {
     let discoveredDevices = [];
 
     session.setHandler('login', async ({ brand, region, username, password }) => {
-      api = new DreameApi({ brand, region });
+      api = new DreameApi({ brand, region, log: (...a) => this.log(...a) });
       await api.login(username, password);
 
       const all = await api.getDevices();
+
+      // Debug: log what the API returns so we can identify the model-name format.
+      this.log('[pair] raw device list:', JSON.stringify(
+        all.map((d) => ({ did: d.did, name: d.name, model: d.model, type: d.type, category: d.category })),
+      ));
+
+      // Accept devices whose model identifier OR display name hints at a mower.
+      // We check several field names because the MOVA cloud may use productModel/type
+      // instead of model, and model identifiers vary (e.g. mova.mower.* vs mova.robot.*).
+      const MOWER_KEYWORDS = ['mow', 'lawn', 'mäh'];
       discoveredDevices = all.filter((d) => {
-        if (!d || !d.model) return false;
-        return d.model.toLowerCase().includes('mow');
+        if (!d || !d.did) return false;
+        const model = (d.model || d.productModel || d.type || '').toLowerCase();
+        const name  = (d.name || '').toLowerCase();
+        return MOWER_KEYWORDS.some((kw) => model.includes(kw) || name.includes(kw));
       });
+
+      // If keyword matching finds nothing, fall back to showing every device so the
+      // user can still pick their mower manually (avoids a dead-end in the pairing UI).
+      if (discoveredDevices.length === 0) {
+        this.log('[pair] no mower keyword match — showing all', all.length, 'devices as fallback');
+        discoveredDevices = all.filter((d) => d && d.did);
+      }
 
       if (discoveredDevices.length === 0) {
         throw new Error(this.homey.__('pair.error_no_devices'));
@@ -166,7 +123,7 @@ class MowerDriver extends Homey.Driver {
 
       return {
         devices: discoveredDevices.map((d) => ({
-          name:  d.name || d.model,
+          name:  d.customName || (d.deviceInfo && d.deviceInfo.displayName) || d.name || d.model,
           model: d.model,
           did:   d.did,
         })),
@@ -179,7 +136,7 @@ class MowerDriver extends Homey.Driver {
 
       const tokens = api.getTokens();
       return {
-        name: device.name || device.model,
+        name: device.customName || (device.deviceInfo && device.deviceInfo.displayName) || device.name || device.model,
         data: { id: did },
         store: {
           access_token:  tokens.accessToken,
@@ -188,6 +145,7 @@ class MowerDriver extends Homey.Driver {
           brand:         api.getBrand(),
           region:        api.getRegion(),
           model:         device.model || '',
+          bind_domain:   device.bindDomain || '',
         },
         settings: {
           username:      api.getUsername(),

@@ -1,0 +1,7 @@
+{
+  "type": "boolean",
+  "title": { "en": "Stop Mowing", "de": "Mähen beenden" },
+  "getable": true,
+  "setable": true,
+  "uiComponent": "button"
+}

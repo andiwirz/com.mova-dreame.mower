@@ -3,60 +3,43 @@
 const Homey = require('homey');
 const DreameApi = require('../../lib/DreameApi');
 
-// siid:piid → mower_status enum
+// latestStatus → mower_status enum
+// Source: EvotecIT/homeassistant-dreamelawnmower types.py DreameMowerState enum
 const STATUS_MAP = {
-  0:  'idle',
-  1:  'mowing',
-  2:  'standby',
-  3:  'paused',
-  4:  'error',
-  5:  'returning',
-  6:  'charging',
-  7:  'error',       // ioBroker: ERROR
-  8:  'paused',      // ioBroker: RAINING_PAUSE
-  9:  'idle',        // ioBroker: INITIALIZING
-  10: 'returning',   // ioBroker: LEAVING_STATION
-  11: 'mapping',
-  12: 'mowing',      // ioBroker: BORDER_MOWING
-  13: 'docked',
-  14: 'updating',
-  // Extended codes from bhuebschen/dreame-mower HA integration + ioBroker
-  15: 'idle',        // ioBroker: RELOCATING (was 'returning')
-  16: 'mowing',      // ioBroker: TASK_NAVIGATING (was 'idle')
-  23: 'idle',        // REMOTE_CONTROL
-  24: 'charging',    // SMART_CHARGING
-  25: 'mowing',      // SECOND_CLEANING — second pass
-  26: 'mowing',      // HUMAN_FOLLOWING
-  27: 'mowing',      // SPOT_CLEANING
-  29: 'idle',        // WAITING_FOR_TASK
-  30: 'docked',      // STATION_CLEANING
-  97: 'mowing',      // SHORTCUT
-  98: 'idle',        // MONITORING
-  99: 'idle',        // MONITORING_PAUSED
+  1:  'mowing',         // MOWING
+  2:  'idle',           // IDLE
+  3:  'paused',         // PAUSED
+  4:  'error',          // ERROR
+  5:  'returning',      // RETURNING
+  6:  'charging',       // CHARGING
+  11: 'mapping',        // BUILDING (map building)
+  13: 'docked',         // CHARGING_COMPLETED
+  14: 'updating',       // UPGRADING
+  15: 'mowing',         // CLEAN_SUMMON (auto-summon mowing)
+  16: 'standby',        // STATION_RESET
+  23: 'remote_control', // REMOTE_CONTROL
+  24: 'charging',       // SMART_CHARGING
+  25: 'mowing',         // SECOND_CLEANING
+  26: 'mowing',         // HUMAN_FOLLOWING
+  27: 'mowing',         // SPOT_CLEANING
+  29: 'idle',           // WAITING_FOR_TASK
+  30: 'mowing',         // STATION_CLEANING
+  97: 'mowing',         // SHORTCUT
+  98: 'mapping',        // MONITORING
+  99: 'paused',         // MONITORING_PAUSED
 };
 
-// siid:piid (3:2) → charging_status enum
+// charging_status code → enum
+// Source: EvotecIT/homeassistant-dreamelawnmower types.py DreameMowerChargingStatus enum
 const CHARGING_MAP = {
-  0:  'not_docked',
-  1:  'charging',
-  2:  'not_charging',
-  3:  'docked',
-  5:  'returning',
-  16: 'paused_cold',
+  1: 'charging',
+  2: 'not_charging',
+  3: 'charging_completed',
+  5: 'returning',
 };
-
-// piid (2:4) → mowing_speed enum (TODO: verify values on real device)
-const MOWING_SPEED_MAP = { 0: 'slow', 1: 'normal', 2: 'fast' };
-
-// Device codes (2:2) that map to specific alarm states
-// Based on antondaubert/dreame-mower HA integration (mower-specific codes)
-const ERROR_TILT_CODES     = new Set([1]);        // TILTED
-const ERROR_OBSTACLE_CODES = new Set([2, 37]);     // TRAPPED/stuck, PATH_IMPASSABLE
-const ERROR_LIFT_CODES     = new Set([73]);         // ROBOT_LIFTED (A1/A1 Pro) / TOP_COVER_OPEN
-const ERROR_RAIN_CODES     = new Set([56, 57, 58]); // BAD_WEATHER, RAIN_INTERRUPTED, RAIN_SUSPENDED
 
 // Statuses that count as "home" for mowing-completed detection
-const HOME_STATUSES = new Set(['idle', 'docked', 'charging', 'standby', 'updating']);
+const HOME_STATUSES = new Set(['idle', 'standby', 'docked', 'charging', 'updating']);
 
 // ─── Versioned migrations ─────────────────────────────────────────────────────
 const MIGRATIONS = [
@@ -72,7 +55,7 @@ const MIGRATIONS = [
   {
     key: 'capabilities_migrated_v2',
     caps: [
-      'alarm_lift', 'rain_protection', 'night_mode',
+      'alarm_lift', 'night_mode',
       'firmware_update', 'measure_area', 'measure_duration',
     ],
   },
@@ -87,6 +70,61 @@ const MIGRATIONS = [
       'collision_avoidance', 'auto_charging', 'mow_efficiency', 'meter_count_total',
     ],
   },
+  {
+    key: 'capabilities_migrated_v7',
+    caps: [],
+  },
+  {
+    key: 'capabilities_migrated_v8',
+    caps: [
+      // Re-enabled as read-only sensors
+      'mower_task_status', 'child_lock',
+    ],
+  },
+  {
+    key: 'capabilities_migrated_v9',
+    caps: ['cmd_all_area', 'cmd_edge_mowing'],
+  },
+  {
+    key: 'capabilities_migrated_v10',
+    caps: ['cmd_dock'],
+  },
+  {
+    key: 'capabilities_migrated_v11',
+    caps: ['cmd_stop'],
+  },
+  {
+    key: 'capabilities_migrated_v12',
+    caps: ['cmd_pause'],
+  },
+];
+
+// Capabilities removed — stripped from existing installs on next init
+const REMOVE_CAPABILITIES = [
+  // v5: no API data
+  'alarm_obstacle', 'alarm_tilt', 'alarm_lift',
+  'mower_task_status',
+  'consumable_blade', 'consumable_brush', 'consumable_robot',
+  'mower_error_code',
+  'mower_progress',
+  'measure_area',
+  'meter_area_total', 'meter_time_total', 'meter_count_total',
+  // v9: replaced by action buttons
+  'mower_mode',
+  // v11: removed — redundant with mower_status
+  'mower_docked', 'mower_mowing', 'mower_paused', 'mower_returning', 'task_active',
+  // v11: removed — requires phone app to steer
+  'cmd_manual_mowing',
+  // v11: edge-zone buttons are managed dynamically by _syncZoneCapabilities
+  // (listed here so stale installs get them removed before re-add in correct order)
+  'cmd_edge_zone_1', 'cmd_edge_zone_2', 'cmd_edge_zone_3', 'cmd_edge_zone_4', 'cmd_edge_zone_5',
+  // v6: write-only (setProperty returns 10007 on MOVA devices)
+  'mowing_speed', 'mower_pattern',
+  'dnd_enabled',
+  'frost_protection', 'grass_protection',
+  'night_mode', 'anti_theft', 'auto_charging',
+  // v8: WRP CFG action returns 404 on MOVA devices — not supported
+  'rain_protection',
 ];
 
 class MowerDevice extends Homey.Device {
@@ -101,6 +139,10 @@ class MowerDevice extends Homey.Device {
     this._wasMowing            = false;
     this._sessionStartTime     = null;
     this._persistedTokenExpiry = 0;
+    this._lastBindDomain       = null;  // track last seen bindDomain to avoid redundant setBindDomain calls
+    this._activeMapIndex       = 0;     // active map index, updated from MAP data each poll
+    this._activeZoneIds        = [];    // detected zone IDs from MAP data (e.g. [1, 2, 3])
+    this._cfgPollCounter       = 0;     // reads CFG (WRP etc.) on first poll and every 10th thereafter
 
     // Flow trigger cards
     this._trgStatusChanged    = this.homey.flow.getDeviceTriggerCard('mower_status_changed');
@@ -108,78 +150,70 @@ class MowerDevice extends Homey.Device {
     this._trgMowingCompleted  = this.homey.flow.getDeviceTriggerCard('mowing_completed');
     this._trgError            = this.homey.flow.getDeviceTriggerCard('mower_error');
     this._trgDocked           = this.homey.flow.getDeviceTriggerCard('mower_docked');
-    this._trgObstacle         = this.homey.flow.getDeviceTriggerCard('obstacle_detected');
-    this._trgTilted           = this.homey.flow.getDeviceTriggerCard('mower_tilted');
-    this._trgLifted           = this.homey.flow.getDeviceTriggerCard('mower_lifted');
-    this._trgRainDetected     = this.homey.flow.getDeviceTriggerCard('rain_detected');
     this._trgFirmwareUpdate   = this.homey.flow.getDeviceTriggerCard('firmware_update_available');
     this._trgBatteryLow       = this.homey.flow.getDeviceTriggerCard('battery_low');
-    this._trgConsumableLow    = this.homey.flow.getDeviceTriggerCard('consumable_low');
 
-    // Capability listeners for setable capabilities
-    this.registerCapabilityListener('mower_mode', async (mode) => {
-      await this.setStoreValue('mowing_mode', mode);
+    // ── Action button listeners ────────────────────────────────────────────────
+    // Each button is a momentary toggle: tap → command fires → resets to false.
+    const did = this.getData().id;
+
+    this.registerCapabilityListener('cmd_all_area', async (value) => {
+      if (!value) return;
+      this.log('[cmd] btn: all area → sendAction(5,1)');
+      await this._safeWrite('cmd_all_area', () => this._api.startMowing(did));
+      await this._setMowingStarted();
+      await this.setCapabilityValue('cmd_all_area', false).catch(() => {});
     });
 
-    this.registerCapabilityListener('mowing_speed', async (speed) => {
-      await this._api.setMowingSpeed(this.getData().id, speed);
+    this.registerCapabilityListener('cmd_edge_mowing', async (value) => {
+      if (!value) return;
+      const mapIdx = this._activeMapIndex ?? 0;
+      this.log(`[cmd] btn: edge mapIndex=${mapIdx} → sendAction(2,50,{m:a,o:101,d:{}})`);
+      await this._safeWrite('cmd_edge_mowing', () => this._api.startEdgeMowing(did, mapIdx));
+      await this._setMowingStarted();
+      await this.setCapabilityValue('cmd_edge_mowing', false).catch(() => {});
     });
 
-    this.registerCapabilityListener('mower_pattern', async (pattern) => {
-      await this._api.setMowingPattern(this.getData().id, pattern);
+    this.registerCapabilityListener('cmd_stop', async (value) => {
+      if (!value) return;
+      this.log('[cmd] btn: stop → sendAction(5,2)');
+      await this._safeWrite('cmd_stop', () => this._api.stopMowing(did));
+      await this.setCapabilityValue('cmd_stop', false).catch(() => {});
     });
 
-    this.registerCapabilityListener('child_lock', async (enabled) => {
-      await this._api.setChildLock(this.getData().id, enabled);
+    this.registerCapabilityListener('cmd_pause', async (value) => {
+      if (!value) return;
+      this.log('[cmd] btn: pause → sendAction(5,4)');
+      await this._safeWrite('cmd_pause', () => this._api.pause(did));
+      await this._applyStatus('paused');
+      await this.setCapabilityValue('cmd_pause', false).catch(() => {});
     });
 
-    this.registerCapabilityListener('dnd_enabled', async (enabled) => {
-      const did      = this.getData().id;
-      const dndStart = this.getSetting('dnd_start');
-      const dndEnd   = this.getSetting('dnd_end');
-      if (dndStart && dndEnd) {
-        await this._api.setDNDSchedule(did, enabled, dndStart, dndEnd);
-      } else {
-        await this._api.setDND(did, enabled);
-      }
+    this.registerCapabilityListener('cmd_dock', async (value) => {
+      if (!value) return;
+      this.log('[cmd] btn: dock → dock()');
+      await this._safeWrite('cmd_dock', () => this._api.dock(did));
+      await this._applyStatus('returning');
+      await this.setCapabilityValue('cmd_dock', false).catch(() => {});
     });
 
-    this.registerCapabilityListener('rain_protection', async (enabled) => {
-      await this._api.setRainProtection(this.getData().id, enabled);
-    });
-
-    this.registerCapabilityListener('night_mode', async (enabled) => {
-      await this._api.setNightMode(this.getData().id, enabled);
-    });
-
-    this.registerCapabilityListener('frost_protection', async (enabled) => {
-      await this._api.setFrostProtection(this.getData().id, enabled);
-    });
-
-    this.registerCapabilityListener('grass_protection', async (enabled) => {
-      await this._api.setGrassProtection(this.getData().id, enabled);
-    });
-
-    this.registerCapabilityListener('anti_theft', async (enabled) => {
-      await this._api.setAntiTheft(this.getData().id, enabled);
-    });
-
-    this.registerCapabilityListener('collision_avoidance', async (enabled) => {
-      await this._api.setCollisionAvoidance(this.getData().id, enabled);
-    });
-
-    this.registerCapabilityListener('auto_charging', async (enabled) => {
-      await this._api.setAutoCharging(this.getData().id, enabled);
-    });
-
-    this.registerCapabilityListener('mow_efficiency', async (mode) => {
-      const pre = await this._getPREArray();
-      pre[1] = mode === 'efficient' ? 1 : 0;
-      await this._api.setPREConfig(this.getData().id, pre);
-      await this.setStoreValue('pre_cfg', pre);
-    });
+    // Zone buttons — register listeners for any zone capabilities already on device
+    await this._syncZoneCapabilities();
 
     await this._initApi();
+
+    // Fetch current device config before starting the poll loop so the settings
+    // page always shows real device values the moment the user opens it.
+    const did = this.getData().id;
+    const cfg = await this._api.getCFG(did).catch((e) => {
+      this.error('[init] getCFG failed:', e.message);
+      return null;
+    });
+    if (cfg) await this._applyCFGSettings(cfg);
+
+    // Skip the redundant getCFG on the very first poll since we just fetched it.
+    this._cfgPollCounter = 1;
+
     this._startPolling();
   }
 
@@ -188,82 +222,34 @@ class MowerDevice extends Homey.Device {
   }
 
   async onSettings({ changedKeys, newSettings }) {
+    this.log('[settings] changed:', changedKeys.join(', '));
+
     if (changedKeys.includes('poll_interval')) {
+      this.log(`[settings] poll_interval → ${newSettings.poll_interval}s`);
       this._stopPolling();
       this._startPolling();
     }
 
-    const did = this.getData().id;
-
-    // Read-only fields: silently revert any accidental edits
-    const readOnlyKeys = ['device_model'];
-    if (changedKeys.some((k) => readOnlyKeys.includes(k))) {
-      const model = await this.getStoreValue('model') || '';
-      await this.setSettings({ device_model: model });
+    // Frost protection
+    if (changedKeys.includes('fdp_enabled')) {
+      const did = this.getData().id;
+      this.log(`[settings] FDP → enabled=${newSettings.fdp_enabled}`);
+      await this._safeWrite('fdp', () => this._api.setFrostProtection(did, newSettings.fdp_enabled));
     }
 
-    const heightKeys = ['cutting_height', 'cutting_height_min', 'cutting_height_max'];
-    if (changedKeys.some((k) => heightKeys.includes(k))) {
-      const min = newSettings.cutting_height_min;
-      const max = newSettings.cutting_height_max;
-      const val = newSettings.cutting_height;
-
-      if (min >= max) {
-        throw new Error(this.homey.__('error.cutting_height_range'));
-      }
-      if (val < min || val > max) {
-        throw new Error(this.homey.__('error.cutting_height_bounds', { min, max }));
-      }
-
-      if (changedKeys.includes('cutting_height')) {
-        await this._api.setCuttingHeight(did, val)
-          .catch((e) => this.error('setCuttingHeight:', e.message));
-      }
+    // Rain protection — write all three values together whenever any one changes
+    const WRP_KEYS = ['wrp_enabled', 'wrp_sensitivity', 'wrp_wait_time'];
+    if (WRP_KEYS.some((k) => changedKeys.includes(k))) {
+      const did = this.getData().id;
+      this.log(`[settings] WRP → enabled=${newSettings.wrp_enabled} sen=${newSettings.wrp_sensitivity} time=${newSettings.wrp_wait_time}h`);
+      await this._safeWrite('wrp', () => this._api.setRainProtectionConfig(did, {
+        enabled:    newSettings.wrp_enabled,
+        sensitivity: newSettings.wrp_sensitivity,
+        waitHours:  newSettings.wrp_wait_time,
+      }));
     }
 
-    if (changedKeys.includes('auto_resume')) {
-      await this._api.setAutoResume(did, newSettings.auto_resume)
-        .catch((e) => this.error('setAutoResume:', e.message));
-    }
-
-    if (changedKeys.includes('border_first')) {
-      await this._api.setBorderFirst(did, newSettings.border_first)
-        .catch((e) => this.error('setBorderFirst:', e.message));
-    }
-
-    if (changedKeys.includes('obstacle_avoidance')) {
-      await this._api.setObstacleAvoidance(did, newSettings.obstacle_avoidance)
-        .catch((e) => this.error('setObstacleAvoidance:', e.message));
-    }
-
-    if (changedKeys.includes('return_battery_threshold')) {
-      await this._api.setReturnBatteryThreshold(did, newSettings.return_battery_threshold)
-        .catch((e) => this.error('setReturnBatteryThreshold:', e.message));
-    }
-
-    if (changedKeys.includes('resume_battery_threshold')) {
-      await this._api.setResumeBatteryThreshold(did, newSettings.resume_battery_threshold)
-        .catch((e) => this.error('setResumeBatteryThreshold:', e.message));
-    }
-
-    if (changedKeys.includes('volume')) {
-      await this._api.setVolume(did, newSettings.volume)
-        .catch((e) => this.error('setVolume:', e.message));
-    }
-
-    if (changedKeys.includes('dnd_start') || changedKeys.includes('dnd_end')) {
-      const enabled = this.getCapabilityValue('dnd_enabled') || false;
-      await this._api.setDNDSchedule(did, enabled, newSettings.dnd_start, newSettings.dnd_end)
-        .catch((e) => this.error('setDNDSchedule:', e.message));
-    }
-
-    if (changedKeys.includes('edge_mowing')) {
-      const pre = await this._getPREArray();
-      pre[9] = newSettings.edge_mowing ? 1 : 0;
-      await this._api.setPREConfig(did, pre)
-        .catch((e) => this.error('setPREConfig (edge_mowing):', e.message));
-      await this.setStoreValue('pre_cfg', pre);
-    }
+    // num_zones is a read-only label — users cannot change it, no handler needed.
   }
 
   // ─── Migration ─────────────────────────────────────────────────────────────
@@ -278,6 +264,12 @@ class MowerDevice extends Homey.Device {
       }
       await this.setStoreValue(key, true);
     }
+
+    for (const cap of REMOVE_CAPABILITIES) {
+      if (this.hasCapability(cap)) {
+        await this.removeCapability(cap).catch((e) => this.error('removeCapability', cap, e.message));
+      }
+    }
   }
 
   // ─── API ──────────────────────────────────────────────────────────────────
@@ -286,7 +278,7 @@ class MowerDevice extends Homey.Device {
     const brand  = await this.getStoreValue('brand')  || this.getSetting('brand')  || 'dreame';
     const region = await this.getStoreValue('region') || this.getSetting('region') || 'eu';
 
-    this._api = new DreameApi({ brand, region });
+    this._api = new DreameApi({ brand, region, log: (...a) => this.log(...a) });
 
     const accessToken  = await this.getStoreValue('access_token');
     const refreshToken = await this.getStoreValue('refresh_token');
@@ -301,6 +293,14 @@ class MowerDevice extends Homey.Device {
     const model = await this.getStoreValue('model');
     if (model) {
       await this.setSettings({ device_model: model }).catch(() => {});
+    }
+
+    // Pre-load bindDomain so sendAction works before the first poll completes.
+    // Also set _lastBindDomain so the first poll doesn't log a redundant update.
+    const bindDomain = await this.getStoreValue('bind_domain');
+    if (bindDomain) {
+      this._api.setBindDomain(bindDomain);
+      this._lastBindDomain = bindDomain;
     }
   }
 
@@ -322,78 +322,364 @@ class MowerDevice extends Homey.Device {
     }
   }
 
+  /**
+   * Single poll cycle: fires getRawProperties (for SETTINGS.0) and
+   * getDeviceStatus (device-list) in parallel, then maps results to capabilities.
+   */
   async _poll() {
     const did = this.getData().id;
-    let props;
 
-    try {
-      props = await this._api.getProperties(did);
-    } catch (err) {
-      this.error('getProperties:', err.message);
-      if (err.message === 'Device offline') {
-        await this.setUnavailable(this.homey.__('error.device_offline'));
-      } else if (err.message.includes('Auth failed') || err.message.includes('No refresh token')) {
-        await this.setUnavailable(this.homey.__('error.auth_failed'));
-      } else {
-        await this.setUnavailable(this.homey.__('error.unreachable'));
-      }
+    const [rawResult, statusResult] = await Promise.allSettled([
+      this._api.getRawProperties(did),
+      this._api.getDeviceStatus(did),
+    ]);
+
+    await this._persistTokensIfChanged();
+
+    // ── Device list: battery, status, online ────────────────────────────────
+    if (statusResult.status === 'rejected') {
+      await this._handlePollError(statusResult.reason);
       return;
     }
 
-    // Persist refreshed tokens only when they actually changed (saves ~6,900 store writes/day)
-    const tk = this._api.getTokens();
-    if (tk.tokenExpiry !== this._persistedTokenExpiry) {
-      await this.setStoreValue('access_token',  tk.accessToken);
-      await this.setStoreValue('refresh_token', tk.refreshToken);
-      await this.setStoreValue('token_expiry',  tk.tokenExpiry);
-      this._persistedTokenExpiry = tk.tokenExpiry;
+    const info = statusResult.value;
+    if (!info) {
+      this.error('Device not found in list for did:', did);
+      return;
     }
 
-    await this._applyProperties(props);
-
-    if (!this.getAvailable()) await this.setAvailable();
-  }
-
-  // ─── Property → capability mapping ────────────────────────────────────────
-
-  async _applyProperties(props) {
-    const val = {};
-    for (const p of props) {
-      if (p && p.code === 0) val[`${p.siid}:${p.piid}`] = p.value;
+    // ── bindDomain → sendCommand host (update only when value changes) ────────
+    if (info.bindDomain != null && info.bindDomain !== this._lastBindDomain) {
+      this._lastBindDomain = info.bindDomain;
+      this._api.setBindDomain(info.bindDomain);
     }
 
-    if (val['1:2']   !== undefined) await this._applyFirmwareState(val['1:2']);
-    if (val['3:1']   !== undefined) await this._applyBattery(val['3:1']);
-    if (val['3:2']   !== undefined) await this._applyChargingStatus(val['3:2']);
-    if (val['2:1']   !== undefined) await this._applyStatus(val['2:1']);
-    if (val['2:2']   !== undefined) await this._applyErrorCode(val['2:2']);
-    if (val['2:4']   !== undefined) await this._applyMowingSpeed(val['2:4']);
-    if (val['1:4']   !== undefined) await this._applyProgress(val['1:4']);
-    if (val['5:104'] !== undefined) await this._applyTaskStatus(val['5:104']);
-    if (val['2:112'] !== undefined) await this._applyBoolCap('rain_protection', val['2:112']);
-    if (val['2:113'] !== undefined) await this._applyBoolCap('night_mode', val['2:113']);
+    // ── Read-only device info → settings (change-guarded) ───────────────────
+    {
+      const infoUpdate = {};
+      // Prefer the human-readable display name (e.g. "LiDAX Ultra 1200") over
+      // the internal model string; fall back to info.model if absent.
+      const displayName = info.deviceInfo?.displayName || info.model || '';
+      if (displayName && displayName !== this.getSetting('device_model'))       infoUpdate.device_model     = displayName;
+      if (info.ver    && info.ver    !== this.getSetting('firmware_version'))   infoUpdate.firmware_version = info.ver;
+      if (info.sn     && info.sn     !== this.getSetting('serial_number'))      infoUpdate.serial_number    = info.sn;
+      if (info.mac    && info.mac    !== this.getSetting('mac_address'))        infoUpdate.mac_address      = info.mac;
+      if (Object.keys(infoUpdate).length > 0) {
+        await this.setSettings(infoUpdate).catch(() => {});
+      }
+    }
 
-    if (val['2:51'] !== undefined) await this._applyCfg(val['2:51']);
-    if (val['4:50'] !== undefined) await this._applyAutoSwitch(val['4:50']);
+    // child_lock may be present in the device-list response on some models
+    if (info.childLock != null && this.hasCapability('child_lock')) {
+      await this._applyBoolCap('child_lock', !!info.childLock);
+    }
 
-    await this._applyConsumable('blade', val['5:105']);
-    await this._applyConsumable('brush', val['5:106']);
-    await this._applyConsumable('robot', val['5:107']);
+    if (info.battery      != null) await this._applyBattery(info.battery);
+    if (info.latestStatus != null) {
+      const mowerStatus = STATUS_MAP[info.latestStatus] ?? 'idle';
+      await this._applyStatus(mowerStatus);
 
-    await this._applyTotalStats(val['12:4'], val['12:2']);
-    if (val['12:1'] !== undefined) await this._applyTotalCount(val['12:1']);
+      // Derive charging_status from mower status.
+      const chargingCode =
+        mowerStatus === 'charging'  ? 1
+        : mowerStatus === 'docked'  ? 3
+        : mowerStatus === 'returning' ? 5
+        : 2; // NOT_CHARGING for all other states
+      await this._applyChargingStatus(chargingCode);
+    }
 
-    // Update session duration counter while mowing is active
+    if (info.online === false) {
+      await this.setUnavailable(this.homey.__('error.device_offline'));
+      return;
+    }
+
+    // ── Session duration counter ─────────────────────────────────────────────
     if (this._wasMowing && this._sessionStartTime !== null) {
       const mins = Math.floor((Date.now() - this._sessionStartTime) / 60000);
       if (this.getCapabilityValue('measure_duration') !== mins) {
         await this.setCapabilityValue('measure_duration', mins);
       }
     }
+
+    // ── CFG settings (WRP etc.) — first poll and every 10th thereafter ───────
+    if (this._cfgPollCounter % 10 === 0) {
+      const cfg = await this._api.getCFG(did).catch((e) => {
+        this.error('[cfg] getCFG failed:', e.message);
+        return null;
+      });
+      if (cfg) await this._applyCFGSettings(cfg);
+    }
+    this._cfgPollCounter++;
+
+    // ── SETTINGS.0 / OTA_INFO.0 / MAP zone detection ────────────────────────
+    if (rawResult.status === 'fulfilled') {
+      const rawData = rawResult.value?.data;
+      if (rawData && typeof rawData === 'object' && !Array.isArray(rawData)) {
+        await this._applyMOVASettings(rawData);
+        await this._detectAndSyncZones(rawData);
+      }
+    } else {
+      this.error('[poll] rawProperties failed:', rawResult.reason?.message);
+    }
+
+    if (!this.getAvailable()) await this.setAvailable();
   }
 
+  // ─── Write helper ─────────────────────────────────────────────────────────
+
+  /**
+   * Execute a cloud write and swallow any error so Homey never shows a red
+   * error notification to the user. The next poll will restore the correct
+   * capability value if the write was rejected by the API.
+   */
+  async _safeWrite(label, fn) {
+    try {
+      await fn();
+    } catch (err) {
+      this.error(`[write] ${label} rejected by API:`, err.message);
+    }
+  }
+
+  // ─── Zone button management ───────────────────────────────────────────────
+
+  /**
+   * Add or remove cmd_zone_N capabilities based on the num_zones setting,
+   * and register a capability listener for each newly added zone button.
+   * Called on init and whenever num_zones changes in settings.
+   */
+  async _syncZoneCapabilities() {
+    const count = Math.max(0, Math.min(5, parseInt(this.getSetting('num_zones'), 10) || 1));
+    const did   = this.getData().id;
+
+    // Phase 1: add / remove all zone capabilities (both mow and edge).
+    // Must be completed before registering listeners because addCapability()
+    // resets the Homey SDK's internal listener state, which would silently
+    // drop any listener registered before the call.
+    for (let i = 1; i <= 5; i++) {
+      for (const prefix of ['cmd_zone_', 'cmd_edge_zone_']) {
+        const capId = `${prefix}${i}`;
+        if (i <= count) {
+          if (!this.hasCapability(capId)) {
+            await this.addCapability(capId)
+              .catch((e) => this.error(`addCapability ${capId}:`, e.message));
+          }
+        } else if (this.hasCapability(capId)) {
+          await this.removeCapability(capId)
+            .catch((e) => this.error(`removeCapability ${capId}:`, e.message));
+        }
+      }
+    }
+
+    // Phase 2: register listeners for all active zone capabilities.
+    // Done after all structural changes so no listener is lost.
+    for (let i = 1; i <= count; i++) {
+      if (this.hasCapability(`cmd_zone_${i}`)) {
+        this._registerZoneListener(`cmd_zone_${i}`, i, did);
+      }
+      if (this.hasCapability(`cmd_edge_zone_${i}`)) {
+        this._registerEdgeZoneListener(`cmd_edge_zone_${i}`, i, did);
+      }
+    }
+  }
+
+  /**
+   * Scan the MAP.N chunks for mowingArea zone IDs and update num_zones + capabilities
+   * automatically whenever the detected count differs from the stored setting.
+   * Called every poll cycle (cheap: exits early when nothing changed).
+   */
+  async _detectAndSyncZones(raw) {
+    const { ids: detectedIds, mapIndex } = this._extractMapInfo(raw);
+
+    // Update active map index used by zone/edge mowing commands
+    if (mapIndex !== this._activeMapIndex) {
+      this.log(`[zones] active map index: ${this._activeMapIndex} → ${mapIndex}`);
+      this._activeMapIndex = mapIndex;
+    }
+
+    // Always keep the zone ID list current (used for edge mowing)
+    this._activeZoneIds = detectedIds;
+
+    if (detectedIds.length === 0) return; // no map data yet
+
+    const capped  = Math.min(detectedIds.length, 5);
+    const current = parseInt(this.getSetting('num_zones'), 10) || 0;
+    if (capped === current) return; // nothing changed
+
+    this.log(`[zones] auto-detected ${detectedIds.length} zone(s) [${detectedIds.join(',')}] — updating num_zones ${current} → ${capped}`);
+    await this.setSettings({ num_zones: String(capped) }).catch((e) => this.error('setSettings num_zones:', e.message));
+    await this._syncZoneCapabilities();
+  }
+
+  /**
+   * Concatenate MAP.N chunks and extract:
+   *   - ids:      sorted list of distinct mowing zone IDs (e.g. [1, 2, 3])
+   *   - mapIndex: the active map's mapIndex value (0-based)
+   *
+   * Zone entries look like: "value":[[1,{"id":1,...}],[2,{"id":2,...}]]
+   * mapIndex appears as: "mapIndex":0
+   * Returns { ids: [], mapIndex: 0 } when no map data is present.
+   */
+  _extractMapInfo(raw) {
+    const parts = [];
+    for (let i = 0; raw[`MAP.${i}`] != null; i++) parts.push(raw[`MAP.${i}`]);
+    const mapStr = parts.join('');
+    if (!mapStr) return { ids: [], mapIndex: 0 };
+
+    // Extract active mapIndex (first occurrence — belongs to the active map)
+    const mapIndexMatch = mapStr.match(/"mapIndex":(\d+)/);
+    const mapIndex = mapIndexMatch ? parseInt(mapIndexMatch[1], 10) : 0;
+
+    // Locate the first map's mowingAreas section
+    const maIdx = mapStr.indexOf('mowingAreas');
+    if (maIdx === -1) return { ids: [], mapIndex };
+
+    // Limit search to the section before forbiddenAreas to avoid false matches
+    const endIdx = mapStr.indexOf('forbiddenAreas', maIdx);
+    const section = mapStr.slice(maIdx, endIdx === -1 ? maIdx + 4000 : endIdx);
+
+    // Zone entries: [N,{ where N is the zone ID (1–99)
+    const idSet = new Set();
+    for (const m of section.matchAll(/\[(\d{1,3}),\{/g)) {
+      const id = parseInt(m[1], 10);
+      if (id >= 1 && id <= 99) idSet.add(id);
+    }
+
+    return { ids: [...idSet].sort((a, b) => a - b), mapIndex };
+  }
+
+  /** Register the momentary-button listener for a single zone mowing capability. */
+  _registerZoneListener(capId, zoneNum, did) {
+    this.registerCapabilityListener(capId, async (value) => {
+      if (!value) return;
+      const mapIdx = this._activeMapIndex ?? 0;
+      this.log(`[cmd] btn: zone ${zoneNum} mapIndex=${mapIdx} → sendAction(2,50,{m:a,o:102,region:[[${zoneNum},${mapIdx}]]})`);
+      await this._safeWrite(capId, () => this._api.startZoneMowing(did, [String(zoneNum)], 1, mapIdx));
+      await this._setMowingStarted();
+      await this.setCapabilityValue(capId, false).catch(() => {});
+    });
+  }
+
+  /** Register the momentary-button listener for a single edge-zone mowing capability. */
+  _registerEdgeZoneListener(capId, zoneNum, did) {
+    this.registerCapabilityListener(capId, async (value) => {
+      if (!value) return;
+      const mapIdx = this._activeMapIndex ?? 0;
+      this.log(`[cmd] btn: edge zone ${zoneNum} mapIndex=${mapIdx} → sendAction(2,50,{m:a,o:101,d:{edge:[[${zoneNum},${mapIdx}]]}})`);
+      await this._safeWrite(capId, () => this._api.startEdgeZoneMowing(did, zoneNum, mapIdx));
+      await this._setMowingStarted();
+      await this.setCapabilityValue(capId, false).catch(() => {});
+    });
+  }
+
+  // ─── Poll helpers ─────────────────────────────────────────────────────────
+
+  /** Persist refreshed tokens only when they actually changed (saves ~6,900 store writes/day). */
+  async _persistTokensIfChanged() {
+    const tk = this._api.getTokens();
+    if (tk.tokenExpiry === this._persistedTokenExpiry) return;
+    await this.setStoreValue('access_token',  tk.accessToken);
+    await this.setStoreValue('refresh_token', tk.refreshToken);
+    await this.setStoreValue('token_expiry',  tk.tokenExpiry);
+    this._persistedTokenExpiry = tk.tokenExpiry;
+  }
+
+  async _handlePollError(err) {
+    this.error('Poll error:', err.message);
+    if (err.message === 'Device offline') {
+      await this.setUnavailable(this.homey.__('error.device_offline'));
+    } else if (err.message.includes('Auth failed') || err.message.includes('No refresh token')) {
+      await this.setUnavailable(this.homey.__('error.auth_failed'));
+    } else {
+      await this.setUnavailable(this.homey.__('error.unreachable'));
+    }
+  }
+
+  // ─── SETTINGS.0 / OTA_INFO.0 mapping ─────────────────────────────────────
+
+  /**
+   * Parse the SETTINGS.0 key-value blob and map known fields to
+   * Homey capabilities and device settings.
+   *
+   * SETTINGS.0 is a JSON array where each element represents a mowing zone:
+   *   [ { mode: 0, settings: { "0": { efficientMode, mowingHeight, … } } }, … ]
+   * We use zone 0 / settings["0"] as the active device-wide configuration.
+   */
+  async _applyMOVASettings(raw) {
+    // SETTINGS is paginated: SETTINGS.0, SETTINGS.1, … must be concatenated before parsing.
+    const parts = [];
+    for (let i = 0; raw[`SETTINGS.${i}`] != null; i++) parts.push(raw[`SETTINGS.${i}`]);
+    const settingsStr = parts.join('');
+    if (!settingsStr) return;
+
+    let zones;
+    try { zones = JSON.parse(settingsStr); } catch { return; }
+    if (!Array.isArray(zones) || zones.length === 0) return;
+
+    const s = zones[0]?.settings?.['0'];
+    if (!s) return;
+
+    // Capability updates (change-guarded)
+    if (s.efficientMode != null) {
+      const mode = s.efficientMode === 1 ? 'efficient' : 'standard';
+      if (this.getCapabilityValue('mow_efficiency') !== mode) {
+        await this.setCapabilityValue('mow_efficiency', mode);
+      }
+    }
+    if (s.obstacleAvoidanceEnabled != null) {
+      await this._applyBoolCap('collision_avoidance', s.obstacleAvoidanceEnabled);
+    }
+
+    // child_lock: MOVA may expose this as prop.s_child_lock
+    const clProp = raw['prop.s_child_lock'] ?? raw['prop.child_lock'];
+    if (clProp != null && this.hasCapability('child_lock')) {
+      await this._applyBoolCap('child_lock', clProp === '1' || clProp === 1 || clProp === true);
+    }
+
+    // OTA_INFO.0 = "[state, updateAvailable]" — index 1 > 0 means update is available.
+    const otaStr = raw['OTA_INFO.0'];
+    if (otaStr) {
+      try {
+        const ota = JSON.parse(otaStr);
+        if (Array.isArray(ota) && ota.length >= 2) {
+          await this._applyFirmwareState(ota[1]);
+        }
+      } catch { /* malformed OTA_INFO, skip */ }
+    }
+  }
+
+  /**
+   * Apply CFG values returned by getCFG() to device settings.
+   * Only updates keys that are actually present in the response (change-guarded).
+   */
+  async _applyCFGSettings(cfg) {
+    const update = {};
+
+    // WRP — rain protection: { value:1, sen:1, time:7 }
+    if (cfg.WRP != null) {
+      const wrp = cfg.WRP;
+      const enabled     = wrp.value === 1;
+      const sensitivity = wrp.sen  ?? 1;
+      const waitTime    = wrp.time ?? 7;
+      if (this.getSetting('wrp_enabled')     !== enabled)     update.wrp_enabled     = enabled;
+      if (this.getSetting('wrp_sensitivity') !== sensitivity) update.wrp_sensitivity = sensitivity;
+      if (this.getSetting('wrp_wait_time')   !== waitTime)    update.wrp_wait_time   = waitTime;
+    }
+
+    // FDP — frost protection: { value:1 }
+    if (cfg.FDP != null) {
+      const fdpEnabled = cfg.FDP.value === 1;
+      if (this.getSetting('fdp_enabled') !== fdpEnabled) update.fdp_enabled = fdpEnabled;
+    }
+
+    if (Object.keys(update).length > 0) {
+      this.log('[cfg] applying settings from CFG:', JSON.stringify(update));
+      await this.setSettings(update).catch((e) => this.error('setSettings CFG:', e.message));
+    }
+  }
+
+  // ─── Capability helpers ───────────────────────────────────────────────────
+
   async _applyFirmwareState(state) {
-    // State 0 = up-to-date, 1 = update available (TODO: verify on real device)
     const updateAvailable = state === 1;
     const prev = this.getCapabilityValue('firmware_update');
     if (prev === updateAvailable) return;
@@ -410,92 +696,9 @@ class MowerDevice extends Homey.Device {
     await this.setCapabilityValue(capId, bool);
   }
 
-  async _applyMowingSpeed(raw) {
-    const speed = MOWING_SPEED_MAP[raw] ?? 'normal';
-    if (this.getCapabilityValue('mowing_speed') === speed) return;
-    await this.setCapabilityValue('mowing_speed', speed);
-  }
-
-  async _applyTotalStats(rawArea, rawMinutes) {
-    if (rawArea != null) {
-      const area = Math.round(rawArea);
-      if (this.getCapabilityValue('meter_area_total') !== area) {
-        await this.setCapabilityValue('meter_area_total', area);
-      }
-    }
-    if (rawMinutes != null) {
-      // Convert minutes to hours, 1 decimal place
-      const hours = Math.round(rawMinutes / 6) / 10;
-      if (this.getCapabilityValue('meter_time_total') !== hours) {
-        await this.setCapabilityValue('meter_time_total', hours);
-      }
-    }
-  }
-
-  async _applyCfg(raw) {
-    // Property 2:51 — device pushes full settings JSON when anything changes.
-    // CFG blob contains: FDP (frost), PROT (grass), STUN (anti-theft), PRE (array).
-    // AutoSwitch (collision, auto-charging) is in siid:4, piid:50 — handled separately.
-    let cfg = {};
-    if (typeof raw === 'string') {
-      try { cfg = JSON.parse(raw); } catch { return; }
-    } else if (raw !== null && typeof raw === 'object') {
-      cfg = raw;
-    }
-
-    if (cfg.FDP  != null) await this._applyBoolCap('frost_protection', cfg.FDP);
-    if (cfg.PROT != null) await this._applyBoolCap('grass_protection', cfg.PROT);
-    if (cfg.STUN != null) await this._applyBoolCap('anti_theft',       cfg.STUN);
-
-    // PRE is a 10-element array; cache it for read-modify-write on capability changes.
-    // Index 1 = mow mode, Index 2 = cutting height, Index 9 = edge mowing.
-    if (Array.isArray(cfg.PRE)) {
-      await this.setStoreValue('pre_cfg', cfg.PRE).catch(() => {});
-      const mowMode = cfg.PRE[1];
-      if (mowMode != null) {
-        const mode = mowMode === 1 ? 'efficient' : 'standard';
-        if (this.getCapabilityValue('mow_efficiency') !== mode) {
-          await this.setCapabilityValue('mow_efficiency', mode);
-        }
-      }
-      const edgeMowing = cfg.PRE[9];
-      if (edgeMowing != null) {
-        await this.setSettings({ edge_mowing: edgeMowing === 1 }).catch(() => {});
-      }
-    }
-  }
-
-  async _applyAutoSwitch(raw) {
-    // Property 4:50 — AutoSwitch settings JSON (collision avoidance, smart charging, etc.)
-    // Written as {k:'LessColl', v:0|1}; read back as full object {LessColl:0, SmartCharge:1, ...}
-    let sw = {};
-    if (typeof raw === 'string') {
-      try { sw = JSON.parse(raw); } catch { return; }
-    } else if (raw !== null && typeof raw === 'object') {
-      sw = raw;
-    }
-    if (sw.LessColl    != null) await this._applyBoolCap('collision_avoidance', sw.LessColl);
-    if (sw.SmartCharge != null) await this._applyBoolCap('auto_charging',       sw.SmartCharge);
-  }
-
-  /** Return the cached PRE array, falling back to a zeroed 10-element array. */
-  async _getPREArray() {
-    const cached = await this.getStoreValue('pre_cfg');
-    return Array.isArray(cached) ? [...cached] : new Array(10).fill(0);
-  }
-
-  async _applyTotalCount(raw) {
-    if (raw == null) return;
-    const count = Math.round(raw);
-    if (this.getCapabilityValue('meter_count_total') !== count) {
-      await this.setCapabilityValue('meter_count_total', count);
-    }
-  }
-
   async _applyBattery(pct) {
     const prev = this.getCapabilityValue('measure_battery');
     await this.setCapabilityValue('measure_battery', pct);
-    // Fire on any decrease — run-listener in driver.js applies the user-configured threshold
     if (prev !== null && pct < prev) {
       this._trgBatteryLow.trigger(this, {}, {})
         .catch((e) => this.error('battery_low trigger:', e.message));
@@ -512,9 +715,22 @@ class MowerDevice extends Homey.Device {
       .catch((e) => this.error('charging_status_changed trigger:', e.message));
   }
 
-  async _applyStatus(code) {
-    const status = STATUS_MAP[code] ?? 'idle';
-    const prev   = this.getCapabilityValue('mower_status');
+  async _applyStatus(status) {
+    const prev = this.getCapabilityValue('mower_status');
+
+    const isMowing    = status === 'mowing';
+    const isReturning = status === 'returning';
+
+    // Task status (enum)
+    const taskStatus =
+      isMowing || status === 'mapping' ? 'mowing'
+      : isReturning                    ? 'docking'
+      : 'idle';
+    if (this.hasCapability('mower_task_status') &&
+        this.getCapabilityValue('mower_task_status') !== taskStatus) {
+      await this.setCapabilityValue('mower_task_status', taskStatus);
+    }
+
     if (status === prev) return;
 
     await this.setCapabilityValue('mower_status', status);
@@ -524,7 +740,6 @@ class MowerDevice extends Homey.Device {
       .catch((e) => this.error('status_changed trigger:', e.message));
 
     // Session duration tracking
-    const isMowing = status === 'mowing';
     if (isMowing && !this._wasMowing) {
       this._sessionStartTime = Date.now();
       if (this.hasCapability('measure_duration')) {
@@ -536,15 +751,35 @@ class MowerDevice extends Homey.Device {
     const isError = status === 'error';
     await this.setCapabilityValue('alarm_generic', isError);
     if (isError) {
-      const errorCode = this.getCapabilityValue('mower_error_code') || 0;
-      const errorDesc = this._getErrorDescription(errorCode);
       this._trgError
-        .trigger(this, { error_code: errorCode, error_description: errorDesc }, {})
+        .trigger(this, { error_code: 0, error_description: this.homey.__('error_codes.unknown').replace('__code__', 0) }, {})
         .catch((e) => this.error('mower_error trigger:', e.message));
     }
 
+    // Reset action buttons when the mower reaches a resting state
+    if (HOME_STATUSES.has(status)) {
+      if (this.hasCapability('cmd_dock')) await this.setCapabilityValue('cmd_dock', false).catch(() => {});
+      if (this.hasCapability('cmd_stop')) await this.setCapabilityValue('cmd_stop', false).catch(() => {});
+    }
+
+    // Reset pause button once the mower confirms it is paused
+    if (status === 'paused' && this.hasCapability('cmd_pause')) {
+      await this.setCapabilityValue('cmd_pause', false).catch(() => {});
+    }
+
+    // Reset all mowing buttons when mowing stops
+    if (!isMowing) {
+      const mowCaps = ['cmd_all_area', 'cmd_edge_mowing'];
+      for (let i = 1; i <= 5; i++) {
+        mowCaps.push(`cmd_zone_${i}`, `cmd_edge_zone_${i}`);
+      }
+      for (const cap of mowCaps) {
+        if (this.hasCapability(cap)) await this.setCapabilityValue(cap, false).catch(() => {});
+      }
+    }
+
     // Docked trigger
-    if (status === 'docked' || status === 'charging') {
+    if (status === 'docked' || status === 'charging' || status === 'charging_completed') {
       this._trgDocked.trigger(this, {}, {})
         .catch((e) => this.error('mower_docked trigger:', e.message));
     }
@@ -558,126 +793,12 @@ class MowerDevice extends Homey.Device {
     this._wasMowing = isMowing;
   }
 
-  async _applyErrorCode(code) {
-    const prevCode = this.getCapabilityValue('mower_error_code') || 0;
-    await this.setCapabilityValue('mower_error_code', code);
-
-    const isTilted   = ERROR_TILT_CODES.has(code);
-    const isObstacle = ERROR_OBSTACLE_CODES.has(code);
-    const isLifted   = ERROR_LIFT_CODES.has(code);
-
-    const prevTilted   = this.getCapabilityValue('alarm_tilt');
-    const prevObstacle = this.getCapabilityValue('alarm_obstacle');
-    const prevLifted   = this.getCapabilityValue('alarm_lift');
-
-    await this.setCapabilityValue('alarm_tilt',     isTilted);
-    await this.setCapabilityValue('alarm_obstacle',  isObstacle);
-    await this.setCapabilityValue('alarm_lift',      isLifted);
-
-    if (isTilted && !prevTilted) {
-      this._trgTilted.trigger(this, {}, {})
-        .catch((e) => this.error('mower_tilted trigger:', e.message));
-    }
-    if (isObstacle && !prevObstacle) {
-      this._trgObstacle.trigger(this, {}, {})
-        .catch((e) => this.error('obstacle_detected trigger:', e.message));
-    }
-    if (isLifted && !prevLifted) {
-      this._trgLifted.trigger(this, {}, {})
-        .catch((e) => this.error('mower_lifted trigger:', e.message));
-    }
-    if (ERROR_RAIN_CODES.has(code) && !ERROR_RAIN_CODES.has(prevCode)) {
-      this._trgRainDetected.trigger(this, {}, {})
-        .catch((e) => this.error('rain_detected trigger:', e.message));
-    }
-  }
-
-  async _applyProgress(raw) {
-    let pct = null;
-    let areaSqm = null;
-
-    if (typeof raw === 'number') {
-      pct = raw;
-    } else if (typeof raw === 'string') {
-      try {
-        const obj = JSON.parse(raw);
-        if (obj.coverage_target != null) {
-          pct = Math.round(obj.coverage_target * 100);
-        } else if (obj.current_area_sqm != null && obj.total_area_sqm) {
-          pct = Math.round((obj.current_area_sqm / obj.total_area_sqm) * 100);
-        }
-        if (obj.current_area_sqm != null) {
-          areaSqm = Math.round(obj.current_area_sqm);
-        }
-      } catch { /* not JSON, ignore */ }
-    }
-
-    if (pct !== null) {
-      const clamped = Math.min(100, Math.max(0, pct));
-      if (this.getCapabilityValue('mower_progress') !== clamped) {
-        await this.setCapabilityValue('mower_progress', clamped);
-      }
-    }
-    if (areaSqm !== null && this.getCapabilityValue('measure_area') !== areaSqm) {
-      await this.setCapabilityValue('measure_area', areaSqm);
-    }
-  }
-
-  async _applyTaskStatus(raw) {
-    let status = 'inactive';
-    if (typeof raw === 'string') {
-      try {
-        const obj = JSON.parse(raw);
-        if (obj.execution_active)                          status = 'active';
-        else if (obj.task_active && !obj.execution_active) status = 'paused';
-        else if (obj.recharging)                           status = 'recharging';
-      } catch { /* not JSON */ }
-    } else if (typeof raw === 'number') {
-      const numMap = { 1: 'active', 2: 'paused', 3: 'recharging', 4: 'inactive' };
-      status = numMap[raw] || 'inactive';
-    }
-    if (this.getCapabilityValue('mower_task_status') === status) return;
-    await this.setCapabilityValue('mower_task_status', status);
-  }
-
-  async _applyConsumable(item, usedMinutes) {
-    if (usedMinutes == null) return;
-    const pct = DreameApi.consumablePercent(usedMinutes, item);
-    if (pct === null) return;
-
-    const capId = `consumable_${item}`;
-    const prev  = this.getCapabilityValue(capId);
-    await this.setCapabilityValue(capId, pct);
-
-    if (prev !== null && pct < prev) {
-      this._trgConsumableLow
-        .trigger(this, { consumable: item }, {})
-        .catch((e) => this.error('consumable_low trigger:', e.message));
-    }
-  }
-
-  // ─── Error description helper ──────────────────────────────────────────────
-
-  _getErrorDescription(code) {
-    const key  = `error_codes.${code}`;
-    const desc = this.homey.__(key);
-    if (!desc || desc === key) {
-      return this.homey.__('error_codes.unknown').replace('__code__', code);
-    }
-    return desc;
-  }
-
   // ─── Shared mowing state helper ───────────────────────────────────────────
 
   async _setMowingStarted() {
-    await this.setCapabilityValue('mower_status', 'mowing');
-    if (!this._wasMowing) {
-      this._sessionStartTime = Date.now();
-      if (this.hasCapability('measure_duration')) {
-        await this.setCapabilityValue('measure_duration', 0);
-      }
-    }
-    this._wasMowing = true;
+    // Route through _applyStatus so the status-changed flow trigger fires
+    // and session-start tracking is handled consistently.
+    await this._applyStatus('mowing');
   }
 
   // ─── Public commands (called by flow cards) ────────────────────────────────
@@ -685,6 +806,7 @@ class MowerDevice extends Homey.Device {
   async cmdStartMowing() {
     const did  = this.getData().id;
     const mode = await this.getStoreValue('mowing_mode') || 'all_area';
+    this.log(`[cmd] startMowing mode=${mode}`);
 
     switch (mode) {
       case 'edge':
@@ -692,11 +814,13 @@ class MowerDevice extends Homey.Device {
         break;
       case 'zone': {
         const ids = (await this.getStoreValue('mowing_zone_ids')) || [];
+        this.log(`[cmd] zone ids=${ids.join(',')}`);
         await this._api.startZoneMowing(did, ids);
         break;
       }
       case 'spot': {
         const ids = (await this.getStoreValue('mowing_spot_ids')) || [];
+        this.log(`[cmd] spot ids=${ids.join(',')}`);
         await this._api.startSpotMowing(did, ids);
         break;
       }
@@ -713,97 +837,80 @@ class MowerDevice extends Homey.Device {
   async cmdStartZoneMowing(zonesStr, passes = 1) {
     const did     = this.getData().id;
     const zoneIds = zonesStr.split(',').map((s) => s.trim()).filter(Boolean);
+    this.log(`[cmd] startZoneMowing zones=${zoneIds.join(',')} passes=${passes}`);
     await this.setStoreValue('mowing_zone_ids', zoneIds);
-    await this.setCapabilityValue('mower_mode', 'zone');
     await this._api.startZoneMowing(did, zoneIds, passes);
     await this._setMowingStarted();
   }
 
   async cmdStartEdgeMowing() {
-    const did = this.getData().id;
-    await this.setCapabilityValue('mower_mode', 'edge');
-    await this._api.startEdgeMowing(did);
+    const did    = this.getData().id;
+    const mapIdx = this._activeMapIndex ?? 0;
+    this.log(`[cmd] startEdgeMowing mapIndex=${mapIdx}`);
+    await this._api.startEdgeMowing(did, mapIdx);
     await this._setMowingStarted();
   }
 
   async cmdStartSpotMowing(spotsStr) {
     const did     = this.getData().id;
     const spotIds = spotsStr.split(',').map((s) => s.trim()).filter(Boolean);
+    this.log(`[cmd] startSpotMowing spots=${spotIds.join(',')}`);
     await this.setStoreValue('mowing_spot_ids', spotIds);
-    await this.setCapabilityValue('mower_mode', 'spot');
     await this._api.startSpotMowing(did, spotIds);
     await this._setMowingStarted();
   }
 
   async cmdPause() {
+    this.log('[cmd] pause');
     await this._api.pause(this.getData().id);
-    await this.setCapabilityValue('mower_status', 'paused');
+    await this._applyStatus('paused');
   }
 
   async cmdStop() {
+    this.log('[cmd] stop');
     await this._api.stopMowing(this.getData().id);
   }
 
   async cmdDock() {
+    this.log('[cmd] dock');
     await this._api.dock(this.getData().id);
-    await this.setCapabilityValue('mower_status', 'returning');
+    await this._applyStatus('returning');
   }
 
-  async cmdFindBot()       { await this._api.findBot(this.getData().id); }
-  async cmdSuppressFault() { await this._api.suppressFault(this.getData().id); }
+  async cmdFindBot() {
+    this.log('[cmd] findBot');
+    await this._api.findBot(this.getData().id);
+  }
+
+  async cmdSuppressFault() {
+    this.log('[cmd] suppressFault');
+    await this._api.suppressFault(this.getData().id);
+  }
 
   async cmdSetMowingMode(mode) {
-    await this.setCapabilityValue('mower_mode', mode);
+    this.log(`[cmd] setMowingMode mode=${mode}`);
     await this.setStoreValue('mowing_mode', mode);
   }
 
-  async cmdSetMowingSpeed(speed) {
-    await this._api.setMowingSpeed(this.getData().id, speed);
-    await this.setCapabilityValue('mowing_speed', speed);
-  }
-
-  async cmdResetConsumable(item) {
-    await this._api.resetConsumable(this.getData().id, item);
-    await this.setCapabilityValue(`consumable_${item}`, 100);
-  }
-
-  async cmdSetChildLock(enabled) {
-    await this._api.setChildLock(this.getData().id, enabled);
-    await this.setCapabilityValue('child_lock', enabled);
-  }
-
-  async cmdSetDND(enabled) {
-    await this._api.setDND(this.getData().id, enabled);
-    await this.setCapabilityValue('dnd_enabled', enabled);
-  }
-
-  async cmdSetMowingPattern(pattern) {
-    await this._api.setMowingPattern(this.getData().id, pattern);
-    await this.setCapabilityValue('mower_pattern', pattern);
-  }
-
-  async cmdSetRainProtection(enabled) {
-    await this._api.setRainProtection(this.getData().id, enabled);
-    await this.setCapabilityValue('rain_protection', enabled);
-  }
-
-  async cmdSetNightMode(enabled) {
-    await this._api.setNightMode(this.getData().id, enabled);
-    await this.setCapabilityValue('night_mode', enabled);
-  }
 
   // ─── Debug API (called by settings/index.html via api.js) ─────────────────
 
   async getDebugPollData() {
-    const did   = this.getData().id;
-    const props = await this._api.getProperties(did);
+    const did = this.getData().id;
+
+    const [rawResponse, deviceStatus] = await Promise.allSettled([
+      this._api.getRawProperties(did),
+      this._api.getDeviceStatus(did),
+    ]);
+
     return {
-      timestamp:  new Date().toISOString(),
-      deviceId:   did,
-      deviceName: this.getName(),
-      model:      this.getSetting('device_model') || '',
-      available:  this.getAvailable(),
-      properties: props,
+      timestamp:    new Date().toISOString(),
+      deviceId:     did,
+      deviceName:   this.getName(),
+      model:        this.getSetting('device_model') || '',
+      available:    this.getAvailable(),
+      rawResponse:  rawResponse.status  === 'fulfilled' ? rawResponse.value  : { error: rawResponse.reason?.message },
+      deviceStatus: deviceStatus.status === 'fulfilled' ? deviceStatus.value : { error: deviceStatus.reason?.message },
     };
   }
 }

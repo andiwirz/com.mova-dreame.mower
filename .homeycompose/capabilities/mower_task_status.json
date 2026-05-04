@@ -2,13 +2,11 @@
   "type": "enum",
   "title": { "en": "Task Status", "de": "Aufgabenstatus" },
   "values": [
-    { "id": "inactive",    "title": { "en": "Inactive",    "de": "Inaktiv"    } },
-    { "id": "active",      "title": { "en": "Active",      "de": "Aktiv"      } },
-    { "id": "paused",      "title": { "en": "Paused",      "de": "Pausiert"   } },
-    { "id": "recharging",  "title": { "en": "Recharging",  "de": "Lädt nach"  } }
+    { "id": "idle",    "title": { "en": "Idle",    "de": "Bereit"   } },
+    { "id": "mowing",  "title": { "en": "Mowing",  "de": "Mähen"    } },
+    { "id": "docking", "title": { "en": "Docking", "de": "Andocken" } }
   ],
   "getable": true,
   "setable": false,
-  "uiComponent": "sensor",
-  "icon": "/assets/capabilities/mower_status.svg"
+  "uiComponent": "sensor"
 }

@@ -6,37 +6,20 @@
   "class": "lawnmower",
   "capabilities": [
     "mower_status",
-    "mower_mode",
-    "mowing_speed",
-    "mower_progress",
+    "cmd_all_area",
+    "cmd_stop",
+    "cmd_pause",
+    "cmd_edge_mowing",
+    "cmd_dock",
     "charging_status",
     "measure_battery",
     "alarm_generic",
-    "alarm_obstacle",
-    "alarm_tilt",
-    "alarm_lift",
-    "mower_task_status",
-    "consumable_blade",
-    "consumable_brush",
-    "consumable_robot",
-    "child_lock",
-    "dnd_enabled",
-    "rain_protection",
-    "frost_protection",
-    "grass_protection",
-    "night_mode",
-    "mower_pattern",
     "mow_efficiency",
-    "anti_theft",
     "collision_avoidance",
-    "auto_charging",
-    "mower_error_code",
     "firmware_update",
-    "measure_area",
     "measure_duration",
-    "meter_area_total",
-    "meter_time_total",
-    "meter_count_total"
+    "mower_task_status",
+    "child_lock"
   ],
   "capabilitiesOptions": {
     "alarm_generic": {
@@ -44,16 +27,6 @@
     },
     "measure_battery": {
       "title": { "en": "Battery", "de": "Akku" }
-    },
-    "mower_error_code": {
-      "title": { "en": "Error Code", "de": "Fehlercode" },
-      "preventInsights": false
-    },
-    "meter_area_total": {
-      "preventInsights": false
-    },
-    "meter_time_total": {
-      "preventInsights": false
     }
   },
   "energy": {
@@ -73,191 +46,114 @@
       "children": [
         {
           "id": "device_model",
-          "type": "text",
+          "type": "label",
           "label": { "en": "Model", "de": "Modell" },
           "value": ""
         },
         {
+          "id": "firmware_version",
+          "type": "label",
+          "label": { "en": "Firmware Version", "de": "Firmware-Version" },
+          "value": ""
+        },
+        {
+          "id": "serial_number",
+          "type": "label",
+          "label": { "en": "Serial Number", "de": "Seriennummer" },
+          "value": ""
+        },
+        {
+          "id": "mac_address",
+          "type": "label",
+          "label": { "en": "MAC Address", "de": "MAC-Adresse" },
+          "value": ""
+        },
+        {
           "id": "username",
-          "type": "text",
+          "type": "label",
           "label": { "en": "Email", "de": "E-Mail" },
           "value": ""
         },
         {
           "id": "brand",
-          "type": "text",
+          "type": "label",
           "label": { "en": "Brand", "de": "Marke" },
-          "value": "dreame"
+          "value": ""
         },
         {
           "id": "region",
-          "type": "text",
+          "type": "label",
           "label": { "en": "Region", "de": "Region" },
-          "value": "eu"
+          "value": ""
         }
       ]
     },
     {
       "type": "group",
-      "label": { "en": "Mowing", "de": "Mähen" },
+      "label": { "en": "Zones", "de": "Zonen" },
       "children": [
         {
-          "id": "border_first",
+          "id": "num_zones",
+          "type": "label",
+          "label": { "en": "Number of zones", "de": "Anzahl Zonen" },
+          "value": "",
+          "hint": {
+            "en": "Auto-detected from map data. One Zone button per zone appears on the device card.",
+            "de": "Wird automatisch aus den Kartendaten erkannt. Pro Zone erscheint ein Zonen-Button auf der Gerätekarte."
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": { "en": "Frost Protection", "de": "Frostschutz" },
+      "children": [
+        {
+          "id": "fdp_enabled",
           "type": "checkbox",
-          "label": { "en": "Mow border first", "de": "Rand zuerst mähen" },
+          "label": { "en": "Enabled", "de": "Aktiviert" },
           "value": false,
           "hint": {
-            "en": "Mow the perimeter edge before mowing the main area.",
-            "de": "Randstreifen vor dem Hauptbereich mähen."
+            "en": "The mower will not mow when frost is detected.",
+            "de": "Der Mähroboter mäht nicht, wenn Frost erkannt wird."
           }
-        },
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": { "en": "Rain Protection", "de": "Regenschutz" },
+      "children": [
         {
-          "id": "edge_mowing",
+          "id": "wrp_enabled",
           "type": "checkbox",
-          "label": { "en": "Edge mowing", "de": "Kantenmähen" },
-          "value": false,
-          "hint": {
-            "en": "Enable edge mowing preference (PRE). The mower stays closer to boundaries.",
-            "de": "Kantenmäh-Präferenz aktivieren (PRE). Der Mähroboter bleibt näher an den Grenzen."
-          }
+          "label": { "en": "Enabled", "de": "Aktiviert" },
+          "value": false
         },
         {
-          "id": "obstacle_avoidance",
+          "id": "wrp_sensitivity",
           "type": "number",
-          "label": { "en": "Obstacle avoidance sensitivity", "de": "Hindernisempfindlichkeit" },
-          "value": 2,
-          "min": 0,
+          "label": { "en": "Sensitivity", "de": "Empfindlichkeit" },
+          "value": 1,
+          "min": 1,
           "max": 3,
           "step": 1,
           "hint": {
-            "en": "0 = Off, 1 = Low, 2 = Medium, 3 = High",
-            "de": "0 = Aus, 1 = Niedrig, 2 = Mittel, 3 = Hoch"
+            "en": "Rain detection sensitivity (1 = low, 3 = high).",
+            "de": "Regenerkennungs-Empfindlichkeit (1 = niedrig, 3 = hoch)."
           }
         },
         {
-          "id": "cutting_height_min",
+          "id": "wrp_wait_time",
           "type": "number",
-          "label": { "en": "Min. cutting height (mm)", "de": "Minimale Schnitthöhe (mm)" },
-          "value": 30,
-          "min": 10,
-          "max": 200,
-          "step": 5,
+          "label": { "en": "Wait time (h)", "de": "Wartezeit (Std.)" },
+          "value": 7,
+          "min": 1,
+          "max": 24,
+          "step": 1,
           "hint": {
-            "en": "Lowest blade position supported by your mower model. Check the manual.",
-            "de": "Niedrigste Messerposition deines Modells. Im Handbuch nachsehen."
-          }
-        },
-        {
-          "id": "cutting_height_max",
-          "type": "number",
-          "label": { "en": "Max. cutting height (mm)", "de": "Maximale Schnitthöhe (mm)" },
-          "value": 100,
-          "min": 10,
-          "max": 200,
-          "step": 5,
-          "hint": {
-            "en": "Highest blade position supported by your mower model. Check the manual.",
-            "de": "Höchste Messerposition deines Modells. Im Handbuch nachsehen."
-          }
-        },
-        {
-          "id": "cutting_height",
-          "type": "number",
-          "label": { "en": "Cutting height (mm)", "de": "Schnitthöhe (mm)" },
-          "value": 60,
-          "min": 10,
-          "max": 200,
-          "step": 5,
-          "hint": {
-            "en": "Current blade height. Must be within the min/max range above. Changes are sent to the mower immediately.",
-            "de": "Aktuelle Messerhöhe. Muss im Min./Max.-Bereich liegen. Änderungen werden sofort an den Mähroboter gesendet."
-          }
-        },
-        {
-          "id": "auto_resume",
-          "type": "checkbox",
-          "label": { "en": "Continue after recharging", "de": "Nach dem Laden weiterfahren" },
-          "value": true,
-          "hint": {
-            "en": "The mower automatically continues the mowing task after returning to the dock to recharge.",
-            "de": "Der Mähroboter setzt die Mähaufgabe nach dem Laden an der Station automatisch fort."
-          }
-        }
-      ]
-    },
-    {
-      "type": "group",
-      "label": { "en": "Battery", "de": "Akku" },
-      "children": [
-        {
-          "id": "return_battery_threshold",
-          "type": "number",
-          "label": { "en": "Return threshold (%)", "de": "Rückkehrschwelle (%)" },
-          "value": 20,
-          "min": 5,
-          "max": 50,
-          "step": 5,
-          "hint": {
-            "en": "Battery level at which the mower returns to the dock to recharge.",
-            "de": "Akkustand, bei dem der Mähroboter zur Station zurückkehrt."
-          }
-        },
-        {
-          "id": "resume_battery_threshold",
-          "type": "number",
-          "label": { "en": "Resume threshold (%)", "de": "Weitermähschwelle (%)" },
-          "value": 80,
-          "min": 50,
-          "max": 100,
-          "step": 5,
-          "hint": {
-            "en": "Battery level at which the mower resumes mowing after recharging.",
-            "de": "Akkustand, ab dem der Mähroboter nach dem Laden weitermäht."
-          }
-        }
-      ]
-    },
-    {
-      "type": "group",
-      "label": { "en": "Sound", "de": "Ton" },
-      "children": [
-        {
-          "id": "volume",
-          "type": "number",
-          "label": { "en": "Volume (%)", "de": "Lautstärke (%)" },
-          "value": 50,
-          "min": 0,
-          "max": 100,
-          "step": 10,
-          "hint": {
-            "en": "Mower speaker volume for alerts and notifications.",
-            "de": "Lautstärke des Mähroboter-Lautsprechers für Meldungen."
-          }
-        }
-      ]
-    },
-    {
-      "type": "group",
-      "label": { "en": "Do Not Disturb", "de": "Nicht stören" },
-      "children": [
-        {
-          "id": "dnd_start",
-          "type": "text",
-          "label": { "en": "Quiet hours start (HH:MM)", "de": "Ruhezeit Beginn (HH:MM)" },
-          "value": "22:00",
-          "hint": {
-            "en": "Start of the quiet hours window. The mower will not start automatically during this period.",
-            "de": "Beginn der Ruhezeit. In dieser Zeit startet der Mähroboter nicht automatisch."
-          }
-        },
-        {
-          "id": "dnd_end",
-          "type": "text",
-          "label": { "en": "Quiet hours end (HH:MM)", "de": "Ruhezeit Ende (HH:MM)" },
-          "value": "07:00",
-          "hint": {
-            "en": "End of the quiet hours window.",
-            "de": "Ende der Ruhezeit."
+            "en": "Hours to wait after rain before resuming mowing.",
+            "de": "Stunden Wartezeit nach dem Regen, bevor das Mähen fortgesetzt wird."
           }
         }
       ]

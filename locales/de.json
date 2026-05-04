@@ -70,7 +70,8 @@
     "charging": "Lädt",
     "mapping": "Kartierung",
     "docked": "Gedockt",
-    "updating": "Aktualisierung"
+    "updating": "Aktualisierung",
+    "remote_control": "Fernsteuerung"
   },
   "error": {
     "unreachable": "Mähroboter nicht erreichbar",
@@ -83,9 +84,10 @@
     "not_docked": "Nicht angedockt",
     "charging": "Lädt",
     "not_charging": "Angedockt (Standby)",
-    "docked": "Vollständig geladen",
+    "docked": "Vollständig geladen (alt)",
     "returning": "Kehrt zurück",
-    "paused_cold": "Pausiert (Kälte)"
+    "paused_cold": "Pausiert (Kälte)",
+    "charging_completed": "Vollständig geladen"
   },
   "mower_mode": {
     "all_area": "Alle",

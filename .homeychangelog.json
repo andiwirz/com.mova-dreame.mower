@@ -18,5 +18,13 @@
   "0.0.5": {
     "en": "Added frost protection, grass protection, anti-theft, collision avoidance, smart charging, mow efficiency mode, edge mowing and total session count.",
     "de": "Frostschutz, Rasenschutz, Diebstahlschutz, Kollisionsvermeidung, Smart-Laden, Mähmodus, Kantenmähen und Gesamtanzahl Mähvorgänge hinzugefügt."
+  },
+  "0.0.6": {
+    "en": "Fixed pairing and polling for MOVA devices (LiDAX series) that use the v2 API. Battery and status now update via device-list fallback. Improved debug settings page.",
+    "de": "Kopplung und Polling für MOVA-Geräte (LiDAX-Serie) mit v2-API korrigiert. Akku und Status werden jetzt über den Gerätelisten-Fallback aktualisiert. Debug-Einstellungsseite verbessert."
+  },
+  "0.0.7": {
+    "en": "Added frost protection and rain protection settings (confirmed via packet capture). Added Stop and Pause buttons. Added per-zone edge mowing buttons. Fixed edge mowing zone-unreachable error. Auto-reset action buttons on status change. Simplified settings page — removed unverified options.",
+    "de": "Frostschutz- und Regenschutz-Einstellungen hinzugefügt (per Packet Capture bestätigt). Knöpfe Mähen beenden und Pausieren hinzugefügt. Kantenmähen-Knöpfe pro Zone hinzugefügt. Fehler 'Zone nicht erreichbar' beim Kantenmähen behoben. Aktionsknöpfe werden bei Statuswechsel automatisch zurückgesetzt. Einstellungsseite vereinfacht — nicht verifizierte Optionen entfernt."
   }
 }
