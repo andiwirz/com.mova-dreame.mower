@@ -73,8 +73,8 @@
       "de": "Beleuchtungseinstellungen (Ein/Aus, Zeitfenster) per Packet Capture bestätigt hinzugefügt. Darstellung der Capability-Icons unter iOS korrigiert. Debug-Poll um CFG-Daten, Capability-Werte und Geräteeinstellungen erweitert."
     },
     "0.0.9": {
-      "en": "Added Do Not Disturb settings (on/off, start/end time) confirmed via packet capture. Fixed DND API payload (was sending JSON string instead of object).",
-      "de": "Bitte-nicht-stören-Einstellungen (Ein/Aus, Start-/Endzeit) per Packet Capture bestätigt hinzugefügt. DND-API-Payload korrigiert (wurde fälschlicherweise als JSON-String statt Objekt gesendet)."
+      "en": "Added Do Not Disturb and Low Speed at Night settings (on/off, start/end time) confirmed via packet capture. Fixed DND API payload (was sending JSON string instead of object).",
+      "de": "Bitte-nicht-stören- und Niedrige-Geschwindigkeit-in-der-Nacht-Einstellungen (Ein/Aus, Start-/Endzeit) per Packet Capture bestätigt hinzugefügt. DND-API-Payload korrigiert (wurde fälschlicherweise als JSON-String statt Objekt gesendet)."
     }
   },
   "flow": {
@@ -976,6 +976,60 @@
               "hint": {
                 "en": "Turn on the LED when the mower reports an error.",
                 "de": "LED leuchtet, wenn der Mähroboter einen Fehler meldet."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Low Speed at Night",
+            "de": "Niedrige Geschwindigkeit in der Nacht"
+          },
+          "children": [
+            {
+              "id": "low_enabled",
+              "type": "checkbox",
+              "label": {
+                "en": "Enabled",
+                "de": "Aktiviert"
+              },
+              "value": false,
+              "hint": {
+                "en": "When enabled, the mower automatically slows down during the set time window to protect animals active at night.",
+                "de": "Wenn aktiviert, verlangsamt sich der Roboter automatisch während des festgelegten Zeitraums, um Tiere zu schützen."
+              }
+            },
+            {
+              "id": "low_start",
+              "type": "number",
+              "label": {
+                "en": "Start (h)",
+                "de": "Start (Uhr)"
+              },
+              "value": 20,
+              "min": 0,
+              "max": 23,
+              "step": 1,
+              "hint": {
+                "en": "Start of the low-speed window (e.g. 20 = 20:00).",
+                "de": "Beginn des Langsamfahr-Zeitraums (z. B. 20 = 20:00 Uhr)."
+              }
+            },
+            {
+              "id": "low_end",
+              "type": "number",
+              "label": {
+                "en": "End (h)",
+                "de": "Ende (Uhr)"
+              },
+              "value": 8,
+              "min": 0,
+              "max": 23,
+              "step": 1,
+              "hint": {
+                "en": "End of the low-speed window (e.g. 8 = 08:00 next day).",
+                "de": "Ende des Langsamfahr-Zeitraums (z. B. 8 = 08:00 Uhr nächsten Tag)."
               }
             }
           ]

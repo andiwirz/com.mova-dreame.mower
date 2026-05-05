@@ -258,6 +258,48 @@
     },
     {
       "type": "group",
+      "label": { "en": "Low Speed at Night", "de": "Niedrige Geschwindigkeit in der Nacht" },
+      "children": [
+        {
+          "id": "low_enabled",
+          "type": "checkbox",
+          "label": { "en": "Enabled", "de": "Aktiviert" },
+          "value": false,
+          "hint": {
+            "en": "When enabled, the mower automatically slows down during the set time window to protect animals active at night.",
+            "de": "Wenn aktiviert, verlangsamt sich der Roboter automatisch während des festgelegten Zeitraums, um Tiere zu schützen."
+          }
+        },
+        {
+          "id": "low_start",
+          "type": "number",
+          "label": { "en": "Start (h)", "de": "Start (Uhr)" },
+          "value": 20,
+          "min": 0,
+          "max": 23,
+          "step": 1,
+          "hint": {
+            "en": "Start of the low-speed window (e.g. 20 = 20:00).",
+            "de": "Beginn des Langsamfahr-Zeitraums (z. B. 20 = 20:00 Uhr)."
+          }
+        },
+        {
+          "id": "low_end",
+          "type": "number",
+          "label": { "en": "End (h)", "de": "Ende (Uhr)" },
+          "value": 8,
+          "min": 0,
+          "max": 23,
+          "step": 1,
+          "hint": {
+            "en": "End of the low-speed window (e.g. 8 = 08:00 next day).",
+            "de": "Ende des Langsamfahr-Zeitraums (z. B. 8 = 08:00 Uhr nächsten Tag)."
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
       "label": { "en": "Do Not Disturb", "de": "Bitte nicht stören" },
       "children": [
         {

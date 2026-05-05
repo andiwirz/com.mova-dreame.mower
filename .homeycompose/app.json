@@ -70,8 +70,8 @@
       "de": "Beleuchtungseinstellungen (Ein/Aus, Zeitfenster) per Packet Capture bestätigt hinzugefügt. Darstellung der Capability-Icons unter iOS korrigiert. Debug-Poll um CFG-Daten, Capability-Werte und Geräteeinstellungen erweitert."
     },
     "0.0.9": {
-      "en": "Added Do Not Disturb settings (on/off, start/end time) confirmed via packet capture. Fixed DND API payload (was sending JSON string instead of object).",
-      "de": "Bitte-nicht-stören-Einstellungen (Ein/Aus, Start-/Endzeit) per Packet Capture bestätigt hinzugefügt. DND-API-Payload korrigiert (wurde fälschlicherweise als JSON-String statt Objekt gesendet)."
+      "en": "Added Do Not Disturb and Low Speed at Night settings (on/off, start/end time) confirmed via packet capture. Fixed DND API payload (was sending JSON string instead of object).",
+      "de": "Bitte-nicht-stören- und Niedrige-Geschwindigkeit-in-der-Nacht-Einstellungen (Ein/Aus, Start-/Endzeit) per Packet Capture bestätigt hinzugefügt. DND-API-Payload korrigiert (wurde fälschlicherweise als JSON-String statt Objekt gesendet)."
     }
   }
 }

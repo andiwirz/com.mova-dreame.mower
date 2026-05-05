@@ -311,6 +311,17 @@ class MowerDevice extends Homey.Device {
       }));
     }
 
+    // Low Speed at Night — write enabled + start + end together whenever any changes
+    const LOW_KEYS = ['low_enabled', 'low_start', 'low_end'];
+    if (LOW_KEYS.some((k) => changedKeys.includes(k))) {
+      this.log(`[settings] LOW → enabled=${newSettings.low_enabled} start=${newSettings.low_start}h end=${newSettings.low_end}h`);
+      await this._safeWrite('low', () => this._api.setLowSpeedNight(did, {
+        enabled:  newSettings.low_enabled,
+        startMin: newSettings.low_start * 60,
+        endMin:   newSettings.low_end   * 60,
+      }));
+    }
+
     // Do Not Disturb — write enabled + start + end together whenever any changes
     const DND_KEYS = ['dnd_enabled', 'dnd_start', 'dnd_end'];
     if (DND_KEYS.some((k) => changedKeys.includes(k))) {
@@ -808,6 +819,27 @@ class MowerDevice extends Homey.Device {
       }
     }
 
+    // LOW — Low Speed at Night: GET returns { value:0|1, time:[startMin,endMin] }
+    if (cfg.LOW != null) {
+      let lowEnabled, lowStart, lowEnd;
+      if (Array.isArray(cfg.LOW)) {
+        lowEnabled = cfg.LOW[0] === 1;
+        lowStart   = Math.round((cfg.LOW[1] ?? 1200) / 60);
+        lowEnd     = Math.round((cfg.LOW[2] ?? 480)  / 60);
+      } else if (typeof cfg.LOW === 'object') {
+        lowEnabled = cfg.LOW.value === 1;
+        lowStart   = Math.round((cfg.LOW.time?.[0] ?? 1200) / 60);
+        lowEnd     = Math.round((cfg.LOW.time?.[1] ?? 480)  / 60);
+      } else {
+        lowEnabled = cfg.LOW === 1;
+        lowStart   = 20;
+        lowEnd     = 8;
+      }
+      if (this.getSetting('low_enabled') !== lowEnabled) update.low_enabled = lowEnabled;
+      if (this.getSetting('low_start')   !== lowStart)   update.low_start   = lowStart;
+      if (this.getSetting('low_end')     !== lowEnd)     update.low_end     = lowEnd;
+    }
+
     // DND — Do Not Disturb: GET returns { value:0|1, time:[startMin,endMin] }
     if (cfg.DND != null) {
       let dndEnabled, dndStart, dndEnd;
@@ -1094,6 +1126,7 @@ class MowerDevice extends Homey.Device {
       'brand', 'region', 'device_model', 'firmware_version',
       'serial_number', 'mac_address', 'poll_interval', 'num_zones',
       'cls_enabled', 'fdp_enabled', 'wrp_enabled', 'wrp_sensitivity', 'wrp_wait_time',
+      'low_enabled', 'low_start', 'low_end',
       'dnd_enabled', 'dnd_start', 'dnd_end',
       'lit_enabled', 'lit_time_start', 'lit_time_end', 'lit_standby', 'lit_working', 'lit_charging', 'lit_error',
     ];
