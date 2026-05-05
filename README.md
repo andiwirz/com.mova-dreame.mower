@@ -10,6 +10,7 @@ MOVA Mower connects your robotic lawn mower to Homey, giving you direct control 
 - **Frost protection** and **Rain protection** settings — read from the mower on startup, written back immediately on change (confirmed via packet capture)
 - **Rain protection** includes sensitivity (1–3) and wait time in hours
 - **Lighting** — configure the LED activation time window and per-scenario light behaviour (standby, mowing, charging, error)
+- **Do Not Disturb** — set a quiet window during which the mower will not start automatically and returns to dock if already mowing
 - **Auto-reset action buttons** when the mower reaches a new state (e.g. dock button resets when mower docks)
 - Flow cards for full automation
 - Built-in **Debug Console** in the app settings for diagnostics and device discovery
@@ -26,11 +27,13 @@ MOVA Mower connects your robotic lawn mower to Homey, giving you direct control 
 | Lighting — Custom time window | Only activate the LED during the configured hours |
 | Lighting — Start / End | Hour of day for LED on and off (e.g. 8 = 08:00, 20 = 20:00) |
 | Lighting — Standby / Mowing / Charging / Error | Per-scenario LED activation |
+| Do Not Disturb — Enabled | Mower will not start automatically during the set window; stops and returns to dock if already mowing |
+| Do Not Disturb — Start / End | Hour of day for the DND window (e.g. 22 = 22:00, 8 = 08:00 next day) |
 | Poll interval | How often Homey checks the mower status (seconds, default 30) |
 
 Device info (model, firmware, serial, MAC, email, brand, region) and zone count are read-only labels updated automatically.
 
-> **Note:** Settings that are read from the mower (Frost Protection, Rain Protection, Lighting time window) are refreshed on startup and every ~5 minutes during normal operation. Changes made in the manufacturer app will appear in Homey within that window.
+> **Note:** Settings that are read from the mower (Frost Protection, Rain Protection, Do Not Disturb, Lighting time window) are refreshed on startup and every ~5 minutes during normal operation. Changes made in the manufacturer app will appear in Homey within that window.
 
 ## Pairing
 
@@ -209,7 +212,7 @@ Write one: `in:[{ m:'s', t:'<KEY>', d:{…} }]`.
 | `WRP` | `{value, sen, time}` | `{value, sen, time}` | Rain protection — `sen`=sensitivity 1–3, `time`=wait hours | ✓ |
 | `VOL` | `{value:0–100}` | `{value:0–100}` | Speaker volume | ✓ |
 | `LIT` | `{value, time:[startMin, endMin]}` | `{value, time:[startMin, endMin], light:[s, w, c, e]}` | LED settings — time in minutes since midnight; `light` array: standby / working / charging / error (`0`\|`1`); `light[]` is **write-only** (not returned by GET) | ✓ |
-| `DND` | `{value, time:[startMin, endMin]}` | `{value, time:[startMin, endMin]}` | Do-Not-Disturb — time in minutes since midnight (e.g. `480`=08:00) | ~ |
+| `DND` | `{value, time:[startMin, endMin]}` | `{value, time:[startMin, endMin]}` | Do-Not-Disturb — time in minutes since midnight (e.g. `1320`=22:00, `480`=08:00) | ✓ |
 | `PRE` | `[n0, n1, …, n9]` | `[n0, n1, …, n9]` | Mowing preferences (10-element array — requires read-modify-write; index 1=mode, 2=cutting height, 5=direction, 8=edge detect, 9=edge mow) | ~ |
 | `PROT` | `{value:0\|1}` | `{value:0\|1}` | Grass protection | ~ |
 | `STUN` | `{value:0\|1}` | `{value:0\|1}` | Anti-theft lock | ~ |

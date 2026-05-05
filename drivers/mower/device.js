@@ -311,6 +311,17 @@ class MowerDevice extends Homey.Device {
       }));
     }
 
+    // Do Not Disturb — write enabled + start + end together whenever any changes
+    const DND_KEYS = ['dnd_enabled', 'dnd_start', 'dnd_end'];
+    if (DND_KEYS.some((k) => changedKeys.includes(k))) {
+      this.log(`[settings] DND → enabled=${newSettings.dnd_enabled} start=${newSettings.dnd_start}h end=${newSettings.dnd_end}h`);
+      await this._safeWrite('dnd', () => this._api.setDNDSchedule(did, {
+        enabled:  newSettings.dnd_enabled,
+        startMin: newSettings.dnd_start * 60,
+        endMin:   newSettings.dnd_end   * 60,
+      }));
+    }
+
     // num_zones is a read-only label — users cannot change it, no handler needed.
   }
 
@@ -797,6 +808,27 @@ class MowerDevice extends Homey.Device {
       }
     }
 
+    // DND — Do Not Disturb: GET returns { value:0|1, time:[startMin,endMin] }
+    if (cfg.DND != null) {
+      let dndEnabled, dndStart, dndEnd;
+      if (Array.isArray(cfg.DND)) {
+        dndEnabled = cfg.DND[0] === 1;
+        dndStart   = Math.round((cfg.DND[1] ?? 1320) / 60);
+        dndEnd     = Math.round((cfg.DND[2] ?? 480)  / 60);
+      } else if (typeof cfg.DND === 'object') {
+        dndEnabled = cfg.DND.value === 1;
+        dndStart   = Math.round((cfg.DND.time?.[0] ?? 1320) / 60);
+        dndEnd     = Math.round((cfg.DND.time?.[1] ?? 480)  / 60);
+      } else {
+        dndEnabled = cfg.DND === 1;
+        dndStart   = 22;
+        dndEnd     = 8;
+      }
+      if (this.getSetting('dnd_enabled') !== dndEnabled) update.dnd_enabled = dndEnabled;
+      if (this.getSetting('dnd_start')   !== dndStart)   update.dnd_start   = dndStart;
+      if (this.getSetting('dnd_end')     !== dndEnd)     update.dnd_end     = dndEnd;
+    }
+
     if (Object.keys(update).length > 0) {
       this.log('[cfg] applying settings from CFG:', JSON.stringify(update));
       await this.setSettings(update).catch((e) => this.error('setSettings CFG:', e.message));
@@ -1062,6 +1094,7 @@ class MowerDevice extends Homey.Device {
       'brand', 'region', 'device_model', 'firmware_version',
       'serial_number', 'mac_address', 'poll_interval', 'num_zones',
       'cls_enabled', 'fdp_enabled', 'wrp_enabled', 'wrp_sensitivity', 'wrp_wait_time',
+      'dnd_enabled', 'dnd_start', 'dnd_end',
       'lit_enabled', 'lit_time_start', 'lit_time_end', 'lit_standby', 'lit_working', 'lit_charging', 'lit_error',
     ];
     const deviceSettings = {};

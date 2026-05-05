@@ -1,6 +1,6 @@
 {
   "id": "com.mova-dreame.mower",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "compatibility": ">=12.0.0",
   "sdk": 3,
   "name": {
@@ -68,6 +68,10 @@
     "0.0.8": {
       "en": "Added lighting settings (on/off, time window) confirmed via packet capture. Fixed capability icon rendering on iOS. Expanded debug poll with CFG data, capability values and device settings.",
       "de": "Beleuchtungseinstellungen (Ein/Aus, Zeitfenster) per Packet Capture bestätigt hinzugefügt. Darstellung der Capability-Icons unter iOS korrigiert. Debug-Poll um CFG-Daten, Capability-Werte und Geräteeinstellungen erweitert."
+    },
+    "0.0.9": {
+      "en": "Added Do Not Disturb settings (on/off, start/end time) confirmed via packet capture. Fixed DND API payload (was sending JSON string instead of object).",
+      "de": "Bitte-nicht-stören-Einstellungen (Ein/Aus, Start-/Endzeit) per Packet Capture bestätigt hinzugefügt. DND-API-Payload korrigiert (wurde fälschlicherweise als JSON-String statt Objekt gesendet)."
     }
   }
 }

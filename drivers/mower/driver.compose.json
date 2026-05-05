@@ -258,6 +258,48 @@
     },
     {
       "type": "group",
+      "label": { "en": "Do Not Disturb", "de": "Bitte nicht stören" },
+      "children": [
+        {
+          "id": "dnd_enabled",
+          "type": "checkbox",
+          "label": { "en": "Enabled", "de": "Aktiviert" },
+          "value": false,
+          "hint": {
+            "en": "When enabled, the mower will not start automatically during the set time window. If it is already mowing it will stop and return to the dock.",
+            "de": "Wenn aktiviert, beginnt der Mähroboter innerhalb des eingestellten Zeitraums nicht automatisch. Wenn er bereits mäht, unterbricht er die Arbeit und kehrt zur Station zurück."
+          }
+        },
+        {
+          "id": "dnd_start",
+          "type": "number",
+          "label": { "en": "Start (h)", "de": "Start (Uhr)" },
+          "value": 22,
+          "min": 0,
+          "max": 23,
+          "step": 1,
+          "hint": {
+            "en": "Start of the Do Not Disturb window (e.g. 22 = 22:00).",
+            "de": "Beginn des Bitte-nicht-stören-Zeitraums (z. B. 22 = 22:00 Uhr)."
+          }
+        },
+        {
+          "id": "dnd_end",
+          "type": "number",
+          "label": { "en": "End (h)", "de": "Ende (Uhr)" },
+          "value": 8,
+          "min": 0,
+          "max": 23,
+          "step": 1,
+          "hint": {
+            "en": "End of the Do Not Disturb window (e.g. 8 = 08:00 next day).",
+            "de": "Ende des Bitte-nicht-stören-Zeitraums (z. B. 8 = 08:00 Uhr nächsten Tag)."
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
       "label": { "en": "Connection", "de": "Verbindung" },
       "children": [
         {

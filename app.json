@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.mova-dreame.mower",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "compatibility": ">=12.0.0",
   "sdk": 3,
   "name": {
@@ -71,6 +71,10 @@
     "0.0.8": {
       "en": "Added lighting settings (on/off, time window) confirmed via packet capture. Fixed capability icon rendering on iOS. Expanded debug poll with CFG data, capability values and device settings.",
       "de": "Beleuchtungseinstellungen (Ein/Aus, Zeitfenster) per Packet Capture bestätigt hinzugefügt. Darstellung der Capability-Icons unter iOS korrigiert. Debug-Poll um CFG-Daten, Capability-Werte und Geräteeinstellungen erweitert."
+    },
+    "0.0.9": {
+      "en": "Added Do Not Disturb settings (on/off, start/end time) confirmed via packet capture. Fixed DND API payload (was sending JSON string instead of object).",
+      "de": "Bitte-nicht-stören-Einstellungen (Ein/Aus, Start-/Endzeit) per Packet Capture bestätigt hinzugefügt. DND-API-Payload korrigiert (wurde fälschlicherweise als JSON-String statt Objekt gesendet)."
     }
   },
   "flow": {
@@ -972,6 +976,60 @@
               "hint": {
                 "en": "Turn on the LED when the mower reports an error.",
                 "de": "LED leuchtet, wenn der Mähroboter einen Fehler meldet."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Do Not Disturb",
+            "de": "Bitte nicht stören"
+          },
+          "children": [
+            {
+              "id": "dnd_enabled",
+              "type": "checkbox",
+              "label": {
+                "en": "Enabled",
+                "de": "Aktiviert"
+              },
+              "value": false,
+              "hint": {
+                "en": "When enabled, the mower will not start automatically during the set time window. If it is already mowing it will stop and return to the dock.",
+                "de": "Wenn aktiviert, beginnt der Mähroboter innerhalb des eingestellten Zeitraums nicht automatisch. Wenn er bereits mäht, unterbricht er die Arbeit und kehrt zur Station zurück."
+              }
+            },
+            {
+              "id": "dnd_start",
+              "type": "number",
+              "label": {
+                "en": "Start (h)",
+                "de": "Start (Uhr)"
+              },
+              "value": 22,
+              "min": 0,
+              "max": 23,
+              "step": 1,
+              "hint": {
+                "en": "Start of the Do Not Disturb window (e.g. 22 = 22:00).",
+                "de": "Beginn des Bitte-nicht-stören-Zeitraums (z. B. 22 = 22:00 Uhr)."
+              }
+            },
+            {
+              "id": "dnd_end",
+              "type": "number",
+              "label": {
+                "en": "End (h)",
+                "de": "Ende (Uhr)"
+              },
+              "value": 8,
+              "min": 0,
+              "max": 23,
+              "step": 1,
+              "hint": {
+                "en": "End of the Do Not Disturb window (e.g. 8 = 08:00 next day).",
+                "de": "Ende des Bitte-nicht-stören-Zeitraums (z. B. 8 = 08:00 Uhr nächsten Tag)."
               }
             }
           ]
