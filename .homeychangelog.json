@@ -28,6 +28,19 @@
     "de": "Frostschutz- und Regenschutz-Einstellungen hinzugefügt (per Packet Capture bestätigt). Knöpfe Mähen beenden und Pausieren hinzugefügt. Kantenmähen-Knöpfe pro Zone hinzugefügt. Fehler 'Zone nicht erreichbar' beim Kantenmähen behoben. Aktionsknöpfe werden bei Statuswechsel automatisch zurückgesetzt. Einstellungsseite vereinfacht — nicht verifizierte Optionen entfernt."
   },
   "0.0.8": {
-    "en": "all actions are working now, nicer icons, removed Dreame for now (MOVA has priority)"
+    "en": "Added lighting settings (on/off, time window, per-scenario LED) confirmed via packet capture. Fixed capability icon rendering on iOS. Expanded debug console with CFG data, capability values and device settings.",
+    "de": "Beleuchtungseinstellungen (Ein/Aus, Zeitfenster, Lichtszenarien) per Packet Capture bestätigt hinzugefügt. Darstellung der Capability-Icons unter iOS korrigiert. Debug-Konsole um CFG-Daten, Capability-Werte und Geräteeinstellungen erweitert."
+  },
+  "0.0.9": {
+    "en": "Added Do Not Disturb and Low Speed at Night settings (on/off, start/end time) confirmed via packet capture. Fixed DND API payload.",
+    "de": "Bitte-nicht-stören- und Niedrige-Geschwindigkeit-in-der-Nacht-Einstellungen hinzugefügt (per Packet Capture bestätigt). DND-API-Payload korrigiert."
+  },
+  "0.0.10": {
+    "en": "Added blade, brush and robot maintenance consumable sensors (%). Fixed LIT settings parsing (CFG returns an array — start time, end time and light scenarios were read incorrectly).",
+    "de": "Klingen-, Reinigungsbürsten- und Roboterwartungs-Sensoren (%) hinzugefügt. LIT-Einstellungs-Parsing korrigiert (CFG liefert ein Array — Startzeit, Endzeit und Lichtszenarien wurden falsch gelesen)."
+  },
+  "0.0.11": {
+    "en": "Added battery settings: return-to-dock threshold, task-resume threshold and resume-after-charging toggle (confirmed via packet capture).",
+    "de": "Akku-Einstellungen hinzugefügt: Rückkehr-Schwellwert, Wiederaufnahme-Schwellwert und Mähen-nach-Laden-fortsetzen (per Packet Capture bestätigt)."
   }
 }

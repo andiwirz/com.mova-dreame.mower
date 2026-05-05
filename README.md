@@ -119,11 +119,7 @@ If this app saves you time and works well for you, a small donation is always ap
 
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-0070ba?logo=paypal)](https://www.paypal.me/AndiWirz)
 
-## Notes
 
-Zone mowing buttons (Zone 1–5) are shown as TBD — the exact API payload for zone-specific mowing on MOVA devices is not yet confirmed. Edge mowing per zone is fully working. Zone and spot mowing via flow cards require zones to be configured in the official MOVA or Dreame app first.
-
----
 
 ## API Reference
 
