@@ -19,7 +19,10 @@
     "firmware_update",
     "measure_duration",
     "child_lock",
-    "mower_volume"
+    "mower_volume",
+    "consumable_blade",
+    "consumable_brush",
+    "consumable_robot"
   ],
   "capabilitiesOptions": {
     "alarm_generic": {

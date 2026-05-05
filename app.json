@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.mova-dreame.mower",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "compatibility": ">=12.0.0",
   "sdk": 3,
   "name": {
@@ -75,6 +75,10 @@
     "0.0.9": {
       "en": "Added Do Not Disturb and Low Speed at Night settings (on/off, start/end time) confirmed via packet capture. Fixed DND API payload (was sending JSON string instead of object).",
       "de": "Bitte-nicht-stören- und Niedrige-Geschwindigkeit-in-der-Nacht-Einstellungen (Ein/Aus, Start-/Endzeit) per Packet Capture bestätigt hinzugefügt. DND-API-Payload korrigiert (wurde fälschlicherweise als JSON-String statt Objekt gesendet)."
+    },
+    "0.0.10": {
+      "en": "Added blade, brush and robot maintenance consumable sensors (%). Fixed LIT settings parsing (CFG returns an array, not an object — start time, end time and light scenarios were read incorrectly).",
+      "de": "Klingen-, Reinigungsbürsten- und Roboterwartungs-Sensoren (%) hinzugefügt. LIT-Einstellungs-Parsing korrigiert (CFG liefert ein Array statt eines Objekts — Startzeit, Endzeit und Lichtszenarien wurden falsch gelesen)."
     }
   },
   "flow": {
@@ -655,7 +659,10 @@
         "firmware_update",
         "measure_duration",
         "child_lock",
-        "mower_volume"
+        "mower_volume",
+        "consumable_blade",
+        "consumable_brush",
+        "consumable_robot"
       ],
       "capabilitiesOptions": {
         "alarm_generic": {
@@ -1383,6 +1390,51 @@
       "setable": false,
       "uiComponent": "sensor",
       "icon": "/assets/capabilities/collision_avoidance.svg"
+    },
+    "consumable_blade": {
+      "type": "number",
+      "title": {
+        "en": "Blade life",
+        "de": "Klingen-Lebensdauer"
+      },
+      "units": "%",
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "decimals": 0,
+      "min": 0,
+      "max": 100,
+      "icon": "/assets/capabilities/consumable_blade.svg"
+    },
+    "consumable_brush": {
+      "type": "number",
+      "title": {
+        "en": "Cleaning brush life",
+        "de": "Reinigungsbürste-Lebensdauer"
+      },
+      "units": "%",
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "decimals": 0,
+      "min": 0,
+      "max": 100,
+      "icon": "/assets/capabilities/consumable_brush.svg"
+    },
+    "consumable_robot": {
+      "type": "number",
+      "title": {
+        "en": "Robot maintenance",
+        "de": "Wartung des Roboters"
+      },
+      "units": "%",
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "decimals": 0,
+      "min": 0,
+      "max": 100,
+      "icon": "/assets/capabilities/consumable_robot.svg"
     },
     "firmware_update": {
       "type": "boolean",

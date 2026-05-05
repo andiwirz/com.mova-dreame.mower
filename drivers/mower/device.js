@@ -101,6 +101,10 @@ const MIGRATIONS = [
     key: 'capabilities_migrated_v13',
     caps: ['mower_volume'],
   },
+  {
+    key: 'capabilities_migrated_v14',
+    caps: ['consumable_blade', 'consumable_brush', 'consumable_robot'],
+  },
 ];
 
 // Capabilities removed — stripped from existing installs on next init
@@ -108,7 +112,6 @@ const REMOVE_CAPABILITIES = [
   // v5: no API data
   'alarm_obstacle', 'alarm_tilt', 'alarm_lift',
   'mower_task_status',
-  'consumable_blade', 'consumable_brush', 'consumable_robot',
   'mower_error_code',
   'mower_progress',
   'measure_area',
@@ -800,22 +803,54 @@ class MowerDevice extends Homey.Device {
       }
     }
 
-    // LIT — lighting: GET returns { value:0|1, time:[startMin,endMin] } only.
-    // The light:[standby,working,charging,error] array is write-only (not in GET response).
-    if (cfg.LIT != null && typeof cfg.LIT === 'object') {
-      const litEnabled = cfg.LIT.value !== 0;
-      const litStart   = Math.round((cfg.LIT.time?.[0] ?? 480) / 60);
-      const litEnd     = Math.round((cfg.LIT.time?.[1] ?? 1200) / 60);
-      if (this.getSetting('lit_enabled')    !== litEnabled) update.lit_enabled    = litEnabled;
-      if (this.getSetting('lit_time_start') !== litStart)   update.lit_time_start = litStart;
-      if (this.getSetting('lit_time_end')   !== litEnd)     update.lit_time_end   = litEnd;
-      // light[] scenarios: only update if the device actually returns them (future firmware may add it).
-      if (Array.isArray(cfg.LIT.light)) {
-        const l = cfg.LIT.light;
-        if (this.getSetting('lit_standby')  !== (l[0] === 1)) update.lit_standby  = l[0] === 1;
-        if (this.getSetting('lit_working')  !== (l[1] === 1)) update.lit_working  = l[1] === 1;
-        if (this.getSetting('lit_charging') !== (l[2] === 1)) update.lit_charging = l[2] === 1;
-        if (this.getSetting('lit_error')    !== (l[3] === 1)) update.lit_error    = l[3] === 1;
+    // LIT — lighting.
+    // GET returns an array [enabled, startMin, endMin, standby, working, charging, error]
+    // or (older firmware) an object { value, time:[startMin,endMin], light:[...] }.
+    // All 7 values are readable; light scenarios are NOT write-only.
+    if (cfg.LIT != null) {
+      let litEnabled, litStart, litEnd, litStandby, litWorking, litCharging, litError;
+      if (Array.isArray(cfg.LIT)) {
+        litEnabled  = cfg.LIT[0] === 1;
+        litStart    = Math.round((cfg.LIT[1] ?? 480)  / 60);
+        litEnd      = Math.round((cfg.LIT[2] ?? 1200) / 60);
+        litStandby  = cfg.LIT[3] === 1;
+        litWorking  = cfg.LIT[4] === 1;
+        litCharging = cfg.LIT[5] === 1;
+        litError    = cfg.LIT[6] === 1;
+      } else if (typeof cfg.LIT === 'object') {
+        litEnabled  = cfg.LIT.value === 1;
+        litStart    = Math.round((cfg.LIT.time?.[0] ?? 480)  / 60);
+        litEnd      = Math.round((cfg.LIT.time?.[1] ?? 1200) / 60);
+        if (Array.isArray(cfg.LIT.light)) {
+          litStandby  = cfg.LIT.light[0] === 1;
+          litWorking  = cfg.LIT.light[1] === 1;
+          litCharging = cfg.LIT.light[2] === 1;
+          litError    = cfg.LIT.light[3] === 1;
+        }
+      }
+      if (litEnabled  !== undefined && this.getSetting('lit_enabled')    !== litEnabled)  update.lit_enabled    = litEnabled;
+      if (litStart    !== undefined && this.getSetting('lit_time_start') !== litStart)    update.lit_time_start = litStart;
+      if (litEnd      !== undefined && this.getSetting('lit_time_end')   !== litEnd)      update.lit_time_end   = litEnd;
+      if (litStandby  !== undefined && this.getSetting('lit_standby')    !== litStandby)  update.lit_standby    = litStandby;
+      if (litWorking  !== undefined && this.getSetting('lit_working')    !== litWorking)  update.lit_working    = litWorking;
+      if (litCharging !== undefined && this.getSetting('lit_charging')   !== litCharging) update.lit_charging   = litCharging;
+      if (litError    !== undefined && this.getSetting('lit_error')      !== litError)    update.lit_error      = litError;
+    }
+
+    // CMS — consumable maintenance: array [bladeMin, brushMin, robotMin] = minutes used since last replacement.
+    // Max life: blade=6000 min (100h), brush=30000 min (500h), robot=3600 min (60h).
+    // Confirmed via getCFG response and cross-checked against MOVA app percentages.
+    if (Array.isArray(cfg.CMS) && cfg.CMS.length >= 3) {
+      const CMS_MAX = [6000, 30000, 3600];
+      const caps    = ['consumable_blade', 'consumable_brush', 'consumable_robot'];
+      for (let i = 0; i < 3; i++) {
+        if (this.hasCapability(caps[i])) {
+          const pct = Math.max(0, Math.round((1 - cfg.CMS[i] / CMS_MAX[i]) * 100));
+          if (this.getCapabilityValue(caps[i]) !== pct) {
+            await this.setCapabilityValue(caps[i], pct)
+              .catch((e) => this.error(`setCapabilityValue ${caps[i]}:`, e.message));
+          }
+        }
       }
     }
 
@@ -1102,10 +1137,11 @@ class MowerDevice extends Homey.Device {
   async getDebugPollData() {
     const did = this.getData().id;
 
-    const [rawResponse, deviceStatus, cfgResult] = await Promise.allSettled([
+    const [rawResponse, deviceStatus, cfgResult, cmsResult] = await Promise.allSettled([
       this._api.getRawProperties(did),
       this._api.getDeviceStatus(did),
       this._api.getCFG(did),
+      this._api.getCMS(did),
     ]);
 
     // Capability snapshot
@@ -1129,6 +1165,7 @@ class MowerDevice extends Homey.Device {
       'low_enabled', 'low_start', 'low_end',
       'dnd_enabled', 'dnd_start', 'dnd_end',
       'lit_enabled', 'lit_time_start', 'lit_time_end', 'lit_standby', 'lit_working', 'lit_charging', 'lit_error',
+      'consumable_blade', 'consumable_brush', 'consumable_robot',
     ];
     const deviceSettings = {};
     for (const k of settingKeys) {
@@ -1136,6 +1173,7 @@ class MowerDevice extends Homey.Device {
     }
 
     const cfgData = cfgResult.status === 'fulfilled' ? cfgResult.value : { error: cfgResult.reason?.message };
+    const cmsData = cmsResult.status === 'fulfilled' ? cmsResult.value : { error: cmsResult.reason?.message };
 
     return {
       timestamp:        new Date().toISOString(),
@@ -1146,6 +1184,7 @@ class MowerDevice extends Homey.Device {
       rawResponse:      rawResponse.status  === 'fulfilled' ? rawResponse.value  : { error: rawResponse.reason?.message },
       deviceStatus:     deviceStatus.status === 'fulfilled' ? deviceStatus.value : { error: deviceStatus.reason?.message },
       cfgData,
+      cmsData,
       capabilityValues,
       storeValues,
       deviceSettings,

@@ -1,0 +1,12 @@
+{
+  "type": "number",
+  "title": { "en": "Cleaning brush life", "de": "Reinigungsbürste-Lebensdauer" },
+  "units": "%",
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "decimals": 0,
+  "min": 0,
+  "max": 100,
+  "icon": "/assets/capabilities/consumable_brush.svg"
+}

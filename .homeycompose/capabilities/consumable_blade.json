@@ -1,0 +1,12 @@
+{
+  "type": "number",
+  "title": { "en": "Blade life", "de": "Klingen-Lebensdauer" },
+  "units": "%",
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "decimals": 0,
+  "min": 0,
+  "max": 100,
+  "icon": "/assets/capabilities/consumable_blade.svg"
+}

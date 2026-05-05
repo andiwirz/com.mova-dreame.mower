@@ -1,6 +1,6 @@
 {
   "id": "com.mova-dreame.mower",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "compatibility": ">=12.0.0",
   "sdk": 3,
   "name": {
@@ -72,6 +72,10 @@
     "0.0.9": {
       "en": "Added Do Not Disturb and Low Speed at Night settings (on/off, start/end time) confirmed via packet capture. Fixed DND API payload (was sending JSON string instead of object).",
       "de": "Bitte-nicht-stören- und Niedrige-Geschwindigkeit-in-der-Nacht-Einstellungen (Ein/Aus, Start-/Endzeit) per Packet Capture bestätigt hinzugefügt. DND-API-Payload korrigiert (wurde fälschlicherweise als JSON-String statt Objekt gesendet)."
+    },
+    "0.0.10": {
+      "en": "Added blade, brush and robot maintenance consumable sensors (%). Fixed LIT settings parsing (CFG returns an array, not an object — start time, end time and light scenarios were read incorrectly).",
+      "de": "Klingen-, Reinigungsbürsten- und Roboterwartungs-Sensoren (%) hinzugefügt. LIT-Einstellungs-Parsing korrigiert (CFG liefert ein Array statt eines Objekts — Startzeit, Endzeit und Lichtszenarien wurden falsch gelesen)."
     }
   }
 }
