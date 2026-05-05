@@ -36,6 +36,37 @@ Device info (model, firmware, serial, MAC, email, brand, region) and zone count 
 
 Open the Homey app, add a new device and select MOVA or Dreame as brand and your region. Enter the same email address and password you use in the official MOVA or Dreame smartphone app. The integration will discover all mowers linked to your account.
 
+## Commands
+
+### Device Card Buttons
+
+| Button | Description |
+|--------|-------------|
+| Start Mowing | Starts mowing using the active mowing mode (full area by default) |
+| Mow Full Area | Immediately starts a full-area mow, ignoring the active mode |
+| Edge Mowing | Starts edge mowing along the entire perimeter |
+| Pause | Pauses the mower; it waits in place until resumed |
+| Stop | Stops mowing and keeps the mower where it is |
+| Return to Dock | Sends the mower back to the charging station |
+| Zone 1–5 | Mows the corresponding zone (buttons appear automatically based on detected map zones) |
+| Edge Zone 1–5 | Edge-mows the corresponding zone (buttons appear automatically based on detected map zones) |
+
+### Flow Card Actions
+
+| Action | Description |
+|--------|-------------|
+| Start mowing | Starts mowing using the configured mowing mode |
+| Start edge mowing | Starts edge mowing along the full perimeter |
+| Start zone mowing | Mows one or more specific zones (comma-separated zone IDs) |
+| Start edge zone mowing | Edge-mows a specific zone by number |
+| Start spot mowing | Mows at specific spot locations (comma-separated spot IDs) |
+| Pause mowing | Pauses the mower in place |
+| Stop mowing | Stops the current mowing session |
+| Return to dock | Returns the mower to the charging station |
+| Find mower | Plays an audible alert to help locate the mower |
+| Clear error | Clears a recoverable fault so mowing can resume |
+| Set mowing mode | Sets the default mode used by "Start mowing" (all area / edge / zone / spot / manual) |
+
 ## Flow Cards
 
 **When...**
@@ -70,6 +101,12 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 |-------|---------|
 | MOVA | Europe (EU), China (CN), North America (NA) |
 | Dreame | Europe (EU), China (CN), North America (NA) |
+
+## Support the Project
+
+If this app saves you time and works well for you, a small donation is always appreciated — it helps cover development time and API research.
+
+[![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-0070ba?logo=paypal)](https://www.paypal.me/PLACEHOLDER)
 
 ## Notes
 
