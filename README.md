@@ -111,3 +111,116 @@ If this app saves you time and works well for you, a small donation is always ap
 ## Notes
 
 Zone mowing buttons (Zone 1–5) are shown as TBD — the exact API payload for zone-specific mowing on MOVA devices is not yet confirmed. Edge mowing per zone is fully working. Zone and spot mowing via flow cards require zones to be configured in the official MOVA or Dreame app first.
+
+---
+
+## API Reference
+
+This section documents the MiOT protocol used internally to communicate with the MOVA / Dreame cloud. Useful for debugging, extensions, or porting to other platforms.
+
+> **Legend:** ✓ = confirmed via packet capture or live testing · ~ = confirmed via ioBroker / HA integration source · ✗ = unverified / TODO
+
+### HTTP Endpoints
+
+All requests are HTTPS POST to port **13267**. Host: `<region><brand-host>` (e.g. `eu.iot.mova-tech.com`).
+
+| Path | Auth header | Purpose |
+|------|-------------|---------|
+| `/dreame-auth/oauth/token` | `Authorization: Basic …` | Login (password grant) and token refresh |
+| `/dreame-user-iot/iotuserbind/device/listV2` | `Dreame-Auth: <token>` | Discover all linked devices |
+| `/dreame-user-iot/iotuserdata/getDeviceData` | `Dreame-Auth: <token>` | Read MiOT properties |
+| `/dreame-user-iot/iotuserdata/setDeviceData` | `Dreame-Auth: <token>` | Write MiOT properties |
+| `/dreame-iot-com<bindHost>/device/sendCommand` | `Dreame-Auth: <token>` | Execute MiOT actions (`bindHost` = `-<first segment of bindDomain>`, e.g. `-20000`) |
+
+Password is MD5-hashed with salt `RAylYC%fmSKp7%Tq` before sending. Both brands share the same Basic auth credentials and salt.
+
+---
+
+### MiOT Properties
+
+Read via `getDeviceData`, write via `setDeviceData`. Body: `{ did, model:[{siid,piid}] }` / `{ did, model:[{siid,piid,value}] }`.
+
+| siid | piid | Name | R | W | Confirmed | Notes |
+|------|------|------|---|---|-----------|-------|
+| 1 | 2 | Firmware state | ✓ | — | ✓ | Firmware version string |
+| 1 | 53 | Bluetooth | ✓ | — | ~ | Source: ioBroker |
+| 2 | 1 | Status | ✓ | — | ✓ | Mower status (numeric code) |
+| 2 | 2 | Device code | ✓ | — | ✓ | Current error / device code |
+| 2 | 4 | Mowing speed | — | ✓ | ✗ | `0`=slow `1`=normal `2`=fast — piid unverified |
+| 2 | 6 | Border first | — | ✓ | ✗ | `0`=off `1`=on — piid unverified |
+| 2 | 50 | App-action channel | ✓ | ✓ | ✓ | Dual-purpose: mowing commands + CFG read/write (see below) |
+| 2 | 51 | Settings CFG blob | ✓ | — | ✓ | Read-only; device pushes full JSON CFG here; do not write directly |
+| 2 | 109 | Cutting height | — | ✓ | ✗ | Height in mm — piid unverified |
+| 2 | 110 | Auto-resume | — | ✓ | ✗ | `0`=off `1`=on — piid unverified |
+| 2 | 111 | Mowing pattern | — | ✓ | ✗ | `0`=zigzag `1`=checkerboard — piid unverified |
+| 2 | 112 | Rain protection | ✓ | — | ✗ | piid unverified — use CFG action channel instead |
+| 2 | 113 | Night mode | — | ✓ | ✗ | `0`=off `1`=on — piid unverified |
+| 2 | 114 | Volume | — | ✓ | ✗ | piid unverified — use CFG action channel instead |
+| 3 | 1 | Battery | ✓ | — | ✓ | 0–100 % |
+| 3 | 2 | Charging status | ✓ | — | ✓ | `0`=not charging `1`=charging |
+| 3 | 10 | Return threshold | — | ✓ | ✗ | Battery % at which mower returns to dock — piid unverified |
+| 3 | 11 | Resume threshold | — | ✓ | ✗ | Battery % at which mower resumes — piid unverified |
+| 4 | 21 | Obstacle avoidance | — | ✓ | ~ | `0`=off `1`=low `2`=medium `3`=high |
+| 4 | 22 | AI detection | ✓ | — | ~ | Source: ioBroker.dreame |
+| 4 | 50 | AutoSwitch settings | ✓ | ✓ | ~ | JSON string `{k:'KEY',v:0\|1}` — see AutoSwitch keys below |
+
+---
+
+### MiOT Actions
+
+Sent via `sendCommand`. Body: `{ did, id, data:{ did, id, method:'action', params:{ did, siid, aiid, in:[…] } } }`.
+
+| siid | aiid | Name | `in` params | Confirmed | Notes |
+|------|------|------|-------------|-----------|-------|
+| 2 | 50 | App-action channel | `[{m, p, o, d}]` or `[{m:'g'\|'s', t, d}]` | ✓ | Multi-purpose (see op-codes and CFG keys) |
+| 4 | 3 | Clear error / fault | — | ✗ | Returns `80001` (not supported) on MOVA devices |
+| 5 | 1 | Start mowing | — | ✓ | Uses active mowing mode |
+| 5 | 2 | Stop mowing | — | ✓ | |
+| 5 | 3 | Return to dock | — | ✓ | |
+| 5 | 4 | Pause | — | ✓ | |
+| 5 | 7 | Start manual mowing | — | ✗ | siid/aiid unverified |
+
+---
+
+### App-Action Channel — Mowing Op-codes
+
+Action: `siid:2, aiid:50`. Payload item: `{ m:'a', p:<mapIndex>, o:<opcode>, d:{…} }`.
+
+| `o` | Name | `d` payload | Confirmed |
+|-----|------|-------------|-----------|
+| 9 | Find mower (audible alert) | `{}` | ✓ |
+| 101 | Edge mowing — full perimeter | `{}` (all boundaries) or `{ edge:[[zoneId, mapIdx]] }` (single zone) | ✓ |
+| 102 | Zone mowing | `{ region:[zoneId, …] }` — flat array of numeric zone IDs | ✓ |
+| 103 | Spot mowing | `{ spots:[spotId, …] }` | ✗ |
+
+`p` is the active map index (typically `0`). Omitting the `edge` array in op-code 101 lets the device mow all stored boundaries automatically — passing unknown boundary-segment IDs causes a "zone unreachable" error.
+
+---
+
+### App-Action Channel — CFG Keys
+
+Read all: `in:[{ m:'g', t:'CFG' }]` → response `data.result.out[0].d` contains all keys.  
+Write one: `in:[{ m:'s', t:'<KEY>', d:{…} }]`.
+
+| Key | GET `d` format | SET `d` format | Description | Confirmed |
+|-----|----------------|----------------|-------------|-----------|
+| `CLS` | `{value:0\|1}` | `{value:0\|1}` | Child lock (`0`=off, `1`=on) | ✓ |
+| `FDP` | `{value:0\|1}` | `{value:0\|1}` | Frost protection | ✓ |
+| `WRP` | `{value, sen, time}` | `{value, sen, time}` | Rain protection — `sen`=sensitivity 1–3, `time`=wait hours | ✓ |
+| `VOL` | `{value:0–100}` | `{value:0–100}` | Speaker volume | ✓ |
+| `LIT` | `{value, time:[startMin, endMin]}` | `{value, time:[startMin, endMin], light:[s, w, c, e]}` | LED settings — time in minutes since midnight; `light` array: standby / working / charging / error (`0`\|`1`); `light[]` is **write-only** (not returned by GET) | ✓ |
+| `DND` | `{value, time:[startMin, endMin]}` | `{value, time:[startMin, endMin]}` | Do-Not-Disturb — time in minutes since midnight (e.g. `480`=08:00) | ~ |
+| `PRE` | `[n0, n1, …, n9]` | `[n0, n1, …, n9]` | Mowing preferences (10-element array — requires read-modify-write; index 1=mode, 2=cutting height, 5=direction, 8=edge detect, 9=edge mow) | ~ |
+| `PROT` | `{value:0\|1}` | `{value:0\|1}` | Grass protection | ~ |
+| `STUN` | `{value:0\|1}` | `{value:0\|1}` | Anti-theft lock | ~ |
+
+---
+
+### AutoSwitch Keys (`siid:4, piid:50`)
+
+Single JSON-string property. Read via property poll; write via `setDeviceData` with value `JSON.stringify({ k:'KEY', v:0|1 })`.
+
+| `k` | Description | `v` values | Confirmed |
+|-----|-------------|------------|-----------|
+| `LessColl` | Collision avoidance sensitivity | `0`=off, `1`=on | ~ |
+| `SmartCharge` | Smart auto-charging | `0`=off, `1`=on | ~ |
