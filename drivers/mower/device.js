@@ -159,42 +159,67 @@ class MowerDevice extends Homey.Device {
 
     this.registerCapabilityListener('cmd_all_area', async (value) => {
       if (!value) return;
-      this.log('[cmd] btn: all area → sendAction(5,1)');
-      await this._safeWrite('cmd_all_area', () => this._api.startMowing(did));
-      await this._setMowingStarted();
-      await this.setCapabilityValue('cmd_all_area', false).catch(() => {});
+      try {
+        this.log('[cmd] btn: all area → sendAction(5,1)');
+        await this._safeWrite('cmd_all_area', () => this._api.startMowing(did));
+        await this._setMowingStarted();
+      } catch (err) {
+        this.error('[cmd_all_area] listener error:', err.message);
+      } finally {
+        await this.setCapabilityValue('cmd_all_area', false).catch(() => {});
+      }
     });
 
     this.registerCapabilityListener('cmd_edge_mowing', async (value) => {
       if (!value) return;
-      const mapIdx = this._activeMapIndex ?? 0;
-      this.log(`[cmd] btn: edge mapIndex=${mapIdx} → sendAction(2,50,{m:a,o:101,d:{}})`);
-      await this._safeWrite('cmd_edge_mowing', () => this._api.startEdgeMowing(did, mapIdx));
-      await this._setMowingStarted();
-      await this.setCapabilityValue('cmd_edge_mowing', false).catch(() => {});
+      try {
+        const mapIdx = this._activeMapIndex ?? 0;
+        this.log(`[cmd] btn: edge mapIndex=${mapIdx} → sendAction(2,50,{m:a,o:101,d:{}})`);
+        await this._safeWrite('cmd_edge_mowing', () => this._api.startEdgeMowing(did, mapIdx));
+        await this._setMowingStarted();
+      } catch (err) {
+        this.error('[cmd_edge_mowing] listener error:', err.message);
+      } finally {
+        await this.setCapabilityValue('cmd_edge_mowing', false).catch(() => {});
+      }
     });
 
     this.registerCapabilityListener('cmd_stop', async (value) => {
       if (!value) return;
-      this.log('[cmd] btn: stop → sendAction(5,2)');
-      await this._safeWrite('cmd_stop', () => this._api.stopMowing(did));
-      await this.setCapabilityValue('cmd_stop', false).catch(() => {});
+      try {
+        this.log('[cmd] btn: stop → sendAction(5,2)');
+        await this._safeWrite('cmd_stop', () => this._api.stopMowing(did));
+      } catch (err) {
+        this.error('[cmd_stop] listener error:', err.message);
+      } finally {
+        await this.setCapabilityValue('cmd_stop', false).catch(() => {});
+      }
     });
 
     this.registerCapabilityListener('cmd_pause', async (value) => {
       if (!value) return;
-      this.log('[cmd] btn: pause → sendAction(5,4)');
-      await this._safeWrite('cmd_pause', () => this._api.pause(did));
-      await this._applyStatus('paused');
-      await this.setCapabilityValue('cmd_pause', false).catch(() => {});
+      try {
+        this.log('[cmd] btn: pause → sendAction(5,4)');
+        await this._safeWrite('cmd_pause', () => this._api.pause(did));
+        await this._applyStatus('paused');
+      } catch (err) {
+        this.error('[cmd_pause] listener error:', err.message);
+      } finally {
+        await this.setCapabilityValue('cmd_pause', false).catch(() => {});
+      }
     });
 
     this.registerCapabilityListener('cmd_dock', async (value) => {
       if (!value) return;
-      this.log('[cmd] btn: dock → dock()');
-      await this._safeWrite('cmd_dock', () => this._api.dock(did));
-      await this._applyStatus('returning');
-      await this.setCapabilityValue('cmd_dock', false).catch(() => {});
+      try {
+        this.log('[cmd] btn: dock → dock()');
+        await this._safeWrite('cmd_dock', () => this._api.dock(did));
+        await this._applyStatus('returning');
+      } catch (err) {
+        this.error('[cmd_dock] listener error:', err.message);
+      } finally {
+        await this.setCapabilityValue('cmd_dock', false).catch(() => {});
+      }
     });
 
     // Zone buttons — register listeners for any zone capabilities already on device
@@ -204,7 +229,6 @@ class MowerDevice extends Homey.Device {
 
     // Fetch current device config before starting the poll loop so the settings
     // page always shows real device values the moment the user opens it.
-    const did = this.getData().id;
     const cfg = await this._api.getCFG(did).catch((e) => {
       this.error('[init] getCFG failed:', e.message);
       return null;
@@ -551,11 +575,16 @@ class MowerDevice extends Homey.Device {
   _registerZoneListener(capId, zoneNum, did) {
     this.registerCapabilityListener(capId, async (value) => {
       if (!value) return;
-      const mapIdx = this._activeMapIndex ?? 0;
-      this.log(`[cmd] btn: zone ${zoneNum} mapIndex=${mapIdx} → sendAction(2,50,{m:a,o:102,region:[[${zoneNum},${mapIdx}]]})`);
-      await this._safeWrite(capId, () => this._api.startZoneMowing(did, [String(zoneNum)], 1, mapIdx));
-      await this._setMowingStarted();
-      await this.setCapabilityValue(capId, false).catch(() => {});
+      try {
+        const mapIdx = this._activeMapIndex ?? 0;
+        this.log(`[cmd] btn: zone ${zoneNum} mapIndex=${mapIdx} → sendAction(2,50,{m:a,o:102,d:{region:[${zoneNum}]}})`);
+        await this._safeWrite(capId, () => this._api.startZoneMowing(did, [zoneNum], mapIdx));
+        await this._setMowingStarted();
+      } catch (err) {
+        this.error(`[${capId}] listener error:`, err.message);
+      } finally {
+        await this.setCapabilityValue(capId, false).catch(() => {});
+      }
     });
   }
 
@@ -563,11 +592,16 @@ class MowerDevice extends Homey.Device {
   _registerEdgeZoneListener(capId, zoneNum, did) {
     this.registerCapabilityListener(capId, async (value) => {
       if (!value) return;
-      const mapIdx = this._activeMapIndex ?? 0;
-      this.log(`[cmd] btn: edge zone ${zoneNum} mapIndex=${mapIdx} → sendAction(2,50,{m:a,o:101,d:{edge:[[${zoneNum},${mapIdx}]]}})`);
-      await this._safeWrite(capId, () => this._api.startEdgeZoneMowing(did, zoneNum, mapIdx));
-      await this._setMowingStarted();
-      await this.setCapabilityValue(capId, false).catch(() => {});
+      try {
+        const mapIdx = this._activeMapIndex ?? 0;
+        this.log(`[cmd] btn: edge zone ${zoneNum} mapIndex=${mapIdx} → sendAction(2,50,{m:a,o:101,d:{edge:[[${zoneNum},${mapIdx}]]}})`);
+        await this._safeWrite(capId, () => this._api.startEdgeZoneMowing(did, zoneNum, mapIdx));
+        await this._setMowingStarted();
+      } catch (err) {
+        this.error(`[${capId}] listener error:`, err.message);
+      } finally {
+        await this.setCapabilityValue(capId, false).catch(() => {});
+      }
     });
   }
 
@@ -813,9 +847,10 @@ class MowerDevice extends Homey.Device {
         await this._api.startEdgeMowing(did);
         break;
       case 'zone': {
-        const ids = (await this.getStoreValue('mowing_zone_ids')) || [];
+        const ids    = (await this.getStoreValue('mowing_zone_ids')) || [];
+        const mapIdx = this._activeMapIndex ?? 0;
         this.log(`[cmd] zone ids=${ids.join(',')}`);
-        await this._api.startZoneMowing(did, ids);
+        await this._api.startZoneMowing(did, ids, mapIdx);
         break;
       }
       case 'spot': {
@@ -834,12 +869,13 @@ class MowerDevice extends Homey.Device {
     await this._setMowingStarted();
   }
 
-  async cmdStartZoneMowing(zonesStr, passes = 1) {
+  async cmdStartZoneMowing(zonesStr) {
     const did     = this.getData().id;
     const zoneIds = zonesStr.split(',').map((s) => s.trim()).filter(Boolean);
-    this.log(`[cmd] startZoneMowing zones=${zoneIds.join(',')} passes=${passes}`);
+    this.log(`[cmd] startZoneMowing zones=${zoneIds.join(',')}`);
     await this.setStoreValue('mowing_zone_ids', zoneIds);
-    await this._api.startZoneMowing(did, zoneIds, passes);
+    const mapIdx = this._activeMapIndex ?? 0;
+    await this._api.startZoneMowing(did, zoneIds, mapIdx);
     await this._setMowingStarted();
   }
 
@@ -848,6 +884,14 @@ class MowerDevice extends Homey.Device {
     const mapIdx = this._activeMapIndex ?? 0;
     this.log(`[cmd] startEdgeMowing mapIndex=${mapIdx}`);
     await this._api.startEdgeMowing(did, mapIdx);
+    await this._setMowingStarted();
+  }
+
+  async cmdStartEdgeZoneMowing(zoneNum) {
+    const did    = this.getData().id;
+    const mapIdx = this._activeMapIndex ?? 0;
+    this.log(`[cmd] startEdgeZoneMowing zone=${zoneNum} mapIndex=${mapIdx}`);
+    await this._api.startEdgeZoneMowing(did, Number(zoneNum), mapIdx);
     await this._setMowingStarted();
   }
 

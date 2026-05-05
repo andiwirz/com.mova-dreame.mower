@@ -18,9 +18,10 @@ class MowerDriver extends Homey.Driver {
       .registerRunListener(({ device }) => device.cmdStartMowing());
 
     flow.getActionCard('start_zone_mowing')
-      .registerRunListener(({ device, zones, passes }) =>
-        device.cmdStartZoneMowing(zones, passes ?? 1),
-      );
+      .registerRunListener(({ device, zones }) => device.cmdStartZoneMowing(zones));
+
+    flow.getActionCard('start_edge_zone_mowing')
+      .registerRunListener(({ device, zone }) => device.cmdStartEdgeZoneMowing(zone));
 
     flow.getActionCard('start_edge_mowing')
       .registerRunListener(({ device }) => device.cmdStartEdgeMowing());
@@ -70,8 +71,8 @@ class MowerDriver extends Homey.Driver {
       );
 
     flow.getConditionCard('mowing_mode_is')
-      .registerRunListener(({ device, mode }) =>
-        device.getCapabilityValue('mower_mode') === mode,
+      .registerRunListener(async ({ device, mode }) =>
+        (await device.getStoreValue('mowing_mode') || 'all_area') === mode,
       );
 
     // ─── Trigger run-listeners (for arg-filtered triggers) ────────────────────

@@ -478,6 +478,39 @@
       },
       {
         "title": {
+          "en": "Start edge mowing for zone",
+          "de": "Kantenmähen für Zone starten"
+        },
+        "titleFormatted": {
+          "en": "Start edge mowing for zone [[zone]]",
+          "de": "Kantenmähen für Zone [[zone]] starten"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "zone",
+            "type": "number",
+            "title": {
+              "en": "Zone number",
+              "de": "Zonennummer"
+            },
+            "placeholder": {
+              "en": "1",
+              "de": "1"
+            },
+            "min": 1,
+            "max": 5,
+            "step": 1
+          }
+        ],
+        "id": "start_edge_zone_mowing"
+      },
+      {
+        "title": {
           "en": "Start mowing",
           "de": "Mähen starten"
         },
@@ -530,12 +563,12 @@
           "de": "Zonenmähen starten"
         },
         "titleFormatted": {
-          "en": "Start mowing zones [[zones]] ([[passes]]×)",
-          "de": "Zonen [[zones]] mähen ([[passes]]×)"
+          "en": "Start mowing zones [[zones]]",
+          "de": "Zonen [[zones]] mähen"
         },
         "hint": {
-          "en": "Enter the zone IDs as configured in the MOVA or Dreame app, separated by commas (e.g. 1,2,3). Passes = number of times each zone is mowed.",
-          "de": "Zonen-IDs wie in der MOVA- oder Dreame-App vergeben, kommagetrennt (z.B. 1,2,3). Durchgänge = Anzahl der Mähdurchläufe pro Zone."
+          "en": "Enter the zone IDs as configured in the MOVA or Dreame app, separated by commas (e.g. 1,2,3).",
+          "de": "Zonen-IDs wie in der MOVA- oder Dreame-App vergeben, kommagetrennt (z.B. 1,2,3)."
         },
         "args": [
           {
@@ -554,21 +587,6 @@
               "en": "1,2,3",
               "de": "1,2,3"
             }
-          },
-          {
-            "name": "passes",
-            "type": "number",
-            "title": {
-              "en": "Passes",
-              "de": "Durchgänge"
-            },
-            "placeholder": {
-              "en": "1",
-              "de": "1"
-            },
-            "min": 1,
-            "max": 4,
-            "step": 1
           }
         ],
         "id": "start_zone_mowing"
@@ -1110,71 +1128,71 @@
     "cmd_zone_1": {
       "type": "boolean",
       "title": {
-        "en": "Mow Zone 1 (TBD)",
-        "de": "Zone 1 mähen (TBD)"
+        "en": "Mow Zone 1",
+        "de": "Zone 1 mähen"
       },
       "getable": true,
       "setable": true,
       "uiComponent": "button",
       "hint": {
-        "en": "Starts zone mowing for segment ID 1 → sendAction(2, 50, {m:'a', o:102, d:{segments:[1]}})",
-        "de": "Startet Zonenmähen für Segment-ID 1 → sendAction(2, 50, {m:'a', o:102, d:{segments:[1]}})"
+        "en": "Starts zone mowing for segment ID 1 → sendAction(2, 50, {m:'a', o:102, d:{region:[1]}})",
+        "de": "Startet Zonenmähen für Segment-ID 1 → sendAction(2, 50, {m:'a', o:102, d:{region:[1]}})"
       }
     },
     "cmd_zone_2": {
       "type": "boolean",
       "title": {
-        "en": "Mow Zone 2 (TBD)",
-        "de": "Zone 2 mähen (TBD)"
+        "en": "Mow Zone 2",
+        "de": "Zone 2 mähen"
       },
       "getable": true,
       "setable": true,
       "uiComponent": "button",
       "hint": {
-        "en": "Starts zone mowing for segment ID 2 → sendAction(2, 50, {m:'a', o:102, d:{segments:[2]}})",
-        "de": "Startet Zonenmähen für Segment-ID 2 → sendAction(2, 50, {m:'a', o:102, d:{segments:[2]}})"
+        "en": "Starts zone mowing for segment ID 2 → sendAction(2, 50, {m:'a', o:102, d:{region:[2]}})",
+        "de": "Startet Zonenmähen für Segment-ID 2 → sendAction(2, 50, {m:'a', o:102, d:{region:[2]}})"
       }
     },
     "cmd_zone_3": {
       "type": "boolean",
       "title": {
-        "en": "Mow Zone 3 (TBD)",
-        "de": "Zone 3 mähen (TBD)"
+        "en": "Mow Zone 3",
+        "de": "Zone 3 mähen"
       },
       "getable": true,
       "setable": true,
       "uiComponent": "button",
       "hint": {
-        "en": "Starts zone mowing for segment ID 3 → sendAction(2, 50, {m:'a', o:102, d:{segments:[3]}})",
-        "de": "Startet Zonenmähen für Segment-ID 3 → sendAction(2, 50, {m:'a', o:102, d:{segments:[3]}})"
+        "en": "Starts zone mowing for segment ID 3 → sendAction(2, 50, {m:'a', o:102, d:{region:[3]}})",
+        "de": "Startet Zonenmähen für Segment-ID 3 → sendAction(2, 50, {m:'a', o:102, d:{region:[3]}})"
       }
     },
     "cmd_zone_4": {
       "type": "boolean",
       "title": {
-        "en": "Mow Zone 4 (TBD)",
-        "de": "Zone 4 mähen (TBD)"
+        "en": "Mow Zone 4",
+        "de": "Zone 4 mähen"
       },
       "getable": true,
       "setable": true,
       "uiComponent": "button",
       "hint": {
-        "en": "Starts zone mowing for segment ID 4 → sendAction(2, 50, {m:'a', o:102, d:{segments:[4]}})",
-        "de": "Startet Zonenmähen für Segment-ID 4 → sendAction(2, 50, {m:'a', o:102, d:{segments:[4]}})"
+        "en": "Starts zone mowing for segment ID 4 → sendAction(2, 50, {m:'a', o:102, d:{region:[4]}})",
+        "de": "Startet Zonenmähen für Segment-ID 4 → sendAction(2, 50, {m:'a', o:102, d:{region:[4]}})"
       }
     },
     "cmd_zone_5": {
       "type": "boolean",
       "title": {
-        "en": "Mow Zone 5 (TBD)",
-        "de": "Zone 5 mähen (TBD)"
+        "en": "Mow Zone 5",
+        "de": "Zone 5 mähen"
       },
       "getable": true,
       "setable": true,
       "uiComponent": "button",
       "hint": {
-        "en": "Starts zone mowing for segment ID 5 → sendAction(2, 50, {m:'a', o:102, d:{segments:[5]}})",
-        "de": "Startet Zonenmähen für Segment-ID 5 → sendAction(2, 50, {m:'a', o:102, d:{segments:[5]}})"
+        "en": "Starts zone mowing for segment ID 5 → sendAction(2, 50, {m:'a', o:102, d:{region:[5]}})",
+        "de": "Startet Zonenmähen für Segment-ID 5 → sendAction(2, 50, {m:'a', o:102, d:{region:[5]}})"
       }
     },
     "collision_avoidance": {

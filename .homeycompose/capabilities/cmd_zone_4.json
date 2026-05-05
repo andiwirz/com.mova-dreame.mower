@@ -1,11 +1,11 @@
 {
   "type": "boolean",
-  "title": { "en": "Mow Zone 4 (TBD)", "de": "Zone 4 mähen (TBD)" },
+  "title": { "en": "Mow Zone 4", "de": "Zone 4 mähen" },
   "getable": true,
   "setable": true,
   "uiComponent": "button",
   "hint": {
-    "en": "Starts zone mowing for segment ID 4 → sendAction(2, 50, {m:'a', o:102, d:{segments:[4]}})",
-    "de": "Startet Zonenmähen für Segment-ID 4 → sendAction(2, 50, {m:'a', o:102, d:{segments:[4]}})"
+    "en": "Starts zone mowing for segment ID 4 → sendAction(2, 50, {m:'a', o:102, d:{region:[4]}})",
+    "de": "Startet Zonenmähen für Segment-ID 4 → sendAction(2, 50, {m:'a', o:102, d:{region:[4]}})"
   }
 }
