@@ -15,74 +15,10 @@
     "error_generic": "Something went wrong. Please try again.",
     "error_empty_fields": "Please enter your email and password."
   },
-  "settings": {
-    "account_group": "Account",
-    "connection_group": "Connection",
-    "mowing_group": "Mowing",
-    "battery_group": "Battery",
-    "sound_group": "Sound",
-    "dnd_group": "Do Not Disturb",
-    "username_label": "Email",
-    "brand_label": "Brand",
-    "region_label": "Region",
-    "poll_interval_label": "Poll interval (seconds)",
-    "poll_interval_hint": "How often the mower status is updated (10–300 seconds)",
-    "cutting_height_min_label": "Min. cutting height (mm)",
-    "cutting_height_min_hint": "Lowest blade position supported by your mower model. Check the manual.",
-    "cutting_height_max_label": "Max. cutting height (mm)",
-    "cutting_height_max_hint": "Highest blade position supported by your mower model. Check the manual.",
-    "cutting_height_label": "Cutting height (mm)",
-    "cutting_height_hint": "Current blade height. Must be within the min/max range above. Changes are sent to the mower immediately.",
-    "auto_resume_label": "Continue after recharging",
-    "auto_resume_hint": "The mower automatically continues the mowing task after returning to the dock to recharge.",
-    "return_battery_label": "Return threshold (%)",
-    "return_battery_hint": "Battery level at which the mower returns to the dock to recharge.",
-    "resume_battery_label": "Resume threshold (%)",
-    "resume_battery_hint": "Battery level at which the mower resumes mowing after recharging.",
-    "volume_label": "Volume (%)",
-    "volume_hint": "Mower speaker volume for alerts and notifications.",
-    "dnd_start_label": "Quiet hours start (HH:MM)",
-    "dnd_start_hint": "Start of the quiet hours window. The mower will not start automatically during this period.",
-    "dnd_end_label": "Quiet hours end (HH:MM)",
-    "dnd_end_hint": "End of the quiet hours window.",
-    "border_first_label": "Mow border first",
-    "border_first_hint": "Mow the perimeter edge before mowing the main area.",
-    "obstacle_avoidance_label": "Obstacle avoidance sensitivity",
-    "obstacle_avoidance_hint": "0 = Off, 1 = Low, 2 = Medium, 3 = High",
-    "device_model_label": "Model"
-  },
-  "status": {
-    "idle": "Idle", "mowing": "Mowing", "standby": "Standby",
-    "paused": "Paused", "error": "Error", "returning": "Returning to dock",
-    "charging": "Charging", "mapping": "Mapping", "docked": "Docked", "updating": "Updating",
-    "remote_control": "Remote Control"
-  },
-  "charging_status": {
-    "not_docked": "Not docked", "charging": "Charging", "not_charging": "Docked (standby)",
-    "charging_completed": "Fully charged", "docked": "Fully charged (legacy)",
-    "returning": "Returning", "paused_cold": "Paused (cold)"
-  },
-  "mower_mode": {
-    "all_area": "All Area", "zone": "Zone", "edge": "Edge", "spot": "Spot", "manual": "Manual"
-  },
-  "mower_pattern": {
-    "zigzag": "Zig-Zag", "checkerboard": "Checkerboard"
-  },
-  "mowing_speed": {
-    "slow": "Slow", "normal": "Normal", "fast": "Fast"
-  },
-  "mow_efficiency": {
-    "standard": "Standard", "efficient": "Efficient"
-  },
-  "task_status": {
-    "inactive": "Inactive", "active": "Active", "paused": "Paused", "recharging": "Recharging"
-  },
   "error": {
     "unreachable": "Mower unreachable",
     "device_offline": "Mower is offline",
-    "auth_failed": "Authentication failed — re-add the device",
-    "cutting_height_range": "Minimum cutting height must be less than maximum.",
-    "cutting_height_bounds": "Cutting height must be between __min__mm and __max__mm."
+    "auth_failed": "Authentication failed — re-add the device"
   },
   "error_codes": {
     "0":  "Normal operation",

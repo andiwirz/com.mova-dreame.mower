@@ -1,4 +1,4 @@
-MOVA & Dreame Mower integriert deinen Mähroboter in Homey und gibt dir die direkte Kontrolle über das Mähen, Kantenmähen und die Zonenverwaltung — alles in einer einzigen App.
+MOVA Mähroboter integriert deinen Mähroboter in Homey und gibt dir die direkte Kontrolle über das Mähen, Kantenmähen und die Zonenverwaltung — alles in einer einzigen App.
 
 Überwache Akkustand und Ladestatus in Echtzeit. Nutze die Aktionsknöpfe auf der Gerätekarte, um das Mähen zu starten, die gesamte Fläche zu mähen, zu pausieren, zu stoppen oder zur Ladestation zurückzukehren. Pro-Zone-Kantenmäh-Knöpfe erscheinen automatisch basierend auf den in deiner Karte erkannten Zonen. Erhalte Benachrichtigungen wenn das Mähen abgeschlossen ist oder ein Fehler auftritt.
 

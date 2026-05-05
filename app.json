@@ -1,12 +1,12 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.mova-dreame.mower",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "compatibility": ">=12.0.0",
   "sdk": 3,
   "name": {
-    "en": "MOVA & Dreame Mower",
-    "de": "MOVA & Dreame Mähroboter"
+    "en": "MOVA Mower",
+    "de": "MOVA Mähroboter"
   },
   "description": {
     "en": "Bring your MOVA or Dreame lawn mower into your smart home automations",
@@ -67,6 +67,10 @@
     "0.0.7": {
       "en": "Added frost protection and rain protection settings (confirmed via packet capture). Added Stop and Pause buttons. Added per-zone edge mowing buttons. Fixed edge mowing zone-unreachable error. Auto-reset action buttons on status change. Simplified settings page — removed unverified options.",
       "de": "Frostschutz- und Regenschutz-Einstellungen hinzugefügt (per Packet Capture bestätigt). Knöpfe Mähen beenden und Pausieren hinzugefügt. Kantenmähen-Knöpfe pro Zone hinzugefügt. Fehler 'Zone nicht erreichbar' beim Kantenmähen behoben. Aktionsknöpfe werden bei Statuswechsel automatisch zurückgesetzt. Einstellungsseite vereinfacht — nicht verifizierte Optionen entfernt."
+    },
+    "0.0.8": {
+      "en": "Added lighting settings (on/off, time window) confirmed via packet capture. Fixed capability icon rendering on iOS. Expanded debug poll with CFG data, capability values and device settings.",
+      "de": "Beleuchtungseinstellungen (Ein/Aus, Zeitfenster) per Packet Capture bestätigt hinzugefügt. Darstellung der Capability-Icons unter iOS korrigiert. Debug-Poll um CFG-Daten, Capability-Werte und Geräteeinstellungen erweitert."
     }
   },
   "flow": {
@@ -646,8 +650,8 @@
         "collision_avoidance",
         "firmware_update",
         "measure_duration",
-        "mower_task_status",
-        "child_lock"
+        "child_lock",
+        "mower_volume"
       ],
       "capabilitiesOptions": {
         "alarm_generic": {
@@ -775,6 +779,28 @@
         {
           "type": "group",
           "label": {
+            "en": "Child Lock",
+            "de": "Kindersicherung"
+          },
+          "children": [
+            {
+              "id": "cls_enabled",
+              "type": "checkbox",
+              "label": {
+                "en": "Enabled",
+                "de": "Aktiviert"
+              },
+              "value": false,
+              "hint": {
+                "en": "Locks physical buttons on the mower so it cannot be started manually.",
+                "de": "Sperrt die physischen Tasten am Mähroboter, damit er nicht manuell gestartet werden kann."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
             "en": "Frost Protection",
             "de": "Frostschutz"
           },
@@ -847,6 +873,112 @@
         {
           "type": "group",
           "label": {
+            "en": "Lighting",
+            "de": "Beleuchtung"
+          },
+          "children": [
+            {
+              "id": "lit_enabled",
+              "type": "checkbox",
+              "label": {
+                "en": "Custom LED activation time window",
+                "de": "Benutzerdefinierter LED-Aktivierungszeitraum"
+              },
+              "value": false,
+              "hint": {
+                "en": "When enabled, the mower only turns on the light during the specified time window.",
+                "de": "Wenn aktiviert, schaltet der Roboter das Licht nur während des angegebenen Zeitraums ein."
+              }
+            },
+            {
+              "id": "lit_time_start",
+              "type": "number",
+              "label": {
+                "en": "Start (h)",
+                "de": "Start (Uhr)"
+              },
+              "value": 8,
+              "min": 0,
+              "max": 23,
+              "step": 1,
+              "hint": {
+                "en": "Start of the LED activation window (e.g. 8 = 08:00).",
+                "de": "Beginn des LED-Aktivierungszeitraums (z. B. 8 = 08:00 Uhr)."
+              }
+            },
+            {
+              "id": "lit_time_end",
+              "type": "number",
+              "label": {
+                "en": "End (h)",
+                "de": "Ende (Uhr)"
+              },
+              "value": 20,
+              "min": 1,
+              "max": 24,
+              "step": 1,
+              "hint": {
+                "en": "End of the LED activation window (e.g. 20 = 20:00).",
+                "de": "Ende des LED-Aktivierungszeitraums (z. B. 20 = 20:00 Uhr)."
+              }
+            },
+            {
+              "id": "lit_standby",
+              "type": "checkbox",
+              "label": {
+                "en": "Light in standby",
+                "de": "Licht im Standby"
+              },
+              "value": false,
+              "hint": {
+                "en": "Turn on the LED when the mower is in standby.",
+                "de": "LED leuchtet, wenn der Mähroboter im Standby ist."
+              }
+            },
+            {
+              "id": "lit_working",
+              "type": "checkbox",
+              "label": {
+                "en": "Light while mowing",
+                "de": "Licht während des Mähens"
+              },
+              "value": false,
+              "hint": {
+                "en": "Turn on the LED while the mower is working.",
+                "de": "LED leuchtet, während der Mähroboter mäht."
+              }
+            },
+            {
+              "id": "lit_charging",
+              "type": "checkbox",
+              "label": {
+                "en": "Light while charging",
+                "de": "Licht beim Laden"
+              },
+              "value": false,
+              "hint": {
+                "en": "Turn on the LED while the mower is charging.",
+                "de": "LED leuchtet, während der Mähroboter geladen wird."
+              }
+            },
+            {
+              "id": "lit_error",
+              "type": "checkbox",
+              "label": {
+                "en": "Light on error",
+                "de": "Licht bei Fehler"
+              },
+              "value": false,
+              "hint": {
+                "en": "Turn on the LED when the mower reports an error.",
+                "de": "LED leuchtet, wenn der Mähroboter einen Fehler meldet."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
             "en": "Connection",
             "de": "Verbindung"
           },
@@ -874,58 +1006,6 @@
     }
   ],
   "capabilities": {
-    "alarm_lift": {
-      "type": "boolean",
-      "title": {
-        "en": "Lifted",
-        "de": "Angehoben"
-      },
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor"
-    },
-    "alarm_obstacle": {
-      "type": "boolean",
-      "title": {
-        "en": "Obstacle",
-        "de": "Hindernis"
-      },
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor"
-    },
-    "alarm_tilt": {
-      "type": "boolean",
-      "title": {
-        "en": "Tilted",
-        "de": "Gekippt"
-      },
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor"
-    },
-    "anti_theft": {
-      "type": "boolean",
-      "title": {
-        "en": "Anti-Theft Lock",
-        "de": "Diebstahlschutz"
-      },
-      "getable": true,
-      "setable": true,
-      "uiComponent": "toggle",
-      "icon": "/assets/capabilities/anti_theft.svg"
-    },
-    "auto_charging": {
-      "type": "boolean",
-      "title": {
-        "en": "Smart Charging",
-        "de": "Smart-Laden"
-      },
-      "getable": true,
-      "setable": true,
-      "uiComponent": "toggle",
-      "icon": "/assets/capabilities/auto_charging.svg"
-    },
     "charging_status": {
       "type": "enum",
       "title": {
@@ -1091,20 +1171,6 @@
       "setable": true,
       "uiComponent": "button"
     },
-    "cmd_manual_mowing": {
-      "type": "boolean",
-      "title": {
-        "en": "Manual",
-        "de": "Manuell"
-      },
-      "getable": true,
-      "setable": true,
-      "uiComponent": "button",
-      "hint": {
-        "en": "Activates remote-control (manual) mode → sendAction(5, 7)",
-        "de": "Aktiviert den Fernsteuerungsmodus → sendAction(5, 7)"
-      }
-    },
     "cmd_pause": {
       "type": "boolean",
       "title": {
@@ -1206,59 +1272,6 @@
       "uiComponent": "sensor",
       "icon": "/assets/capabilities/collision_avoidance.svg"
     },
-    "consumable_blade": {
-      "type": "number",
-      "title": {
-        "en": "Blade Health",
-        "de": "Klingengesundheit"
-      },
-      "units": "%",
-      "min": 0,
-      "max": 100,
-      "decimals": 0,
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor"
-    },
-    "consumable_brush": {
-      "type": "number",
-      "title": {
-        "en": "Brush Health",
-        "de": "Bürstengesundheit"
-      },
-      "units": "%",
-      "min": 0,
-      "max": 100,
-      "decimals": 0,
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor"
-    },
-    "consumable_robot": {
-      "type": "number",
-      "title": {
-        "en": "Robot Health",
-        "de": "Robotergesundheit"
-      },
-      "units": "%",
-      "min": 0,
-      "max": 100,
-      "decimals": 0,
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor"
-    },
-    "dnd_enabled": {
-      "type": "boolean",
-      "title": {
-        "en": "Do Not Disturb",
-        "de": "Nicht stören"
-      },
-      "getable": true,
-      "setable": true,
-      "uiComponent": "toggle",
-      "icon": "/assets/capabilities/dnd_enabled.svg"
-    },
     "firmware_update": {
       "type": "boolean",
       "title": {
@@ -1269,40 +1282,6 @@
       "setable": false,
       "uiComponent": "sensor",
       "icon": "/assets/capabilities/firmware_update.svg"
-    },
-    "frost_protection": {
-      "type": "boolean",
-      "title": {
-        "en": "Frost Protection",
-        "de": "Frostschutz"
-      },
-      "getable": true,
-      "setable": true,
-      "uiComponent": "toggle",
-      "icon": "/assets/capabilities/frost_protection.svg"
-    },
-    "grass_protection": {
-      "type": "boolean",
-      "title": {
-        "en": "Grass Protection",
-        "de": "Rasenschutz"
-      },
-      "getable": true,
-      "setable": true,
-      "uiComponent": "toggle",
-      "icon": "/assets/capabilities/grass_protection.svg"
-    },
-    "measure_area": {
-      "type": "number",
-      "title": {
-        "en": "Mowed Area",
-        "de": "Gemähte Fläche"
-      },
-      "units": "m²",
-      "decimals": 0,
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor"
     },
     "measure_duration": {
       "type": "number",
@@ -1320,41 +1299,6 @@
       "decimals": 0,
       "min": 0,
       "icon": "/assets/capabilities/measure_duration.svg"
-    },
-    "meter_area_total": {
-      "type": "number",
-      "title": {
-        "en": "Total Area Mowed",
-        "de": "Gesamte gemähte Fläche"
-      },
-      "units": "m²",
-      "decimals": 0,
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor"
-    },
-    "meter_count_total": {
-      "type": "number",
-      "title": {
-        "en": "Total Mowing Sessions",
-        "de": "Gesamte Mähvorgänge"
-      },
-      "decimals": 0,
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor"
-    },
-    "meter_time_total": {
-      "type": "number",
-      "title": {
-        "en": "Total Mowing Time",
-        "de": "Gesamte Mähzeit"
-      },
-      "units": "min",
-      "decimals": 0,
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor"
     },
     "mow_efficiency": {
       "type": "enum",
@@ -1382,147 +1326,6 @@
       "setable": false,
       "uiComponent": "sensor",
       "icon": "/assets/capabilities/mow_efficiency.svg"
-    },
-    "mower_docked": {
-      "type": "boolean",
-      "title": {
-        "en": "Docked",
-        "de": "Angedockt"
-      },
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor"
-    },
-    "mower_error_code": {
-      "type": "number",
-      "title": {
-        "en": "Error Code",
-        "de": "Fehlercode"
-      },
-      "min": 0,
-      "decimals": 0,
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor"
-    },
-    "mower_mode": {
-      "type": "enum",
-      "title": {
-        "en": "Mowing Mode",
-        "de": "Mähmodus"
-      },
-      "values": [
-        {
-          "id": "all_area",
-          "title": {
-            "en": "All Area",
-            "de": "Alle"
-          }
-        },
-        {
-          "id": "zone",
-          "title": {
-            "en": "Zone",
-            "de": "Zone"
-          }
-        },
-        {
-          "id": "edge",
-          "title": {
-            "en": "Edge",
-            "de": "Kante"
-          }
-        },
-        {
-          "id": "spot",
-          "title": {
-            "en": "Spot",
-            "de": "Spot"
-          }
-        },
-        {
-          "id": "manual",
-          "title": {
-            "en": "Manual",
-            "de": "Manuell"
-          }
-        }
-      ],
-      "getable": true,
-      "setable": true,
-      "uiComponent": "picker",
-      "icon": "/assets/capabilities/mower_mode.svg"
-    },
-    "mower_mowing": {
-      "type": "boolean",
-      "title": {
-        "en": "Mowing",
-        "de": "Mähen"
-      },
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor"
-    },
-    "mower_pattern": {
-      "type": "enum",
-      "title": {
-        "en": "Mowing Pattern",
-        "de": "Mähmuster"
-      },
-      "values": [
-        {
-          "id": "zigzag",
-          "title": {
-            "en": "Zig-Zag",
-            "de": "Zick-Zack"
-          }
-        },
-        {
-          "id": "checkerboard",
-          "title": {
-            "en": "Checkerboard",
-            "de": "Schachbrett"
-          }
-        }
-      ],
-      "getable": true,
-      "setable": true,
-      "uiComponent": "picker",
-      "icon": "/assets/capabilities/mower_pattern.svg"
-    },
-    "mower_paused": {
-      "type": "boolean",
-      "title": {
-        "en": "Paused",
-        "de": "Pausiert"
-      },
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor"
-    },
-    "mower_progress": {
-      "type": "number",
-      "title": {
-        "en": "Mowing Progress",
-        "de": "Mähfortschritt"
-      },
-      "units": "%",
-      "min": 0,
-      "max": 100,
-      "decimals": 0,
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor"
-    },
-    "mower_returning": {
-      "type": "boolean",
-      "title": {
-        "en": "Returning",
-        "de": "Kehrt zurück"
-      },
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor"
     },
     "mower_status": {
       "type": "enum",
@@ -1614,93 +1417,19 @@
       "uiComponent": "sensor",
       "icon": "/assets/capabilities/mower_status.svg"
     },
-    "mower_task_status": {
-      "type": "enum",
+    "mower_volume": {
+      "type": "number",
       "title": {
-        "en": "Task Status",
-        "de": "Aufgabenstatus"
-      },
-      "values": [
-        {
-          "id": "idle",
-          "title": {
-            "en": "Idle",
-            "de": "Bereit"
-          }
-        },
-        {
-          "id": "mowing",
-          "title": {
-            "en": "Mowing",
-            "de": "Mähen"
-          }
-        },
-        {
-          "id": "docking",
-          "title": {
-            "en": "Docking",
-            "de": "Andocken"
-          }
-        }
-      ],
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor"
-    },
-    "mowing_speed": {
-      "type": "enum",
-      "title": {
-        "en": "Mowing Speed",
-        "de": "Mähgeschwindigkeit"
-      },
-      "values": [
-        {
-          "id": "slow",
-          "title": {
-            "en": "Slow",
-            "de": "Langsam"
-          }
-        },
-        {
-          "id": "normal",
-          "title": {
-            "en": "Normal",
-            "de": "Normal"
-          }
-        },
-        {
-          "id": "fast",
-          "title": {
-            "en": "Fast",
-            "de": "Schnell"
-          }
-        }
-      ],
-      "getable": true,
-      "setable": true,
-      "uiComponent": "picker",
-      "icon": "/assets/capabilities/mowing_speed.svg"
-    },
-    "night_mode": {
-      "type": "boolean",
-      "title": {
-        "en": "Night Mode",
-        "de": "Nachtmodus"
+        "en": "Volume",
+        "de": "Lautstärke"
       },
       "getable": true,
       "setable": true,
-      "uiComponent": "toggle",
-      "icon": "/assets/capabilities/night_mode.svg"
-    },
-    "task_active": {
-      "type": "boolean",
-      "title": {
-        "en": "Task Active",
-        "de": "Aufgabe aktiv"
-      },
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor"
+      "uiComponent": "slider",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "icon": "/assets/capabilities/mower_volume.svg"
     }
   }
 }

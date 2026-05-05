@@ -18,8 +18,8 @@
     "collision_avoidance",
     "firmware_update",
     "measure_duration",
-    "mower_task_status",
-    "child_lock"
+    "child_lock",
+    "mower_volume"
   ],
   "capabilitiesOptions": {
     "alarm_generic": {
@@ -106,6 +106,22 @@
     },
     {
       "type": "group",
+      "label": { "en": "Child Lock", "de": "Kindersicherung" },
+      "children": [
+        {
+          "id": "cls_enabled",
+          "type": "checkbox",
+          "label": { "en": "Enabled", "de": "Aktiviert" },
+          "value": false,
+          "hint": {
+            "en": "Locks physical buttons on the mower so it cannot be started manually.",
+            "de": "Sperrt die physischen Tasten am Mähroboter, damit er nicht manuell gestartet werden kann."
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
       "label": { "en": "Frost Protection", "de": "Frostschutz" },
       "children": [
         {
@@ -154,6 +170,88 @@
           "hint": {
             "en": "Hours to wait after rain before resuming mowing.",
             "de": "Stunden Wartezeit nach dem Regen, bevor das Mähen fortgesetzt wird."
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": { "en": "Lighting", "de": "Beleuchtung" },
+      "children": [
+        {
+          "id": "lit_enabled",
+          "type": "checkbox",
+          "label": { "en": "Custom LED activation time window", "de": "Benutzerdefinierter LED-Aktivierungszeitraum" },
+          "value": false,
+          "hint": {
+            "en": "When enabled, the mower only turns on the light during the specified time window.",
+            "de": "Wenn aktiviert, schaltet der Roboter das Licht nur während des angegebenen Zeitraums ein."
+          }
+        },
+        {
+          "id": "lit_time_start",
+          "type": "number",
+          "label": { "en": "Start (h)", "de": "Start (Uhr)" },
+          "value": 8,
+          "min": 0,
+          "max": 23,
+          "step": 1,
+          "hint": {
+            "en": "Start of the LED activation window (e.g. 8 = 08:00).",
+            "de": "Beginn des LED-Aktivierungszeitraums (z. B. 8 = 08:00 Uhr)."
+          }
+        },
+        {
+          "id": "lit_time_end",
+          "type": "number",
+          "label": { "en": "End (h)", "de": "Ende (Uhr)" },
+          "value": 20,
+          "min": 1,
+          "max": 24,
+          "step": 1,
+          "hint": {
+            "en": "End of the LED activation window (e.g. 20 = 20:00).",
+            "de": "Ende des LED-Aktivierungszeitraums (z. B. 20 = 20:00 Uhr)."
+          }
+        },
+        {
+          "id": "lit_standby",
+          "type": "checkbox",
+          "label": { "en": "Light in standby", "de": "Licht im Standby" },
+          "value": false,
+          "hint": {
+            "en": "Turn on the LED when the mower is in standby.",
+            "de": "LED leuchtet, wenn der Mähroboter im Standby ist."
+          }
+        },
+        {
+          "id": "lit_working",
+          "type": "checkbox",
+          "label": { "en": "Light while mowing", "de": "Licht während des Mähens" },
+          "value": false,
+          "hint": {
+            "en": "Turn on the LED while the mower is working.",
+            "de": "LED leuchtet, während der Mähroboter mäht."
+          }
+        },
+        {
+          "id": "lit_charging",
+          "type": "checkbox",
+          "label": { "en": "Light while charging", "de": "Licht beim Laden" },
+          "value": false,
+          "hint": {
+            "en": "Turn on the LED while the mower is charging.",
+            "de": "LED leuchtet, während der Mähroboter geladen wird."
+          }
+        },
+        {
+          "id": "lit_error",
+          "type": "checkbox",
+          "label": { "en": "Light on error", "de": "Licht bei Fehler" },
+          "value": false,
+          "hint": {
+            "en": "Turn on the LED when the mower reports an error.",
+            "de": "LED leuchtet, wenn der Mähroboter einen Fehler meldet."
           }
         }
       ]

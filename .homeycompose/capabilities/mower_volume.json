@@ -1,0 +1,11 @@
+{
+  "type": "number",
+  "title": { "en": "Volume", "de": "Lautstärke" },
+  "getable": true,
+  "setable": true,
+  "uiComponent": "slider",
+  "min": 0,
+  "max": 100,
+  "step": 1,
+"icon": "/assets/capabilities/mower_volume.svg"
+}

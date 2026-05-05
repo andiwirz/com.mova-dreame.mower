@@ -1,9 +1,0 @@
-{
-  "type": "number",
-  "title": { "en": "Total Area Mowed", "de": "Gesamte gemähte Fläche" },
-  "units": "m²",
-  "decimals": 0,
-  "getable": true,
-  "setable": false,
-  "uiComponent": "sensor"
-}

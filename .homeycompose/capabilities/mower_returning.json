@@ -1,7 +1,0 @@
-{
-  "type": "boolean",
-  "title": { "en": "Returning", "de": "Kehrt zurück" },
-  "getable": true,
-  "setable": false,
-  "uiComponent": "sensor"
-}

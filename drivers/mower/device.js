@@ -1,7 +1,7 @@
 'use strict';
 
 const Homey = require('homey');
-const DreameApi = require('../../lib/DreameApi');
+const MovaApi = require('../../lib/MovaApi');
 
 // latestStatus → mower_status enum
 // Source: EvotecIT/homeassistant-dreamelawnmower types.py DreameMowerState enum
@@ -96,6 +96,10 @@ const MIGRATIONS = [
   {
     key: 'capabilities_migrated_v12',
     caps: ['cmd_pause'],
+  },
+  {
+    key: 'capabilities_migrated_v13',
+    caps: ['mower_volume'],
   },
 ];
 
@@ -222,6 +226,14 @@ class MowerDevice extends Homey.Device {
       }
     });
 
+    this.registerCapabilityListener('mower_volume', async (value) => {
+      try {
+        await this._safeWrite('mower_volume', () => this._api.setVolume(did, value));
+      } catch (err) {
+        this.error('[mower_volume] listener error:', err.message);
+      }
+    });
+
     // Zone buttons — register listeners for any zone capabilities already on device
     await this._syncZoneCapabilities();
 
@@ -247,6 +259,7 @@ class MowerDevice extends Homey.Device {
 
   async onSettings({ changedKeys, newSettings }) {
     this.log('[settings] changed:', changedKeys.join(', '));
+    const did = this.getData().id;
 
     if (changedKeys.includes('poll_interval')) {
       this.log(`[settings] poll_interval → ${newSettings.poll_interval}s`);
@@ -254,9 +267,17 @@ class MowerDevice extends Homey.Device {
       this._startPolling();
     }
 
+    // Child lock
+    if (changedKeys.includes('cls_enabled')) {
+      this.log(`[settings] CLS → enabled=${newSettings.cls_enabled}`);
+      await this._safeWrite('cls', () => this._api.setChildLock(did, newSettings.cls_enabled));
+      if (this.hasCapability('child_lock')) {
+        await this._applyBoolCap('child_lock', newSettings.cls_enabled);
+      }
+    }
+
     // Frost protection
     if (changedKeys.includes('fdp_enabled')) {
-      const did = this.getData().id;
       this.log(`[settings] FDP → enabled=${newSettings.fdp_enabled}`);
       await this._safeWrite('fdp', () => this._api.setFrostProtection(did, newSettings.fdp_enabled));
     }
@@ -264,12 +285,29 @@ class MowerDevice extends Homey.Device {
     // Rain protection — write all three values together whenever any one changes
     const WRP_KEYS = ['wrp_enabled', 'wrp_sensitivity', 'wrp_wait_time'];
     if (WRP_KEYS.some((k) => changedKeys.includes(k))) {
-      const did = this.getData().id;
       this.log(`[settings] WRP → enabled=${newSettings.wrp_enabled} sen=${newSettings.wrp_sensitivity} time=${newSettings.wrp_wait_time}h`);
       await this._safeWrite('wrp', () => this._api.setRainProtectionConfig(did, {
-        enabled:    newSettings.wrp_enabled,
+        enabled:     newSettings.wrp_enabled,
         sensitivity: newSettings.wrp_sensitivity,
-        waitHours:  newSettings.wrp_wait_time,
+        waitHours:   newSettings.wrp_wait_time,
+      }));
+    }
+
+    // Lighting — write all values together whenever any one changes
+    const LIT_KEYS = ['lit_enabled', 'lit_time_start', 'lit_time_end', 'lit_standby', 'lit_working', 'lit_charging', 'lit_error'];
+    if (LIT_KEYS.some((k) => changedKeys.includes(k))) {
+      const light = [
+        newSettings.lit_standby  ? 1 : 0,
+        newSettings.lit_working  ? 1 : 0,
+        newSettings.lit_charging ? 1 : 0,
+        newSettings.lit_error    ? 1 : 0,
+      ];
+      this.log(`[settings] LIT → enabled=${newSettings.lit_enabled} start=${newSettings.lit_time_start}h end=${newSettings.lit_time_end}h light=${JSON.stringify(light)}`);
+      await this._safeWrite('lit', () => this._api.setLighting(did, {
+        value:     newSettings.lit_enabled ? 1 : 0,
+        timeStart: newSettings.lit_time_start,
+        timeEnd:   newSettings.lit_time_end,
+        light,
       }));
     }
 
@@ -302,7 +340,7 @@ class MowerDevice extends Homey.Device {
     const brand  = await this.getStoreValue('brand')  || this.getSetting('brand')  || 'dreame';
     const region = await this.getStoreValue('region') || this.getSetting('region') || 'eu';
 
-    this._api = new DreameApi({ brand, region, log: (...a) => this.log(...a) });
+    this._api = new MovaApi({ brand, region, log: (...a) => this.log(...a) });
 
     const accessToken  = await this.getStoreValue('access_token');
     const refreshToken = await this.getStoreValue('refresh_token');
@@ -401,7 +439,9 @@ class MowerDevice extends Homey.Device {
     if (info.battery      != null) await this._applyBattery(info.battery);
     if (info.latestStatus != null) {
       const mowerStatus = STATUS_MAP[info.latestStatus] ?? 'idle';
-      await this._applyStatus(mowerStatus);
+      // Dreame/MOVA device list may expose the fault code under different field names.
+      const faultCode = info.latestFaultCode ?? info.faultCode ?? info.errorCode ?? 0;
+      await this._applyStatus(mowerStatus, faultCode);
 
       // Derive charging_status from mower status.
       const chargingCode =
@@ -686,23 +726,75 @@ class MowerDevice extends Homey.Device {
    * Only updates keys that are actually present in the response (change-guarded).
    */
   async _applyCFGSettings(cfg) {
+    this.log('[cfg] ' + Object.keys(cfg).map((k) => `${k} = ${JSON.stringify(cfg[k])}`).join(' | '));
+
+    // CFG values come back either as scalars (0/1) or as objects ({ value: 0/1, ... }).
+    // cfgBool handles both formats safely.
+    const cfgBool = (v) => (typeof v === 'object' ? v.value : v) === 1;
+
     const update = {};
 
-    // WRP — rain protection: { value:1, sen:1, time:7 }
+    // WRP — rain protection.
+    // GET returns an array [enabled, waitTimeHours, sensitivity].
+    // SET uses an object { value, sen, time } (confirmed via packet capture).
     if (cfg.WRP != null) {
-      const wrp = cfg.WRP;
-      const enabled     = wrp.value === 1;
-      const sensitivity = wrp.sen  ?? 1;
-      const waitTime    = wrp.time ?? 7;
+      let enabled, waitTime, sensitivity;
+      if (Array.isArray(cfg.WRP)) {
+        enabled     = cfg.WRP[0] === 1;
+        waitTime    = cfg.WRP[1] ?? 7;
+        sensitivity = cfg.WRP[2] ?? 1;
+      } else if (typeof cfg.WRP === 'object') {
+        enabled     = cfg.WRP.value === 1;
+        waitTime    = cfg.WRP.time  ?? 7;
+        sensitivity = cfg.WRP.sen   ?? 1;
+      } else {
+        enabled     = cfg.WRP === 1;
+        waitTime    = 7;
+        sensitivity = 1;
+      }
       if (this.getSetting('wrp_enabled')     !== enabled)     update.wrp_enabled     = enabled;
       if (this.getSetting('wrp_sensitivity') !== sensitivity) update.wrp_sensitivity = sensitivity;
       if (this.getSetting('wrp_wait_time')   !== waitTime)    update.wrp_wait_time   = waitTime;
     }
 
-    // FDP — frost protection: { value:1 }
+    // CLS — child lock: scalar 0/1 (confirmed via ioBroker: type:'number')
+    if (cfg.CLS != null) {
+      const clsEnabled = cfgBool(cfg.CLS);
+      if (this.getSetting('cls_enabled') !== clsEnabled) update.cls_enabled = clsEnabled;
+      if (this.hasCapability('child_lock')) await this._applyBoolCap('child_lock', clsEnabled);
+    }
+
+    // FDP — frost protection: scalar 0/1
     if (cfg.FDP != null) {
-      const fdpEnabled = cfg.FDP.value === 1;
+      const fdpEnabled = cfgBool(cfg.FDP);
       if (this.getSetting('fdp_enabled') !== fdpEnabled) update.fdp_enabled = fdpEnabled;
+    }
+
+    // VOL — volume: scalar 0–100
+    if (cfg.VOL != null && this.hasCapability('mower_volume')) {
+      const vol = Number(cfg.VOL);
+      if (this.getCapabilityValue('mower_volume') !== vol) {
+        await this.setCapabilityValue('mower_volume', vol).catch((e) => this.error('setCapabilityValue mower_volume:', e.message));
+      }
+    }
+
+    // LIT — lighting: GET returns { value:0|1, time:[startMin,endMin] } only.
+    // The light:[standby,working,charging,error] array is write-only (not in GET response).
+    if (cfg.LIT != null && typeof cfg.LIT === 'object') {
+      const litEnabled = cfg.LIT.value !== 0;
+      const litStart   = Math.round((cfg.LIT.time?.[0] ?? 480) / 60);
+      const litEnd     = Math.round((cfg.LIT.time?.[1] ?? 1200) / 60);
+      if (this.getSetting('lit_enabled')    !== litEnabled) update.lit_enabled    = litEnabled;
+      if (this.getSetting('lit_time_start') !== litStart)   update.lit_time_start = litStart;
+      if (this.getSetting('lit_time_end')   !== litEnd)     update.lit_time_end   = litEnd;
+      // light[] scenarios: only update if the device actually returns them (future firmware may add it).
+      if (Array.isArray(cfg.LIT.light)) {
+        const l = cfg.LIT.light;
+        if (this.getSetting('lit_standby')  !== (l[0] === 1)) update.lit_standby  = l[0] === 1;
+        if (this.getSetting('lit_working')  !== (l[1] === 1)) update.lit_working  = l[1] === 1;
+        if (this.getSetting('lit_charging') !== (l[2] === 1)) update.lit_charging = l[2] === 1;
+        if (this.getSetting('lit_error')    !== (l[3] === 1)) update.lit_error    = l[3] === 1;
+      }
     }
 
     if (Object.keys(update).length > 0) {
@@ -749,7 +841,7 @@ class MowerDevice extends Homey.Device {
       .catch((e) => this.error('charging_status_changed trigger:', e.message));
   }
 
-  async _applyStatus(status) {
+  async _applyStatus(status, faultCode = 0) {
     const prev = this.getCapabilityValue('mower_status');
 
     const isMowing    = status === 'mowing';
@@ -786,7 +878,11 @@ class MowerDevice extends Homey.Device {
     await this.setCapabilityValue('alarm_generic', isError);
     if (isError) {
       this._trgError
-        .trigger(this, { error_code: 0, error_description: this.homey.__('error_codes.unknown').replace('__code__', 0) }, {})
+        .trigger(this, {
+          error_code:        faultCode,
+          error_description: this.homey.__(`error_codes.${faultCode}`)
+                          || this.homey.__('error_codes.unknown').replace('__code__', faultCode),
+        }, {})
         .catch((e) => this.error('mower_error trigger:', e.message));
     }
 
@@ -942,19 +1038,51 @@ class MowerDevice extends Homey.Device {
   async getDebugPollData() {
     const did = this.getData().id;
 
-    const [rawResponse, deviceStatus] = await Promise.allSettled([
+    const [rawResponse, deviceStatus, cfgResult] = await Promise.allSettled([
       this._api.getRawProperties(did),
       this._api.getDeviceStatus(did),
+      this._api.getCFG(did),
     ]);
 
+    // Capability snapshot
+    const capabilityValues = {};
+    for (const cap of this.getCapabilities()) {
+      capabilityValues[cap] = this.getCapabilityValue(cap);
+    }
+
+    // Store snapshot (non-sensitive keys only)
+    const storeKeys = ['brand', 'region', 'model', 'bind_domain', 'token_expiry', 'mowing_mode'];
+    const storeValues = {};
+    for (const k of storeKeys) {
+      storeValues[k] = await this.getStoreValue(k);
+    }
+
+    // Settings snapshot (no passwords)
+    const settingKeys = [
+      'brand', 'region', 'device_model', 'firmware_version',
+      'serial_number', 'mac_address', 'poll_interval', 'num_zones',
+      'cls_enabled', 'fdp_enabled', 'wrp_enabled', 'wrp_sensitivity', 'wrp_wait_time',
+      'lit_enabled', 'lit_time_start', 'lit_time_end', 'lit_standby', 'lit_working', 'lit_charging', 'lit_error',
+    ];
+    const deviceSettings = {};
+    for (const k of settingKeys) {
+      deviceSettings[k] = this.getSetting(k);
+    }
+
+    const cfgData = cfgResult.status === 'fulfilled' ? cfgResult.value : { error: cfgResult.reason?.message };
+
     return {
-      timestamp:    new Date().toISOString(),
-      deviceId:     did,
-      deviceName:   this.getName(),
-      model:        this.getSetting('device_model') || '',
-      available:    this.getAvailable(),
-      rawResponse:  rawResponse.status  === 'fulfilled' ? rawResponse.value  : { error: rawResponse.reason?.message },
-      deviceStatus: deviceStatus.status === 'fulfilled' ? deviceStatus.value : { error: deviceStatus.reason?.message },
+      timestamp:        new Date().toISOString(),
+      deviceId:         did,
+      deviceName:       this.getName(),
+      model:            this.getSetting('device_model') || '',
+      available:        this.getAvailable(),
+      rawResponse:      rawResponse.status  === 'fulfilled' ? rawResponse.value  : { error: rawResponse.reason?.message },
+      deviceStatus:     deviceStatus.status === 'fulfilled' ? deviceStatus.value : { error: deviceStatus.reason?.message },
+      cfgData,
+      capabilityValues,
+      storeValues,
+      deviceSettings,
     };
   }
 }

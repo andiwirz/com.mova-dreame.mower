@@ -1,8 +1,0 @@
-{
-  "type": "boolean",
-  "title": { "en": "Do Not Disturb", "de": "Nicht stören" },
-  "getable": true,
-  "setable": true,
-  "uiComponent": "toggle",
-  "icon": "/assets/capabilities/dnd_enabled.svg"
-}

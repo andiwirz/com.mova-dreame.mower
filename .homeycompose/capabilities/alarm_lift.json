@@ -1,7 +1,0 @@
-{
-  "type": "boolean",
-  "title": { "en": "Lifted", "de": "Angehoben" },
-  "getable": true,
-  "setable": false,
-  "uiComponent": "sensor"
-}

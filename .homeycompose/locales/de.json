@@ -15,74 +15,10 @@
     "error_generic": "Etwas ist schiefgelaufen. Bitte nochmals versuchen.",
     "error_empty_fields": "Bitte E-Mail und Passwort eingeben."
   },
-  "settings": {
-    "account_group": "Konto",
-    "connection_group": "Verbindung",
-    "mowing_group": "Mähen",
-    "battery_group": "Akku",
-    "sound_group": "Ton",
-    "dnd_group": "Nicht stören",
-    "username_label": "E-Mail",
-    "brand_label": "Marke",
-    "region_label": "Region",
-    "poll_interval_label": "Abfrageintervall (Sekunden)",
-    "poll_interval_hint": "Wie oft der Status abgefragt wird (10–300 Sekunden)",
-    "cutting_height_min_label": "Minimale Schnitthöhe (mm)",
-    "cutting_height_min_hint": "Niedrigste Messerposition deines Modells. Im Handbuch nachsehen.",
-    "cutting_height_max_label": "Maximale Schnitthöhe (mm)",
-    "cutting_height_max_hint": "Höchste Messerposition deines Modells. Im Handbuch nachsehen.",
-    "cutting_height_label": "Schnitthöhe (mm)",
-    "cutting_height_hint": "Aktuelle Messerhöhe. Muss im Min./Max.-Bereich liegen. Änderungen werden sofort an den Mähroboter gesendet.",
-    "auto_resume_label": "Nach dem Laden weiterfahren",
-    "auto_resume_hint": "Der Mähroboter setzt die Mähaufgabe nach dem Laden an der Station automatisch fort.",
-    "return_battery_label": "Rückkehrschwelle (%)",
-    "return_battery_hint": "Akkustand, bei dem der Mähroboter zur Station zurückkehrt.",
-    "resume_battery_label": "Weitermähschwelle (%)",
-    "resume_battery_hint": "Akkustand, ab dem der Mähroboter nach dem Laden weitermäht.",
-    "volume_label": "Lautstärke (%)",
-    "volume_hint": "Lautstärke des Mähroboter-Lautsprechers für Meldungen.",
-    "dnd_start_label": "Ruhezeit Beginn (HH:MM)",
-    "dnd_start_hint": "Beginn der Ruhezeit. In dieser Zeit startet der Mähroboter nicht automatisch.",
-    "dnd_end_label": "Ruhezeit Ende (HH:MM)",
-    "dnd_end_hint": "Ende der Ruhezeit.",
-    "border_first_label": "Rand zuerst mähen",
-    "border_first_hint": "Randstreifen vor dem Hauptbereich mähen.",
-    "obstacle_avoidance_label": "Hindernisempfindlichkeit",
-    "obstacle_avoidance_hint": "0 = Aus, 1 = Niedrig, 2 = Mittel, 3 = Hoch",
-    "device_model_label": "Modell"
-  },
-  "status": {
-    "idle": "Bereit", "mowing": "Mähen", "standby": "Standby",
-    "paused": "Pausiert", "error": "Fehler", "returning": "Kehrt zurück",
-    "charging": "Lädt", "mapping": "Kartierung", "docked": "Gedockt", "updating": "Aktualisierung",
-    "remote_control": "Fernsteuerung"
-  },
-  "charging_status": {
-    "not_docked": "Nicht angedockt", "charging": "Lädt", "not_charging": "Angedockt (Standby)",
-    "charging_completed": "Vollständig geladen", "docked": "Vollständig geladen (alt)",
-    "returning": "Kehrt zurück", "paused_cold": "Pausiert (Kälte)"
-  },
-  "mower_mode": {
-    "all_area": "Alle", "zone": "Zone", "edge": "Kante", "spot": "Spot", "manual": "Manuell"
-  },
-  "mower_pattern": {
-    "zigzag": "Zick-Zack", "checkerboard": "Schachbrett"
-  },
-  "mowing_speed": {
-    "slow": "Langsam", "normal": "Normal", "fast": "Schnell"
-  },
-  "mow_efficiency": {
-    "standard": "Standard", "efficient": "Effizient"
-  },
-  "task_status": {
-    "inactive": "Inaktiv", "active": "Aktiv", "paused": "Pausiert", "recharging": "Lädt nach"
-  },
   "error": {
     "unreachable": "Mähroboter nicht erreichbar",
     "device_offline": "Mähroboter ist offline",
-    "auth_failed": "Authentifizierung fehlgeschlagen — Gerät neu hinzufügen",
-    "cutting_height_range": "Die minimale Schnitthöhe muss kleiner als die maximale sein.",
-    "cutting_height_bounds": "Die Schnitthöhe muss zwischen __min__mm und __max__mm liegen."
+    "auth_failed": "Authentifizierung fehlgeschlagen — Gerät neu hinzufügen"
   },
   "error_codes": {
     "0":  "Normaler Betrieb",

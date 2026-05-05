@@ -1,9 +1,0 @@
-{
-  "type": "number",
-  "title": { "en": "Mowed Area", "de": "Gemähte Fläche" },
-  "units": "m²",
-  "decimals": 0,
-  "getable": true,
-  "setable": false,
-  "uiComponent": "sensor"
-}

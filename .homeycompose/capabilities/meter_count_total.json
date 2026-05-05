@@ -1,8 +1,0 @@
-{
-  "type": "number",
-  "title": { "en": "Total Mowing Sessions", "de": "Gesamte Mähvorgänge" },
-  "decimals": 0,
-  "getable": true,
-  "setable": false,
-  "uiComponent": "sensor"
-}

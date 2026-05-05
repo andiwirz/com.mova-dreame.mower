@@ -1,11 +1,11 @@
 {
   "id": "com.mova-dreame.mower",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "compatibility": ">=12.0.0",
   "sdk": 3,
   "name": {
-    "en": "MOVA & Dreame Mower",
-    "de": "MOVA & Dreame Mähroboter"
+    "en": "MOVA Mower",
+    "de": "MOVA Mähroboter"
   },
   "description": {
     "en": "Bring your MOVA or Dreame lawn mower into your smart home automations",
@@ -64,6 +64,10 @@
     "0.0.7": {
       "en": "Added frost protection and rain protection settings (confirmed via packet capture). Added Stop and Pause buttons. Added per-zone edge mowing buttons. Fixed edge mowing zone-unreachable error. Auto-reset action buttons on status change. Simplified settings page — removed unverified options.",
       "de": "Frostschutz- und Regenschutz-Einstellungen hinzugefügt (per Packet Capture bestätigt). Knöpfe Mähen beenden und Pausieren hinzugefügt. Kantenmähen-Knöpfe pro Zone hinzugefügt. Fehler 'Zone nicht erreichbar' beim Kantenmähen behoben. Aktionsknöpfe werden bei Statuswechsel automatisch zurückgesetzt. Einstellungsseite vereinfacht — nicht verifizierte Optionen entfernt."
+    },
+    "0.0.8": {
+      "en": "Added lighting settings (on/off, time window) confirmed via packet capture. Fixed capability icon rendering on iOS. Expanded debug poll with CFG data, capability values and device settings.",
+      "de": "Beleuchtungseinstellungen (Ein/Aus, Zeitfenster) per Packet Capture bestätigt hinzugefügt. Darstellung der Capability-Icons unter iOS korrigiert. Debug-Poll um CFG-Daten, Capability-Werte und Geräteeinstellungen erweitert."
     }
   }
 }

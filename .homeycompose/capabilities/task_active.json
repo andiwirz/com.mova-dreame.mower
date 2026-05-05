@@ -1,7 +1,0 @@
-{
-  "type": "boolean",
-  "title": { "en": "Task Active", "de": "Aufgabe aktiv" },
-  "getable": true,
-  "setable": false,
-  "uiComponent": "sensor"
-}

@@ -1,6 +1,6 @@
 'use strict';
 
-const DreameApi = require('./lib/DreameApi');
+const MovaApi = require('./lib/MovaApi');
 
 module.exports = {
 
@@ -36,7 +36,7 @@ module.exports = {
       if (!brand || !region || !username || !password) {
         throw new Error('brand, region, username and password are required');
       }
-      const api = new DreameApi({ brand, region, log: (...a) => homey.app.log(...a) });
+      const api = new MovaApi({ brand, region, log: (...a) => homey.app.log(...a) });
       await api.login(username, password);
       return api.getRawDevices();
     }

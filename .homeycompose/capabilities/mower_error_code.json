@@ -1,9 +1,0 @@
-{
-  "type": "number",
-  "title": { "en": "Error Code", "de": "Fehlercode" },
-  "min": 0,
-  "decimals": 0,
-  "getable": true,
-  "setable": false,
-  "uiComponent": "sensor"
-}

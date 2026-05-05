@@ -1,8 +1,0 @@
-{
-  "type": "boolean",
-  "title": { "en": "Anti-Theft Lock", "de": "Diebstahlschutz" },
-  "getable": true,
-  "setable": true,
-  "uiComponent": "toggle",
-  "icon": "/assets/capabilities/anti_theft.svg"
-}

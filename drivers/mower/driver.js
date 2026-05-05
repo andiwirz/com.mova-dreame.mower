@@ -1,7 +1,7 @@
 'use strict';
 
 const Homey = require('homey');
-const DreameApi = require('../../lib/DreameApi');
+const MovaApi = require('../../lib/MovaApi');
 
 class MowerDriver extends Homey.Driver {
   async onInit() {
@@ -90,7 +90,7 @@ class MowerDriver extends Homey.Driver {
     let discoveredDevices = [];
 
     session.setHandler('login', async ({ brand, region, username, password }) => {
-      api = new DreameApi({ brand, region, log: (...a) => this.log(...a) });
+      api = new MovaApi({ brand, region, log: (...a) => this.log(...a) });
       await api.login(username, password);
 
       const all = await api.getDevices();

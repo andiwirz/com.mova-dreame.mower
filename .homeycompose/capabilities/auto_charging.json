@@ -1,8 +1,0 @@
-{
-  "type": "boolean",
-  "title": { "en": "Smart Charging", "de": "Smart-Laden" },
-  "getable": true,
-  "setable": true,
-  "uiComponent": "toggle",
-  "icon": "/assets/capabilities/auto_charging.svg"
-}

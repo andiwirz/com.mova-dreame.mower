@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Debug — MOVA &amp; Dreame Mower</title>
+  <title>Debug — MOVA Mower</title>
   <script type="text/javascript" src="/homey.js" data-origin="settings"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -309,7 +309,7 @@
 
 <header>
   <h1>🔍 Debug Console</h1>
-  <span>MOVA &amp; Dreame Mower</span>
+  <span>MOVA Mower</span>
 </header>
 
 <!-- ── Top navigation ──────────────────────────────────────────────────── -->
@@ -344,11 +344,13 @@
 
   <div class="content">
     <div class="tabs">
-      <button class="tab active" onclick="showTab('table', this)">Properties</button>
+      <button class="tab active" onclick="showTab('cloud', this)">Cloud Data</button>
+      <button class="tab" onclick="showTab('homey', this)">Homey State</button>
       <button class="tab" onclick="showTab('json', this)">Raw JSON</button>
     </div>
 
-    <div id="tabTable">
+    <!-- ── Tab: Cloud Data ───────────────────────────────────────────────── -->
+    <div id="tabCloud">
       <div class="empty" id="emptyMsg">No data yet.</div>
 
       <!-- MOVA key-value properties -->
@@ -368,8 +370,49 @@
         </thead>
         <tbody id="statusBody"></tbody>
       </table>
+
+      <!-- CFG settings (WRP, CLS, FDP, VOL, …) -->
+      <table class="prop-table" id="cfgTable" style="display:none;margin-top:12px">
+        <thead>
+          <tr><th colspan="2">CFG Settings (from mower)</th></tr>
+          <tr><th>Key</th><th>Value</th></tr>
+        </thead>
+        <tbody id="cfgBody"></tbody>
+      </table>
     </div>
 
+    <!-- ── Tab: Homey State ──────────────────────────────────────────────── -->
+    <div id="tabHomey" style="display:none">
+
+      <!-- Capability values -->
+      <table class="prop-table" id="capTable" style="display:none;margin-top:12px">
+        <thead>
+          <tr><th colspan="2">Capability Values</th></tr>
+          <tr><th>Capability</th><th>Value</th></tr>
+        </thead>
+        <tbody id="capBody"></tbody>
+      </table>
+
+      <!-- Store values -->
+      <table class="prop-table" id="storeTable" style="display:none;margin-top:12px">
+        <thead>
+          <tr><th colspan="2">Store Values</th></tr>
+          <tr><th>Key</th><th>Value</th></tr>
+        </thead>
+        <tbody id="storeBody"></tbody>
+      </table>
+
+      <!-- Device settings -->
+      <table class="prop-table" id="settingsTable" style="display:none;margin-top:12px">
+        <thead>
+          <tr><th colspan="2">Device Settings</th></tr>
+          <tr><th>Setting</th><th>Value</th></tr>
+        </thead>
+        <tbody id="settingsBody"></tbody>
+      </table>
+    </div>
+
+    <!-- ── Tab: Raw JSON ─────────────────────────────────────────────────── -->
     <div id="tabJson" style="display:none">
       <div class="json-wrap">
         <div class="json-toolbar">
@@ -400,8 +443,8 @@
         <div class="dis-field">
           <label>Brand</label>
           <select id="dis-brand">
-            <option value="dreame">Dreame</option>
             <option value="mova">MOVA</option>
+            <option value="dreame">Dreame</option>
           </select>
         </div>
         <div class="dis-field">
@@ -462,7 +505,7 @@
   let lastPollData = null;
   let lastDiscover = null;
   let autoTimer    = null;
-  let activeTab    = 'table';
+  let activeTab    = 'cloud';
 
   // ── Init ────────────────────────────────────────────────────────────────────
   function onHomeyReady(Homey) {
@@ -526,63 +569,89 @@
       document.getElementById('copyBtn').disabled = false;
       renderTable(data);
       renderJson(data);
-      const rawData = (data.rawResponse || {}).data;
+      const rawData   = (data.rawResponse || {}).data;
       const propCount = Array.isArray(rawData) ? rawData.length
         : (rawData && typeof rawData === 'object' ? Object.keys(rawData).length : 0);
-      setStatus(`Last poll: ${formatTs(data.timestamp)} — ${propCount} properties received`);
+      const cfgCount  = data.cfgData && !data.cfgData.error ? Object.keys(data.cfgData).length : 0;
+      const capCount  = data.capabilityValues ? Object.keys(data.capabilityValues).length : 0;
+      setStatus(`Last poll: ${formatTs(data.timestamp)} — ${propCount} device props · ${cfgCount} CFG keys · ${capCount} capabilities`);
     });
   }
 
   // ── Render table ─────────────────────────────────────────────────────────────
   function clearTable() {
-    document.getElementById('kvTable').style.display     = 'none';
-    document.getElementById('statusTable').style.display = 'none';
-    document.getElementById('emptyMsg').style.display    = 'block';
-    document.getElementById('jsonOut').textContent       = 'No data yet.';
+    ['kvTable','statusTable','cfgTable','capTable','storeTable','settingsTable'].forEach((id) => {
+      document.getElementById(id).style.display = 'none';
+    });
+    document.getElementById('emptyMsg').style.display = 'block';
+    document.getElementById('jsonOut').textContent    = 'No data yet.';
+  }
+
+  function renderKvRows(tbodyId, entries, sortKeys = false) {
+    const body = document.getElementById(tbodyId);
+    body.innerHTML = '';
+    const list = sortKeys ? entries.sort(([a], [b]) => a.localeCompare(b)) : entries;
+    list.forEach(([k, v]) => {
+      const valStr = v === null || v === undefined ? '—' : (typeof v === 'object' ? JSON.stringify(v) : String(v));
+      const isLong = valStr.length > 80;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><span class="prop-name">${escHtml(k)}</span></td>
+        <td><span class="prop-value${isLong ? ' long' : ''}" title="${escHtml(valStr)}">${escHtml(isLong ? valStr.slice(0, 100) + '…' : valStr)}</span></td>
+      `;
+      body.appendChild(tr);
+    });
   }
 
   function renderTable(data) {
-    const rawData      = (data.rawResponse || {}).data;
-    const deviceStatus = data.deviceStatus;
-    let anyData = false;
+    let anyCloud = false;
 
+    // ── MOVA key-value object ─────────────────────────────────────────────────
+    const rawData = (data.rawResponse || {}).data;
     if (rawData && typeof rawData === 'object' && !rawData.error) {
-      // ── MOVA key-value object ───────────────────────────────────────────────
-      const body = document.getElementById('kvBody');
-      body.innerHTML = '';
-      Object.entries(rawData).sort(([a], [b]) => a.localeCompare(b)).forEach(([k, v]) => {
-        const valStr = typeof v === 'object' ? JSON.stringify(v) : String(v);
-        const isLong = valStr.length > 80;
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><span class="prop-name">${escHtml(k)}</span></td>
-          <td><span class="prop-value${isLong ? ' long' : ''}" title="${escHtml(valStr)}">${escHtml(isLong ? valStr.slice(0, 100) + '…' : valStr)}</span></td>
-        `;
-        body.appendChild(tr);
-      });
+      renderKvRows('kvBody', Object.entries(rawData), true);
       document.getElementById('kvTable').style.display = 'table';
-      anyData = true;
+      anyCloud = true;
     }
 
-    // ── Device-list status (always shown if present) ───────────────────────────
+    // ── Device-list status ────────────────────────────────────────────────────
+    const deviceStatus = data.deviceStatus;
     if (deviceStatus && !deviceStatus.error) {
-      const body = document.getElementById('statusBody');
-      body.innerHTML = '';
-      Object.entries(deviceStatus).forEach(([k, v]) => {
-        if (typeof v === 'object' && v !== null) return; // skip nested objects
-        const valStr = String(v);
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><span class="prop-name">${escHtml(k)}</span></td>
-          <td><span class="prop-value">${escHtml(valStr)}</span></td>
-        `;
-        body.appendChild(tr);
-      });
+      renderKvRows('statusBody', Object.entries(deviceStatus).filter(([, v]) => typeof v !== 'object' || v === null));
       document.getElementById('statusTable').style.display = 'table';
-      anyData = true;
+      anyCloud = true;
     }
 
-    document.getElementById('emptyMsg').style.display = anyData ? 'none' : 'block';
+    // ── CFG settings ──────────────────────────────────────────────────────────
+    const cfg = data.cfgData;
+    if (cfg && !cfg.error && typeof cfg === 'object' && Object.keys(cfg).length > 0) {
+      renderKvRows('cfgBody', Object.entries(cfg).sort(([a], [b]) => a.localeCompare(b)));
+      document.getElementById('cfgTable').style.display = 'table';
+      anyCloud = true;
+    }
+
+    document.getElementById('emptyMsg').style.display = anyCloud ? 'none' : 'block';
+
+    // ── Capability values ─────────────────────────────────────────────────────
+    const caps = data.capabilityValues;
+    if (caps && typeof caps === 'object' && Object.keys(caps).length > 0) {
+      renderKvRows('capBody', Object.entries(caps).sort(([a], [b]) => a.localeCompare(b)));
+      document.getElementById('capTable').style.display = 'table';
+    }
+
+    // ── Store values ──────────────────────────────────────────────────────────
+    const store = data.storeValues;
+    if (store && typeof store === 'object' && Object.keys(store).length > 0) {
+      renderKvRows('storeBody', Object.entries(store));
+      document.getElementById('storeTable').style.display = 'table';
+    }
+
+    // ── Device settings ───────────────────────────────────────────────────────
+    const settings = data.deviceSettings;
+    if (settings && typeof settings === 'object' && Object.keys(settings).length > 0) {
+      renderKvRows('settingsBody', Object.entries(settings));
+      document.getElementById('settingsTable').style.display = 'table';
+    }
   }
 
   function renderJson(data) {
@@ -592,7 +661,8 @@
   // ── Tabs ─────────────────────────────────────────────────────────────────────
   function showTab(tab, el) {
     activeTab = tab;
-    document.getElementById('tabTable').style.display = tab === 'table' ? 'block' : 'none';
+    document.getElementById('tabCloud').style.display = tab === 'cloud' ? 'block' : 'none';
+    document.getElementById('tabHomey').style.display = tab === 'homey' ? 'block' : 'none';
     document.getElementById('tabJson').style.display  = tab === 'json'  ? 'block' : 'none';
     document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
     el.classList.add('active');

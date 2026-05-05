@@ -26,5 +26,8 @@
   "0.0.7": {
     "en": "Added frost protection and rain protection settings (confirmed via packet capture). Added Stop and Pause buttons. Added per-zone edge mowing buttons. Fixed edge mowing zone-unreachable error. Auto-reset action buttons on status change. Simplified settings page — removed unverified options.",
     "de": "Frostschutz- und Regenschutz-Einstellungen hinzugefügt (per Packet Capture bestätigt). Knöpfe Mähen beenden und Pausieren hinzugefügt. Kantenmähen-Knöpfe pro Zone hinzugefügt. Fehler 'Zone nicht erreichbar' beim Kantenmähen behoben. Aktionsknöpfe werden bei Statuswechsel automatisch zurückgesetzt. Einstellungsseite vereinfacht — nicht verifizierte Optionen entfernt."
+  },
+  "0.0.8": {
+    "en": "all actions are working now, nicer icons, removed Dreame for now (MOVA has priority)"
   }
 }
