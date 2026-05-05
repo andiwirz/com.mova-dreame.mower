@@ -106,7 +106,7 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 
 If this app saves you time and works well for you, a small donation is always appreciated — it helps cover development time and API research.
 
-[![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-0070ba?logo=paypal)](https://www.paypal.me/PLACEHOLDER)
+[![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-0070ba?logo=paypal)](https://www.paypal.me/AndiWirz)
 
 ## Notes
 
