@@ -13,6 +13,7 @@ MOVA Mower connects your robotic lawn mower to Homey, giving you direct control 
 - **Do Not Disturb** — set a quiet window during which the mower will not start automatically and returns to dock if already mowing
 - **Low Speed at Night** — set a time window during which the mower slows down automatically to protect animals active at night
 - **Consumable status** — blade life, cleaning brush life, and robot maintenance remaining (%) read from the device
+- **Battery settings** — configure the return-to-dock threshold, task-resume threshold, and custom charging time window
 - **Auto-reset action buttons** when the mower reaches a new state (e.g. dock button resets when mower docks)
 - Flow cards for full automation
 - Built-in **Debug Console** in the app settings for diagnostics and device discovery
@@ -33,6 +34,9 @@ MOVA Mower connects your robotic lawn mower to Homey, giving you direct control 
 | Do Not Disturb — Start / End | Hour of day for the DND window (e.g. 22 = 22:00, 8 = 08:00 next day) |
 | Low Speed at Night — Enabled | Mower slows down automatically during the set window to protect animals active at night |
 | Low Speed at Night — Start / End | Hour of day for the low-speed window (e.g. 20 = 20:00, 8 = 08:00 next day) |
+| Battery — Return threshold (%) | Mower returns to dock when battery drops to this level |
+| Battery — Resume threshold (%) | Mower resumes its task once the battery reaches this level after charging |
+| Battery — Resume mowing after charging | When enabled, the mower automatically resumes its unfinished task after charging completes |
 | Poll interval | How often Homey checks the mower status (seconds, default 30) |
 
 Device info (model, firmware, serial, MAC, email, brand, region) and zone count are read-only labels updated automatically.
@@ -222,6 +226,7 @@ Write one: `in:[{ m:'s', t:'<KEY>', d:{…} }]`.
 | `STUN` | `{value:0\|1}` | `{value:0\|1}` | Anti-theft lock | ~ |
 | `LOW` | `[enabled, startMin, endMin]` | `{value, time:[startMin, endMin]}` | Low Speed at Night — time in minutes since midnight (e.g. `1200`=20:00, `480`=08:00) | ✓ |
 | `CMS` | `[bladeMin, brushMin, robotMin]` | — | Consumable usage in minutes since last replacement — blade max 6000 min (100h), brush max 30000 min (500h), robot max 3600 min (60h) | ✓ |
+| `BAT` | `[returnPct, resumePct, autoResume, ?, startMin, endMin]` | `{value:[returnPct, resumePct, autoResume], type:'power'}` | Battery thresholds + auto-resume flag; `[4]`/`[5]` = charging window times — `type:'schedule'` write not yet confirmed | ✓ |
 
 ---
 

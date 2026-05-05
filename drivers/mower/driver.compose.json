@@ -261,6 +261,48 @@
     },
     {
       "type": "group",
+      "label": { "en": "Battery", "de": "Akku" },
+      "children": [
+        {
+          "id": "bat_return_pct",
+          "type": "number",
+          "label": { "en": "Return charging threshold (%)", "de": "Ladestand für automatisches Aufladen (%)" },
+          "value": 15,
+          "min": 5,
+          "max": 90,
+          "step": 5,
+          "hint": {
+            "en": "The mower returns to the dock automatically when the battery drops to this level.",
+            "de": "Der Mähroboter kehrt automatisch zur Station zurück, wenn der Akkustand auf diesen Wert sinkt."
+          }
+        },
+        {
+          "id": "bat_resume_pct",
+          "type": "number",
+          "label": { "en": "Resume task threshold (%)", "de": "Ladestand für Wiederaufnahme der Aufgaben (%)" },
+          "value": 100,
+          "min": 10,
+          "max": 100,
+          "step": 5,
+          "hint": {
+            "en": "After charging, the mower resumes its task automatically once the battery reaches this level.",
+            "de": "Nach dem Aufladen setzt der Mähroboter die Aufgabe automatisch fort, sobald der Akku diesen Ladestand erreicht hat."
+          }
+        },
+        {
+          "id": "bat_auto_resume",
+          "type": "checkbox",
+          "label": { "en": "Resume mowing after charging", "de": "Mähen nach dem Laden fortsetzen" },
+          "value": false,
+          "hint": {
+            "en": "When enabled, the mower automatically resumes its unfinished task after charging is complete.",
+            "de": "Wenn aktiviert, setzt der Roboter die unerledigte Aufgabe nach Abschluss der Ladezeit automatisch fort."
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
       "label": { "en": "Low Speed at Night", "de": "Niedrige Geschwindigkeit in der Nacht" },
       "children": [
         {

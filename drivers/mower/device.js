@@ -314,6 +314,18 @@ class MowerDevice extends Homey.Device {
       }));
     }
 
+    // Battery power config — write return %, resume % and schedule toggle together
+    // (bat_schedule_start / bat_schedule_end write format not yet confirmed, read-only for now)
+    const BAT_POWER_KEYS = ['bat_return_pct', 'bat_resume_pct', 'bat_auto_resume'];
+    if (BAT_POWER_KEYS.some((k) => changedKeys.includes(k))) {
+      this.log(`[settings] BAT power → return=${newSettings.bat_return_pct}% resume=${newSettings.bat_resume_pct}% autoResume=${newSettings.bat_auto_resume}`);
+      await this._safeWrite('bat', () => this._api.setBatteryConfig(did, {
+        returnPct:   newSettings.bat_return_pct,
+        resumePct:   newSettings.bat_resume_pct,
+        autoResume:  newSettings.bat_auto_resume,
+      }));
+    }
+
     // Low Speed at Night — write enabled + start + end together whenever any changes
     const LOW_KEYS = ['low_enabled', 'low_start', 'low_end'];
     if (LOW_KEYS.some((k) => changedKeys.includes(k))) {
@@ -854,6 +866,18 @@ class MowerDevice extends Homey.Device {
       }
     }
 
+    // BAT — battery config: GET returns [returnPct, resumePct, scheduleEnabled, ?, startMin, endMin]
+    // SET type:'power' sends [returnPct, resumePct, scheduleEnabled] (confirmed via packet capture).
+    // Schedule time window write (type:'schedule') is not yet confirmed — start/end are read-only for now.
+    if (Array.isArray(cfg.BAT) && cfg.BAT.length >= 2) {
+      const batReturn  = cfg.BAT[0];
+      const batResume  = cfg.BAT[1];
+      const batAutoResume = cfg.BAT[2] === 1;
+      if (this.getSetting('bat_return_pct')  !== batReturn)     update.bat_return_pct  = batReturn;
+      if (this.getSetting('bat_resume_pct')  !== batResume)     update.bat_resume_pct  = batResume;
+      if (this.getSetting('bat_auto_resume') !== batAutoResume) update.bat_auto_resume = batAutoResume;
+    }
+
     // LOW — Low Speed at Night: GET returns { value:0|1, time:[startMin,endMin] }
     if (cfg.LOW != null) {
       let lowEnabled, lowStart, lowEnd;
@@ -1162,6 +1186,7 @@ class MowerDevice extends Homey.Device {
       'brand', 'region', 'device_model', 'firmware_version',
       'serial_number', 'mac_address', 'poll_interval', 'num_zones',
       'cls_enabled', 'fdp_enabled', 'wrp_enabled', 'wrp_sensitivity', 'wrp_wait_time',
+      'bat_return_pct', 'bat_resume_pct', 'bat_auto_resume',
       'low_enabled', 'low_start', 'low_end',
       'dnd_enabled', 'dnd_start', 'dnd_end',
       'lit_enabled', 'lit_time_start', 'lit_time_end', 'lit_standby', 'lit_working', 'lit_charging', 'lit_error',

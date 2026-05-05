@@ -1,6 +1,6 @@
 {
   "id": "com.mova-dreame.mower",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "compatibility": ">=12.0.0",
   "sdk": 3,
   "name": {
@@ -76,6 +76,10 @@
     "0.0.10": {
       "en": "Added blade, brush and robot maintenance consumable sensors (%). Fixed LIT settings parsing (CFG returns an array, not an object — start time, end time and light scenarios were read incorrectly).",
       "de": "Klingen-, Reinigungsbürsten- und Roboterwartungs-Sensoren (%) hinzugefügt. LIT-Einstellungs-Parsing korrigiert (CFG liefert ein Array statt eines Objekts — Startzeit, Endzeit und Lichtszenarien wurden falsch gelesen)."
+    },
+    "0.0.11": {
+      "en": "Added battery settings: return-to-dock threshold, task-resume threshold and custom charging time window (confirmed via packet capture). Charging window start/end are read from device; write format not yet confirmed.",
+      "de": "Akku-Einstellungen hinzugefügt: Rückkehr-Schwellwert, Wiederaufnahme-Schwellwert und benutzerdefinierte Ladezeit (per Packet Capture bestätigt). Ladezeit-Start/-Ende werden vom Gerät gelesen; Schreiben noch nicht bestätigt."
     }
   }
 }
