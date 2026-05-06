@@ -387,6 +387,52 @@
     },
     {
       "type": "group",
+      "label": { "en": "Voice Announcements", "de": "Sprachansagemodi" },
+      "children": [
+        {
+          "id": "voice_notification",
+          "type": "checkbox",
+          "label": { "en": "Regular notification", "de": "Regelmäßige Benachrichtigungsansage" },
+          "value": false,
+          "hint": {
+            "en": "The mower announces regular status notifications.",
+            "de": "Der Mähroboter gibt regelmäßige Benachrichtigungsansagen aus."
+          }
+        },
+        {
+          "id": "voice_work_status",
+          "type": "checkbox",
+          "label": { "en": "Work status", "de": "Arbeitsstatusansage" },
+          "value": false,
+          "hint": {
+            "en": "The mower announces work status changes (e.g. mowing started, returning to dock).",
+            "de": "Der Mähroboter gibt Arbeitsstatusänderungen aus (z. B. Mähen gestartet, Rückkehr zur Station)."
+          }
+        },
+        {
+          "id": "voice_special_status",
+          "type": "checkbox",
+          "label": { "en": "Special status", "de": "Spezialstatusansage" },
+          "value": false,
+          "hint": {
+            "en": "The mower announces special status events.",
+            "de": "Der Mähroboter gibt Ansagen zu besonderen Statusereignissen aus."
+          }
+        },
+        {
+          "id": "voice_error_status",
+          "type": "checkbox",
+          "label": { "en": "Error status", "de": "Fehlerstatusansage" },
+          "value": false,
+          "hint": {
+            "en": "The mower announces error conditions.",
+            "de": "Der Mähroboter gibt Fehlermeldungen als Sprachansage aus."
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
       "label": { "en": "Anti-Theft Alarm", "de": "Anti-Diebstahl-Alarm" },
       "children": [
         {

@@ -1,6 +1,6 @@
 {
   "id": "com.mova-dreame.mower",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "compatibility": ">=12.0.0",
   "sdk": 3,
   "name": {
@@ -88,6 +88,10 @@
     "0.0.13": {
       "en": "Added anti-theft alarm settings: lift alarm, map-leave alarm and real-time location (confirmed via packet capture).",
       "de": "Anti-Diebstahl-Einstellungen hinzugefügt: Hebealarm, Alarm bei Kartenverlassen und Echtzeit-Standort (per Packet Capture bestätigt)."
+    },
+    "0.0.14": {
+      "en": "Added voice announcement mode settings: regular notification, work status, special status and error status (confirmed via packet capture).",
+      "de": "Sprachansagemodi hinzugefügt: Regelmäßige Benachrichtigung, Arbeitsstatus, Spezialstatus und Fehlerstatus (per Packet Capture bestätigt)."
     }
   }
 }

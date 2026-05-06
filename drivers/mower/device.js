@@ -331,6 +331,18 @@ class MowerDevice extends Homey.Device {
       }));
     }
 
+    // Voice announcement modes — write all four together whenever any one changes
+    const VOICE_KEYS = ['voice_notification', 'voice_work_status', 'voice_special_status', 'voice_error_status'];
+    if (VOICE_KEYS.some((k) => changedKeys.includes(k))) {
+      this.log(`[settings] VOICE → notification=${newSettings.voice_notification} work=${newSettings.voice_work_status} special=${newSettings.voice_special_status} error=${newSettings.voice_error_status}`);
+      await this._safeWrite('voice', () => this._api.setVoiceModes(did, {
+        notification:  newSettings.voice_notification,
+        workStatus:    newSettings.voice_work_status,
+        specialStatus: newSettings.voice_special_status,
+        errorStatus:   newSettings.voice_error_status,
+      }));
+    }
+
     // Battery power config — write return %, resume % and schedule toggle together
     // (bat_schedule_start / bat_schedule_end write format not yet confirmed, read-only for now)
     const BAT_POWER_KEYS = ['bat_return_pct', 'bat_resume_pct', 'bat_auto_resume'];
@@ -847,6 +859,18 @@ class MowerDevice extends Homey.Device {
       if (this.getCapabilityValue('mower_volume') !== vol) {
         await this.setCapabilityValue('mower_volume', vol).catch((e) => this.error('setCapabilityValue mower_volume:', e.message));
       }
+    }
+
+    // VOICE — voice announcement modes: array [notification, workStatus, specialStatus, errorStatus]
+    if (Array.isArray(cfg.VOICE) && cfg.VOICE.length >= 4) {
+      const voiceNotification  = cfg.VOICE[0] === 1;
+      const voiceWorkStatus    = cfg.VOICE[1] === 1;
+      const voiceSpecialStatus = cfg.VOICE[2] === 1;
+      const voiceErrorStatus   = cfg.VOICE[3] === 1;
+      if (this.getSetting('voice_notification')  !== voiceNotification)  update.voice_notification  = voiceNotification;
+      if (this.getSetting('voice_work_status')   !== voiceWorkStatus)    update.voice_work_status   = voiceWorkStatus;
+      if (this.getSetting('voice_special_status') !== voiceSpecialStatus) update.voice_special_status = voiceSpecialStatus;
+      if (this.getSetting('voice_error_status')  !== voiceErrorStatus)   update.voice_error_status  = voiceErrorStatus;
     }
 
     // LIT — lighting.

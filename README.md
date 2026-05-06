@@ -14,6 +14,7 @@ MOVA Mower connects your robotic lawn mower to Homey, giving you direct control 
 - **Low Speed at Night** — set a time window during which the mower slows down automatically to protect animals active at night
 - **Consumable status** — blade life, cleaning brush life, and robot maintenance remaining (%) read from the device
 - **Battery settings** — configure the return-to-dock threshold, task-resume threshold, and custom charging time window
+- **Voice Announcements** — configure which voice modes the mower uses (notifications, work status, special status, errors)
 - **Anti-Theft Alarm** — enable lift alarm: mower locks and triggers an audible alarm when lifted
 - **AI Obstacle Photos** — enable or disable photo capture of AI-detected obstacles
 - **Auto-reset action buttons** when the mower reaches a new state (e.g. dock button resets when mower docks)
@@ -39,6 +40,10 @@ MOVA Mower connects your robotic lawn mower to Homey, giving you direct control 
 | Battery — Return threshold (%) | Mower returns to dock when battery drops to this level |
 | Battery — Resume threshold (%) | Mower resumes its task once the battery reaches this level after charging |
 | Battery — Resume mowing after charging | When enabled, the mower automatically resumes its unfinished task after charging completes |
+| Voice — Regular Notification | The mower announces regular status notifications |
+| Voice — Work Status | The mower announces work status changes (mowing started, returning …) |
+| Voice — Special Status | The mower announces special status events |
+| Voice — Error Status | The mower announces error conditions |
 | Anti-Theft — Lift Alarm | When enabled, the mower locks and triggers an alarm immediately when lifted |
 | Anti-Theft — Map Alarm | Triggers an alarm when the mower leaves the mapped area (requires Link module) |
 | Anti-Theft — Real-time Location | Enables real-time GPS location tracking (requires Link module) |
@@ -218,6 +223,7 @@ Write one: `in:[{ m:'s', t:'<KEY>', d:{…} }]`.
 | Key | GET `d` format | SET `d` format | Description | Confirmed |
 |-----|----------------|----------------|-------------|-----------|
 | `AOP` | `{value:0\|1}` | `{value:0\|1}` | AI obstacle photo capture — when on, the mower photographs detected obstacles | ✓ |
+| `VOICE` | `[notification, workStatus, specialStatus, errorStatus]` | `{value:[0\|1, 0\|1, 0\|1, 0\|1]}` | Voice announcement modes — all 4 booleans sent together | ✓ |
 | `ATA` | `[liftAlarm, mapAlarm, realtimeLocation]` | `{value:[0\|1, 0\|1, 0\|1]}` | Anti-theft alarm — `[0]`=lift alarm, `[1]`=alarm when leaving map (Link module), `[2]`=real-time location (Link module) | ✓ |
 | `CLS` | `{value:0\|1}` | `{value:0\|1}` | Child lock (`0`=off, `1`=on) | ✓ |
 | `FDP` | `{value:0\|1}` | `{value:0\|1}` | Frost protection | ✓ |
