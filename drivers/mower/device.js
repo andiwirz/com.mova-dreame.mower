@@ -855,15 +855,13 @@ class MowerDevice extends Homey.Device {
     if (Array.isArray(cfg.CMS) && cfg.CMS.length >= 3) {
       const CMS_MAX = [6000, 30000, 3600];
       const caps    = ['consumable_blade', 'consumable_brush', 'consumable_robot'];
-      for (let i = 0; i < 3; i++) {
-        if (this.hasCapability(caps[i])) {
-          const pct = Math.max(0, Math.round((1 - cfg.CMS[i] / CMS_MAX[i]) * 100));
-          if (this.getCapabilityValue(caps[i]) !== pct) {
-            await this.setCapabilityValue(caps[i], pct)
-              .catch((e) => this.error(`setCapabilityValue ${caps[i]}:`, e.message));
-          }
-        }
-      }
+      await Promise.all(caps.map((cap, i) => {
+        if (!this.hasCapability(cap)) return null;
+        const pct = Math.max(0, Math.round((1 - cfg.CMS[i] / CMS_MAX[i]) * 100));
+        if (this.getCapabilityValue(cap) === pct) return null;
+        return this.setCapabilityValue(cap, pct)
+          .catch((e) => this.error(`setCapabilityValue ${cap}:`, e.message));
+      }));
     }
 
     // BAT — battery config: GET returns [returnPct, resumePct, scheduleEnabled, ?, startMin, endMin]
@@ -1161,11 +1159,10 @@ class MowerDevice extends Homey.Device {
   async getDebugPollData() {
     const did = this.getData().id;
 
-    const [rawResponse, deviceStatus, cfgResult, cmsResult] = await Promise.allSettled([
+    const [rawResponse, deviceStatus, cfgResult] = await Promise.allSettled([
       this._api.getRawProperties(did),
       this._api.getDeviceStatus(did),
       this._api.getCFG(did),
-      this._api.getCMS(did),
     ]);
 
     // Capability snapshot
@@ -1198,7 +1195,8 @@ class MowerDevice extends Homey.Device {
     }
 
     const cfgData = cfgResult.status === 'fulfilled' ? cfgResult.value : { error: cfgResult.reason?.message };
-    const cmsData = cmsResult.status === 'fulfilled' ? cmsResult.value : { error: cmsResult.reason?.message };
+    // CMS is already included in the getCFG response — no separate API call needed.
+    const cmsData = cfgData?.CMS ?? null;
 
     return {
       timestamp:        new Date().toISOString(),
