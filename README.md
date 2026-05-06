@@ -231,7 +231,7 @@ Write one: `in:[{ m:'s', t:'<KEY>', d:{…} }]`.
 | `VOL` | `{value:0–100}` | `{value:0–100}` | Speaker volume | ✓ |
 | `LIT` | `[enabled, startMin, endMin, standby, working, charging, error]` | `{value, time:[startMin, endMin], light:[s, w, c, e]}` | LED settings — time in minutes since midnight; scenario values `0`\|`1`; GET returns all 7 values in one array | ✓ |
 | `DND` | `[enabled, startMin, endMin]` | `{value, time:[startMin, endMin]}` | Do-Not-Disturb — time in minutes since midnight (e.g. `1320`=22:00, `480`=08:00) | ✓ |
-| `PRE` | `[n0, n1, …, n9]` | `[n0, n1, …, n9]` | Mowing preferences (10-element array — requires read-modify-write; index 1=mode, 2=cutting height, 5=direction, 8=edge detect, 9=edge mow) | ~ |
+| `PRE` | `[n0…n18]` | `[n0…n18]` | Mowing preferences (19-element array — requires full read-modify-write). Partially decoded: `[1]`=efficiency(0/1), `[4]`=height(mm), `[8]`=safeEdge, `[9]`=autoEdge, `[13]`=obstacleHeight(cm), `[14]`=obstacleDistance(cm), `[15]`=AI bitmask(bit0=human,bit1=animal,bit2=object), `[16]`=LiDAR. Not exposed — remaining indices unknown. | ~ |
 | `PROT` | `{value:0\|1}` | `{value:0\|1}` | Grass protection | ~ |
 | `STUN` | `{value:0\|1}` | `{value:0\|1}` | Anti-theft lock | ~ |
 | `LOW` | `[enabled, startMin, endMin]` | `{value, time:[startMin, endMin]}` | Low Speed at Night — time in minutes since midnight (e.g. `1200`=20:00, `480`=08:00) | ✓ |
