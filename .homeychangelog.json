@@ -42,5 +42,13 @@
   "0.0.11": {
     "en": "Added battery settings: return-to-dock threshold, task-resume threshold and resume-after-charging toggle (confirmed via packet capture).",
     "de": "Akku-Einstellungen hinzugefügt: Rückkehr-Schwellwert, Wiederaufnahme-Schwellwert und Mähen-nach-Laden-fortsetzen (per Packet Capture bestätigt)."
+  },
+  "0.0.12": {
+    "en": "Added AI obstacle photo capture setting (confirmed via packet capture).",
+    "de": "Einstellung zum Aufnehmen von Fotos KI-erkannter Hindernisse hinzugefügt (per Packet Capture bestätigt)."
+  },
+  "0.0.13": {
+    "en": "Added anti-theft lift alarm setting (confirmed via packet capture).",
+    "de": "Einstellung für den Anti-Diebstahl-Hebealarm hinzugefügt (per Packet Capture bestätigt)."
   }
 }

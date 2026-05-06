@@ -387,6 +387,38 @@
     },
     {
       "type": "group",
+      "label": { "en": "Anti-Theft Alarm", "de": "Anti-Diebstahl-Alarm" },
+      "children": [
+        {
+          "id": "ata_enabled",
+          "type": "checkbox",
+          "label": { "en": "Lift alarm", "de": "Hebealarm" },
+          "value": false,
+          "hint": {
+            "en": "When enabled, the mower locks itself and triggers an alarm immediately when lifted.",
+            "de": "Wenn aktiviert, wird der Roboter gesperrt und der Alarm wird sofort ausgelöst, wenn er angehoben wird."
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": { "en": "AI Obstacle Detection", "de": "KI-Hinderniserkennung" },
+      "children": [
+        {
+          "id": "aop_enabled",
+          "type": "checkbox",
+          "label": { "en": "Capture photos of AI-detected obstacles", "de": "Fotos von KI-erkannten Hindernissen aufnehmen" },
+          "value": false,
+          "hint": {
+            "en": "When enabled, the mower photographs obstacles detected by AI. You can then tap the obstacle icons on the map in the manufacturer app to view the actual photos.",
+            "de": "Wenn aktiviert, fotografiert der Mähroboter erkannte Hindernisse. Die Fotos können in der Hersteller-App durch Tippen auf die Hindernissymbole auf der Karte angezeigt werden."
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
       "label": { "en": "Connection", "de": "Verbindung" },
       "children": [
         {

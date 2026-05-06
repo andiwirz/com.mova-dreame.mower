@@ -14,6 +14,8 @@ MOVA Mower connects your robotic lawn mower to Homey, giving you direct control 
 - **Low Speed at Night** — set a time window during which the mower slows down automatically to protect animals active at night
 - **Consumable status** — blade life, cleaning brush life, and robot maintenance remaining (%) read from the device
 - **Battery settings** — configure the return-to-dock threshold, task-resume threshold, and custom charging time window
+- **Anti-Theft Alarm** — enable lift alarm: mower locks and triggers an audible alarm when lifted
+- **AI Obstacle Photos** — enable or disable photo capture of AI-detected obstacles
 - **Auto-reset action buttons** when the mower reaches a new state (e.g. dock button resets when mower docks)
 - Flow cards for full automation
 - Built-in **Debug Console** in the app settings for diagnostics and device discovery
@@ -37,6 +39,8 @@ MOVA Mower connects your robotic lawn mower to Homey, giving you direct control 
 | Battery — Return threshold (%) | Mower returns to dock when battery drops to this level |
 | Battery — Resume threshold (%) | Mower resumes its task once the battery reaches this level after charging |
 | Battery — Resume mowing after charging | When enabled, the mower automatically resumes its unfinished task after charging completes |
+| Anti-Theft — Lift Alarm | When enabled, the mower locks and triggers an alarm immediately when lifted |
+| AI Obstacle Photos | When enabled, the mower photographs AI-detected obstacles so you can view them in the manufacturer app |
 | Poll interval | How often Homey checks the mower status (seconds, default 30) |
 
 Device info (model, firmware, serial, MAC, email, brand, region) and zone count are read-only labels updated automatically.
@@ -211,6 +215,8 @@ Write one: `in:[{ m:'s', t:'<KEY>', d:{…} }]`.
 
 | Key | GET `d` format | SET `d` format | Description | Confirmed |
 |-----|----------------|----------------|-------------|-----------|
+| `AOP` | `{value:0\|1}` | `{value:0\|1}` | AI obstacle photo capture — when on, the mower photographs detected obstacles | ✓ |
+| `ATA` | `[liftAlarm, ?, ?]` | `{value:[0\|1, 0, 0]}` | Anti-theft lift alarm — index 0 = lift alarm enabled; other indices unknown | ✓ |
 | `CLS` | `{value:0\|1}` | `{value:0\|1}` | Child lock (`0`=off, `1`=on) | ✓ |
 | `FDP` | `{value:0\|1}` | `{value:0\|1}` | Frost protection | ✓ |
 | `WRP` | `{value, sen, time}` | `{value, sen, time}` | Rain protection — `sen`=sensitivity 1–3, `time`=wait hours | ✓ |

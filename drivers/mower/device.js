@@ -285,6 +285,18 @@ class MowerDevice extends Homey.Device {
       await this._safeWrite('fdp', () => this._api.setFrostProtection(did, newSettings.fdp_enabled));
     }
 
+    // AI obstacle photo capture
+    if (changedKeys.includes('aop_enabled')) {
+      this.log(`[settings] AOP → enabled=${newSettings.aop_enabled}`);
+      await this._safeWrite('aop', () => this._api.setAIObstaclePhoto(did, newSettings.aop_enabled));
+    }
+
+    // Anti-theft lift alarm
+    if (changedKeys.includes('ata_enabled')) {
+      this.log(`[settings] ATA → enabled=${newSettings.ata_enabled}`);
+      await this._safeWrite('ata', () => this._api.setAntiTheftAlarm(did, newSettings.ata_enabled));
+    }
+
     // Rain protection — write all three values together whenever any one changes
     const WRP_KEYS = ['wrp_enabled', 'wrp_sensitivity', 'wrp_wait_time'];
     if (WRP_KEYS.some((k) => changedKeys.includes(k))) {
@@ -805,6 +817,18 @@ class MowerDevice extends Homey.Device {
     if (cfg.FDP != null) {
       const fdpEnabled = cfgBool(cfg.FDP);
       if (this.getSetting('fdp_enabled') !== fdpEnabled) update.fdp_enabled = fdpEnabled;
+    }
+
+    // AOP — AI obstacle photo capture: scalar 0/1
+    if (cfg.AOP != null) {
+      const aopEnabled = cfgBool(cfg.AOP);
+      if (this.getSetting('aop_enabled') !== aopEnabled) update.aop_enabled = aopEnabled;
+    }
+
+    // ATA — anti-theft lift alarm: array [liftAlarmEnabled, ?, ?] — only index 0 is understood
+    if (cfg.ATA != null) {
+      const ataEnabled = Array.isArray(cfg.ATA) ? cfg.ATA[0] === 1 : cfgBool(cfg.ATA);
+      if (this.getSetting('ata_enabled') !== ataEnabled) update.ata_enabled = ataEnabled;
     }
 
     // VOL — volume: scalar 0–100
