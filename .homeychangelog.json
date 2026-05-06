@@ -48,7 +48,7 @@
     "de": "Einstellung zum Aufnehmen von Fotos KI-erkannter Hindernisse hinzugefügt (per Packet Capture bestätigt)."
   },
   "0.0.13": {
-    "en": "Added anti-theft lift alarm setting (confirmed via packet capture).",
-    "de": "Einstellung für den Anti-Diebstahl-Hebealarm hinzugefügt (per Packet Capture bestätigt)."
+    "en": "Added anti-theft alarm settings: lift alarm, map-leave alarm and real-time location (confirmed via packet capture).",
+    "de": "Anti-Diebstahl-Einstellungen hinzugefügt: Hebealarm, Alarm bei Kartenverlassen und Echtzeit-Standort (per Packet Capture bestätigt)."
   }
 }

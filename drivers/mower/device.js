@@ -291,10 +291,15 @@ class MowerDevice extends Homey.Device {
       await this._safeWrite('aop', () => this._api.setAIObstaclePhoto(did, newSettings.aop_enabled));
     }
 
-    // Anti-theft lift alarm
-    if (changedKeys.includes('ata_enabled')) {
-      this.log(`[settings] ATA → enabled=${newSettings.ata_enabled}`);
-      await this._safeWrite('ata', () => this._api.setAntiTheftAlarm(did, newSettings.ata_enabled));
+    // Anti-theft alarm — write all three values together whenever any one changes
+    const ATA_KEYS = ['ata_lift', 'ata_map_alarm', 'ata_realtime'];
+    if (ATA_KEYS.some((k) => changedKeys.includes(k))) {
+      this.log(`[settings] ATA → lift=${newSettings.ata_lift} mapAlarm=${newSettings.ata_map_alarm} realtime=${newSettings.ata_realtime}`);
+      await this._safeWrite('ata', () => this._api.setAntiTheftAlarm(did, {
+        lift:     newSettings.ata_lift,
+        mapAlarm: newSettings.ata_map_alarm,
+        realtime: newSettings.ata_realtime,
+      }));
     }
 
     // Rain protection — write all three values together whenever any one changes
@@ -825,10 +830,15 @@ class MowerDevice extends Homey.Device {
       if (this.getSetting('aop_enabled') !== aopEnabled) update.aop_enabled = aopEnabled;
     }
 
-    // ATA — anti-theft lift alarm: array [liftAlarmEnabled, ?, ?] — only index 0 is understood
+    // ATA — anti-theft alarm: array [liftAlarm, mapAlarm, realtimeLocation]
     if (cfg.ATA != null) {
-      const ataEnabled = Array.isArray(cfg.ATA) ? cfg.ATA[0] === 1 : cfgBool(cfg.ATA);
-      if (this.getSetting('ata_enabled') !== ataEnabled) update.ata_enabled = ataEnabled;
+      const ata = Array.isArray(cfg.ATA) ? cfg.ATA : [cfgBool(cfg.ATA) ? 1 : 0, 0, 0];
+      const ataLift     = ata[0] === 1;
+      const ataMapAlarm = (ata[1] ?? 0) === 1;
+      const ataRealtime = (ata[2] ?? 0) === 1;
+      if (this.getSetting('ata_lift')      !== ataLift)     update.ata_lift      = ataLift;
+      if (this.getSetting('ata_map_alarm') !== ataMapAlarm) update.ata_map_alarm = ataMapAlarm;
+      if (this.getSetting('ata_realtime')  !== ataRealtime) update.ata_realtime  = ataRealtime;
     }
 
     // VOL — volume: scalar 0–100

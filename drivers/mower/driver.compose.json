@@ -390,13 +390,33 @@
       "label": { "en": "Anti-Theft Alarm", "de": "Anti-Diebstahl-Alarm" },
       "children": [
         {
-          "id": "ata_enabled",
+          "id": "ata_lift",
           "type": "checkbox",
           "label": { "en": "Lift alarm", "de": "Hebealarm" },
           "value": false,
           "hint": {
             "en": "When enabled, the mower locks itself and triggers an alarm immediately when lifted.",
             "de": "Wenn aktiviert, wird der Roboter gesperrt und der Alarm wird sofort ausgelöst, wenn er angehoben wird."
+          }
+        },
+        {
+          "id": "ata_map_alarm",
+          "type": "checkbox",
+          "label": { "en": "Alarm when leaving the map", "de": "Alarm bei Verlassen der Karte" },
+          "value": false,
+          "hint": {
+            "en": "Triggers an alarm when the mower leaves the mapped area. Requires the Link module.",
+            "de": "Löst einen Alarm aus, wenn der Mähroboter die kartierte Fläche verlässt. Erfordert das Link-Modul."
+          }
+        },
+        {
+          "id": "ata_realtime",
+          "type": "checkbox",
+          "label": { "en": "Real-time location", "de": "Standort in Echtzeit" },
+          "value": false,
+          "hint": {
+            "en": "Enables real-time GPS location tracking. Requires the Link module.",
+            "de": "Aktiviert die GPS-Echtzeit-Standortverfolgung. Erfordert das Link-Modul."
           }
         }
       ]

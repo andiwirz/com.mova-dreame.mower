@@ -40,6 +40,8 @@ MOVA Mower connects your robotic lawn mower to Homey, giving you direct control 
 | Battery — Resume threshold (%) | Mower resumes its task once the battery reaches this level after charging |
 | Battery — Resume mowing after charging | When enabled, the mower automatically resumes its unfinished task after charging completes |
 | Anti-Theft — Lift Alarm | When enabled, the mower locks and triggers an alarm immediately when lifted |
+| Anti-Theft — Map Alarm | Triggers an alarm when the mower leaves the mapped area (requires Link module) |
+| Anti-Theft — Real-time Location | Enables real-time GPS location tracking (requires Link module) |
 | AI Obstacle Photos | When enabled, the mower photographs AI-detected obstacles so you can view them in the manufacturer app |
 | Poll interval | How often Homey checks the mower status (seconds, default 30) |
 
@@ -216,7 +218,7 @@ Write one: `in:[{ m:'s', t:'<KEY>', d:{…} }]`.
 | Key | GET `d` format | SET `d` format | Description | Confirmed |
 |-----|----------------|----------------|-------------|-----------|
 | `AOP` | `{value:0\|1}` | `{value:0\|1}` | AI obstacle photo capture — when on, the mower photographs detected obstacles | ✓ |
-| `ATA` | `[liftAlarm, ?, ?]` | `{value:[0\|1, 0, 0]}` | Anti-theft lift alarm — index 0 = lift alarm enabled; other indices unknown | ✓ |
+| `ATA` | `[liftAlarm, mapAlarm, realtimeLocation]` | `{value:[0\|1, 0\|1, 0\|1]}` | Anti-theft alarm — `[0]`=lift alarm, `[1]`=alarm when leaving map (Link module), `[2]`=real-time location (Link module) | ✓ |
 | `CLS` | `{value:0\|1}` | `{value:0\|1}` | Child lock (`0`=off, `1`=on) | ✓ |
 | `FDP` | `{value:0\|1}` | `{value:0\|1}` | Frost protection | ✓ |
 | `WRP` | `{value, sen, time}` | `{value, sen, time}` | Rain protection — `sen`=sensitivity 1–3, `time`=wait hours | ✓ |
