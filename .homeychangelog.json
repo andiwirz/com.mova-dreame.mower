@@ -58,5 +58,8 @@
   "0.0.15": {
     "en": "Renamed app to MOVA & Dreame Mower. Internal code cleanup.",
     "de": "App in MOVA & Dreame Mähroboter umbenannt. Interne Code-Bereinigung."
+  },
+  "0.0.16": {
+    "en": "update readme files"
   }
 }

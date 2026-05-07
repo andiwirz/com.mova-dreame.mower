@@ -1,6 +1,6 @@
 {
   "id": "com.mova-dreame.mower",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "compatibility": ">=12.0.0",
   "sdk": 3,
   "name": {
@@ -12,7 +12,9 @@
     "de": "Integriere deinen MOVA & Dreame Mähroboter in deine Smart-Home-Automationen"
   },
   "brandColor": "#000000",
-  "category": ["appliances"],
+  "category": [
+    "appliances"
+  ],
   "permissions": [],
   "images": {
     "small": "/assets/images/small.png",
