@@ -124,6 +124,16 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 | MOVA | Europe (EU), China (CN), North America (NA) |
 | Dreame | Europe (EU), China (CN), North America (NA) |
 
+## Tested Devices
+
+| Device | Model | Status |
+|--------|-------|--------|
+| MOVA LiDAX Ultra 1200 | `mova.mower.g2529d` | ✅ Fully implemented |
+| MOVA ViAX 300 | `mova.mower.g2420b` | 🟡 Basic tests ok |
+| Dreame A2 | — | 🟡 Basic tests ok |
+
+Other MOVA and Dreame robotic mowers using the same cloud API are expected to work. If you test a different model, feel free to open an issue or pull request to get it added here.
+
 ## Support the Project
 
 If this app saves you time and works well for you, a small donation is always appreciated — it helps cover development time and API research.
