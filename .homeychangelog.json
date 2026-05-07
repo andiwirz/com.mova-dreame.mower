@@ -54,5 +54,9 @@
   "0.0.14": {
     "en": "Added voice announcement mode settings: regular notification, work status, special status and error status (confirmed via packet capture).",
     "de": "Sprachansagemodi hinzugefügt: Regelmäßige Benachrichtigung, Arbeitsstatus, Spezialstatus und Fehlerstatus (per Packet Capture bestätigt)."
+  },
+  "0.0.15": {
+    "en": "Renamed app to MOVA & Dreame Mower. Internal code cleanup.",
+    "de": "App in MOVA & Dreame Mähroboter umbenannt. Interne Code-Bereinigung."
   }
 }
