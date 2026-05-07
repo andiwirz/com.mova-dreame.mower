@@ -18,6 +18,7 @@
   "error": {
     "unreachable": "Mähroboter nicht erreichbar",
     "device_offline": "Mähroboter ist offline",
+    "device_not_found": "Mähroboter im Konto nicht gefunden — Gerät neu hinzufügen",
     "auth_failed": "Authentifizierung fehlgeschlagen — Gerät neu hinzufügen"
   },
   "error_codes": {

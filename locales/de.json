@@ -78,7 +78,8 @@
     "device_offline": "Mähroboter ist offline",
     "auth_failed": "Authentifizierung fehlgeschlagen — Gerät neu hinzufügen",
     "cutting_height_range": "Die minimale Schnitthöhe muss kleiner als die maximale sein.",
-    "cutting_height_bounds": "Die Schnitthöhe muss zwischen __min__mm und __max__mm liegen."
+    "cutting_height_bounds": "Die Schnitthöhe muss zwischen __min__mm und __max__mm liegen.",
+    "device_not_found": "Mähroboter im Konto nicht gefunden — Gerät neu hinzufügen"
   },
   "charging_status": {
     "not_docked": "Nicht angedockt",

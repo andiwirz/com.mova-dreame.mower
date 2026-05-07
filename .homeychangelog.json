@@ -60,6 +60,10 @@
     "de": "App in MOVA & Dreame Mähroboter umbenannt. Interne Code-Bereinigung."
   },
   "0.0.16": {
-    "en": "update readme files"
+    "en": "Updated readme files."
+  },
+  "0.0.17": {
+    "en": "Fixed battery and status not updating for MOVA ViAX 300 and other newer devices. The MOVA cloud API returns malformed JSON for some device fields — the app now sanitizes the response before parsing so polling succeeds.",
+    "de": "Akku- und Statusaktualisierung für MOVA ViAX 300 und andere neuere Geräte korrigiert. Die MOVA-Cloud-API liefert für einige Gerätefelder ungültiges JSON — die App bereinigt die Antwort jetzt vor dem Parsen, sodass das Polling erfolgreich ist."
   }
 }

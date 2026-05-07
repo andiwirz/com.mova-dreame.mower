@@ -18,6 +18,7 @@
   "error": {
     "unreachable": "Mower unreachable",
     "device_offline": "Mower is offline",
+    "device_not_found": "Mower not found in account — re-add the device",
     "auth_failed": "Authentication failed — re-add the device"
   },
   "error_codes": {

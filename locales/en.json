@@ -78,7 +78,8 @@
     "device_offline": "Mower is offline",
     "auth_failed": "Authentication failed — re-add the device",
     "cutting_height_range": "Minimum cutting height must be less than maximum.",
-    "cutting_height_bounds": "Cutting height must be between __min__mm and __max__mm."
+    "cutting_height_bounds": "Cutting height must be between __min__mm and __max__mm.",
+    "device_not_found": "Mower not found in account — re-add the device"
   },
   "charging_status": {
     "not_docked": "Not docked",

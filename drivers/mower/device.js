@@ -473,6 +473,7 @@ class MowerDevice extends Homey.Device {
     const info = statusResult.value;
     if (!info) {
       this.error('Device not found in list for did:', did);
+      await this.setUnavailable(this.homey.__('error.device_not_found'));
       return;
     }
 
