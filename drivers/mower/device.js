@@ -105,6 +105,152 @@ const MIGRATIONS = [
     key: 'capabilities_migrated_v14',
     caps: ['consumable_blade', 'consumable_brush', 'consumable_robot'],
   },
+  {
+    key: 'capabilities_migrated_v15',
+    caps: ['mow_zone', 'mow_spot'],
+  },
+  {
+    key: 'capabilities_migrated_v16',
+    caps: ['cmd_start_mowing'],
+  },
+  {
+    key: 'capabilities_migrated_v17',
+    caps: ['cmd_start_spot_mowing'],
+  },
+  {
+    // Reorder migration: removes all capabilities then re-adds in the desired display order.
+    key: 'capabilities_migrated_v18',
+    reorder: [
+      'cmd_start_mowing',
+      'cmd_start_spot_mowing',
+      'cmd_pause',
+      'cmd_stop',
+      'cmd_dock',
+      'mower_status',
+      'mow_zone',
+      'mow_spot',
+      'charging_status',
+      'measure_battery',
+      'alarm_generic',
+      'mow_efficiency',
+      'collision_avoidance',
+      'firmware_update',
+      'measure_duration',
+      'child_lock',
+      'mower_volume',
+      'consumable_blade',
+      'consumable_brush',
+      'consumable_robot',
+    ],
+  },
+  {
+    // Move mower_volume (slider) to position 3.
+    key: 'capabilities_migrated_v19',
+    reorder: [
+      'cmd_start_mowing',
+      'cmd_start_spot_mowing',
+      'mower_volume',
+      'cmd_pause',
+      'cmd_stop',
+      'cmd_dock',
+      'mower_status',
+      'mow_zone',
+      'mow_spot',
+      'charging_status',
+      'measure_battery',
+      'alarm_generic',
+      'mow_efficiency',
+      'collision_avoidance',
+      'firmware_update',
+      'measure_duration',
+      'child_lock',
+      'consumable_blade',
+      'consumable_brush',
+      'consumable_robot',
+    ],
+  },
+  {
+    // Add cutting_height slider at position 3 (above mower_volume).
+    key: 'capabilities_migrated_v20',
+    reorder: [
+      'cmd_start_mowing',
+      'cmd_start_spot_mowing',
+      'cutting_height',
+      'mower_volume',
+      'cmd_pause',
+      'cmd_stop',
+      'cmd_dock',
+      'mower_status',
+      'mow_zone',
+      'mow_spot',
+      'charging_status',
+      'measure_battery',
+      'alarm_generic',
+      'mow_efficiency',
+      'collision_avoidance',
+      'firmware_update',
+      'measure_duration',
+      'child_lock',
+      'consumable_blade',
+      'consumable_brush',
+      'consumable_robot',
+    ],
+  },
+  {
+    // Move cutting_height above mower_volume.
+    key: 'capabilities_migrated_v21',
+    reorder: [
+      'cmd_start_mowing',
+      'cmd_start_spot_mowing',
+      'cutting_height',
+      'mower_volume',
+      'cmd_pause',
+      'cmd_stop',
+      'cmd_dock',
+      'mower_status',
+      'mow_zone',
+      'mow_spot',
+      'charging_status',
+      'measure_battery',
+      'alarm_generic',
+      'mow_efficiency',
+      'collision_avoidance',
+      'firmware_update',
+      'measure_duration',
+      'child_lock',
+      'consumable_blade',
+      'consumable_brush',
+      'consumable_robot',
+    ],
+  },
+  {
+    // Move mower_status and mow_zone before cutting_height so the slider appears
+    // at position 3 in the icon row (buttons render separately, not in the icon row).
+    key: 'capabilities_migrated_v22',
+    reorder: [
+      'cmd_start_mowing',
+      'cmd_start_spot_mowing',
+      'cmd_pause',
+      'cmd_stop',
+      'cmd_dock',
+      'mower_status',
+      'mow_zone',
+      'cutting_height',
+      'mower_volume',
+      'mow_spot',
+      'charging_status',
+      'measure_battery',
+      'alarm_generic',
+      'mow_efficiency',
+      'collision_avoidance',
+      'firmware_update',
+      'measure_duration',
+      'child_lock',
+      'consumable_blade',
+      'consumable_brush',
+      'consumable_robot',
+    ],
+  },
 ];
 
 // Capabilities removed — stripped from existing installs on next init
@@ -122,8 +268,9 @@ const REMOVE_CAPABILITIES = [
   'mower_docked', 'mower_mowing', 'mower_paused', 'mower_returning', 'task_active',
   // v11: removed — requires phone app to steer
   'cmd_manual_mowing',
-  // v11: edge-zone buttons are managed dynamically by _syncZoneCapabilities
-  // (listed here so stale installs get them removed before re-add in correct order)
+  // v15: replaced by mow_zone / mow_spot pickers
+  'cmd_all_area', 'cmd_edge_mowing',
+  'cmd_zone_1', 'cmd_zone_2', 'cmd_zone_3', 'cmd_zone_4', 'cmd_zone_5',
   'cmd_edge_zone_1', 'cmd_edge_zone_2', 'cmd_edge_zone_3', 'cmd_edge_zone_4', 'cmd_edge_zone_5',
   // v6: write-only (setProperty returns 10007 on MOVA devices)
   'mowing_speed', 'mower_pattern',
@@ -149,6 +296,8 @@ class MowerDevice extends Homey.Device {
     this._lastBindDomain       = null;  // track last seen bindDomain to avoid redundant setBindDomain calls
     this._activeMapIndex       = 0;     // active map index, updated from MAP data each poll
     this._activeZoneIds        = [];    // detected zone IDs from MAP data (e.g. [1, 2, 3])
+    this._lastZonePickerKey    = null;  // cache key for _updateZonePicker change-guard
+    this._lastSpotPickerKey    = null;  // cache key for _updateSpotPicker change-guard
     this._cfgPollCounter       = 0;     // reads CFG (WRP etc.) on first poll and every 10th thereafter
 
     // Flow trigger cards
@@ -160,34 +309,71 @@ class MowerDevice extends Homey.Device {
     this._trgFirmwareUpdate   = this.homey.flow.getDeviceTriggerCard('firmware_update_available');
     this._trgBatteryLow       = this.homey.flow.getDeviceTriggerCard('battery_low');
 
-    // ── Action button listeners ────────────────────────────────────────────────
-    // Each button is a momentary toggle: tap → command fires → resets to false.
+    // ── Picker listeners ───────────────────────────────────────────────────────
     const did = this.getData().id;
 
-    this.registerCapabilityListener('cmd_all_area', async (value) => {
+    this.registerCapabilityListener('mow_zone', (value) => {
+      this.log(`[mow_zone] selected: ${value}`);
+    });
+
+    this.registerCapabilityListener('mow_spot', (value) => {
+      this.log(`[mow_spot] selected: ${value}`);
+    });
+
+    // ── Start mowing button (zone) ─────────────────────────────────────────────
+    this.registerCapabilityListener('cmd_start_mowing', async (value) => {
       if (!value) return;
       try {
-        this.log('[cmd] btn: all area → sendAction(5,1)');
-        await this._safeWrite('cmd_all_area', () => this._api.startMowing(did));
+        const zone   = this.getCapabilityValue('mow_zone') ?? 'none';
+        const mapIdx = this._activeMapIndex ?? 0;
+
+        if (zone === 'all') {
+          this.log('[cmd] start mowing: all areas');
+          await this._safeWrite('mow_zone:all', () => this._api.startMowing(did));
+        } else if (zone === 'edge_all') {
+          this.log(`[cmd] start mowing: edge all mapIndex=${mapIdx}`);
+          await this._safeWrite('mow_zone:edge_all', () => this._api.startEdgeMowing(did, mapIdx));
+        } else if (zone.startsWith('zone_')) {
+          const zoneId = parseInt(zone.slice(5), 10);
+          this.log(`[cmd] start mowing: zone ${zoneId} mapIndex=${mapIdx}`);
+          await this._safeWrite(`mow_zone:zone_${zoneId}`, () => this._api.startZoneMowing(did, [zoneId], mapIdx));
+        } else if (zone.startsWith('edge_')) {
+          const zoneId = parseInt(zone.slice(5), 10);
+          this.log(`[cmd] start mowing: edge zone ${zoneId} mapIndex=${mapIdx}`);
+          await this._safeWrite(`mow_zone:edge_${zoneId}`, () => this._api.startEdgeZoneMowing(did, zoneId, mapIdx));
+        } else {
+          this.log('[cmd_start_mowing] no zone selected — nothing to start');
+          return;
+        }
+
         await this._setMowingStarted();
       } catch (err) {
-        this.error('[cmd_all_area] listener error:', err.message);
+        this.error('[cmd_start_mowing] listener error:', err.message);
       } finally {
-        await this.setCapabilityValue('cmd_all_area', false).catch(() => {});
+        await this.setCapabilityValue('cmd_start_mowing', false).catch(() => {});
       }
     });
 
-    this.registerCapabilityListener('cmd_edge_mowing', async (value) => {
+    // ── Start spot mowing button ───────────────────────────────────────────────
+    this.registerCapabilityListener('cmd_start_spot_mowing', async (value) => {
       if (!value) return;
       try {
+        const spot   = this.getCapabilityValue('mow_spot') ?? 'none';
         const mapIdx = this._activeMapIndex ?? 0;
-        this.log(`[cmd] btn: edge mapIndex=${mapIdx} → sendAction(2,50,{m:a,o:101,d:{}})`);
-        await this._safeWrite('cmd_edge_mowing', () => this._api.startEdgeMowing(did, mapIdx));
+
+        if (spot === 'none') {
+          this.log('[cmd_start_spot_mowing] no spot selected — nothing to start');
+          return;
+        }
+
+        const spotId = parseInt(spot.slice(5), 10); // 'spot_1002' → 1002
+        this.log(`[cmd] start spot mowing: spot ${spotId} mapIndex=${mapIdx}`);
+        await this._safeWrite(`mow_spot:${spotId}`, () => this._api.startSpotMowing(did, [spotId], mapIdx));
         await this._setMowingStarted();
       } catch (err) {
-        this.error('[cmd_edge_mowing] listener error:', err.message);
+        this.error('[cmd_start_spot_mowing] listener error:', err.message);
       } finally {
-        await this.setCapabilityValue('cmd_edge_mowing', false).catch(() => {});
+        await this.setCapabilityValue('cmd_start_spot_mowing', false).catch(() => {});
       }
     });
 
@@ -236,9 +422,6 @@ class MowerDevice extends Homey.Device {
         this.error('[mower_volume] listener error:', err.message);
       }
     });
-
-    // Zone buttons — register listeners for any zone capabilities already on device
-    await this._syncZoneCapabilities();
 
     await this._initApi();
 
@@ -377,19 +560,33 @@ class MowerDevice extends Homey.Device {
       }));
     }
 
-    // num_zones is a read-only label — users cannot change it, no handler needed.
   }
 
   // ─── Migration ─────────────────────────────────────────────────────────────
 
   async _migrate() {
-    for (const { key, caps } of MIGRATIONS) {
+    for (const { key, caps, reorder } of MIGRATIONS) {
       if (await this.getStoreValue(key)) continue;
-      for (const cap of caps) {
-        if (!this.hasCapability(cap)) {
+
+      if (reorder) {
+        // Reorder migration: remove all listed capabilities, then re-add in the
+        // desired order. Homey preserves add-order as the display order.
+        for (const cap of reorder) {
+          if (this.hasCapability(cap)) {
+            await this.removeCapability(cap).catch((e) => this.error('removeCapability', cap, e.message));
+          }
+        }
+        for (const cap of reorder) {
           await this.addCapability(cap).catch((e) => this.error('addCapability', cap, e.message));
         }
+      } else {
+        for (const cap of caps) {
+          if (!this.hasCapability(cap)) {
+            await this.addCapability(cap).catch((e) => this.error('addCapability', cap, e.message));
+          }
+        }
       }
+
       await this.setStoreValue(key, true);
     }
 
@@ -527,9 +724,7 @@ class MowerDevice extends Homey.Device {
     // ── Session duration counter ─────────────────────────────────────────────
     if (this._wasMowing && this._sessionStartTime !== null) {
       const mins = Math.floor((Date.now() - this._sessionStartTime) / 60000);
-      if (this.getCapabilityValue('measure_duration') !== mins) {
-        await this.setCapabilityValue('measure_duration', mins);
-      }
+      await this._setCap('measure_duration', mins);
     }
 
     // ── CFG settings (WRP etc.) — first poll and every 10th thereafter ───────
@@ -571,145 +766,164 @@ class MowerDevice extends Homey.Device {
     }
   }
 
-  // ─── Zone button management ───────────────────────────────────────────────
+  // ─── Picker management ────────────────────────────────────────────────────
 
   /**
-   * Add or remove cmd_zone_N capabilities based on the num_zones setting,
-   * and register a capability listener for each newly added zone button.
-   * Called on init and whenever num_zones changes in settings.
-   */
-  async _syncZoneCapabilities() {
-    const count = Math.max(0, Math.min(5, parseInt(this.getSetting('num_zones'), 10) || 1));
-    const did   = this.getData().id;
-
-    // Phase 1: add / remove all zone capabilities (both mow and edge).
-    // Must be completed before registering listeners because addCapability()
-    // resets the Homey SDK's internal listener state, which would silently
-    // drop any listener registered before the call.
-    for (let i = 1; i <= 5; i++) {
-      for (const prefix of ['cmd_zone_', 'cmd_edge_zone_']) {
-        const capId = `${prefix}${i}`;
-        if (i <= count) {
-          if (!this.hasCapability(capId)) {
-            await this.addCapability(capId)
-              .catch((e) => this.error(`addCapability ${capId}:`, e.message));
-          }
-        } else if (this.hasCapability(capId)) {
-          await this.removeCapability(capId)
-            .catch((e) => this.error(`removeCapability ${capId}:`, e.message));
-        }
-      }
-    }
-
-    // Phase 2: register listeners for all active zone capabilities.
-    // Done after all structural changes so no listener is lost.
-    for (let i = 1; i <= count; i++) {
-      if (this.hasCapability(`cmd_zone_${i}`)) {
-        this._registerZoneListener(`cmd_zone_${i}`, i, did);
-      }
-      if (this.hasCapability(`cmd_edge_zone_${i}`)) {
-        this._registerEdgeZoneListener(`cmd_edge_zone_${i}`, i, did);
-      }
-    }
-  }
-
-  /**
-   * Scan the MAP.N chunks for mowingArea zone IDs and update num_zones + capabilities
-   * automatically whenever the detected count differs from the stored setting.
-   * Called every poll cycle (cheap: exits early when nothing changed).
+   * Scan MAP.N chunks for zone and spot IDs, then update the num_zones setting
+   * and both pickers. Exits early when nothing has changed.
+   * Called every poll cycle (cheap due to change-guard caches).
    */
   async _detectAndSyncZones(raw) {
-    const { ids: detectedIds, mapIndex } = this._extractMapInfo(raw);
+    const { ids: detectedIds, spotIds, mapIndex } = this._extractMapInfo(raw);
 
-    // Update active map index used by zone/edge mowing commands
     if (mapIndex !== this._activeMapIndex) {
       this.log(`[zones] active map index: ${this._activeMapIndex} → ${mapIndex}`);
       this._activeMapIndex = mapIndex;
     }
 
-    // Always keep the zone ID list current (used for edge mowing)
     this._activeZoneIds = detectedIds;
 
-    if (detectedIds.length === 0) return; // no map data yet
+    if (detectedIds.length > 0) {
+      const capped  = Math.min(detectedIds.length, 5);
+      const current = parseInt(this.getSetting('num_zones'), 10) || 0;
+      if (capped !== current) {
+        this.log(`[zones] auto-detected ${detectedIds.length} zone(s) [${detectedIds.join(',')}] — updating num_zones ${current} → ${capped}`);
+        await this.setSettings({ num_zones: String(capped) }).catch((e) => this.error('setSettings num_zones:', e.message));
+      }
+      await this._updateZonePicker(detectedIds);
+    }
 
-    const capped  = Math.min(detectedIds.length, 5);
-    const current = parseInt(this.getSetting('num_zones'), 10) || 0;
-    if (capped === current) return; // nothing changed
-
-    this.log(`[zones] auto-detected ${detectedIds.length} zone(s) [${detectedIds.join(',')}] — updating num_zones ${current} → ${capped}`);
-    await this.setSettings({ num_zones: String(capped) }).catch((e) => this.error('setSettings num_zones:', e.message));
-    await this._syncZoneCapabilities();
+    if (spotIds.length > 0) {
+      await this._updateSpotPicker(spotIds);
+    }
   }
 
   /**
    * Concatenate MAP.N chunks and extract:
    *   - ids:      sorted list of distinct mowing zone IDs (e.g. [1, 2, 3])
+   *   - spotIds:  sorted list of distinct clean spot IDs (e.g. [1001, 1002])
    *   - mapIndex: the active map's mapIndex value (0-based)
    *
-   * Zone entries look like: "value":[[1,{"id":1,...}],[2,{"id":2,...}]]
-   * mapIndex appears as: "mapIndex":0
-   * Returns { ids: [], mapIndex: 0 } when no map data is present.
+   * Zone entries: [N,{ where N is 1–99 inside the mowingAreas section.
+   * Spot entries: [N,{ where N is 1000–9999 inside the cleanSpots section.
+   * Returns { ids: [], spotIds: [], mapIndex: 0 } when no map data is present.
    */
   _extractMapInfo(raw) {
     const parts = [];
     for (let i = 0; raw[`MAP.${i}`] != null; i++) parts.push(raw[`MAP.${i}`]);
     const mapStr = parts.join('');
-    if (!mapStr) return { ids: [], mapIndex: 0 };
+    if (!mapStr) return { ids: [], spotIds: [], mapIndex: 0 };
 
     // Extract active mapIndex (first occurrence — belongs to the active map)
     const mapIndexMatch = mapStr.match(/"mapIndex":(\d+)/);
     const mapIndex = mapIndexMatch ? parseInt(mapIndexMatch[1], 10) : 0;
 
-    // Locate the first map's mowingAreas section
-    const maIdx = mapStr.indexOf('mowingAreas');
-    if (maIdx === -1) return { ids: [], mapIndex };
-
-    // Limit search to the section before forbiddenAreas to avoid false matches
-    const endIdx = mapStr.indexOf('forbiddenAreas', maIdx);
-    const section = mapStr.slice(maIdx, endIdx === -1 ? maIdx + 4000 : endIdx);
-
-    // Zone entries: [N,{ where N is the zone ID (1–99)
+    // ── Zone IDs from mowingAreas section ──────────────────────────────────
     const idSet = new Set();
-    for (const m of section.matchAll(/\[(\d{1,3}),\{/g)) {
-      const id = parseInt(m[1], 10);
-      if (id >= 1 && id <= 99) idSet.add(id);
+    const maIdx = mapStr.indexOf('mowingAreas');
+    if (maIdx !== -1) {
+      const endIdx = mapStr.indexOf('forbiddenAreas', maIdx);
+      const section = mapStr.slice(maIdx, endIdx === -1 ? maIdx + 4000 : endIdx);
+      for (const m of section.matchAll(/\[(\d{1,3}),\{/g)) {
+        const id = parseInt(m[1], 10);
+        if (id >= 1 && id <= 99) idSet.add(id);
+      }
     }
 
-    return { ids: [...idSet].sort((a, b) => a - b), mapIndex };
+    // ── Spot IDs ────────────────────────────────────────────────────────────
+    // Spot IDs are ≥ 1000. The containing key varies by firmware/brand:
+    // known candidates are cleanSpots, spots, customAreas, virtualSpots.
+    // Strategy: try each candidate name; if none matched, fall back to a
+    // whole-map scan for [NNNN,{ patterns outside the mowingAreas section.
+    const spotSet = new Set();
+    const SPOT_SECTION_NAMES = ['cleanSpots', 'spots', 'customAreas', 'virtualSpots'];
+    let spotSectionFound = false;
+
+    for (const name of SPOT_SECTION_NAMES) {
+      const idx = mapStr.indexOf(name);
+      if (idx === -1) continue;
+      spotSectionFound = true;
+      const section = mapStr.slice(idx, idx + 8000);
+      for (const m of section.matchAll(/\[(\d{4,5}),\{/g)) {
+        const id = parseInt(m[1], 10);
+        if (id >= 1000 && id <= 99999) spotSet.add(id);
+      }
+      // Also match {"id":NNNN} style entries in the same section
+      for (const m of section.matchAll(/"id"\s*:\s*(\d{4,5})/g)) {
+        const id = parseInt(m[1], 10);
+        if (id >= 1000 && id <= 99999) spotSet.add(id);
+      }
+      break;
+    }
+
+    if (!spotSectionFound) {
+      // Fallback: scan the whole MAP string (excluding mowingAreas) for 4-digit IDs
+
+      // Still try to find 4-digit IDs outside of the mowingAreas section
+      const noMa = maIdx !== -1 ? mapStr.slice(0, maIdx) + mapStr.slice(maIdx + 4000) : mapStr;
+      for (const m of noMa.matchAll(/\[(\d{4,5}),\{/g)) {
+        const id = parseInt(m[1], 10);
+        if (id >= 1000 && id <= 99999) spotSet.add(id);
+      }
+      for (const m of noMa.matchAll(/"id"\s*:\s*(\d{4,5})/g)) {
+        const id = parseInt(m[1], 10);
+        if (id >= 1000 && id <= 99999) spotSet.add(id);
+      }
+    }
+
+    return {
+      ids:      [...idSet].sort((a, b) => a - b),
+      spotIds:  [...spotSet].sort((a, b) => a - b),
+      mapIndex,
+    };
   }
 
-  /** Register the momentary-button listener for a single zone mowing capability. */
-  _registerZoneListener(capId, zoneNum, did) {
-    this.registerCapabilityListener(capId, async (value) => {
-      if (!value) return;
-      try {
-        const mapIdx = this._activeMapIndex ?? 0;
-        this.log(`[cmd] btn: zone ${zoneNum} mapIndex=${mapIdx} → sendAction(2,50,{m:a,o:102,d:{region:[${zoneNum}]}})`);
-        await this._safeWrite(capId, () => this._api.startZoneMowing(did, [zoneNum], mapIdx));
-        await this._setMowingStarted();
-      } catch (err) {
-        this.error(`[${capId}] listener error:`, err.message);
-      } finally {
-        await this.setCapabilityValue(capId, false).catch(() => {});
-      }
-    });
+  /**
+   * Rebuild the mow_zone picker values from detected zone IDs.
+   * Adds: all areas, per-zone entries, edge: all areas, per-zone edge entries.
+   * Change-guarded — no-ops when the zone list is unchanged.
+   */
+  async _updateZonePicker(zoneIds) {
+    const key = zoneIds.join(',');
+    if (key === this._lastZonePickerKey) return;
+    this._lastZonePickerKey = key;
+
+    const values = [
+      { id: 'none',     title: { en: '— Select —',      de: '— Auswählen —' } },
+      { id: 'all',      title: { en: 'All areas',        de: 'Alle Flächen' } },
+    ];
+    for (const id of zoneIds) {
+      values.push({ id: `zone_${id}`, title: { en: `Zone ${id}`, de: `Zone ${id}` } });
+    }
+    values.push({ id: 'edge_all', title: { en: 'Edge: all areas', de: 'Kante: Alle Flächen' } });
+    for (const id of zoneIds) {
+      values.push({ id: `edge_${id}`, title: { en: `Edge: Zone ${id}`, de: `Kante: Zone ${id}` } });
+    }
+
+    this.log(`[picker] mow_zone updated: ${values.map((v) => v.id).join(', ')}`);
+    await this.setCapabilityOptions('mow_zone', { values })
+      .catch((e) => this.error('setCapabilityOptions mow_zone:', e.message));
   }
 
-  /** Register the momentary-button listener for a single edge-zone mowing capability. */
-  _registerEdgeZoneListener(capId, zoneNum, did) {
-    this.registerCapabilityListener(capId, async (value) => {
-      if (!value) return;
-      try {
-        const mapIdx = this._activeMapIndex ?? 0;
-        this.log(`[cmd] btn: edge zone ${zoneNum} mapIndex=${mapIdx} → sendAction(2,50,{m:a,o:101,d:{edge:[[${zoneNum},${mapIdx}]]}})`);
-        await this._safeWrite(capId, () => this._api.startEdgeZoneMowing(did, zoneNum, mapIdx));
-        await this._setMowingStarted();
-      } catch (err) {
-        this.error(`[${capId}] listener error:`, err.message);
-      } finally {
-        await this.setCapabilityValue(capId, false).catch(() => {});
-      }
-    });
+  /**
+   * Rebuild the mow_spot picker values from detected spot IDs.
+   * Change-guarded — no-ops when the spot list is unchanged.
+   */
+  async _updateSpotPicker(spotIds) {
+    const key = spotIds.join(',');
+    if (key === this._lastSpotPickerKey) return;
+    this._lastSpotPickerKey = key;
+
+    const values = [
+      { id: 'none', title: { en: '— Select spot —', de: '— Spot auswählen —' } },
+    ];
+    for (const id of spotIds) {
+      values.push({ id: `spot_${id}`, title: { en: `Spot ${id}`, de: `Spot ${id}` } });
+    }
+
+    this.log(`[picker] mow_spot updated: ${values.map((v) => v.id).join(', ')}`);
+    await this.setCapabilityOptions('mow_spot', { values })
+      .catch((e) => this.error('setCapabilityOptions mow_spot:', e.message));
   }
 
   // ─── Poll helpers ─────────────────────────────────────────────────────────
@@ -718,9 +932,11 @@ class MowerDevice extends Homey.Device {
   async _persistTokensIfChanged() {
     const tk = this._api.getTokens();
     if (tk.tokenExpiry === this._persistedTokenExpiry) return;
-    await this.setStoreValue('access_token',  tk.accessToken);
-    await this.setStoreValue('refresh_token', tk.refreshToken);
-    await this.setStoreValue('token_expiry',  tk.tokenExpiry);
+    await Promise.all([
+      this.setStoreValue('access_token',  tk.accessToken),
+      this.setStoreValue('refresh_token', tk.refreshToken),
+      this.setStoreValue('token_expiry',  tk.tokenExpiry),
+    ]);
     this._persistedTokenExpiry = tk.tokenExpiry;
   }
 
@@ -756,18 +972,26 @@ class MowerDevice extends Homey.Device {
     try { zones = JSON.parse(settingsStr); } catch { return; }
     if (!Array.isArray(zones) || zones.length === 0) return;
 
-    const s = zones[0]?.settings?.['0'];
-    if (!s) return;
-
+    // Use the active map's settings; fall back to map 0 if not yet detected.
+    const mapEntry = zones[this._activeMapIndex ?? 0] ?? zones[0];
+    const s = mapEntry?.settings?.['0'] ?? mapEntry?.settings ?? mapEntry ?? {};
     // Capability updates (change-guarded)
     if (s.efficientMode != null) {
-      const mode = s.efficientMode === 1 ? 'efficient' : 'standard';
-      if (this.getCapabilityValue('mow_efficiency') !== mode) {
-        await this.setCapabilityValue('mow_efficiency', mode);
-      }
+      await this._setCap('mow_efficiency', s.efficientMode === 1 ? 'efficient' : 'standard');
     }
     if (s.obstacleAvoidanceEnabled != null) {
       await this._applyBoolCap('collision_avoidance', s.obstacleAvoidanceEnabled);
+    }
+
+    // mowingHeight is stored in centimetres in SETTINGS (e.g. 4.5 cm = 45 mm).
+    // Multiply by 10 to convert to mm for the capability display.
+    if (s.mowingHeight != null && this.hasCapability('cutting_height')) {
+      const height = Math.round(Number(s.mowingHeight) * 10);
+      const zoneHeights = Object.entries(mapEntry?.settings ?? {})
+        .map(([k, v]) => `zone${k}=${v?.mowingHeight}cm`)
+        .join(' | ');
+      this.log(`[settings] mowingHeight=${s.mowingHeight}cm → ${height}mm | ${zoneHeights}`);
+      await this._setCap('cutting_height', height);
     }
 
     // child_lock: MOVA may expose this as prop.s_child_lock
@@ -856,10 +1080,7 @@ class MowerDevice extends Homey.Device {
 
     // VOL — volume: scalar 0–100
     if (cfg.VOL != null && this.hasCapability('mower_volume')) {
-      const vol = Number(cfg.VOL);
-      if (this.getCapabilityValue('mower_volume') !== vol) {
-        await this.setCapabilityValue('mower_volume', vol).catch((e) => this.error('setCapabilityValue mower_volume:', e.message));
-      }
+      await this._setCap('mower_volume', Number(cfg.VOL));
     }
 
     // VOICE — voice announcement modes: array [notification, workStatus, specialStatus, errorStatus]
@@ -917,9 +1138,7 @@ class MowerDevice extends Homey.Device {
       await Promise.all(caps.map((cap, i) => {
         if (!this.hasCapability(cap)) return null;
         const pct = Math.max(0, Math.round((1 - cfg.CMS[i] / CMS_MAX[i]) * 100));
-        if (this.getCapabilityValue(cap) === pct) return null;
-        return this.setCapabilityValue(cap, pct)
-          .catch((e) => this.error(`setCapabilityValue ${cap}:`, e.message));
+        return this._setCap(cap, pct);
       }));
     }
 
@@ -988,23 +1207,27 @@ class MowerDevice extends Homey.Device {
   async _applyFirmwareState(state) {
     const updateAvailable = state === 1;
     const prev = this.getCapabilityValue('firmware_update');
-    if (prev === updateAvailable) return;
-    await this.setCapabilityValue('firmware_update', updateAvailable);
+    await this._setCap('firmware_update', updateAvailable);
     if (updateAvailable && !prev) {
       this._trgFirmwareUpdate.trigger(this, {}, {})
         .catch((e) => this.error('firmware_update_available trigger:', e.message));
     }
   }
 
+  async _setCap(capId, value) {
+    const prev = this.getCapabilityValue(capId);
+    if (prev === value) return;
+    this.log(`[cap] ${capId}: ${JSON.stringify(prev)} → ${JSON.stringify(value)}`);
+    await this.setCapabilityValue(capId, value).catch((e) => this.error(`[cap] setCapabilityValue ${capId}:`, e.message));
+  }
+
   async _applyBoolCap(capId, value) {
-    const bool = value === 1 || value === true;
-    if (this.getCapabilityValue(capId) === bool) return;
-    await this.setCapabilityValue(capId, bool);
+    await this._setCap(capId, value === 1 || value === true);
   }
 
   async _applyBattery(pct) {
     const prev = this.getCapabilityValue('measure_battery');
-    await this.setCapabilityValue('measure_battery', pct);
+    await this._setCap('measure_battery', pct);
     if (prev !== null && pct < prev) {
       this._trgBatteryLow.trigger(this, {}, {})
         .catch((e) => this.error('battery_low trigger:', e.message));
@@ -1013,9 +1236,8 @@ class MowerDevice extends Homey.Device {
 
   async _applyChargingStatus(code) {
     const status = CHARGING_MAP[code] ?? 'not_docked';
-    const prev   = this.getCapabilityValue('charging_status');
-    if (status === prev) return;
-    await this.setCapabilityValue('charging_status', status);
+    if (status === this.getCapabilityValue('charging_status')) return;
+    await this._setCap('charging_status', status);
     this._trgChargingChanged
       .trigger(this, { status }, {})
       .catch((e) => this.error('charging_status_changed trigger:', e.message));
@@ -1032,14 +1254,13 @@ class MowerDevice extends Homey.Device {
       isMowing || status === 'mapping' ? 'mowing'
       : isReturning                    ? 'docking'
       : 'idle';
-    if (this.hasCapability('mower_task_status') &&
-        this.getCapabilityValue('mower_task_status') !== taskStatus) {
-      await this.setCapabilityValue('mower_task_status', taskStatus);
+    if (this.hasCapability('mower_task_status')) {
+      await this._setCap('mower_task_status', taskStatus);
     }
 
     if (status === prev) return;
 
-    await this.setCapabilityValue('mower_status', status);
+    await this._setCap('mower_status', status);
 
     this._trgStatusChanged
       .trigger(this, { status }, {})
@@ -1049,13 +1270,13 @@ class MowerDevice extends Homey.Device {
     if (isMowing && !this._wasMowing) {
       this._sessionStartTime = Date.now();
       if (this.hasCapability('measure_duration')) {
-        await this.setCapabilityValue('measure_duration', 0);
+        await this._setCap('measure_duration', 0);
       }
     }
 
     // Error alarm
     const isError = status === 'error';
-    await this.setCapabilityValue('alarm_generic', isError);
+    await this._setCap('alarm_generic', isError);
     if (isError) {
       this._trgError
         .trigger(this, {
@@ -1068,25 +1289,18 @@ class MowerDevice extends Homey.Device {
 
     // Reset action buttons when the mower reaches a resting state
     if (HOME_STATUSES.has(status)) {
-      if (this.hasCapability('cmd_dock')) await this.setCapabilityValue('cmd_dock', false).catch(() => {});
-      if (this.hasCapability('cmd_stop')) await this.setCapabilityValue('cmd_stop', false).catch(() => {});
+      if (this.hasCapability('cmd_dock'))          await this.setCapabilityValue('cmd_dock',          false).catch(() => {});
+      if (this.hasCapability('cmd_stop'))          await this.setCapabilityValue('cmd_stop',          false).catch(() => {});
+      if (this.hasCapability('cmd_start_mowing'))      await this.setCapabilityValue('cmd_start_mowing',      false).catch(() => {});
+      if (this.hasCapability('cmd_start_spot_mowing')) await this.setCapabilityValue('cmd_start_spot_mowing', false).catch(() => {});
     }
 
     // Reset pause button once the mower confirms it is paused
     if (status === 'paused' && this.hasCapability('cmd_pause')) {
       await this.setCapabilityValue('cmd_pause', false).catch(() => {});
     }
-
-    // Reset all mowing buttons when mowing stops
-    if (!isMowing) {
-      const mowCaps = ['cmd_all_area', 'cmd_edge_mowing'];
-      for (let i = 1; i <= 5; i++) {
-        mowCaps.push(`cmd_zone_${i}`, `cmd_edge_zone_${i}`);
-      }
-      for (const cap of mowCaps) {
-        if (this.hasCapability(cap)) await this.setCapabilityValue(cap, false).catch(() => {});
-      }
-    }
+    // Pickers (mow_zone / mow_spot) intentionally keep their selection so the user
+    // can re-run the same zone or spot by pressing cmd_start_mowing again.
 
     // Docked trigger
     if (status === 'docked' || status === 'charging' || status === 'charging_completed') {
@@ -1237,36 +1451,29 @@ class MowerDevice extends Homey.Device {
       storeValues[k] = await this.getStoreValue(k);
     }
 
-    // Settings snapshot (no passwords)
-    const settingKeys = [
-      'brand', 'region', 'device_model', 'firmware_version',
-      'serial_number', 'mac_address', 'poll_interval', 'num_zones',
-      'cls_enabled', 'fdp_enabled', 'wrp_enabled', 'wrp_sensitivity', 'wrp_wait_time',
-      'bat_return_pct', 'bat_resume_pct', 'bat_auto_resume',
-      'low_enabled', 'low_start', 'low_end',
-      'dnd_enabled', 'dnd_start', 'dnd_end',
-      'lit_enabled', 'lit_time_start', 'lit_time_end', 'lit_standby', 'lit_working', 'lit_charging', 'lit_error',
-      'consumable_blade', 'consumable_brush', 'consumable_robot',
-    ];
-    const deviceSettings = {};
-    for (const k of settingKeys) {
-      deviceSettings[k] = this.getSetting(k);
-    }
+    // Settings snapshot — all keys, no passwords in this driver's settings
+    const deviceSettings = this.getSettings();
+
+    // Picker options currently shown in the UI
+    const zoneOptions = (this.getCapabilityOptions('mow_zone')?.values ?? []).map((v) => v.id);
+    const spotOptions = (this.getCapabilityOptions('mow_spot')?.values ?? []).map((v) => v.id);
 
     const cfgData = cfgResult.status === 'fulfilled' ? cfgResult.value : { error: cfgResult.reason?.message };
-    // CMS is already included in the getCFG response — no separate API call needed.
-    const cmsData = cfgData?.CMS ?? null;
 
     return {
       timestamp:        new Date().toISOString(),
+      appVersion:       this.homey.manifest.version,
       deviceId:         did,
       deviceName:       this.getName(),
       model:            this.getSetting('device_model') || '',
       available:        this.getAvailable(),
+      activeMapIndex:   this._activeMapIndex,
+      activeZoneIds:    this._activeZoneIds,
+      zonePickerOptions: zoneOptions,
+      spotPickerOptions: spotOptions,
       rawResponse:      rawResponse.status  === 'fulfilled' ? rawResponse.value  : { error: rawResponse.reason?.message },
       deviceStatus:     deviceStatus.status === 'fulfilled' ? deviceStatus.value : { error: deviceStatus.reason?.message },
       cfgData,
-      cmsData,
       capabilityValues,
       storeValues,
       deviceSettings,

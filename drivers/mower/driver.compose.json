@@ -5,12 +5,16 @@
   },
   "class": "lawnmower",
   "capabilities": [
-    "mower_status",
-    "cmd_all_area",
-    "cmd_stop",
+    "cmd_start_mowing",
+    "cmd_start_spot_mowing",
     "cmd_pause",
-    "cmd_edge_mowing",
+    "cmd_stop",
     "cmd_dock",
+    "mower_status",
+    "mow_zone",
+    "cutting_height",
+    "mower_volume",
+    "mow_spot",
     "charging_status",
     "measure_battery",
     "alarm_generic",
@@ -19,7 +23,6 @@
     "firmware_update",
     "measure_duration",
     "child_lock",
-    "mower_volume",
     "consumable_blade",
     "consumable_brush",
     "consumable_robot"
@@ -30,6 +33,34 @@
     },
     "measure_battery": {
       "title": { "en": "Battery", "de": "Akku" }
+    },
+    "cutting_height": {
+      "preventInsights": true,
+      "preventTag": true
+    },
+    "mower_volume": {
+      "preventInsights": true,
+      "preventTag": true
+    },
+    "charging_status": {
+      "preventInsights": true,
+      "preventTag": true
+    },
+    "child_lock": {
+      "preventInsights": true,
+      "preventTag": true
+    },
+    "collision_avoidance": {
+      "preventInsights": true,
+      "preventTag": true
+    },
+    "mow_efficiency": {
+      "preventInsights": true,
+      "preventTag": true
+    },
+    "firmware_update": {
+      "preventInsights": true,
+      "preventTag": true
     }
   },
   "energy": {
@@ -101,8 +132,8 @@
           "label": { "en": "Number of zones", "de": "Anzahl Zonen" },
           "value": "",
           "hint": {
-            "en": "Auto-detected from map data. One Zone button per zone appears on the device card.",
-            "de": "Wird automatisch aus den Kartendaten erkannt. Pro Zone erscheint ein Zonen-Button auf der Gerätekarte."
+            "en": "Auto-detected from map data. Zone and spot options appear in the Zone and Spot pickers on the device card.",
+            "de": "Wird automatisch aus den Kartendaten erkannt. Zonen und Spots erscheinen in den Auswahl-Pickers auf der Gerätekarte."
           }
         }
       ]

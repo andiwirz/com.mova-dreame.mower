@@ -1,0 +1,12 @@
+{
+  "type": "boolean",
+  "title": { "en": "Start Mowing (Zone Selection)", "de": "Mähen starten (Zonenauswahl)" },
+  "getable": true,
+  "setable": true,
+  "uiComponent": "button",
+  "icon": "/assets/capabilities/cmd_start_mowing.svg",
+  "hint": {
+    "en": "Starts mowing based on the current Zone Selection. Select a zone first, then press this button.",
+    "de": "Startet das Mähen basierend auf der aktuellen Zonenauswahl. Erst eine Zone auswählen, dann diesen Knopf drücken."
+  }
+}

@@ -4,6 +4,7 @@
   "getable": true,
   "setable": true,
   "uiComponent": "button",
+  "icon": "/assets/capabilities/cmd_dock.svg",
   "hint": {
     "en": "Sends the mower back to the charging station → dock()",
     "de": "Schickt den Mähroboter zurück zur Ladestation → dock()"

@@ -65,5 +65,73 @@
   "0.0.17": {
     "en": "Fixed battery and status not updating for MOVA ViAX 300 and other newer devices. The MOVA cloud API returns malformed JSON for some device fields — the app now sanitizes the response before parsing so polling succeeds.",
     "de": "Akku- und Statusaktualisierung für MOVA ViAX 300 und andere neuere Geräte korrigiert. Die MOVA-Cloud-API liefert für einige Gerätefelder ungültiges JSON — die App bereinigt die Antwort jetzt vor dem Parsen, sodass das Polling erfolgreich ist."
+  },
+  "0.0.18": {
+    "en": "Replaced per-zone buttons with two dynamic pickers: Zone (all areas, individual zones, edge mowing) and Spot (configured spots). Options are populated automatically from map data.",
+    "de": "Zonen-Buttons durch zwei dynamische Picker ersetzt: Zone (Alle Flächen, einzelne Zonen, Kantenmähen) und Spot (konfigurierte Spots). Optionen werden automatisch aus den Kartendaten befüllt."
+  },
+  "0.0.19": {
+    "en": "Added Start Mowing button: select a zone or spot in the pickers first, then press the button to start. The picker retains its selection so the same area can be re-started without re-selecting.",
+    "de": "Knopf 'Mähen starten' hinzugefügt: erst eine Zone oder einen Spot im Picker auswählen, dann den Knopf drücken. Der Picker behält die Auswahl, damit dieselbe Fläche ohne erneute Auswahl nochmals gestartet werden kann."
+  },
+  "0.0.20": {
+    "en": "Fixed spot picker not populating: broadened MAP scan to detect spots under any known section name (cleanSpots, spots, customAreas, virtualSpots) with a whole-map fallback.",
+    "de": "Spotauswahl-Picker wird nun korrekt befüllt: MAP-Scan erkennt Spots unter allen bekannten Schlüsselnamen (cleanSpots, spots, customAreas, virtualSpots) mit Fallback auf die gesamte Karte."
+  },
+  "0.0.21": {
+    "en": "Split Start Mowing into two separate buttons: one for Zone Selection and one for Spot Mowing.",
+    "de": "Mähen-starten-Knopf in zwei getrennte Knöpfe aufgeteilt: einen für die Zonenauswahl und einen für das Spot-Mähen."
+  },
+  "0.0.22": {
+    "en": "Reordered device card: Start Mowing, Start Spot Mowing, Pause, Stop, Return to Station — followed by status and pickers.",
+    "de": "Gerätekarte neu geordnet: Mähen starten, Spot mähen starten, Pausieren, Mähen beenden, Zurück zur Station — dann Status und Picker."
+  },
+  "0.0.23": {
+    "en": "Moved volume slider to position 3 on the device card.",
+    "de": "Lautstärke-Slider auf Position 3 der Gerätekarte verschoben."
+  },
+  "0.0.24": {
+    "en": "Added cutting height slider (mm). Min/max limits are configurable in device settings. Uses read-modify-write on the PRE config array so all other mowing parameters are preserved.",
+    "de": "Mähhöhe-Slider (mm) hinzugefügt. Min-/Max-Grenzen in den Geräteeinstellungen konfigurierbar. Schreibt per Read-Modify-Write auf das PRE-Konfigurationsarray, sodass alle anderen Mähparameter erhalten bleiben."
+  },
+  "0.0.25": {
+    "en": "Fixed cutting height not displaying: now reads mowingHeight from SETTINGS data (more reliable than CFG.PRE). PRE array is fetched on demand before first write if not yet cached.",
+    "de": "Mähhöhe-Anzeige korrigiert: Wert wird jetzt aus SETTINGS (mowingHeight) gelesen, zuverlässiger als CFG.PRE. PRE-Array wird beim ersten Schreiben bei Bedarf direkt vom Gerät abgerufen."
+  },
+  "0.0.26": {
+    "en": "Fixed cutting height slider position: status and zone picker now appear before the slider so it renders at position 3 in the icon row.",
+    "de": "Position des Mähhöhe-Sliders korrigiert: Status und Zonenauswahl erscheinen jetzt vor dem Slider, sodass er an Position 3 in der Icon-Zeile angezeigt wird."
+  },
+  "0.0.27": {
+    "en": "Fixed cutting height value not displaying: added direct PRE fetch on startup as fallback when the CFG response does not include the PRE array. Broadened SETTINGS parsing to handle devices that don't nest mowingHeight under settings[\"0\"].",
+    "de": "Mähhöhe-Anzeige korrigiert: PRE-Array wird beim Start direkt abgerufen, falls die CFG-Antwort ihn nicht enthält. SETTINGS-Parsing erweitert für Geräte, bei denen mowingHeight nicht unter settings[\"0\"] verschachtelt ist."
+  },
+  "0.0.28": {
+    "en": "Fixed cutting height unit mismatch: SETTINGS returns mowingHeight in centimetres (e.g. 3.5 cm) — now correctly converted to millimetres (×10) before updating the slider. Fixed getPRE() to unwrap object-wrapped responses.",
+    "de": "Einheitenfehler bei der Mähhöhe behoben: SETTINGS liefert mowingHeight in Zentimetern (z. B. 3,5 cm) — wird jetzt korrekt in Millimeter (×10) umgerechnet. getPRE() erkennt jetzt auch objektgekapselte Antworten."
+  },
+  "0.0.29": {
+    "en": "Fixed cutting height slider reverting after a write: slider no longer snaps back to the old SETTINGS value while the device write is in flight. SETTINGS is now read from the active map index. All zone heights are logged for easier debugging.",
+    "de": "Mähhöhe-Slider springt nach dem Schreiben nicht mehr zurück: der Slider behält den neuen Wert, bis die SETTINGS-Antwort den Schreibvorgang bestätigt. SETTINGS wird jetzt vom aktiven Kartenindex gelesen. Alle Zonenhöhen werden für einfacheres Debugging geloggt."
+  },
+  "0.0.30": {
+    "en": "Fixed cutting height write: device does not support the direct PRE GET endpoint. The app now synthesises the PRE array from the packet-capture baseline and the live SETTINGS values so the slider write always succeeds.",
+    "de": "Mähhöhe-Schreiben korrigiert: Das Gerät unterstützt den direkten PRE-GET-Endpunkt nicht. Die App erstellt das PRE-Array jetzt aus der Packet-Capture-Baseline und den aktuellen SETTINGS-Werten, sodass der Slider-Schreibvorgang immer erfolgreich ist."
+  },
+  "0.0.31": {
+    "en": "Fixed child lock and firmware update status being suppressed for up to 5 minutes after a cutting height slider write.",
+    "de": "Kindersicherung und Firmware-Updatestatus wurden nach einem Mähhöhe-Slider-Schreibvorgang bis zu 5 Minuten lang nicht aktualisiert — behoben."
+  },
+  "0.0.32": {
+    "en": "Fixed cutting height write overwriting the mowing direction: PRE d[6] (mowing direction in degrees) is now read from SETTINGS and preserved on every slider write.",
+    "de": "Mähhöhe-Schreiben überschrieb die Mährichtung: PRE d[6] (Mährichtung in Grad) wird jetzt aus SETTINGS gelesen und bei jedem Slider-Schreibvorgang korrekt übernommen."
+  },
+  "0.0.33": {
+    "en": "Made cutting height read-only: the sensor displays the current value from the mower but does not write to the device. Writing requires a full read-modify-write of the PRE config array, which is not reliably supported by this device.",
+    "de": "Mähhöhe ist jetzt schreibgeschützt: Der Sensor zeigt den aktuellen Wert des Mähroboters an, schreibt aber nicht auf das Gerät. Das Schreiben würde ein vollständiges Read-Modify-Write des PRE-Konfigurationsarrays erfordern, das von diesem Gerät nicht zuverlässig unterstützt wird."
+  },
+  "0.0.34": {
+    "en": "Added icons to action buttons: Play for Start Mowing, location pin for Start Spot Mowing, pause bars for Pause, stop square for Stop, and house for Return to Station.",
+    "de": "Icons für Aktionsknöpfe hinzugefügt: Play für Mähen starten, Standort-Pin für Spot mähen, Pausebalken für Pausieren, Stop-Quadrat für Beenden und Haus für Zurück zur Station."
   }
 }

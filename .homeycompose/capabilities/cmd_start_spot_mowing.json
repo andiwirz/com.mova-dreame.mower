@@ -1,0 +1,12 @@
+{
+  "type": "boolean",
+  "title": { "en": "Start Spot Mowing (Spot Selection)", "de": "Spot mähen starten (Spotauswahl)" },
+  "getable": true,
+  "setable": true,
+  "uiComponent": "button",
+  "icon": "/assets/capabilities/cmd_start_spot_mowing.svg",
+  "hint": {
+    "en": "Starts mowing based on the current Spot Selection. Select a spot first, then press this button.",
+    "de": "Startet das Mähen basierend auf der aktuellen Spotauswahl. Erst einen Spot auswählen, dann diesen Knopf drücken."
+  }
+}

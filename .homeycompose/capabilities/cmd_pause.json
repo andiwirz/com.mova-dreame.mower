@@ -3,5 +3,6 @@
   "title": { "en": "Pause Mowing", "de": "Mähen pausieren" },
   "getable": true,
   "setable": true,
-  "uiComponent": "button"
+  "uiComponent": "button",
+  "icon": "/assets/capabilities/cmd_pause.svg"
 }

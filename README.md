@@ -219,7 +219,7 @@ Action: `siid:2, aiid:50`. Payload item: `{ m:'a', p:<mapIndex>, o:<opcode>, d:{
 | 9 | Find mower (audible alert) | `{}` | ✓ |
 | 101 | Edge mowing — full perimeter | `{}` (all boundaries) or `{ edge:[[zoneId, mapIdx]] }` (single zone) | ✓ |
 | 102 | Zone mowing | `{ region:[zoneId, …] }` — flat array of numeric zone IDs | ✓ |
-| 103 | Spot mowing | `{ spots:[spotId, …] }` | ✗ |
+| 103 | Spot mowing | `{ area:[areaId, …] }` — flat array of numeric area/spot IDs | ✓ |
 
 `p` is the active map index (typically `0`). Omitting the `edge` array in op-code 101 lets the device mow all stored boundaries automatically — passing unknown boundary-segment IDs causes a "zone unreachable" error.
 

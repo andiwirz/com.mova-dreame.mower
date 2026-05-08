@@ -1,0 +1,11 @@
+{
+  "type": "enum",
+  "title": { "en": "Zone Selection", "de": "Zonenauswahl" },
+  "values": [
+    { "id": "none", "title": { "en": "— Select —", "de": "— Auswählen —" } },
+    { "id": "all",  "title": { "en": "All areas",  "de": "Alle Flächen" } }
+  ],
+  "getable": true,
+  "setable": true,
+  "uiComponent": "picker"
+}

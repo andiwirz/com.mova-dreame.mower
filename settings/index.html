@@ -15,36 +15,61 @@
       color: #1a1a1a;
     }
 
-    header {
-      background: #000;
-      color: #fff;
-      padding: 16px 20px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    header h1 { font-size: 16px; font-weight: 600; }
-    header span { font-size: 12px; opacity: .5; }
-
     /* ── Top navigation ── */
     .top-nav {
       display: flex;
-      background: #111;
-      border-bottom: 1px solid #333;
+      background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      padding: 0 12px;
+      gap: 4px;
     }
     .top-nav button {
-      padding: 12px 20px;
-      background: none;
+      padding: 10px 18px;
+      background: transparent;
       border: none;
-      color: #aaa;
+      border-radius: 6px;
+      color: #888;
       font-size: 13px;
       font-weight: 500;
       cursor: pointer;
-      border-bottom: 3px solid transparent;
-      transition: color .15s, border-color .15s;
+      margin: 6px 0;
+      transition: background .15s, color .15s;
     }
-    .top-nav button:hover { color: #fff; }
-    .top-nav button.active { color: #fff; border-bottom-color: #00A8E0; }
+    .top-nav button:hover { background: #f0f0f0; color: #1a1a1a; }
+    .top-nav button.active {
+      background: #00A8E0;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    /* ── Help banner ── */
+    .help-banner {
+      background: #f0f7ff;
+      border-bottom: 1px solid #c8dff5;
+      padding: 14px 20px;
+      display: flex;
+      gap: 32px;
+    }
+    .help-banner .help-item {
+      flex: 1;
+    }
+    .help-banner .help-item strong {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 4px;
+    }
+    .help-banner .help-item p {
+      font-size: 12px;
+      color: #555;
+      line-height: 1.5;
+    }
+    .help-banner .divider {
+      width: 1px;
+      background: #c8dff5;
+      flex-shrink: 0;
+    }
 
     /* ── Shared toolbar ── */
     .toolbar {
@@ -226,21 +251,13 @@
 
     /* ── Discover section ── */
     .discover-wrap {
-      max-width: 560px;
-      margin: 24px auto;
-      padding: 0 20px;
+      padding: 0;
     }
     .discover-card {
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 1px 4px rgba(0,0,0,.08);
-      padding: 20px;
-      margin-bottom: 20px;
+      padding: 12px 20px 20px;
     }
     .discover-card h2 {
-      font-size: 15px;
-      font-weight: 600;
-      margin-bottom: 4px;
+      display: none;
     }
     .discover-card p {
       font-size: 13px;
@@ -307,19 +324,26 @@
 </head>
 <body>
 
-<header>
-  <h1>🔍 Debug Console</h1>
-  <span>MOVA Mower</span>
-</header>
-
 <!-- ── Top navigation ──────────────────────────────────────────────────── -->
 <nav class="top-nav">
-  <button class="active" data-section="poll"     onclick="showSection('poll',    this)">Device Poll</button>
-  <button               data-section="discover"  onclick="showSection('discover', this)">Discover Devices</button>
+  <button class="active" data-section="poll"     onclick="showSection('poll',    this)">Debug installed Device</button>
+  <button               data-section="discover"  onclick="showSection('discover', this)">Debug Device Discovery</button>
 </nav>
 
+<!-- ── Help banner ─────────────────────────────────────────────────────── -->
+<div class="help-banner">
+  <div class="help-item" id="help-poll">
+    <strong>🔍 Debug installed Device</strong>
+    <p>Use this tab if your device was added successfully but some functions are not working correctly. Select the device, poll its current state and send the JSON to the developer via the Homey Community forum or a private message.</p>
+  </div>
+  <div class="help-item" id="help-discover" style="display:none">
+    <strong>📡 Debug Device Discovery</strong>
+    <p>Use this tab if you cannot add your device at all. Run the discovery, copy the JSON result and send it to the developer via the Homey Community forum or a private message so the device can be added to the app.</p>
+  </div>
+</div>
+
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
-<!-- SECTION: Device Poll                                                    -->
+<!-- SECTION: Debug installed Device                                                    -->
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
 <div id="section-poll">
 
@@ -427,18 +451,12 @@
 </div><!-- /section-poll -->
 
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
-<!-- SECTION: Discover Devices                                               -->
+<!-- SECTION: Debug Device Discovery                                               -->
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
 <div id="section-discover" style="display:none">
   <div class="discover-wrap">
 
     <div class="discover-card">
-      <h2>Discover Devices</h2>
-      <p>
-        Connect to the MOVA / Dreame cloud and fetch the raw device list.
-        Copy the result and send it to the developer to help diagnose pairing problems.
-      </p>
-
       <div class="dis-row">
         <div class="dis-field">
           <label>Brand</label>
@@ -479,10 +497,6 @@
         <button class="secondary" id="dis-copy" onclick="copyDiscoverJson()" disabled>Copy JSON</button>
       </div>
 
-      <p class="dis-hint">
-        Your credentials are sent directly to the MOVA / Dreame cloud and are not stored.
-        The raw response is shown below — copy and paste it into a GitHub issue or support message.
-      </p>
     </div>
 
     <!-- Result -->
@@ -532,6 +546,8 @@
   function showSection(name, el) {
     document.getElementById('section-poll').style.display     = name === 'poll'     ? 'block' : 'none';
     document.getElementById('section-discover').style.display = name === 'discover' ? 'block' : 'none';
+    document.getElementById('help-poll').style.display        = name === 'poll'     ? ''      : 'none';
+    document.getElementById('help-discover').style.display    = name === 'discover' ? ''      : 'none';
     document.querySelectorAll('.top-nav button').forEach((b) => b.classList.remove('active'));
     el.classList.add('active');
   }
@@ -687,7 +703,7 @@
     }, secs * 1000);
   }
 
-  // ── Discover Devices ─────────────────────────────────────────────────────────
+  // ── Debug Device Discovery ─────────────────────────────────────────────────────────
   function doDiscover() {
     const brand    = document.getElementById('dis-brand').value;
     const region   = document.getElementById('dis-region').value;

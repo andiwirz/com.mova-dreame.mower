@@ -3,5 +3,6 @@
   "title": { "en": "Stop Mowing", "de": "Mähen beenden" },
   "getable": true,
   "setable": true,
-  "uiComponent": "button"
+  "uiComponent": "button",
+  "icon": "/assets/capabilities/cmd_stop.svg"
 }

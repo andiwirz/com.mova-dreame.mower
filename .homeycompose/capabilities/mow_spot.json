@@ -1,0 +1,10 @@
+{
+  "type": "enum",
+  "title": { "en": "Spot Selection", "de": "Spotauswahl" },
+  "values": [
+    { "id": "none", "title": { "en": "— Select spot —", "de": "— Spot auswählen —" } }
+  ],
+  "getable": true,
+  "setable": true,
+  "uiComponent": "picker"
+}
