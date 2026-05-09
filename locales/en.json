@@ -3,109 +3,23 @@
     "title": "Connect MOVA / Dreame Account",
     "subtitle": "Enter your app account credentials",
     "brand_label": "Brand",
-    "brand_dreame": "Dreame",
-    "brand_mova": "MOVA",
     "region_label": "Region",
-    "region_eu": "Europe (EU)",
-    "region_us": "USA (US)",
-    "region_cn": "China (CN)",
-    "region_sg": "Asia (SG)",
     "email_label": "Email",
-    "email_placeholder": "you@example.com",
     "password_label": "Password",
     "login_button": "Sign In & Find Mowers",
     "searching": "Searching for mowers…",
     "select_device": "Select Your Mower",
     "select_device_hint": "Tap a mower to add it to Homey",
-    "add_button": "Add",
-    "done_button": "Done",
     "error_no_devices": "No robotic mowers found in this account.",
     "error_login": "Login failed. Check your credentials.",
     "error_generic": "Something went wrong. Please try again.",
     "error_empty_fields": "Please enter your email and password."
   },
-  "settings": {
-    "account_group": "Account",
-    "connection_group": "Connection",
-    "username_label": "Email",
-    "brand_label": "Brand",
-    "region_label": "Region",
-    "poll_interval_label": "Poll interval (seconds)",
-    "poll_interval_hint": "How often the mower status is updated (10–300 seconds)",
-    "mowing_group": "Mowing",
-    "dnd_group": "Do Not Disturb",
-    "cutting_height_label": "Cutting height (mm)",
-    "cutting_height_hint": "Current blade height. Must be within the min/max range above. Changes are sent to the mower immediately.",
-    "auto_resume_label": "Continue after recharging",
-    "auto_resume_hint": "The mower automatically continues the mowing task after returning to the dock to recharge.",
-    "dnd_start_label": "Quiet hours start (HH:MM)",
-    "dnd_start_hint": "Start of the quiet hours window. The mower will not start automatically during this period.",
-    "dnd_end_label": "Quiet hours end (HH:MM)",
-    "dnd_end_hint": "End of the quiet hours window.",
-    "cutting_height_min_label": "Min. cutting height (mm)",
-    "cutting_height_min_hint": "Lowest blade position supported by your mower model. Check the manual.",
-    "cutting_height_max_label": "Max. cutting height (mm)",
-    "cutting_height_max_hint": "Highest blade position supported by your mower model. Check the manual.",
-    "battery_group": "Battery",
-    "sound_group": "Sound",
-    "return_battery_label": "Return threshold (%)",
-    "return_battery_hint": "Battery level at which the mower returns to the dock to recharge.",
-    "resume_battery_label": "Resume threshold (%)",
-    "resume_battery_hint": "Battery level at which the mower resumes mowing after recharging.",
-    "volume_label": "Volume (%)",
-    "volume_hint": "Mower speaker volume for alerts and notifications.",
-    "border_first_label": "Mow border first",
-    "border_first_hint": "Mow the perimeter edge before mowing the main area.",
-    "obstacle_avoidance_label": "Obstacle avoidance sensitivity",
-    "obstacle_avoidance_hint": "0 = Off, 1 = Low, 2 = Medium, 3 = High",
-    "device_model_label": "Model"
-  },
-  "status": {
-    "idle": "Idle",
-    "mowing": "Mowing",
-    "standby": "Standby",
-    "paused": "Paused",
-    "error": "Error",
-    "returning": "Returning to dock",
-    "charging": "Charging",
-    "mapping": "Mapping",
-    "docked": "Docked",
-    "updating": "Updating",
-    "remote_control": "Remote Control"
-  },
   "error": {
     "unreachable": "Mower unreachable",
     "device_offline": "Mower is offline",
-    "auth_failed": "Authentication failed — re-add the device",
-    "cutting_height_range": "Minimum cutting height must be less than maximum.",
-    "cutting_height_bounds": "Cutting height must be between __min__mm and __max__mm.",
-    "device_not_found": "Mower not found in account — re-add the device"
-  },
-  "charging_status": {
-    "not_docked": "Not docked",
-    "charging": "Charging",
-    "not_charging": "Docked (standby)",
-    "docked": "Fully charged (legacy)",
-    "returning": "Returning",
-    "paused_cold": "Paused (cold)",
-    "charging_completed": "Fully charged"
-  },
-  "mower_mode": {
-    "all_area": "All Area",
-    "edge": "Edge",
-    "zone": "Zone",
-    "spot": "Spot",
-    "manual": "Manual"
-  },
-  "task_status": {
-    "inactive": "Inactive",
-    "active": "Active",
-    "paused": "Paused",
-    "recharging": "Recharging"
-  },
-  "mower_pattern": {
-    "zigzag": "Zig-Zag",
-    "checkerboard": "Checkerboard"
+    "device_not_found": "Mower not found in account — re-add the device",
+    "auth_failed": "Authentication failed — re-add the device"
   },
   "error_codes": {
     "0": "Normal operation",
@@ -183,14 +97,5 @@
     "72": "Returning — pause timeout",
     "73": "Top cover open / Robot lifted",
     "unknown": "Error __code__"
-  },
-  "mowing_speed": {
-    "slow": "Slow",
-    "normal": "Normal",
-    "fast": "Fast"
-  },
-  "mow_efficiency": {
-    "standard": "Standard",
-    "efficient": "Efficient"
   }
 }

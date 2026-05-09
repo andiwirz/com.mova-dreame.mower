@@ -1,6 +1,6 @@
 {
   "id": "com.mova-dreame.mower",
-  "version": "0.0.34",
+  "version": "0.0.38",
   "compatibility": ">=12.0.0",
   "sdk": 3,
   "name": {
@@ -173,6 +173,22 @@
     "0.0.34": {
       "en": "Added icons to action buttons: Play for Start Mowing, location pin for Start Spot Mowing, pause bars for Pause, stop square for Stop, and house for Return to Station.",
       "de": "Icons für Aktionsknöpfe hinzugefügt: Play für Mähen starten, Standort-Pin für Spot mähen, Pausebalken für Pausieren, Stop-Quadrat für Beenden und Haus für Zurück zur Station."
+    },
+    "0.0.35": {
+      "en": "Added 'Obstacle detected by AI camera' flow trigger. After each mowing session the app checks for AI-detected obstacles and fires the trigger once per obstacle, with a photo URL and obstacle type token. Requires the AI obstacle photo capture setting to be enabled on the mower.",
+      "de": "Flow-Auslöser 'Hindernis von KI-Kamera erkannt' hinzugefügt. Nach jedem Mähvorgang prüft die App auf KI-erkannte Hindernisse und löst den Auslöser je Hindernis aus — mit Foto-URL und Hindernistyp als Token. Voraussetzung: Einstellung für KI-Hindernisfoto-Aufnahme am Mähroboter aktiviert."
+    },
+    "0.0.36": {
+      "en": "Fixed pairing failing for Dreame devices whose API response contains an unescaped JSON string in the 'property' field. The response sanitiser now strips that field before parsing.",
+      "de": "Kopplung für Dreame-Geräte korrigiert, bei denen die API-Antwort im Feld 'property' einen nicht escaped JSON-String enthält. Die Antwort-Bereinigung entfernt dieses Feld jetzt vor dem Parsen."
+    },
+    "0.0.37": {
+      "en": "Fixed 'Poll failed: Invalid Capability: mow_spot' for devices where the Zone or Spot picker capability was silently missing. Added a recovery migration that re-adds both pickers if absent, and guarded all capability lookups so a missing picker can no longer crash polling or device init.",
+      "de": "Fehler 'Poll failed: Invalid Capability: mow_spot' für Geräte behoben, bei denen die Zonen- oder Spot-Picker-Capability still fehlte. Eine Wiederherstellungsmigration fügt beide Picker bei Bedarf erneut hinzu. Alle Capability-Abfragen sind jetzt abgesichert, sodass ein fehlender Picker Polling und Geräteinit nicht mehr zum Absturz bringen kann."
+    },
+    "0.0.38": {
+      "en": "Fixed device initialisation crash ('Cannot read properties of undefined') caused by a migration failure before instance fields were set. Instance fields are now initialised before migration runs. Added a fast-path for freshly paired devices that skips all historic capability add/remove cycles — only a single recovery check runs instead of dozens of redundant API calls.",
+      "de": "Absturz bei der Geräteinitialisierung ('Cannot read properties of undefined') behoben, der durch einen Migrationsfehler vor der Feldinitializierung verursacht wurde. Felder werden jetzt vor der Migration initialisiert. Für neu gekoppelte Geräte werden alle historischen Capability-Add/Remove-Zyklen übersprungen — statt dutzender redundanter API-Aufrufe läuft nur noch eine einzige Wiederherstellungsprüfung."
     }
   }
 }

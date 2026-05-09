@@ -133,5 +133,11 @@
   "0.0.34": {
     "en": "Added icons to action buttons: Play for Start Mowing, location pin for Start Spot Mowing, pause bars for Pause, stop square for Stop, and house for Return to Station.",
     "de": "Icons für Aktionsknöpfe hinzugefügt: Play für Mähen starten, Standort-Pin für Spot mähen, Pausebalken für Pausieren, Stop-Quadrat für Beenden und Haus für Zurück zur Station."
+  },
+  "0.0.36": {
+    "en": "update for A3 AWD Pro 3500"
+  },
+  "0.0.38": {
+    "en": "remove some capability migrations, add registration guard for mow_zone and mow_spot"
   }
 }

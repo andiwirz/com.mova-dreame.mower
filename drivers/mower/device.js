@@ -251,6 +251,13 @@ const MIGRATIONS = [
       'consumable_robot',
     ],
   },
+  {
+    // Recovery: ensure mow_zone and mow_spot are present. A previous addCapability()
+    // call may have failed silently (logged but swallowed), leaving the capability
+    // absent even though the migration key was marked done.
+    key: 'capabilities_migrated_v23',
+    caps: ['mow_zone', 'mow_spot'],
+  },
 ];
 
 // Capabilities removed — stripped from existing installs on next init
@@ -286,8 +293,8 @@ class MowerDevice extends Homey.Device {
   // ─── Lifecycle ─────────────────────────────────────────────────────────────
 
   async onInit() {
-    await this._migrate();
-
+    // Initialise all instance fields first so getDebugPollData() and capability
+    // listeners never see `undefined` even if _migrate() or _initApi() throws.
     this._api                  = null;
     this._pollTimer            = null;
     this._wasMowing            = false;
@@ -299,6 +306,10 @@ class MowerDevice extends Homey.Device {
     this._lastZonePickerKey    = null;  // cache key for _updateZonePicker change-guard
     this._lastSpotPickerKey    = null;  // cache key for _updateSpotPicker change-guard
     this._cfgPollCounter       = 0;     // reads CFG (WRP etc.) on first poll and every 10th thereafter
+    this._uid                  = null;  // device uid, extracted from first poll info response
+    this._model                = null;  // raw model string (e.g. "mova.mower.g2529d"), for obstacle photo API
+
+    await this._migrate();
 
     // Flow trigger cards
     this._trgStatusChanged    = this.homey.flow.getDeviceTriggerCard('mower_status_changed');
@@ -308,17 +319,22 @@ class MowerDevice extends Homey.Device {
     this._trgDocked           = this.homey.flow.getDeviceTriggerCard('mower_docked');
     this._trgFirmwareUpdate   = this.homey.flow.getDeviceTriggerCard('firmware_update_available');
     this._trgBatteryLow       = this.homey.flow.getDeviceTriggerCard('battery_low');
+    this._trgObstacleDetected = this.homey.flow.getDeviceTriggerCard('obstacle_detected');
 
     // ── Picker listeners ───────────────────────────────────────────────────────
     const did = this.getData().id;
 
-    this.registerCapabilityListener('mow_zone', (value) => {
-      this.log(`[mow_zone] selected: ${value}`);
-    });
+    if (this.hasCapability('mow_zone')) {
+      this.registerCapabilityListener('mow_zone', (value) => {
+        this.log(`[mow_zone] selected: ${value}`);
+      });
+    }
 
-    this.registerCapabilityListener('mow_spot', (value) => {
-      this.log(`[mow_spot] selected: ${value}`);
-    });
+    if (this.hasCapability('mow_spot')) {
+      this.registerCapabilityListener('mow_spot', (value) => {
+        this.log(`[mow_spot] selected: ${value}`);
+      });
+    }
 
     // ── Start mowing button (zone) ─────────────────────────────────────────────
     this.registerCapabilityListener('cmd_start_mowing', async (value) => {
@@ -565,6 +581,21 @@ class MowerDevice extends Homey.Device {
   // ─── Migration ─────────────────────────────────────────────────────────────
 
   async _migrate() {
+    // Fast-path for freshly paired devices: capabilities are already installed
+    // in the correct final order by driver.compose.json, so historic migrations
+    // (adds and reorders) are all no-ops. Mark them done immediately so we don't
+    // run dozens of addCapability/removeCapability cycles on every new device.
+    // Only the recovery migration (the last entry) is always allowed to run.
+    const [firstMigration, ...rest] = MIGRATIONS;
+    const lastMigration = rest.at(-1) ?? firstMigration;
+    const isFirstRun = !(await this.getStoreValue(firstMigration.key));
+    if (isFirstRun) {
+      for (const { key } of MIGRATIONS) {
+        if (key === lastMigration.key) continue; // let the recovery migration run
+        await this.setStoreValue(key, true);
+      }
+    }
+
     for (const { key, caps, reorder } of MIGRATIONS) {
       if (await this.getStoreValue(key)) continue;
 
@@ -678,6 +709,12 @@ class MowerDevice extends Homey.Device {
     if (info.bindDomain != null && info.bindDomain !== this._lastBindDomain) {
       this._lastBindDomain = info.bindDomain;
       this._api.setBindDomain(info.bindDomain);
+    }
+
+    // ── Capture uid + model once (needed for obstacle photo checks) ──────────
+    if (info.masterUid != null && this._uid == null) {
+      this._uid   = String(info.masterUid);
+      this._model = info.model || '';
     }
 
     // ── Read-only device info → settings (change-guarded) ───────────────────
@@ -1312,6 +1349,10 @@ class MowerDevice extends Homey.Device {
     if (this._wasMowing && HOME_STATUSES.has(status)) {
       this._trgMowingCompleted.trigger(this, {}, {})
         .catch((e) => this.error('mowing_completed trigger:', e.message));
+      // Check for AI obstacle photos from the session that just ended.
+      // Delay 60 s to give the server time to finalize the session file.
+      const did = this.getData().id;
+      this.homey.setTimeout(() => this._checkObstaclePhotos(did), 60_000);
     }
 
     this._wasMowing = isMowing;
@@ -1323,6 +1364,59 @@ class MowerDevice extends Homey.Device {
     // Route through _applyStatus so the status-changed flow trigger fires
     // and session-start tracking is handled consistently.
     await this._applyStatus('mowing');
+  }
+
+  // ─── AI obstacle photo check ──────────────────────────────────────────────
+
+  async _checkObstaclePhotos(did) {
+    if (!this._uid || !this._model) return;
+
+    // Only look at sessions newer than the last check (default: last 48 h).
+    const since = await this.getStoreValue('lastObstacleTs') || null;
+
+    const res = await this._api.getObstacleHistory(did, this._uid, since).catch((e) => {
+      this.error('[obstacle] history fetch failed:', e.message); return null;
+    });
+
+    const list = res?.data?.list ?? [];
+    if (list.length === 0) return;
+
+    // Advance the watermark immediately so a crash/restart doesn't re-fire old events.
+    await this.setStoreValue('lastObstacleTs', Math.floor(Date.now() / 1000));
+
+    for (const entry of list) {
+      let history;
+      try { history = JSON.parse(entry.history); } catch { continue; }
+
+      const fileEntry = history.find((p) => p.piid === 9);
+      if (!fileEntry?.value) continue;
+
+      const urlRes = await this._api.getObstacleFileUrl(did, this._model, this._uid, fileEntry.value).catch(() => null);
+      if (!urlRes?.data) continue;
+
+      const sessionJson = await this._api.fetchSignedUrl(urlRes.data).catch(() => null);
+      const aiObstacles = sessionJson?.ai_obstacle ?? [];
+
+      for (const obs of aiObstacles) {
+        const [, , , obstacleType, fileId] = obs;
+
+        const photoRes = await this._api.getObstaclePhoto(did, fileId).catch(() => null);
+        const photoUrl = photoRes?.code === 0 ? (photoRes.data ?? '') : '';
+
+        // Wrap in a Homey Image so the token works natively in image-aware
+        // flow actions (push notifications with preview, Telegram, etc.).
+        let photo = null;
+        if (photoUrl) {
+          photo = await this.homey.images.createImage();
+          photo.setUrl(photoUrl);
+        }
+
+        this.log(`[obstacle] type=${obstacleType} fileId=${fileId} photo=${photo ? 'ok' : 'none'}`);
+
+        this._trgObstacleDetected.trigger(this, { photo, obstacle_type: obstacleType }, {})
+          .catch((e) => this.error('[obstacle] trigger failed:', e.message));
+      }
+    }
   }
 
   // ─── Public commands (called by flow cards) ────────────────────────────────
@@ -1430,6 +1524,8 @@ class MowerDevice extends Homey.Device {
   // ─── Debug API (called by settings/index.html via api.js) ─────────────────
 
   async getDebugPollData() {
+    if (!this._api) throw new Error('Device not initialised yet — please wait and try again');
+
     const did = this.getData().id;
 
     const [rawResponse, deviceStatus, cfgResult] = await Promise.allSettled([
@@ -1455,8 +1551,12 @@ class MowerDevice extends Homey.Device {
     const deviceSettings = this.getSettings();
 
     // Picker options currently shown in the UI
-    const zoneOptions = (this.getCapabilityOptions('mow_zone')?.values ?? []).map((v) => v.id);
-    const spotOptions = (this.getCapabilityOptions('mow_spot')?.values ?? []).map((v) => v.id);
+    const zoneOptions = this.hasCapability('mow_zone')
+      ? (this.getCapabilityOptions('mow_zone')?.values ?? []).map((v) => v.id)
+      : [];
+    const spotOptions = this.hasCapability('mow_spot')
+      ? (this.getCapabilityOptions('mow_spot')?.values ?? []).map((v) => v.id)
+      : [];
 
     const cfgData = cfgResult.status === 'fulfilled' ? cfgResult.value : { error: cfgResult.reason?.message };
 
