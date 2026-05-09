@@ -2,9 +2,11 @@ MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct
 
 ## Features
 
-- **Action buttons** on the device card: Start Mowing, Mow Full Area, Edge Mowing, Stop, Pause, Return to Dock
-- **Per-zone edge mowing** buttons — detected automatically from your map, up to 5 zones
+- **Action buttons** on the device card: Start Mowing, Start Spot Mowing, Pause, Stop, Return to Dock
+- **Zone picker** — select a zone, the full area, or edge mowing from a dynamic list built from your map; press Start Mowing to begin
+- **Spot picker** — select a configured spot from your map; press Start Spot Mowing to begin
 - **Live status**: battery level, charging status, mower status (mowing / paused / docked / error / …)
+- **Cutting height** sensor — displays the current blade height read from the mower (read-only)
 - **Volume** slider — set the mower's speaker volume (0–100)
 - **Child lock** — lock and unlock the physical buttons on the mower directly from Homey
 - **Frost protection** and **Rain protection** settings — read from the mower on startup, written back immediately on change (confirmed via packet capture)
@@ -16,10 +18,10 @@ MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct
 - **Battery settings** — configure the return-to-dock threshold, task-resume threshold, and custom charging time window
 - **Voice Announcements** — configure which voice modes the mower uses (notifications, work status, special status, errors)
 - **Anti-Theft Alarm** — enable lift alarm: mower locks and triggers an audible alarm when lifted
-- **AI Obstacle Photos** — enable or disable photo capture of AI-detected obstacles
+- **AI Obstacle Photos** — enable photo capture of AI-detected obstacles; fires an "Obstacle detected" flow trigger with a photo and obstacle type after each mowing session
 - **Auto-reset action buttons** when the mower reaches a new state (e.g. dock button resets when mower docks)
 - Flow cards for full automation
-- Built-in **Debug Console** in the app settings for diagnostics and device discovery
+- Built-in **Debug Console** in the app settings for diagnostics, device discovery and compatibility checks
 
 ## Device Settings
 
@@ -62,16 +64,15 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 
 ### Device Card Buttons
 
-| Button | Description |
-|--------|-------------|
-| Start Mowing | Starts mowing using the active mowing mode (full area by default) |
-| Mow Full Area | Immediately starts a full-area mow, ignoring the active mode |
-| Edge Mowing | Starts edge mowing along the entire perimeter |
+| Button / Picker | Description |
+|-----------------|-------------|
+| Start Mowing | Starts mowing using the selection in the Zone picker |
+| Start Spot Mowing | Starts mowing at the location selected in the Spot picker |
 | Pause | Pauses the mower; it waits in place until resumed |
 | Stop | Stops mowing and keeps the mower where it is |
 | Return to Dock | Sends the mower back to the charging station |
-| Zone 1–5 | Mows the corresponding zone (buttons appear automatically based on detected map zones) |
-| Edge Zone 1–5 | Edge-mows the corresponding zone (buttons appear automatically based on detected map zones) |
+| Zone picker | Select what to mow: Full Area, individual zones, edge mowing (full perimeter), or edge mowing for a single zone — options are populated automatically from your map |
+| Spot picker | Select a named spot to mow — options are populated automatically from your map |
 
 ### Flow Card Actions
 
@@ -99,6 +100,7 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 - Mower error occurred
 - Battery is low
 - Firmware update available
+- Obstacle detected by AI camera *(fires once per obstacle after each mowing session, with a photo and obstacle type token — requires AI obstacle photo capture to be enabled in device settings)*
 
 **And...**
 - Mower is / is not mowing
@@ -121,8 +123,8 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 
 | Brand | Regions |
 |-------|---------|
-| MOVA | Europe (EU), China (CN), North America (NA) |
-| Dreame | Europe (EU), China (CN), North America (NA) |
+| MOVA | Europe (EU), China (CN), North America (US), Asia (SG) |
+| Dreame | Europe (EU), China (CN), North America (US), Asia (SG) |
 
 ## Tested Devices
 
