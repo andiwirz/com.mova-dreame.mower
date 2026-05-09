@@ -718,7 +718,7 @@
     document.getElementById('tabCloud').style.display = tab === 'cloud' ? 'block' : 'none';
     document.getElementById('tabHomey').style.display = tab === 'homey' ? 'block' : 'none';
     document.getElementById('tabJson').style.display  = tab === 'json'  ? 'block' : 'none';
-    document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
     el.classList.add('active');
   }
 

@@ -171,26 +171,28 @@ Password is MD5-hashed with salt `RAylYC%fmSKp7%Tq` before sending. Both brands 
 
 Read via `getDeviceData`, write via `setDeviceData`. Body: `{ did, model:[{siid,piid}] }` / `{ did, model:[{siid,piid,value}] }`.
 
+> **v2 API note:** MOVA and newer Dreame devices (A2, A3, ViAX series) use the v2 cloud API which **ignores the siid/piid list** in `getDeviceData` and returns its own key-value format (`SETTINGS.0`, `MAP.19`, …). On these devices all properties marked ✗ cannot be read or written via this endpoint — use the App-Action Channel (siid:2, piid:50) with CFG keys instead. Only older standard MiOT Dreame devices would respond to direct property reads.
+
 | siid | piid | Name | R | W | Confirmed | Notes |
 |------|------|------|---|---|-----------|-------|
 | 1 | 2 | Firmware state | ✓ | — | ✓ | Firmware version string |
 | 1 | 53 | Bluetooth | ✓ | — | ~ | Source: ioBroker |
 | 2 | 1 | Status | ✓ | — | ✓ | Mower status (numeric code) |
 | 2 | 2 | Device code | ✓ | — | ✓ | Current error / device code |
-| 2 | 4 | Mowing speed | — | ✓ | ✗ | `0`=slow `1`=normal `2`=fast — piid unverified |
-| 2 | 6 | Border first | — | ✓ | ✗ | `0`=off `1`=on — piid unverified |
+| 2 | 4 | Mowing speed | — | ✓ | ✗ | `0`=slow `1`=normal `2`=fast — not accessible on v2 API devices |
+| 2 | 6 | Border first | — | ✓ | ✗ | `0`=off `1`=on — not accessible on v2 API devices |
 | 2 | 50 | App-action channel | ✓ | ✓ | ✓ | Dual-purpose: mowing commands + CFG read/write (see below) |
 | 2 | 51 | Settings CFG blob | ✓ | — | ✓ | Read-only; device pushes full JSON CFG here; do not write directly |
-| 2 | 109 | Cutting height | — | ✓ | ✗ | Height in mm — piid unverified |
-| 2 | 110 | Auto-resume | — | ✓ | ✗ | `0`=off `1`=on — piid unverified |
-| 2 | 111 | Mowing pattern | — | ✓ | ✗ | `0`=zigzag `1`=checkerboard — piid unverified |
-| 2 | 112 | Rain protection | ✓ | — | ✗ | piid unverified — use CFG action channel instead |
-| 2 | 113 | Night mode | — | ✓ | ✗ | `0`=off `1`=on — piid unverified |
-| 2 | 114 | Volume | — | ✓ | ✗ | piid unverified — use CFG action channel instead |
+| 2 | 109 | Cutting height | — | ✗ | ✗ | Write rejected (error 10007) on v2 API devices; read ignored — use CFG `PRE[4]` instead |
+| 2 | 110 | Auto-resume | — | ✓ | ✗ | `0`=off `1`=on — not accessible on v2 API devices |
+| 2 | 111 | Mowing pattern | — | ✓ | ✗ | `0`=zigzag `1`=checkerboard — not accessible on v2 API devices |
+| 2 | 112 | Rain protection | ✓ | — | ✗ | Not accessible on v2 API devices — use CFG `WRP` instead |
+| 2 | 113 | Night mode | — | ✓ | ✗ | `0`=off `1`=on — not accessible on v2 API devices |
+| 2 | 114 | Volume | — | ✓ | ✗ | Not accessible on v2 API devices — use CFG `VOL` instead |
 | 3 | 1 | Battery | ✓ | — | ✓ | 0–100 % |
 | 3 | 2 | Charging status | ✓ | — | ✓ | `0`=not charging `1`=charging |
-| 3 | 10 | Return threshold | — | ✓ | ✗ | Battery % at which mower returns to dock — piid unverified |
-| 3 | 11 | Resume threshold | — | ✓ | ✗ | Battery % at which mower resumes — piid unverified |
+| 3 | 10 | Return threshold | — | ✓ | ✗ | Not accessible on v2 API devices — use CFG `BAT[0]` instead |
+| 3 | 11 | Resume threshold | — | ✓ | ✗ | Not accessible on v2 API devices — use CFG `BAT[1]` instead |
 | 4 | 21 | Obstacle avoidance | — | ✓ | ~ | `0`=off `1`=low `2`=medium `3`=high |
 | 4 | 22 | AI detection | ✓ | — | ~ | Source: ioBroker.dreame |
 | 4 | 50 | AutoSwitch settings | ✓ | ✓ | ~ | JSON string `{k:'KEY',v:0\|1}` — see AutoSwitch keys below |
