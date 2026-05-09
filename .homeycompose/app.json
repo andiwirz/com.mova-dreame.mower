@@ -1,6 +1,6 @@
 {
   "id": "com.mova-dreame.mower",
-  "version": "0.0.39",
+  "version": "0.0.44",
   "compatibility": ">=12.0.0",
   "sdk": 3,
   "name": {
@@ -18,12 +18,14 @@
   "permissions": [],
   "images": {
     "small": "/assets/images/small.png",
-    "large": "/assets/images/large.png"
+    "large": "/assets/images/large.png",
+    "xlarge": "/assets/images/xlarge.png"
   },
   "author": {
     "name": "Andi Wirz",
     "email": "andi@wirzfamily.ch"
   },
+  "homeyCommunityTopicId": 154425,
   "source": "https://github.com/andiwirz/com.mova-dreame.mower",
   "bugs": {
     "url": "https://github.com/andiwirz/com.mova-dreame.mower/issues"
@@ -193,6 +195,26 @@
     "0.0.39": {
       "en": "Added Installation Check to the Debug Device Discovery settings page. After fetching the device list, tap 'Installation Check' to verify that login, device count, model recognition and online status are all OK — a green banner then confirms the device is ready to be added via the Homey app.",
       "de": "Installationscheck zur Debug-Geräteerkennung in den App-Einstellungen hinzugefügt. Nach dem Abrufen der Geräteliste auf 'Installation Check' tippen, um Login, Geräteanzahl, Modellerkennung und Online-Status zu prüfen — ein grünes Banner bestätigt, dass das Gerät über die Homey-App hinzugefügt werden kann."
+    },
+    "0.0.40": {
+      "en": "Cutting height is now a writable slider (20–70 mm, 5 mm steps). Adjust the blade height directly from the device card without opening the manufacturer app. Uses a read-modify-write of the PRE config array (confirmed via packet capture).",
+      "de": "Schnitthöhe ist jetzt ein schreibbarer Schieberegler (20–70 mm, 5-mm-Schritte). Die Messhöhe kann direkt über die Gerätekarte angepasst werden, ohne die Hersteller-App öffnen zu müssen. Verwendet Read-Modify-Write des PRE-Konfigurations-Arrays (bestätigt via Packet-Capture)."
+    },
+    "0.0.41": {
+      "en": "Fixed cutting height slider: the full PRE config array is now reconstructed from SETTINGS fields (confirmed field mapping via packet capture correlation) instead of relying on an unreadable API endpoint. The slider no longer snaps back after a write.",
+      "de": "Schnitthöhen-Schieberegler korrigiert: Das vollständige PRE-Konfigurations-Array wird jetzt aus den SETTINGS-Feldern rekonstruiert (Feld-Mapping via Packet-Capture-Korrelation bestätigt) statt auf einen nicht lesbaren API-Endpunkt zu setzen. Der Schieberegler springt nach dem Schreiben nicht mehr zurück."
+    },
+    "0.0.42": {
+      "en": "Mow efficiency (Standard / Efficient) is now a writable picker. Cutting height slider min/max can now be configured per device in the settings.",
+      "de": "Mäh-Effizienz (Standard / Effizient) ist jetzt ein schreibbarer Picker. Minimaler und maximaler Wert des Schnitthöhen-Schiebereglers können jetzt pro Gerät in den Einstellungen konfiguriert werden."
+    },
+    "0.0.43": {
+      "en": "Added edge mowing settings (auto, safe, UltraTrim, obstacle avoidance at edges) and obstacle avoidance settings (LiDAR, height, distance, AI detection) to the device settings page. Values sync bidirectionally with the mower.",
+      "de": "Randmähen-Einstellungen (automatisch, sicher, UltraTrim, Hindernisvermeidung an Kanten) und Hindernisvermeidungs-Einstellungen (LiDAR, Höhe, Abstand, KI-Erkennung) zur Geräte-Einstellungsseite hinzugefügt. Werte werden bidirektional mit dem Mäher synchronisiert."
+    },
+    "0.0.44": {
+      "en": "Added 6 new flow cards: 'Mowing started' trigger, 'Consumable needs replacement' trigger, 'Set cutting height' action, 'Set efficiency mode' action, 'Mow efficiency is efficient' condition, 'Battery above/below X%' condition.",
+      "de": "6 neue Flow-Karten hinzugefügt: Auslöser 'Mähen gestartet', Auslöser 'Verbrauchsmaterial muss ersetzt werden', Aktion 'Schnitthöhe setzen', Aktion 'Mäheffizienz-Modus setzen', Bedingung 'Mäheffizienz ist Effizient', Bedingung 'Akku über/unter X%'."
     }
   }
 }

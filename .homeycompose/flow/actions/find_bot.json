@@ -1,4 +1,4 @@
 {
-  "title": { "en": "Find mower (audible alert)", "de": "Mähroboter suchen (Signalton)" },
+  "title": { "en": "Find mower with audible alert", "de": "Mähroboter mit Signalton suchen" },
   "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
 }

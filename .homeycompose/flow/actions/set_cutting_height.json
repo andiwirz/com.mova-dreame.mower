@@ -1,0 +1,13 @@
+{
+  "title": { "en": "Set cutting height", "de": "Schnitthöhe setzen" },
+  "titleFormatted": { "en": "Set cutting height to [[height]] mm", "de": "Schnitthöhe auf [[height]] mm setzen" },
+  "args": [
+    { "name": "device", "type": "device", "filter": "driver_id=mower" },
+    {
+      "name": "height", "type": "number",
+      "title": { "en": "Height (mm)", "de": "Höhe (mm)" },
+      "min": 20, "max": 100, "step": 5,
+      "placeholder": { "en": "40", "de": "40" }
+    }
+  ]
+}

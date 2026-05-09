@@ -28,20 +28,20 @@
     "de": "Frostschutz- und Regenschutz-Einstellungen hinzugefügt (per Packet Capture bestätigt). Knöpfe Mähen beenden und Pausieren hinzugefügt. Kantenmähen-Knöpfe pro Zone hinzugefügt. Fehler 'Zone nicht erreichbar' beim Kantenmähen behoben. Aktionsknöpfe werden bei Statuswechsel automatisch zurückgesetzt. Einstellungsseite vereinfacht — nicht verifizierte Optionen entfernt."
   },
   "0.0.8": {
-    "en": "Added lighting settings (on/off, time window, per-scenario LED) confirmed via packet capture. Fixed capability icon rendering on iOS. Expanded debug console with CFG data, capability values and device settings.",
-    "de": "Beleuchtungseinstellungen (Ein/Aus, Zeitfenster, Lichtszenarien) per Packet Capture bestätigt hinzugefügt. Darstellung der Capability-Icons unter iOS korrigiert. Debug-Konsole um CFG-Daten, Capability-Werte und Geräteeinstellungen erweitert."
+    "en": "Added lighting settings (on/off, time window) confirmed via packet capture. Fixed capability icon rendering on iOS. Expanded debug poll with CFG data, capability values and device settings.",
+    "de": "Beleuchtungseinstellungen (Ein/Aus, Zeitfenster) per Packet Capture bestätigt hinzugefügt. Darstellung der Capability-Icons unter iOS korrigiert. Debug-Poll um CFG-Daten, Capability-Werte und Geräteeinstellungen erweitert."
   },
   "0.0.9": {
-    "en": "Added Do Not Disturb and Low Speed at Night settings (on/off, start/end time) confirmed via packet capture. Fixed DND API payload.",
-    "de": "Bitte-nicht-stören- und Niedrige-Geschwindigkeit-in-der-Nacht-Einstellungen hinzugefügt (per Packet Capture bestätigt). DND-API-Payload korrigiert."
+    "en": "Added Do Not Disturb and Low Speed at Night settings (on/off, start/end time) confirmed via packet capture. Fixed DND API payload (was sending JSON string instead of object).",
+    "de": "Bitte-nicht-stören- und Niedrige-Geschwindigkeit-in-der-Nacht-Einstellungen (Ein/Aus, Start-/Endzeit) per Packet Capture bestätigt hinzugefügt. DND-API-Payload korrigiert (wurde fälschlicherweise als JSON-String statt Objekt gesendet)."
   },
   "0.0.10": {
-    "en": "Added blade, brush and robot maintenance consumable sensors (%). Fixed LIT settings parsing (CFG returns an array — start time, end time and light scenarios were read incorrectly).",
-    "de": "Klingen-, Reinigungsbürsten- und Roboterwartungs-Sensoren (%) hinzugefügt. LIT-Einstellungs-Parsing korrigiert (CFG liefert ein Array — Startzeit, Endzeit und Lichtszenarien wurden falsch gelesen)."
+    "en": "Added blade, brush and robot maintenance consumable sensors (%). Fixed LIT settings parsing (CFG returns an array, not an object — start time, end time and light scenarios were read incorrectly).",
+    "de": "Klingen-, Reinigungsbürsten- und Roboterwartungs-Sensoren (%) hinzugefügt. LIT-Einstellungs-Parsing korrigiert (CFG liefert ein Array statt eines Objekts — Startzeit, Endzeit und Lichtszenarien wurden falsch gelesen)."
   },
   "0.0.11": {
-    "en": "Added battery settings: return-to-dock threshold, task-resume threshold and resume-after-charging toggle (confirmed via packet capture).",
-    "de": "Akku-Einstellungen hinzugefügt: Rückkehr-Schwellwert, Wiederaufnahme-Schwellwert und Mähen-nach-Laden-fortsetzen (per Packet Capture bestätigt)."
+    "en": "Added battery settings: return-to-dock threshold, task-resume threshold and custom charging time window (confirmed via packet capture). Charging window start/end are read from device; write format not yet confirmed.",
+    "de": "Akku-Einstellungen hinzugefügt: Rückkehr-Schwellwert, Wiederaufnahme-Schwellwert und benutzerdefinierte Ladezeit (per Packet Capture bestätigt). Ladezeit-Start/-Ende werden vom Gerät gelesen; Schreiben noch nicht bestätigt."
   },
   "0.0.12": {
     "en": "Added AI obstacle photo capture setting (confirmed via packet capture).",
@@ -60,7 +60,8 @@
     "de": "App in MOVA & Dreame Mähroboter umbenannt. Interne Code-Bereinigung."
   },
   "0.0.16": {
-    "en": "Updated readme files."
+    "en": "Updated readme files.",
+    "de": "Readme-Dateien aktualisiert."
   },
   "0.0.17": {
     "en": "Fixed battery and status not updating for MOVA ViAX 300 and other newer devices. The MOVA cloud API returns malformed JSON for some device fields — the app now sanitizes the response before parsing so polling succeeds.",
@@ -134,13 +135,44 @@
     "en": "Added icons to action buttons: Play for Start Mowing, location pin for Start Spot Mowing, pause bars for Pause, stop square for Stop, and house for Return to Station.",
     "de": "Icons für Aktionsknöpfe hinzugefügt: Play für Mähen starten, Standort-Pin für Spot mähen, Pausebalken für Pausieren, Stop-Quadrat für Beenden und Haus für Zurück zur Station."
   },
+  "0.0.35": {
+    "en": "Added 'Obstacle detected by AI camera' flow trigger. After each mowing session the app checks for AI-detected obstacles and fires the trigger once per obstacle, with a photo URL and obstacle type token. Requires the AI obstacle photo capture setting to be enabled on the mower.",
+    "de": "Flow-Auslöser 'Hindernis von KI-Kamera erkannt' hinzugefügt. Nach jedem Mähvorgang prüft die App auf KI-erkannte Hindernisse und löst den Auslöser je Hindernis aus — mit Foto-URL und Hindernistyp als Token. Voraussetzung: Einstellung für KI-Hindernisfoto-Aufnahme am Mähroboter aktiviert."
+  },
   "0.0.36": {
-    "en": "update for A3 AWD Pro 3500"
+    "en": "Fixed pairing failing for Dreame devices whose API response contains an unescaped JSON string in the 'property' field. The response sanitiser now strips that field before parsing.",
+    "de": "Kopplung für Dreame-Geräte korrigiert, bei denen die API-Antwort im Feld 'property' einen nicht escaped JSON-String enthält. Die Antwort-Bereinigung entfernt dieses Feld jetzt vor dem Parsen."
+  },
+  "0.0.37": {
+    "en": "Fixed 'Poll failed: Invalid Capability: mow_spot' for devices where the Zone or Spot picker capability was silently missing. Added a recovery migration that re-adds both pickers if absent, and guarded all capability lookups so a missing picker can no longer crash polling or device init.",
+    "de": "Fehler 'Poll failed: Invalid Capability: mow_spot' für Geräte behoben, bei denen die Zonen- oder Spot-Picker-Capability still fehlte. Eine Wiederherstellungsmigration fügt beide Picker bei Bedarf erneut hinzu. Alle Capability-Abfragen sind jetzt abgesichert, sodass ein fehlender Picker Polling und Geräteinit nicht mehr zum Absturz bringen kann."
   },
   "0.0.38": {
-    "en": "remove some capability migrations, add registration guard for mow_zone and mow_spot"
+    "en": "Fixed device initialisation crash ('Cannot read properties of undefined') caused by a migration failure before instance fields were set. Instance fields are now initialised before migration runs. Added a fast-path for freshly paired devices that skips all historic capability add/remove cycles — only a single recovery check runs instead of dozens of redundant API calls.",
+    "de": "Absturz bei der Geräteinitialisierung ('Cannot read properties of undefined') behoben, der durch einen Migrationsfehler vor der Feldinitializierung verursacht wurde. Felder werden jetzt vor der Migration initialisiert. Für neu gekoppelte Geräte werden alle historischen Capability-Add/Remove-Zyklen übersprungen — statt dutzender redundanter API-Aufrufe läuft nur noch eine einzige Wiederherstellungsprüfung."
   },
   "0.0.39": {
-    "en": "add Installation checker"
+    "en": "Added Installation Check to the Debug Device Discovery settings page. After fetching the device list, tap 'Installation Check' to verify that login, device count, model recognition and online status are all OK — a green banner then confirms the device is ready to be added via the Homey app.",
+    "de": "Installationscheck zur Debug-Geräteerkennung in den App-Einstellungen hinzugefügt. Nach dem Abrufen der Geräteliste auf 'Installation Check' tippen, um Login, Geräteanzahl, Modellerkennung und Online-Status zu prüfen — ein grünes Banner bestätigt, dass das Gerät über die Homey-App hinzugefügt werden kann."
+  },
+  "0.0.40": {
+    "en": "Cutting height is now a writable slider (20–70 mm, 5 mm steps). Adjust the blade height directly from the device card without opening the manufacturer app. Uses a read-modify-write of the PRE config array (confirmed via packet capture).",
+    "de": "Schnitthöhe ist jetzt ein schreibbarer Schieberegler (20–70 mm, 5-mm-Schritte). Die Messhöhe kann direkt über die Gerätekarte angepasst werden, ohne die Hersteller-App öffnen zu müssen. Verwendet Read-Modify-Write des PRE-Konfigurations-Arrays (bestätigt via Packet-Capture)."
+  },
+  "0.0.41": {
+    "en": "Fixed cutting height slider: the full PRE config array is now reconstructed from SETTINGS fields (confirmed field mapping via packet capture correlation) instead of relying on an unreadable API endpoint. The slider no longer snaps back after a write.",
+    "de": "Schnitthöhen-Schieberegler korrigiert: Das vollständige PRE-Konfigurations-Array wird jetzt aus den SETTINGS-Feldern rekonstruiert (Feld-Mapping via Packet-Capture-Korrelation bestätigt) statt auf einen nicht lesbaren API-Endpunkt zu setzen. Der Schieberegler springt nach dem Schreiben nicht mehr zurück."
+  },
+  "0.0.42": {
+    "en": "Mow efficiency (Standard / Efficient) is now a writable picker. Cutting height slider min/max can now be configured per device in the settings.",
+    "de": "Mäh-Effizienz (Standard / Effizient) ist jetzt ein schreibbarer Picker. Minimaler und maximaler Wert des Schnitthöhen-Schiebereglers können jetzt pro Gerät in den Einstellungen konfiguriert werden."
+  },
+  "0.0.43": {
+    "en": "Added edge mowing settings (auto, safe, UltraTrim, obstacle avoidance at edges) and obstacle avoidance settings (LiDAR, height, distance, AI detection) to the device settings page. Values sync bidirectionally with the mower.",
+    "de": "Randmähen-Einstellungen (automatisch, sicher, UltraTrim, Hindernisvermeidung an Kanten) und Hindernisvermeidungs-Einstellungen (LiDAR, Höhe, Abstand, KI-Erkennung) zur Geräte-Einstellungsseite hinzugefügt. Werte werden bidirektional mit dem Mäher synchronisiert."
+  },
+  "0.0.44": {
+    "en": "Added 6 new flow cards: 'Mowing started' trigger, 'Consumable needs replacement' trigger, 'Set cutting height' action, 'Set efficiency mode' action, 'Mow efficiency is efficient' condition, 'Battery above/below X%' condition.",
+    "de": "6 neue Flow-Karten hinzugefügt: Auslöser 'Mähen gestartet', Auslöser 'Verbrauchsmaterial muss ersetzt werden', Aktion 'Schnitthöhe setzen', Aktion 'Mäheffizienz-Modus setzen', Bedingung 'Mäheffizienz ist Effizient', Bedingung 'Akku über/unter X%'."
   }
 }

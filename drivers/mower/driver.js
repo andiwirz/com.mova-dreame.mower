@@ -47,6 +47,12 @@ class MowerDriver extends Homey.Driver {
     flow.getActionCard('suppress_fault')
       .registerRunListener(({ device }) => device.cmdSuppressFault());
 
+    flow.getActionCard('set_cutting_height')
+      .registerRunListener(({ device, height }) => device.cmdSetCuttingHeight(height));
+
+    flow.getActionCard('set_efficiency_mode')
+      .registerRunListener(({ device, mode }) => device.cmdSetEfficiencyMode(mode));
+
     // ─── Conditions ───────────────────────────────────────────────────────────
 
     flow.getConditionCard('is_mowing')
@@ -75,12 +81,25 @@ class MowerDriver extends Homey.Driver {
         (await device.getStoreValue('mowing_mode') || 'all_area') === mode,
       );
 
+    flow.getConditionCard('is_efficient_mode')
+      .registerRunListener(({ device }) =>
+        device.getCapabilityValue('mow_efficiency') === 'efficient',
+      );
+
+    flow.getConditionCard('battery_level_is')
+      .registerRunListener(({ device, percentage }) =>
+        device.getCapabilityValue('measure_battery') >= percentage,
+      );
+
     // ─── Trigger run-listeners (for arg-filtered triggers) ────────────────────
 
     flow.getDeviceTriggerCard('battery_low')
       .registerRunListener(({ device, threshold }) =>
         device.getCapabilityValue('measure_battery') < threshold,
       );
+
+    flow.getDeviceTriggerCard('consumable_needs_replacement')
+      .registerRunListener((_args, state) => state.pct <= _args.threshold);
   }
 
   // ─── Pairing ───────────────────────────────────────────────────────────────

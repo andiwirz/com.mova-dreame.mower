@@ -1,0 +1,4 @@
+{
+  "title": { "en": "Mow efficiency !{{is|is not}} set to efficient", "de": "Mäheffizienz !{{ist|ist nicht}} auf Effizient gesetzt" },
+  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
+}

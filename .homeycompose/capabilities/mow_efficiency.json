@@ -6,7 +6,7 @@
     { "id": "efficient", "title": { "en": "Efficient",  "de": "Effizient" } }
   ],
   "getable": true,
-  "setable": false,
-  "uiComponent": "sensor",
+  "setable": true,
+  "uiComponent": "picker",
   "icon": "/assets/capabilities/mow_efficiency.svg"
 }

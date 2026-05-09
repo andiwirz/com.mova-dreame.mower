@@ -1,0 +1,13 @@
+{
+  "title": { "en": "Battery !{{is above|is below}} a set percentage", "de": "Akku !{{ist über|ist unter}} einem eingestellten Wert" },
+  "titleFormatted": { "en": "Battery !{{is above|is below}} [[percentage]]%", "de": "Akku !{{ist über|ist unter}} [[percentage]]%" },
+  "args": [
+    { "name": "device", "type": "device", "filter": "driver_id=mower" },
+    {
+      "name": "percentage", "type": "number",
+      "title": { "en": "Percentage (%)", "de": "Prozentsatz (%)" },
+      "min": 1, "max": 100, "step": 1,
+      "placeholder": { "en": "20", "de": "20" }
+    }
+  ]
+}

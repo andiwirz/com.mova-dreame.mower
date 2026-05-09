@@ -3,8 +3,11 @@
   "title": { "en": "Cutting Height", "de": "Mähhöhe" },
   "units": "mm",
   "decimals": 0,
+  "min": 20,
+  "max": 100,
+  "step": 5,
   "getable": true,
-  "setable": false,
-  "uiComponent": "sensor",
+  "setable": true,
+  "uiComponent": "slider",
   "icon": "/assets/capabilities/cutting_height.svg"
 }

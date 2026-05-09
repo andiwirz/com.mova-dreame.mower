@@ -6,7 +6,8 @@ MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct
 - **Zone picker** — select a zone, the full area, or edge mowing from a dynamic list built from your map; press Start Mowing to begin
 - **Spot picker** — select a configured spot from your map; press Start Spot Mowing to begin
 - **Live status**: battery level, charging status, mower status (mowing / paused / docked / error / …)
-- **Cutting height** sensor — displays the current blade height read from the mower (read-only)
+- **Cutting height** slider — read and set the blade height directly from the device card (min/max configurable per device in settings)
+- **Mow efficiency** picker — switch between Standard and Efficient mode directly from the device card
 - **Volume** slider — set the mower's speaker volume (0–100)
 - **Child lock** — lock and unlock the physical buttons on the mower directly from Homey
 - **Frost protection** and **Rain protection** settings — read from the mower on startup, written back immediately on change (confirmed via packet capture)
@@ -15,18 +16,28 @@ MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct
 - **Do Not Disturb** — set a quiet window during which the mower will not start automatically and returns to dock if already mowing
 - **Low Speed at Night** — set a time window during which the mower slows down automatically to protect animals active at night
 - **Consumable status** — blade life, cleaning brush life, and robot maintenance remaining (%) read from the device
-- **Battery settings** — configure the return-to-dock threshold, task-resume threshold, and custom charging time window
+- **Battery settings** — configure the return-to-dock threshold, task-resume threshold, and auto-resume after charging
 - **Voice Announcements** — configure which voice modes the mower uses (notifications, work status, special status, errors)
 - **Anti-Theft Alarm** — enable lift alarm: mower locks and triggers an audible alarm when lifted
 - **AI Obstacle Photos** — enable photo capture of AI-detected obstacles; fires an "Obstacle detected" flow trigger with a photo and obstacle type after each mowing session
 - **Auto-reset action buttons** when the mower reaches a new state (e.g. dock button resets when mower docks)
-- Flow cards for full automation
+- Full flow card support for automation
 - Built-in **Debug Console** in the app settings for diagnostics, device discovery and compatibility checks
 
 ## Device Settings
 
 | Setting | Description |
 |---------|-------------|
+| Cutting Height — Minimum / Maximum | Lower and upper bound for the cutting height slider (mm) |
+| Mow Efficiency | Standard or Efficient mowing mode |
+| Edge Mowing — Automatic | Robot automatically mows edges after finishing the main area |
+| Edge Mowing — Safe | Keeps a small distance from the lawn boundary to avoid damage |
+| Edge Mowing — UltraTrim™ | Shifts the cutter disc outward on the last edge pass |
+| Edge Mowing — Obstacle Avoidance at Edges | Actively navigates around obstacles at edges |
+| Obstacle Avoidance — LiDAR | Detects and avoids obstacles automatically without contact |
+| Obstacle Avoidance — Height | Avoids obstacles taller than this threshold (5 / 10 / 15 / 20 cm) |
+| Obstacle Avoidance — Distance | Distance at which the robot starts avoiding an obstacle (10 / 15 / 20 cm) |
+| Obstacle Avoidance — AI Detection | Object types the robot detects using AI (Off / People / Animals / Objects / combinations) |
 | Child Lock | Locks / unlocks physical buttons on the mower |
 | Frost Protection | Prevents mowing when frost is detected |
 | Rain Protection — Enabled | Pauses mowing during rain |
@@ -54,7 +65,7 @@ MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct
 
 Device info (model, firmware, serial, MAC, email, brand, region) and zone count are read-only labels updated automatically.
 
-> **Note:** Settings that are read from the mower (Frost Protection, Rain Protection, Do Not Disturb, Low Speed at Night, Lighting time window) are refreshed on startup and every ~5 minutes during normal operation. Changes made in the manufacturer app will appear in Homey within that window.
+> **Note:** Settings that are read from the mower (Frost Protection, Rain Protection, Do Not Disturb, Low Speed at Night, Lighting time window, Edge Mowing, Obstacle Avoidance) are refreshed on startup and every ~5 minutes during normal operation. Changes made in the manufacturer app will appear in Homey within that window.
 
 ## Pairing
 
@@ -86,19 +97,23 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 | Pause mowing | Pauses the mower in place |
 | Stop mowing | Stops the current mowing session |
 | Return to dock | Returns the mower to the charging station |
-| Find mower | Plays an audible alert to help locate the mower |
+| Find mower with audible alert | Plays an audible alert to help locate the mower |
 | Clear error | Clears a recoverable fault so mowing can resume |
 | Set mowing mode | Sets the default mode used by "Start mowing" (all area / edge / zone / spot / manual) |
+| Set cutting height | Sets the blade height in mm via flow |
+| Set mow efficiency mode | Switches between Standard and Efficient mowing mode via flow |
 
 ## Flow Cards
 
 **When...**
-- Mower status changed
-- Charging status changed
+- Mowing started
 - Mowing completed
 - Mower docked at station
-- Mower error occurred
-- Battery is low
+- Mower status changed *(token: status)*
+- Charging status changed *(token: status)*
+- Mower error occurred *(tokens: error code, error description)*
+- Battery drops below X% *(arg: threshold %)*
+- Consumable drops below X% *(arg: threshold %; tokens: consumable type, remaining %)*
 - Firmware update available
 - Obstacle detected by AI camera *(fires once per obstacle after each mowing session, with a photo and obstacle type token — requires AI obstacle photo capture to be enabled in device settings)*
 
@@ -107,17 +122,24 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 - Mower is / is not docked
 - Mower is / is not charging
 - Mower has / has no error
+- Mowing mode is / is not *(dropdown: all area / zone / edge / spot / manual)*
+- Mow efficiency is / is not set to efficient
+- Battery is above / is below X% *(arg: percentage %)*
 
 **Then...**
 - Start mowing (full area)
 - Start edge mowing
-- Start zone mowing
-- Start spot mowing
+- Start zone mowing *(comma-separated zone IDs)*
+- Start edge zone mowing *(zone number)*
+- Start spot mowing *(comma-separated spot IDs)*
 - Pause mowing
 - Stop mowing
 - Return to dock
-- Find mower (audible alert)
+- Find mower with audible alert
 - Clear recoverable error
+- Set mowing mode *(dropdown: all area / zone / edge / spot / manual)*
+- Set cutting height *(number: mm)*
+- Set mow efficiency mode *(dropdown: Standard / Efficient)*
 
 ## Supported Brands & Regions
 
@@ -221,7 +243,7 @@ Action: `siid:2, aiid:50`. Payload item: `{ m:'a', p:<mapIndex>, o:<opcode>, d:{
 
 | `o` | Name | `d` payload | Confirmed |
 |-----|------|-------------|-----------|
-| 9 | Find mower (audible alert) | `{}` | ✓ |
+| 9 | Find mower with audible alert | `{}` | ✓ |
 | 101 | Edge mowing — full perimeter | `{}` (all boundaries) or `{ edge:[[zoneId, mapIdx]] }` (single zone) | ✓ |
 | 102 | Zone mowing | `{ region:[zoneId, …] }` — flat array of numeric zone IDs | ✓ |
 | 103 | Spot mowing | `{ area:[areaId, …] }` — flat array of numeric area/spot IDs | ✓ |
@@ -246,12 +268,36 @@ Write one: `in:[{ m:'s', t:'<KEY>', d:{…} }]`.
 | `VOL` | `{value:0–100}` | `{value:0–100}` | Speaker volume | ✓ |
 | `LIT` | `[enabled, startMin, endMin, standby, working, charging, error]` | `{value, time:[startMin, endMin], light:[s, w, c, e]}` | LED settings — time in minutes since midnight; scenario values `0`\|`1`; GET returns all 7 values in one array | ✓ |
 | `DND` | `[enabled, startMin, endMin]` | `{value, time:[startMin, endMin]}` | Do-Not-Disturb — time in minutes since midnight (e.g. `1320`=22:00, `480`=08:00) | ✓ |
-| `PRE` | `[n0…n18]` | `[n0…n18]` | Mowing preferences (19-element array — requires full read-modify-write). Partially decoded: `[1]`=efficiency(0/1), `[4]`=height(mm), `[8]`=safeEdge, `[9]`=autoEdge, `[13]`=obstacleHeight(cm), `[14]`=obstacleDistance(cm), `[15]`=AI bitmask(bit0=human,bit1=animal,bit2=object), `[16]`=LiDAR. Not exposed — remaining indices unknown. | ~ |
+| `PRE` | `[n0…n18]` | `[n0…n18]` | Mowing preferences — 19-element array, full array required on write (read-modify-write). GET not supported on v2 devices; reconstruct from `SETTINGS.0` fields (see table below). | ✓ |
 | `PROT` | `{value:0\|1}` | `{value:0\|1}` | Grass protection | ~ |
 | `STUN` | `{value:0\|1}` | `{value:0\|1}` | Anti-theft lock | ~ |
 | `LOW` | `[enabled, startMin, endMin]` | `{value, time:[startMin, endMin]}` | Low Speed at Night — time in minutes since midnight (e.g. `1200`=20:00, `480`=08:00) | ✓ |
 | `CMS` | `[bladeMin, brushMin, robotMin]` | — | Consumable usage in minutes since last replacement — blade max 6000 min (100h), brush max 30000 min (500h), robot max 3600 min (60h) | ✓ |
 | `BAT` | `[returnPct, resumePct, autoResume, ?, startMin, endMin]` | `{value:[returnPct, resumePct, autoResume], type:'power'}` | Battery thresholds + auto-resume flag; `[4]`/`[5]` = charging window times — `type:'schedule'` write not yet confirmed | ✓ |
+
+#### PRE Array Field Mapping
+
+Confirmed via packet-capture correlation against `SETTINGS.0` JSON fields (all 16 non-reserved indices matched):
+
+| Index | `SETTINGS.0` field | Unit / values | Description |
+|-------|--------------------|---------------|-------------|
+| 0–2 | — | reserved | Always `0` |
+| 3 | `efficientMode` | `0`=Standard, `1`=Efficient | Mow efficiency mode |
+| 4 | `mowingHeight` | mm (×10 from cm) | Cutting height |
+| 5 | `edgeMowingWalkMode` | `0`/`1` | Edge mowing walk mode |
+| 6 | `mowingDirection` | degrees | Mowing direction angle |
+| 7 | `edgeMowingAuto` | `0`=off, `1`=on | Automatic edge mowing after main area |
+| 8 | `edgeMowingSafe` | `0`=off, `1`=on | Safe edge mowing (keeps distance from boundary) |
+| 9 | `cutterPosition` | `0`=off, `1`=on | UltraTrim™ — shifts cutter disc outward on last pass |
+| 10 | `edgeMowingNum` | integer | Number of edge mowing passes |
+| 11 | `edgeMowingObstacleAvoidance` | `0`=off, `1`=on | Obstacle avoidance at edges |
+| 12 | `mowingDirectionMode` | `0`/`1` | Mowing direction mode |
+| 13 | `obstacleAvoidanceHeight` | cm | Obstacle avoidance height threshold |
+| 14 | `obstacleAvoidanceDistance` | cm | Obstacle avoidance distance threshold |
+| 15 | `obstacleAvoidanceAi` | bitmask: bit0=people, bit1=animals, bit2=objects | AI obstacle detection categories |
+| 16 | `obstacleAvoidanceEnabled` | `0`=off, `1`=on | LiDAR obstacle detection |
+| 17 | `ridingMowingmode` | `0`/`1` | Riding mowing mode |
+| 18 | `ridingMowingDistance` | cm | Riding mowing distance |
 
 ---
 

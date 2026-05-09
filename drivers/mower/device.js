@@ -258,6 +258,61 @@ const MIGRATIONS = [
     key: 'capabilities_migrated_v23',
     caps: ['mow_zone', 'mow_spot'],
   },
+  {
+    // Re-add cutting_height so Homey picks up the new setable/slider/min/max/step
+    // definition from the updated capability JSON. Full reorder preserves display order.
+    key: 'capabilities_migrated_v24',
+    reorder: [
+      'cmd_start_mowing',
+      'cmd_start_spot_mowing',
+      'cmd_pause',
+      'cmd_stop',
+      'cmd_dock',
+      'mower_status',
+      'mow_zone',
+      'cutting_height',
+      'mower_volume',
+      'mow_spot',
+      'charging_status',
+      'measure_battery',
+      'alarm_generic',
+      'mow_efficiency',
+      'collision_avoidance',
+      'firmware_update',
+      'measure_duration',
+      'child_lock',
+      'consumable_blade',
+      'consumable_brush',
+      'consumable_robot',
+    ],
+  },
+  {
+    // Re-add mow_efficiency so Homey picks up the new setable/picker definition.
+    key: 'capabilities_migrated_v25',
+    reorder: [
+      'cmd_start_mowing',
+      'cmd_start_spot_mowing',
+      'cmd_pause',
+      'cmd_stop',
+      'cmd_dock',
+      'mower_status',
+      'mow_zone',
+      'cutting_height',
+      'mower_volume',
+      'mow_spot',
+      'charging_status',
+      'measure_battery',
+      'alarm_generic',
+      'mow_efficiency',
+      'collision_avoidance',
+      'firmware_update',
+      'measure_duration',
+      'child_lock',
+      'consumable_blade',
+      'consumable_brush',
+      'consumable_robot',
+    ],
+  },
 ];
 
 // Capabilities removed — stripped from existing installs on next init
@@ -308,6 +363,9 @@ class MowerDevice extends Homey.Device {
     this._cfgPollCounter       = 0;     // reads CFG (WRP etc.) on first poll and every 10th thereafter
     this._uid                  = null;  // device uid, extracted from first poll info response
     this._model                = null;  // raw model string (e.g. "mova.mower.g2529d"), for obstacle photo API
+    this._cachedPRE              = null;  // last known PRE array; used for cutting_height read-modify-write
+    this._cuttingHeightWriteTs   = 0;    // timestamp of last successful cutting_height write; guards poll snap-back
+    this._preWriteCuttingHeight  = null; // capability value before last write; used to detect snap-back vs external change
 
     await this._migrate();
 
@@ -315,11 +373,13 @@ class MowerDevice extends Homey.Device {
     this._trgStatusChanged    = this.homey.flow.getDeviceTriggerCard('mower_status_changed');
     this._trgChargingChanged  = this.homey.flow.getDeviceTriggerCard('charging_status_changed');
     this._trgMowingCompleted  = this.homey.flow.getDeviceTriggerCard('mowing_completed');
+    this._trgMowingStarted    = this.homey.flow.getDeviceTriggerCard('mowing_started');
     this._trgError            = this.homey.flow.getDeviceTriggerCard('mower_error');
     this._trgDocked           = this.homey.flow.getDeviceTriggerCard('mower_docked');
     this._trgFirmwareUpdate   = this.homey.flow.getDeviceTriggerCard('firmware_update_available');
     this._trgBatteryLow       = this.homey.flow.getDeviceTriggerCard('battery_low');
     this._trgObstacleDetected = this.homey.flow.getDeviceTriggerCard('obstacle_detected');
+    this._trgConsumable       = this.homey.flow.getDeviceTriggerCard('consumable_needs_replacement');
 
     // ── Picker listeners ───────────────────────────────────────────────────────
     const did = this.getData().id;
@@ -439,6 +499,48 @@ class MowerDevice extends Homey.Device {
       }
     });
 
+    this.registerCapabilityListener('cutting_height', async (value) => {
+      // Read-modify-write using the PRE array reconstructed from SETTINGS on every poll.
+      // _cachedPRE is populated by _buildPREFromSettings() in _applyMOVASettings.
+      try {
+        if (!this._cachedPRE || this._cachedPRE.length < 19) {
+          this.error('[cutting_height] PRE not available yet — retry after next poll');
+          throw new Error('PRE not available');
+        }
+        const pre = [...this._cachedPRE];
+        pre[4] = Math.round(value);
+        this._preWriteCuttingHeight = this.getCapabilityValue('cutting_height');
+        this.log(`[cutting_height] writing PRE[4]=${pre[4]}mm`);
+        await this._api.writePRE(did, pre);
+        this._cachedPRE            = pre;
+        this._cuttingHeightWriteTs = Date.now();
+        this.log('[cutting_height] write OK — poll overwrite suppressed for 90s');
+      } catch (err) {
+        this.error('[cutting_height] listener error:', err.message);
+        throw err;
+      }
+    });
+
+    this.registerCapabilityListener('mow_efficiency', async (value) => {
+      try {
+        if (!this._cachedPRE || this._cachedPRE.length < 19) {
+          this.error('[mow_efficiency] PRE not available yet — retry after next poll');
+          throw new Error('PRE not available');
+        }
+        const pre = [...this._cachedPRE];
+        pre[3] = value === 'efficient' ? 1 : 0;
+        this.log(`[mow_efficiency] writing PRE[3]=${pre[3]} (${value})`);
+        await this._api.writePRE(did, pre);
+        this._cachedPRE = pre;
+        this.log('[mow_efficiency] write OK');
+      } catch (err) {
+        this.error('[mow_efficiency] listener error:', err.message);
+        throw err;
+      }
+    });
+
+    this._applyCuttingHeightOptions();
+
     await this._initApi();
 
     // Fetch current device config before starting the poll loop so the settings
@@ -467,6 +569,37 @@ class MowerDevice extends Homey.Device {
       this.log(`[settings] poll_interval → ${newSettings.poll_interval}s`);
       this._stopPolling();
       this._startPolling();
+    }
+
+    if (changedKeys.includes('cutting_height_min') || changedKeys.includes('cutting_height_max')) {
+      this._applyCuttingHeightOptions(newSettings);
+    }
+
+    // PRE-backed settings: edge mowing + obstacle avoidance
+    const PRE_SETTINGS_MAP = {
+      edge_mowing_auto:     { index: 7,  bool: true },
+      edge_mowing_safe:     { index: 8,  bool: true },
+      edge_mowing_ultratrim:{ index: 9,  bool: true },
+      edge_mowing_obstacle: { index: 11, bool: true },
+      obstacle_lidar:       { index: 16, bool: true },
+      obstacle_height:      { index: 13 },
+      obstacle_distance:    { index: 14 },
+      obstacle_ai:          { index: 15 },
+    };
+    const preKeys = Object.keys(PRE_SETTINGS_MAP).filter((k) => changedKeys.includes(k));
+    if (preKeys.length > 0) {
+      if (!this._cachedPRE || this._cachedPRE.length < 19) {
+        this.error('[settings] PRE not available — retry after next poll');
+      } else {
+        const pre = [...this._cachedPRE];
+        for (const key of preKeys) {
+          const { index, bool } = PRE_SETTINGS_MAP[key];
+          pre[index] = bool ? (newSettings[key] ? 1 : 0) : Number(newSettings[key]);
+        }
+        this.log(`[settings] PRE update for: ${preKeys.join(', ')}`);
+        await this._safeWrite('pre', () => this._api.writePRE(did, pre));
+        this._cachedPRE = pre;
+      }
     }
 
     // Child lock
@@ -791,6 +924,20 @@ class MowerDevice extends Homey.Device {
   // ─── Write helper ─────────────────────────────────────────────────────────
 
   /**
+   * Apply cutting_height min/max from device settings to the capability options.
+   * Falls back to the global capability defaults (20–70 mm) when not configured.
+   * @param {object} [s]  Settings object; omit to read from this.getSetting().
+   */
+  _applyCuttingHeightOptions(s) {
+    const min = Number((s ?? this).getSetting('cutting_height_min') ?? 20) || 20;
+    const max = Number((s ?? this).getSetting('cutting_height_max') ?? 70) || 70;
+    this.log(`[cutting_height] options → min=${min}mm max=${max}mm`);
+    this.setCapabilityOptions('cutting_height', { min, max }).catch((e) =>
+      this.error('[cutting_height] setCapabilityOptions:', e.message),
+    );
+  }
+
+  /**
    * Execute a cloud write and swallow any error so Homey never shows a red
    * error notification to the user. The next poll will restore the correct
    * capability value if the write was rejected by the API.
@@ -991,6 +1138,43 @@ class MowerDevice extends Homey.Device {
   // ─── SETTINGS.0 / OTA_INFO.0 mapping ─────────────────────────────────────
 
   /**
+   * Reconstruct the 19-element PRE config array from the zone-0 SETTINGS object.
+   *
+   * The device does not expose PRE via any readable API (getCFG returns a [0,0]
+   * stub; a direct getPRE action returns r:3). Instead we rebuild it here from the
+   * SETTINGS fields the device reports on every poll. The field-to-index mapping
+   * was confirmed by correlating a live packet capture of the official MOVA app
+   * writing PRE with the simultaneously reported SETTINGS values.
+   *
+   * @param {object} s  Zone-0 settings object (mapEntry.settings["0"])
+   * @returns {number[]|null}  19-element PRE array, or null if mowingHeight absent
+   */
+  _buildPREFromSettings(s) {
+    if (!s || s.mowingHeight == null) return null;
+    return [
+      0,                                          // [0]  reserved
+      0,                                          // [1]  reserved
+      0,                                          // [2]  reserved
+      s.efficientMode               ?? 1,         // [3]  efficientMode
+      Math.round(Number(s.mowingHeight) * 10),    // [4]  mowingHeight cm → mm
+      s.edgeMowingWalkMode          ?? 1,         // [5]  edgeMowingWalkMode
+      s.mowingDirection             ?? 0,         // [6]  mowingDirection (angle)
+      s.edgeMowingAuto              ?? 1,         // [7]  edgeMowingAuto
+      s.edgeMowingSafe              ?? 1,         // [8]  edgeMowingSafe
+      s.cutterPosition              ?? 1,         // [9]  cutterPosition
+      s.edgeMowingNum               ?? 1,         // [10] edgeMowingNum
+      s.edgeMowingObstacleAvoidance ?? 1,         // [11] edgeMowingObstacleAvoidance
+      s.mowingDirectionMode         ?? 1,         // [12] mowingDirectionMode
+      s.obstacleAvoidanceHeight     ?? 15,        // [13] obstacleAvoidanceHeight
+      s.obstacleAvoidanceDistance   ?? 15,        // [14] obstacleAvoidanceDistance
+      s.obstacleAvoidanceAi         ?? 7,         // [15] obstacleAvoidanceAi
+      s.obstacleAvoidanceEnabled    ?? 1,         // [16] obstacleAvoidanceEnabled
+      s.ridingMowingmode            ?? 1,         // [17] ridingMowingmode
+      s.ridingMowingDistance        ?? 5,         // [18] ridingMowingDistance
+    ];
+  }
+
+  /**
    * Parse the SETTINGS.0 key-value blob and map known fields to
    * Homey capabilities and device settings.
    *
@@ -1012,6 +1196,13 @@ class MowerDevice extends Homey.Device {
     // Use the active map's settings; fall back to map 0 if not yet detected.
     const mapEntry = zones[this._activeMapIndex ?? 0] ?? zones[0];
     const s = mapEntry?.settings?.['0'] ?? mapEntry?.settings ?? mapEntry ?? {};
+
+    // Rebuild the PRE array from SETTINGS fields on every poll so it's always
+    // fresh and ready for cutting_height write operations (read-modify-write).
+    // The device doesn't expose PRE via any readable API; we reconstruct it here.
+    const builtPRE = this._buildPREFromSettings(s);
+    if (builtPRE) this._cachedPRE = builtPRE;
+
     // Capability updates (change-guarded)
     if (s.efficientMode != null) {
       await this._setCap('mow_efficiency', s.efficientMode === 1 ? 'efficient' : 'standard');
@@ -1022,13 +1213,41 @@ class MowerDevice extends Homey.Device {
 
     // mowingHeight is stored in centimetres in SETTINGS (e.g. 4.5 cm = 45 mm).
     // Multiply by 10 to convert to mm for the capability display.
+    // Skip the update for 90s after a slider write so the mower has time to apply
+    // the new height before SETTINGS.0 reflects it (avoids the slider snapping back).
     if (s.mowingHeight != null && this.hasCapability('cutting_height')) {
       const height = Math.round(Number(s.mowingHeight) * 10);
       const zoneHeights = Object.entries(mapEntry?.settings ?? {})
         .map(([k, v]) => `zone${k}=${v?.mowingHeight}cm`)
         .join(' | ');
       this.log(`[settings] mowingHeight=${s.mowingHeight}cm → ${height}mm | ${zoneHeights}`);
-      await this._setCap('cutting_height', height);
+      const withinWindow = Date.now() - this._cuttingHeightWriteTs < 90_000;
+      const isSnapBack   = withinWindow && height === this._preWriteCuttingHeight;
+      if (isSnapBack) {
+        // Device still reporting the old value while our write propagates — suppress snap-back.
+        this.log('[settings] cutting_height poll suppressed (device still applying write)');
+      } else {
+        if (withinWindow) this._cuttingHeightWriteTs = 0; // write confirmed or external change — stop suppressing
+        await this._setCap('cutting_height', height);
+      }
+    }
+
+    // Sync edge-mowing + obstacle-avoidance device settings from SETTINGS poll.
+    // Change-guarded: only calls setSettings when at least one value differs.
+    {
+      const update = {};
+      const b = (v) => v === 1 || v === true;
+      if (s.edgeMowingAuto              != null && this.getSetting('edge_mowing_auto')      !== b(s.edgeMowingAuto))              update.edge_mowing_auto      = b(s.edgeMowingAuto);
+      if (s.edgeMowingSafe              != null && this.getSetting('edge_mowing_safe')      !== b(s.edgeMowingSafe))              update.edge_mowing_safe      = b(s.edgeMowingSafe);
+      if (s.cutterPosition              != null && this.getSetting('edge_mowing_ultratrim') !== b(s.cutterPosition))              update.edge_mowing_ultratrim = b(s.cutterPosition);
+      if (s.edgeMowingObstacleAvoidance != null && this.getSetting('edge_mowing_obstacle')  !== b(s.edgeMowingObstacleAvoidance)) update.edge_mowing_obstacle  = b(s.edgeMowingObstacleAvoidance);
+      if (s.obstacleAvoidanceEnabled    != null && this.getSetting('obstacle_lidar')        !== b(s.obstacleAvoidanceEnabled))    update.obstacle_lidar        = b(s.obstacleAvoidanceEnabled);
+      if (s.obstacleAvoidanceHeight     != null && this.getSetting('obstacle_height')       !== String(s.obstacleAvoidanceHeight)) update.obstacle_height      = String(s.obstacleAvoidanceHeight);
+      if (s.obstacleAvoidanceDistance   != null && this.getSetting('obstacle_distance')     !== String(s.obstacleAvoidanceDistance)) update.obstacle_distance  = String(s.obstacleAvoidanceDistance);
+      if (s.obstacleAvoidanceAi         != null && this.getSetting('obstacle_ai')           !== String(s.obstacleAvoidanceAi))    update.obstacle_ai           = String(s.obstacleAvoidanceAi);
+      if (Object.keys(update).length > 0) {
+        await this.setSettings(update).catch((e) => this.error('[settings] setSettings failed:', e.message));
+      }
     }
 
     // child_lock: MOVA may expose this as prop.s_child_lock
@@ -1115,6 +1334,8 @@ class MowerDevice extends Homey.Device {
       if (this.getSetting('ata_realtime')  !== ataRealtime) update.ata_realtime  = ataRealtime;
     }
 
+    // PRE is not readable via getCFG (returns stub [0,0]) — reconstructed from SETTINGS instead.
+
     // VOL — volume: scalar 0–100
     if (cfg.VOL != null && this.hasCapability('mower_volume')) {
       await this._setCap('mower_volume', Number(cfg.VOL));
@@ -1170,12 +1391,20 @@ class MowerDevice extends Homey.Device {
     // Max life: blade=6000 min (100h), brush=30000 min (500h), robot=3600 min (60h).
     // Confirmed via getCFG response and cross-checked against MOVA app percentages.
     if (Array.isArray(cfg.CMS) && cfg.CMS.length >= 3) {
-      const CMS_MAX = [6000, 30000, 3600];
-      const caps    = ['consumable_blade', 'consumable_brush', 'consumable_robot'];
-      await Promise.all(caps.map((cap, i) => {
-        if (!this.hasCapability(cap)) return null;
-        const pct = Math.max(0, Math.round((1 - cfg.CMS[i] / CMS_MAX[i]) * 100));
-        return this._setCap(cap, pct);
+      const CMS_MAX   = [6000, 30000, 3600];
+      const caps      = ['consumable_blade', 'consumable_brush', 'consumable_robot'];
+      const typeNames = ['blade', 'brush', 'robot'];
+      await Promise.all(caps.map(async (cap, i) => {
+        if (!this.hasCapability(cap)) return;
+        const prev = this.getCapabilityValue(cap);
+        const pct  = Math.max(0, Math.round((1 - cfg.CMS[i] / CMS_MAX[i]) * 100));
+        await this._setCap(cap, pct);
+        // Fire consumable trigger when value decreases (threshold filtering handled by run-listener)
+        if (prev !== null && pct < prev) {
+          this._trgConsumable
+            .trigger(this, { consumable_type: typeNames[i], remaining_pct: pct }, { pct })
+            .catch((e) => this.error('consumable_needs_replacement trigger:', e.message));
+        }
       }));
     }
 
@@ -1309,6 +1538,8 @@ class MowerDevice extends Homey.Device {
       if (this.hasCapability('measure_duration')) {
         await this._setCap('measure_duration', 0);
       }
+      this._trgMowingStarted.trigger(this, {}, {})
+        .catch((e) => this.error('mowing_started trigger:', e.message));
     }
 
     // Error alarm
@@ -1520,6 +1751,31 @@ class MowerDevice extends Homey.Device {
     await this.setStoreValue('mowing_mode', mode);
   }
 
+  async cmdSetCuttingHeight(height) {
+    this.log(`[cmd] setCuttingHeight height=${height}mm`);
+    if (!this._cachedPRE || this._cachedPRE.length < 19) {
+      throw new Error('PRE not available yet — retry after next poll');
+    }
+    const pre = [...this._cachedPRE];
+    pre[4] = Math.round(height);
+    this._preWriteCuttingHeight = this.getCapabilityValue('cutting_height');
+    await this._api.writePRE(this.getData().id, pre);
+    this._cachedPRE            = pre;
+    this._cuttingHeightWriteTs = Date.now();
+    await this._setCap('cutting_height', height);
+  }
+
+  async cmdSetEfficiencyMode(mode) {
+    this.log(`[cmd] setEfficiencyMode mode=${mode}`);
+    if (!this._cachedPRE || this._cachedPRE.length < 19) {
+      throw new Error('PRE not available yet — retry after next poll');
+    }
+    const pre = [...this._cachedPRE];
+    pre[3] = mode === 'efficient' ? 1 : 0;
+    await this._api.writePRE(this.getData().id, pre);
+    this._cachedPRE = pre;
+    await this._setCap('mow_efficiency', mode);
+  }
 
   // ─── Debug API (called by settings/index.html via api.js) ─────────────────
 

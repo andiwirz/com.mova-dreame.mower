@@ -1,0 +1,4 @@
+{
+  "title": { "en": "Mowing started", "de": "Mähen gestartet" },
+  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
+}

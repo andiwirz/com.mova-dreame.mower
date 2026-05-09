@@ -68,7 +68,8 @@
   },
   "images": {
     "small": "/drivers/mower/assets/images/small.png",
-    "large": "/drivers/mower/assets/images/large.png"
+    "large": "/drivers/mower/assets/images/large.png",
+    "xlarge": "/drivers/mower/assets/images/xlarge.png"
   },
   "pair": [
     { "id": "pair" }
@@ -135,6 +136,151 @@
             "en": "Auto-detected from map data. Zone and spot options appear in the Zone and Spot pickers on the device card.",
             "de": "Wird automatisch aus den Kartendaten erkannt. Zonen und Spots erscheinen in den Auswahl-Pickers auf der Gerätekarte."
           }
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": { "en": "Cutting Height", "de": "Schnitthöhe" },
+      "children": [
+        {
+          "id": "cutting_height_min",
+          "type": "number",
+          "label": { "en": "Minimum (mm)", "de": "Minimum (mm)" },
+          "value": 20,
+          "min": 20,
+          "max": 50,
+          "step": 5,
+          "hint": {
+            "en": "Lower bound of the cutting height slider.",
+            "de": "Unterer Grenzwert des Schnitthöhen-Schiebereglers."
+          }
+        },
+        {
+          "id": "cutting_height_max",
+          "type": "number",
+          "label": { "en": "Maximum (mm)", "de": "Maximum (mm)" },
+          "value": 70,
+          "min": 50,
+          "max": 100,
+          "step": 5,
+          "hint": {
+            "en": "Upper bound of the cutting height slider.",
+            "de": "Oberer Grenzwert des Schnitthöhen-Schiebereglers."
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": { "en": "Edge Mowing", "de": "Randmähen" },
+      "children": [
+        {
+          "id": "edge_mowing_auto",
+          "type": "checkbox",
+          "label": { "en": "Automatic Edge Mowing", "de": "Automatisches Randmähen" },
+          "value": true,
+          "hint": {
+            "en": "The robot automatically mows edges after finishing the main area.",
+            "de": "Der Roboter mäht die Ränder automatisch nach dem Gesamtflächen-Mähen."
+          }
+        },
+        {
+          "id": "edge_mowing_safe",
+          "type": "checkbox",
+          "label": { "en": "Safe Edge Mowing", "de": "Sicheres Randmähen" },
+          "value": true,
+          "hint": {
+            "en": "Keeps a small distance from the lawn boundary to avoid damage.",
+            "de": "Hält einen kleinen Abstand zur Rasengrenze, um Schäden zu vermeiden."
+          }
+        },
+        {
+          "id": "edge_mowing_ultratrim",
+          "type": "checkbox",
+          "label": { "en": "UltraTrim™ 1.0", "de": "UltraTrim™ 1.0" },
+          "value": true,
+          "hint": {
+            "en": "Shifts the cutter disc outward on the last edge pass, leaving a 3 cm grass strip.",
+            "de": "Verschiebt die Schneidscheibe auf der letzten Randmahd seitlich und lässt eine Grashöhe von 3 cm."
+          }
+        },
+        {
+          "id": "edge_mowing_obstacle",
+          "type": "checkbox",
+          "label": { "en": "Obstacle Avoidance at Edges", "de": "Hindernisvermeidung an Kanten" },
+          "value": true,
+          "hint": {
+            "en": "Actively navigates around obstacles at edges (may leave some uncut grass).",
+            "de": "Navigiert aktiv um Hindernisse an Kanten herum (kann ungeschnittenes Gras hinterlassen)."
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": { "en": "Obstacle Avoidance", "de": "Hindernisvermeidung" },
+      "children": [
+        {
+          "id": "obstacle_lidar",
+          "type": "checkbox",
+          "label": { "en": "LiDAR Obstacle Detection", "de": "LiDAR-Hinderniserkennung" },
+          "value": true,
+          "hint": {
+            "en": "Detects and avoids obstacles automatically without contact.",
+            "de": "Erkennt und umfährt Hindernisse automatisch ohne Kontakt."
+          }
+        },
+        {
+          "id": "obstacle_height",
+          "type": "dropdown",
+          "label": { "en": "Obstacle Avoidance Height", "de": "Höhe zur Vermeidung von Hindernissen" },
+          "value": "15",
+          "hint": {
+            "en": "Avoids obstacles taller than this threshold.",
+            "de": "Weicht Hindernissen aus, die höher als dieser Wert sind."
+          },
+          "values": [
+            { "id": "5",  "label": { "en": "5 cm",  "de": "5 cm"  } },
+            { "id": "10", "label": { "en": "10 cm", "de": "10 cm" } },
+            { "id": "15", "label": { "en": "15 cm", "de": "15 cm" } },
+            { "id": "20", "label": { "en": "20 cm", "de": "20 cm" } }
+          ]
+        },
+        {
+          "id": "obstacle_distance",
+          "type": "dropdown",
+          "label": { "en": "Obstacle Avoidance Distance", "de": "Abstand bei Hindernisvermeidung" },
+          "value": "15",
+          "hint": {
+            "en": "Distance at which the robot starts avoiding an obstacle.",
+            "de": "Entfernung, ab der der Roboter Hindernissen ausweicht."
+          },
+          "values": [
+            { "id": "10", "label": { "en": "10 cm", "de": "10 cm" } },
+            { "id": "15", "label": { "en": "15 cm", "de": "15 cm" } },
+            { "id": "20", "label": { "en": "20 cm", "de": "20 cm" } }
+          ]
+        },
+        {
+          "id": "obstacle_ai",
+          "type": "dropdown",
+          "label": { "en": "AI Obstacle Detection", "de": "AI-Hinderniserkennung" },
+          "value": "7",
+          "hint": {
+            "en": "Object types the robot detects and avoids using AI.",
+            "de": "Hindernistypen, die der Roboter per KI erkennt und umfährt."
+          },
+          "values": [
+            { "id": "0", "label": { "en": "Off",                      "de": "Aus"                          } },
+            { "id": "1", "label": { "en": "People",                   "de": "Personen"                     } },
+            { "id": "2", "label": { "en": "Animals",                  "de": "Tiere"                        } },
+            { "id": "3", "label": { "en": "People + Animals",         "de": "Personen + Tiere"             } },
+            { "id": "4", "label": { "en": "Objects",                  "de": "Objekte"                      } },
+            { "id": "5", "label": { "en": "People + Objects",         "de": "Personen + Objekte"           } },
+            { "id": "6", "label": { "en": "Animals + Objects",        "de": "Tiere + Objekte"              } },
+            { "id": "7", "label": { "en": "All (People + Animals + Objects)", "de": "Alle (Personen + Tiere + Objekte)" } }
+          ]
         }
       ]
     },

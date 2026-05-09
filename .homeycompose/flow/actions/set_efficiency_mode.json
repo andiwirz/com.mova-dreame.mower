@@ -1,0 +1,15 @@
+{
+  "title": { "en": "Set mow efficiency mode", "de": "Mäheffizienz-Modus setzen" },
+  "titleFormatted": { "en": "Set mow efficiency to [[mode]]", "de": "Mäheffizienz auf [[mode]] setzen" },
+  "args": [
+    { "name": "device", "type": "device", "filter": "driver_id=mower" },
+    {
+      "name": "mode", "type": "dropdown",
+      "title": { "en": "Mode", "de": "Modus" },
+      "values": [
+        { "id": "standard",  "label": { "en": "Standard",  "de": "Standard"  } },
+        { "id": "efficient", "label": { "en": "Efficient",  "de": "Effizient" } }
+      ]
+    }
+  ]
+}

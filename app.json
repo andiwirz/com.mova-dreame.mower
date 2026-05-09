@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.mova-dreame.mower",
-  "version": "0.0.39",
+  "version": "0.0.44",
   "compatibility": ">=12.0.0",
   "sdk": 3,
   "name": {
@@ -19,12 +19,14 @@
   "permissions": [],
   "images": {
     "small": "/assets/images/small.png",
-    "large": "/assets/images/large.png"
+    "large": "/assets/images/large.png",
+    "xlarge": "/assets/images/xlarge.png"
   },
   "author": {
     "name": "Andi Wirz",
     "email": "andi@wirzfamily.ch"
   },
+  "homeyCommunityTopicId": 154425,
   "source": "https://github.com/andiwirz/com.mova-dreame.mower",
   "bugs": {
     "url": "https://github.com/andiwirz/com.mova-dreame.mower/issues"
@@ -194,6 +196,26 @@
     "0.0.39": {
       "en": "Added Installation Check to the Debug Device Discovery settings page. After fetching the device list, tap 'Installation Check' to verify that login, device count, model recognition and online status are all OK — a green banner then confirms the device is ready to be added via the Homey app.",
       "de": "Installationscheck zur Debug-Geräteerkennung in den App-Einstellungen hinzugefügt. Nach dem Abrufen der Geräteliste auf 'Installation Check' tippen, um Login, Geräteanzahl, Modellerkennung und Online-Status zu prüfen — ein grünes Banner bestätigt, dass das Gerät über die Homey-App hinzugefügt werden kann."
+    },
+    "0.0.40": {
+      "en": "Cutting height is now a writable slider (20–70 mm, 5 mm steps). Adjust the blade height directly from the device card without opening the manufacturer app. Uses a read-modify-write of the PRE config array (confirmed via packet capture).",
+      "de": "Schnitthöhe ist jetzt ein schreibbarer Schieberegler (20–70 mm, 5-mm-Schritte). Die Messhöhe kann direkt über die Gerätekarte angepasst werden, ohne die Hersteller-App öffnen zu müssen. Verwendet Read-Modify-Write des PRE-Konfigurations-Arrays (bestätigt via Packet-Capture)."
+    },
+    "0.0.41": {
+      "en": "Fixed cutting height slider: the full PRE config array is now reconstructed from SETTINGS fields (confirmed field mapping via packet capture correlation) instead of relying on an unreadable API endpoint. The slider no longer snaps back after a write.",
+      "de": "Schnitthöhen-Schieberegler korrigiert: Das vollständige PRE-Konfigurations-Array wird jetzt aus den SETTINGS-Feldern rekonstruiert (Feld-Mapping via Packet-Capture-Korrelation bestätigt) statt auf einen nicht lesbaren API-Endpunkt zu setzen. Der Schieberegler springt nach dem Schreiben nicht mehr zurück."
+    },
+    "0.0.42": {
+      "en": "Mow efficiency (Standard / Efficient) is now a writable picker. Cutting height slider min/max can now be configured per device in the settings.",
+      "de": "Mäh-Effizienz (Standard / Effizient) ist jetzt ein schreibbarer Picker. Minimaler und maximaler Wert des Schnitthöhen-Schiebereglers können jetzt pro Gerät in den Einstellungen konfiguriert werden."
+    },
+    "0.0.43": {
+      "en": "Added edge mowing settings (auto, safe, UltraTrim, obstacle avoidance at edges) and obstacle avoidance settings (LiDAR, height, distance, AI detection) to the device settings page. Values sync bidirectionally with the mower.",
+      "de": "Randmähen-Einstellungen (automatisch, sicher, UltraTrim, Hindernisvermeidung an Kanten) und Hindernisvermeidungs-Einstellungen (LiDAR, Höhe, Abstand, KI-Erkennung) zur Geräte-Einstellungsseite hinzugefügt. Werte werden bidirektional mit dem Mäher synchronisiert."
+    },
+    "0.0.44": {
+      "en": "Added 6 new flow cards: 'Mowing started' trigger, 'Consumable needs replacement' trigger, 'Set cutting height' action, 'Set efficiency mode' action, 'Mow efficiency is efficient' condition, 'Battery above/below X%' condition.",
+      "de": "6 neue Flow-Karten hinzugefügt: Auslöser 'Mähen gestartet', Auslöser 'Verbrauchsmaterial muss ersetzt werden', Aktion 'Schnitthöhe setzen', Aktion 'Mäheffizienz-Modus setzen', Bedingung 'Mäheffizienz ist Effizient', Bedingung 'Akku über/unter X%'."
     }
   },
   "flow": {
@@ -258,6 +280,61 @@
           }
         ],
         "id": "charging_status_changed"
+      },
+      {
+        "title": {
+          "en": "Consumable needs replacement",
+          "de": "Verbrauchsmaterial muss ersetzt werden"
+        },
+        "titleFormatted": {
+          "en": "Consumable drops below [[threshold]]%",
+          "de": "Verbrauchsmaterial fällt unter [[threshold]]%"
+        },
+        "hint": {
+          "en": "Triggers when blade, brush, or robot life drops below the set percentage.",
+          "de": "Wird ausgelöst wenn die Restlebensdauer von Messer, Bürste oder Roboter unter den eingestellten Wert fällt."
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "threshold",
+            "type": "number",
+            "title": {
+              "en": "Below (%)",
+              "de": "Unter (%)"
+            },
+            "min": 1,
+            "max": 100,
+            "step": 1,
+            "placeholder": {
+              "en": "20",
+              "de": "20"
+            }
+          }
+        ],
+        "tokens": [
+          {
+            "name": "consumable_type",
+            "type": "string",
+            "title": {
+              "en": "Consumable",
+              "de": "Verbrauchsmaterial"
+            }
+          },
+          {
+            "name": "remaining_pct",
+            "type": "number",
+            "title": {
+              "en": "Remaining (%)",
+              "de": "Verbleibend (%)"
+            }
+          }
+        ],
+        "id": "consumable_needs_replacement"
       },
       {
         "title": {
@@ -363,6 +440,20 @@
       },
       {
         "title": {
+          "en": "Mowing started",
+          "de": "Mähen gestartet"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "mowing_started"
+      },
+      {
+        "title": {
           "en": "Obstacle detected by AI camera",
           "de": "Hindernis von KI-Kamera erkannt"
         },
@@ -397,6 +488,39 @@
     "conditions": [
       {
         "title": {
+          "en": "Battery !{{is above|is below}} a set percentage",
+          "de": "Akku !{{ist über|ist unter}} einem eingestellten Wert"
+        },
+        "titleFormatted": {
+          "en": "Battery !{{is above|is below}} [[percentage]]%",
+          "de": "Akku !{{ist über|ist unter}} [[percentage]]%"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "percentage",
+            "type": "number",
+            "title": {
+              "en": "Percentage (%)",
+              "de": "Prozentsatz (%)"
+            },
+            "min": 1,
+            "max": 100,
+            "step": 1,
+            "placeholder": {
+              "en": "20",
+              "de": "20"
+            }
+          }
+        ],
+        "id": "battery_level_is"
+      },
+      {
+        "title": {
           "en": "Mower !{{is|is not}} charging",
           "de": "Mähroboter !{{lädt|lädt nicht}}"
         },
@@ -422,6 +546,20 @@
           }
         ],
         "id": "is_docked"
+      },
+      {
+        "title": {
+          "en": "Mow efficiency !{{is|is not}} set to efficient",
+          "de": "Mäheffizienz !{{ist|ist nicht}} auf Effizient gesetzt"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "is_efficient_mode"
       },
       {
         "title": {
@@ -518,8 +656,8 @@
     "actions": [
       {
         "title": {
-          "en": "Find mower (audible alert)",
-          "de": "Mähroboter suchen (Signalton)"
+          "en": "Find mower with audible alert",
+          "de": "Mähroboter mit Signalton suchen"
         },
         "args": [
           {
@@ -557,6 +695,81 @@
           }
         ],
         "id": "return_to_dock"
+      },
+      {
+        "title": {
+          "en": "Set cutting height",
+          "de": "Schnitthöhe setzen"
+        },
+        "titleFormatted": {
+          "en": "Set cutting height to [[height]] mm",
+          "de": "Schnitthöhe auf [[height]] mm setzen"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "height",
+            "type": "number",
+            "title": {
+              "en": "Height (mm)",
+              "de": "Höhe (mm)"
+            },
+            "min": 20,
+            "max": 100,
+            "step": 5,
+            "placeholder": {
+              "en": "40",
+              "de": "40"
+            }
+          }
+        ],
+        "id": "set_cutting_height"
+      },
+      {
+        "title": {
+          "en": "Set mow efficiency mode",
+          "de": "Mäheffizienz-Modus setzen"
+        },
+        "titleFormatted": {
+          "en": "Set mow efficiency to [[mode]]",
+          "de": "Mäheffizienz auf [[mode]] setzen"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "mode",
+            "type": "dropdown",
+            "title": {
+              "en": "Mode",
+              "de": "Modus"
+            },
+            "values": [
+              {
+                "id": "standard",
+                "label": {
+                  "en": "Standard",
+                  "de": "Standard"
+                }
+              },
+              {
+                "id": "efficient",
+                "label": {
+                  "en": "Efficient",
+                  "de": "Effizient"
+                }
+              }
+            ]
+          }
+        ],
+        "id": "set_efficiency_mode"
       },
       {
         "title": {
@@ -863,7 +1076,8 @@
       },
       "images": {
         "small": "/drivers/mower/assets/images/small.png",
-        "large": "/drivers/mower/assets/images/large.png"
+        "large": "/drivers/mower/assets/images/large.png",
+        "xlarge": "/drivers/mower/assets/images/xlarge.png"
       },
       "pair": [
         {
@@ -962,6 +1176,280 @@
                 "en": "Auto-detected from map data. Zone and spot options appear in the Zone and Spot pickers on the device card.",
                 "de": "Wird automatisch aus den Kartendaten erkannt. Zonen und Spots erscheinen in den Auswahl-Pickers auf der Gerätekarte."
               }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Cutting Height",
+            "de": "Schnitthöhe"
+          },
+          "children": [
+            {
+              "id": "cutting_height_min",
+              "type": "number",
+              "label": {
+                "en": "Minimum (mm)",
+                "de": "Minimum (mm)"
+              },
+              "value": 20,
+              "min": 20,
+              "max": 50,
+              "step": 5,
+              "hint": {
+                "en": "Lower bound of the cutting height slider.",
+                "de": "Unterer Grenzwert des Schnitthöhen-Schiebereglers."
+              }
+            },
+            {
+              "id": "cutting_height_max",
+              "type": "number",
+              "label": {
+                "en": "Maximum (mm)",
+                "de": "Maximum (mm)"
+              },
+              "value": 70,
+              "min": 50,
+              "max": 100,
+              "step": 5,
+              "hint": {
+                "en": "Upper bound of the cutting height slider.",
+                "de": "Oberer Grenzwert des Schnitthöhen-Schiebereglers."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Edge Mowing",
+            "de": "Randmähen"
+          },
+          "children": [
+            {
+              "id": "edge_mowing_auto",
+              "type": "checkbox",
+              "label": {
+                "en": "Automatic Edge Mowing",
+                "de": "Automatisches Randmähen"
+              },
+              "value": true,
+              "hint": {
+                "en": "The robot automatically mows edges after finishing the main area.",
+                "de": "Der Roboter mäht die Ränder automatisch nach dem Gesamtflächen-Mähen."
+              }
+            },
+            {
+              "id": "edge_mowing_safe",
+              "type": "checkbox",
+              "label": {
+                "en": "Safe Edge Mowing",
+                "de": "Sicheres Randmähen"
+              },
+              "value": true,
+              "hint": {
+                "en": "Keeps a small distance from the lawn boundary to avoid damage.",
+                "de": "Hält einen kleinen Abstand zur Rasengrenze, um Schäden zu vermeiden."
+              }
+            },
+            {
+              "id": "edge_mowing_ultratrim",
+              "type": "checkbox",
+              "label": {
+                "en": "UltraTrim™ 1.0",
+                "de": "UltraTrim™ 1.0"
+              },
+              "value": true,
+              "hint": {
+                "en": "Shifts the cutter disc outward on the last edge pass, leaving a 3 cm grass strip.",
+                "de": "Verschiebt die Schneidscheibe auf der letzten Randmahd seitlich und lässt eine Grashöhe von 3 cm."
+              }
+            },
+            {
+              "id": "edge_mowing_obstacle",
+              "type": "checkbox",
+              "label": {
+                "en": "Obstacle Avoidance at Edges",
+                "de": "Hindernisvermeidung an Kanten"
+              },
+              "value": true,
+              "hint": {
+                "en": "Actively navigates around obstacles at edges (may leave some uncut grass).",
+                "de": "Navigiert aktiv um Hindernisse an Kanten herum (kann ungeschnittenes Gras hinterlassen)."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Obstacle Avoidance",
+            "de": "Hindernisvermeidung"
+          },
+          "children": [
+            {
+              "id": "obstacle_lidar",
+              "type": "checkbox",
+              "label": {
+                "en": "LiDAR Obstacle Detection",
+                "de": "LiDAR-Hinderniserkennung"
+              },
+              "value": true,
+              "hint": {
+                "en": "Detects and avoids obstacles automatically without contact.",
+                "de": "Erkennt und umfährt Hindernisse automatisch ohne Kontakt."
+              }
+            },
+            {
+              "id": "obstacle_height",
+              "type": "dropdown",
+              "label": {
+                "en": "Obstacle Avoidance Height",
+                "de": "Höhe zur Vermeidung von Hindernissen"
+              },
+              "value": "15",
+              "hint": {
+                "en": "Avoids obstacles taller than this threshold.",
+                "de": "Weicht Hindernissen aus, die höher als dieser Wert sind."
+              },
+              "values": [
+                {
+                  "id": "5",
+                  "label": {
+                    "en": "5 cm",
+                    "de": "5 cm"
+                  }
+                },
+                {
+                  "id": "10",
+                  "label": {
+                    "en": "10 cm",
+                    "de": "10 cm"
+                  }
+                },
+                {
+                  "id": "15",
+                  "label": {
+                    "en": "15 cm",
+                    "de": "15 cm"
+                  }
+                },
+                {
+                  "id": "20",
+                  "label": {
+                    "en": "20 cm",
+                    "de": "20 cm"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "obstacle_distance",
+              "type": "dropdown",
+              "label": {
+                "en": "Obstacle Avoidance Distance",
+                "de": "Abstand bei Hindernisvermeidung"
+              },
+              "value": "15",
+              "hint": {
+                "en": "Distance at which the robot starts avoiding an obstacle.",
+                "de": "Entfernung, ab der der Roboter Hindernissen ausweicht."
+              },
+              "values": [
+                {
+                  "id": "10",
+                  "label": {
+                    "en": "10 cm",
+                    "de": "10 cm"
+                  }
+                },
+                {
+                  "id": "15",
+                  "label": {
+                    "en": "15 cm",
+                    "de": "15 cm"
+                  }
+                },
+                {
+                  "id": "20",
+                  "label": {
+                    "en": "20 cm",
+                    "de": "20 cm"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "obstacle_ai",
+              "type": "dropdown",
+              "label": {
+                "en": "AI Obstacle Detection",
+                "de": "AI-Hinderniserkennung"
+              },
+              "value": "7",
+              "hint": {
+                "en": "Object types the robot detects and avoids using AI.",
+                "de": "Hindernistypen, die der Roboter per KI erkennt und umfährt."
+              },
+              "values": [
+                {
+                  "id": "0",
+                  "label": {
+                    "en": "Off",
+                    "de": "Aus"
+                  }
+                },
+                {
+                  "id": "1",
+                  "label": {
+                    "en": "People",
+                    "de": "Personen"
+                  }
+                },
+                {
+                  "id": "2",
+                  "label": {
+                    "en": "Animals",
+                    "de": "Tiere"
+                  }
+                },
+                {
+                  "id": "3",
+                  "label": {
+                    "en": "People + Animals",
+                    "de": "Personen + Tiere"
+                  }
+                },
+                {
+                  "id": "4",
+                  "label": {
+                    "en": "Objects",
+                    "de": "Objekte"
+                  }
+                },
+                {
+                  "id": "5",
+                  "label": {
+                    "en": "People + Objects",
+                    "de": "Personen + Objekte"
+                  }
+                },
+                {
+                  "id": "6",
+                  "label": {
+                    "en": "Animals + Objects",
+                    "de": "Tiere + Objekte"
+                  }
+                },
+                {
+                  "id": "7",
+                  "label": {
+                    "en": "All (People + Animals + Objects)",
+                    "de": "Alle (Personen + Tiere + Objekte)"
+                  }
+                }
+              ]
             }
           ]
         },
@@ -1840,9 +2328,12 @@
       },
       "units": "mm",
       "decimals": 0,
+      "min": 20,
+      "max": 100,
+      "step": 5,
       "getable": true,
-      "setable": false,
-      "uiComponent": "sensor",
+      "setable": true,
+      "uiComponent": "slider",
       "icon": "/assets/capabilities/cutting_height.svg"
     },
     "firmware_update": {
@@ -1896,8 +2387,8 @@
         }
       ],
       "getable": true,
-      "setable": false,
-      "uiComponent": "sensor",
+      "setable": true,
+      "uiComponent": "picker",
       "icon": "/assets/capabilities/mow_efficiency.svg"
     },
     "mow_spot": {
