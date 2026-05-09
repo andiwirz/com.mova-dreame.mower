@@ -193,9 +193,9 @@ Read via `getDeviceData`, write via `setDeviceData`. Body: `{ did, model:[{siid,
 | 3 | 2 | Charging status | ✓ | — | ✓ | `0`=not charging `1`=charging |
 | 3 | 10 | Return threshold | — | ✓ | ✗ | Not accessible on v2 API devices — use CFG `BAT[0]` instead |
 | 3 | 11 | Resume threshold | — | ✓ | ✗ | Not accessible on v2 API devices — use CFG `BAT[1]` instead |
-| 4 | 21 | Obstacle avoidance | — | ✓ | ~ | `0`=off `1`=low `2`=medium `3`=high |
-| 4 | 22 | AI detection | ✓ | — | ~ | Source: ioBroker.dreame |
-| 4 | 50 | AutoSwitch settings | ✓ | ✓ | ~ | JSON string `{k:'KEY',v:0\|1}` — see AutoSwitch keys below |
+| 4 | 21 | Obstacle avoidance | — | ✓ | ✗ | `0`=off `1`=low `2`=medium `3`=high — not accessible on v2 API devices |
+| 4 | 22 | AI detection | ✓ | — | ✗ | Not accessible on v2 API devices |
+| 4 | 50 | AutoSwitch settings | ✓ | ✓ | ✓ | JSON string `{k:'KEY',v:0\|1}` — see AutoSwitch keys below |
 
 ---
 
@@ -261,5 +261,5 @@ Single JSON-string property. Read via property poll; write via `setDeviceData` w
 
 | `k` | Description | `v` values | Confirmed |
 |-----|-------------|------------|-----------|
-| `LessColl` | Collision avoidance sensitivity | `0`=off, `1`=on | ~ |
-| `SmartCharge` | Smart auto-charging | `0`=off, `1`=on | ~ |
+| `LessColl` | Collision avoidance sensitivity (source: ioBroker.dreame — key unverified on live device) | `0`=off, `1`=on | ~ |
+| `SmartCharge` | Smart auto-charging (source: ioBroker.dreame — key unverified on live device) | `0`=off, `1`=on | ~ |
