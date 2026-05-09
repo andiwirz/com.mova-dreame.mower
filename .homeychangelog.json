@@ -139,5 +139,8 @@
   },
   "0.0.38": {
     "en": "remove some capability migrations, add registration guard for mow_zone and mow_spot"
+  },
+  "0.0.39": {
+    "en": "add Installation checker"
   }
 }

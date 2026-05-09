@@ -320,6 +320,40 @@
       margin-top: 14px;
       line-height: 1.5;
     }
+
+    /* ── Installation check ── */
+    .check-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .check-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13px;
+      padding: 8px 12px;
+      border-radius: 7px;
+      line-height: 1.4;
+    }
+    .check-ok   { background: #f0faf4; color: #1a5c35; }
+    .check-fail { background: #fff0f0; color: #7b1010; }
+    .check-warn { background: #fff8e1; color: #6d4c00; }
+    .check-icon { font-size: 15px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+    .check-success-banner {
+      background: #e8f8ed;
+      border: 1px solid #a8ddb8;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-top: 4px;
+    }
+    .check-success-banner strong { display: block; color: #1a5c35; margin-bottom: 6px; font-size: 14px; }
+    .check-success-banner p { font-size: 13px; color: #2e7d4e; line-height: 1.6; }
+    .check-fail-banner {
+      background: #fff0f0;
+      border: 1px solid #ffcdd2;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-top: 4px;
+    }
+    .check-fail-banner strong { display: block; color: #b71c1c; margin-bottom: 6px; font-size: 14px; }
+    .check-fail-banner p { font-size: 13px; color: #c62828; line-height: 1.5; }
   </style>
 </head>
 <body>
@@ -494,10 +528,14 @@
 
       <div class="dis-btn-row">
         <button class="blue" id="dis-btn" onclick="doDiscover()">Fetch Device List</button>
+        <button class="secondary" id="dis-check" onclick="doInstallCheck()" disabled>Installation Check</button>
         <button class="secondary" id="dis-copy" onclick="copyDiscoverJson()" disabled>Copy JSON</button>
       </div>
 
     </div>
+
+    <!-- Installation check result -->
+    <div id="dis-check-result" style="display:none; padding: 0 20px 16px;"></div>
 
     <!-- Result -->
     <div id="dis-result" style="display:none">
@@ -721,6 +759,8 @@
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner white"></span>Fetching…';
     document.getElementById('dis-copy').disabled = true;
+    document.getElementById('dis-check').disabled = true;
+    document.getElementById('dis-check-result').style.display = 'none';
     document.getElementById('dis-result').style.display = 'none';
 
     // Discovery is tunnelled through the existing /pollDevice route to avoid a
@@ -746,7 +786,82 @@
 
       document.getElementById('dis-result').style.display = 'block';
       document.getElementById('dis-copy').disabled = false;
+      document.getElementById('dis-check').disabled = false;
     });
+  }
+
+  function doInstallCheck() {
+    const result = document.getElementById('dis-check-result');
+    result.style.display = 'block';
+    result.innerHTML = '';
+
+    const checks = [];
+    let allOk = true;
+
+    // 1 — API response OK
+    const apiOk = lastDiscover && lastDiscover.code === 0;
+    checks.push({ ok: apiOk, label: 'Login and API call successful' });
+    if (!apiOk) allOk = false;
+
+    // Extract device list
+    const d = (lastDiscover && lastDiscover.data) || {};
+    const records = (d.page && d.page.records) || d.list || d.records || [];
+
+    // 2 — At least one device
+    const hasDevices = records.length > 0;
+    checks.push({ ok: hasDevices, label: `${records.length} device${records.length !== 1 ? 's' : ''} found in account` });
+    if (!hasDevices) allOk = false;
+
+    // Per-device checks
+    records.forEach((dev) => {
+      const name = dev.customName || dev.model || 'Device';
+
+      // Model recognised as mower
+      const modelOk = typeof dev.model === 'string' &&
+        (dev.model.startsWith('dreame.mower.') || dev.model.startsWith('mova.mower.'));
+      checks.push({ ok: modelOk, label: `${name}: model "${dev.model || '—'}" recognised as robotic mower` });
+      if (!modelOk) allOk = false;
+
+      // Device ID present
+      const didOk = !!dev.did;
+      checks.push({ ok: didOk, label: `${name}: device ID present (${dev.did || 'missing'})` });
+      if (!didOk) allOk = false;
+
+      // Online status — warning only, not a blocker
+      const onlineOk = dev.online === true;
+      checks.push({
+        ok: onlineOk, warn: !onlineOk,
+        label: `${name}: ${onlineOk ? 'device is online' : 'device is currently offline — make sure it is powered on and connected before adding'}`,
+      });
+    });
+
+    // Render checklist
+    const list = document.createElement('div');
+    list.className = 'check-list';
+    checks.forEach(({ ok, warn, label }) => {
+      const row = document.createElement('div');
+      row.className = `check-item ${ok ? 'check-ok' : (warn ? 'check-warn' : 'check-fail')}`;
+      row.innerHTML = `<span class="check-icon">${ok ? '✓' : (warn ? '⚠' : '✗')}</span><span>${escHtml(label)}</span>`;
+      list.appendChild(row);
+    });
+    result.appendChild(list);
+
+    // Summary banner
+    const banner = document.createElement('div');
+    if (allOk) {
+      banner.className = 'check-success-banner';
+      banner.innerHTML = `
+        <strong>✅ Ready to add in Homey</strong>
+        <p>Open the <strong>Homey app</strong> on your phone or tablet → tap <strong>Devices</strong> → <strong>+</strong> → search for <strong>MOVA &amp; Dreame Mower</strong> → follow the pairing steps.<br>Do <em>not</em> add the device here — this page is for debugging only.</p>
+      `;
+    } else {
+      banner.className = 'check-fail-banner';
+      banner.innerHTML = `
+        <strong>⚠ One or more checks failed</strong>
+        <p>Review the issues above. If the model is not recognised, please copy the JSON and send it to the developer via the Homey Community forum.</p>
+      `;
+    }
+    result.appendChild(banner);
   }
 
   function countDevices(data) {

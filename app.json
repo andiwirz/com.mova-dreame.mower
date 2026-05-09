@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.mova-dreame.mower",
-  "version": "0.0.38",
+  "version": "0.0.39",
   "compatibility": ">=12.0.0",
   "sdk": 3,
   "name": {
@@ -190,6 +190,10 @@
     "0.0.38": {
       "en": "Fixed device initialisation crash ('Cannot read properties of undefined') caused by a migration failure before instance fields were set. Instance fields are now initialised before migration runs. Added a fast-path for freshly paired devices that skips all historic capability add/remove cycles — only a single recovery check runs instead of dozens of redundant API calls.",
       "de": "Absturz bei der Geräteinitialisierung ('Cannot read properties of undefined') behoben, der durch einen Migrationsfehler vor der Feldinitializierung verursacht wurde. Felder werden jetzt vor der Migration initialisiert. Für neu gekoppelte Geräte werden alle historischen Capability-Add/Remove-Zyklen übersprungen — statt dutzender redundanter API-Aufrufe läuft nur noch eine einzige Wiederherstellungsprüfung."
+    },
+    "0.0.39": {
+      "en": "Added Installation Check to the Debug Device Discovery settings page. After fetching the device list, tap 'Installation Check' to verify that login, device count, model recognition and online status are all OK — a green banner then confirms the device is ready to be added via the Homey app.",
+      "de": "Installationscheck zur Debug-Geräteerkennung in den App-Einstellungen hinzugefügt. Nach dem Abrufen der Geräteliste auf 'Installation Check' tippen, um Login, Geräteanzahl, Modellerkennung und Online-Status zu prüfen — ein grünes Banner bestätigt, dass das Gerät über die Homey-App hinzugefügt werden kann."
     }
   },
   "flow": {
