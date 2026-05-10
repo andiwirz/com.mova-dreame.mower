@@ -82,6 +82,7 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 | Pause | Pauses the mower; it waits in place until resumed |
 | Stop | Stops mowing and keeps the mower where it is |
 | Return to Dock | Sends the mower back to the charging station |
+| Go to Maintenance Point | Drives the mower to its configured maintenance point |
 | Zone picker | Select what to mow: Full Area, individual zones, edge mowing (full perimeter), or edge mowing for a single zone — options are populated automatically from your map |
 | Spot picker | Select a named spot to mow — options are populated automatically from your map |
 
@@ -102,6 +103,7 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 | Set mowing mode | Sets the default mode used by "Start mowing" (all area / edge / zone / spot / manual) |
 | Set cutting height | Sets the blade height in mm via flow |
 | Set mow efficiency mode | Switches between Standard and Efficient mowing mode via flow |
+| Go to maintenance point | Drives the mower to its configured maintenance point |
 
 ## Flow Cards
 
@@ -247,6 +249,7 @@ Action: `siid:2, aiid:50`. Payload item: `{ m:'a', p:<mapIndex>, o:<opcode>, d:{
 | 101 | Edge mowing — full perimeter | `{}` (all boundaries) or `{ edge:[[zoneId, mapIdx]] }` (single zone) | ✓ |
 | 102 | Zone mowing | `{ region:[zoneId, …] }` — flat array of numeric zone IDs | ✓ |
 | 103 | Spot mowing | `{ area:[areaId, …] }` — flat array of numeric area/spot IDs | ✓ |
+| 109 | Go to maintenance point | `{ point:[1] }` — `point` array references the maintenance point index | ✓ |
 
 `p` is the active map index (typically `0`). Omitting the `edge` array in op-code 101 lets the device mow all stored boundaries automatically — passing unknown boundary-segment IDs causes a "zone unreachable" error.
 

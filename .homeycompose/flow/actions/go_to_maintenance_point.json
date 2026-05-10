@@ -1,0 +1,4 @@
+{
+  "title": { "en": "Go to maintenance point", "de": "Zum Wartungspunkt fahren" },
+  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
+}

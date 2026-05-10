@@ -174,5 +174,13 @@
   "0.0.44": {
     "en": "Added 6 new flow cards: 'Mowing started' trigger, 'Consumable needs replacement' trigger, 'Set cutting height' action, 'Set efficiency mode' action, 'Mow efficiency is efficient' condition, 'Battery above/below X%' condition.",
     "de": "6 neue Flow-Karten hinzugefügt: Auslöser 'Mähen gestartet', Auslöser 'Verbrauchsmaterial muss ersetzt werden', Aktion 'Schnitthöhe setzen', Aktion 'Mäheffizienz-Modus setzen', Bedingung 'Mäheffizienz ist Effizient', Bedingung 'Akku über/unter X%'."
+  },
+  "0.0.45": {
+    "en": "Added 'Go to Maintenance Point' button to the device card and as a flow action. The mower drives to its configured maintenance point (confirmed via packet capture, op-code 109).",
+    "de": "Schaltfläche 'Gehe zum Wartungspunkt' zur Gerätekarte und als Flow-Aktion hinzugefügt. Der Mähroboter fährt zu seinem konfigurierten Wartungspunkt (per Packet Capture bestätigt, Op-Code 109)."
+  },
+  "1.0.0": {
+    "en": "Initial public release.",
+    "de": "Erste öffentliche Version."
   }
 }

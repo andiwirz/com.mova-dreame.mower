@@ -47,6 +47,9 @@ class MowerDriver extends Homey.Driver {
     flow.getActionCard('suppress_fault')
       .registerRunListener(({ device }) => device.cmdSuppressFault());
 
+    flow.getActionCard('go_to_maintenance_point')
+      .registerRunListener(({ device }) => device.cmdGoToMaintenancePoint());
+
     flow.getActionCard('set_cutting_height')
       .registerRunListener(({ device, height }) => device.cmdSetCuttingHeight(height));
 

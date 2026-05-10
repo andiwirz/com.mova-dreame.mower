@@ -313,6 +313,34 @@ const MIGRATIONS = [
       'consumable_robot',
     ],
   },
+  {
+    // Add cmd_maintenance_point button after cmd_dock.
+    key: 'capabilities_migrated_v26',
+    reorder: [
+      'cmd_start_mowing',
+      'cmd_start_spot_mowing',
+      'cmd_pause',
+      'cmd_stop',
+      'cmd_dock',
+      'cmd_maintenance_point',
+      'mower_status',
+      'mow_zone',
+      'cutting_height',
+      'mower_volume',
+      'mow_spot',
+      'charging_status',
+      'measure_battery',
+      'alarm_generic',
+      'mow_efficiency',
+      'collision_avoidance',
+      'firmware_update',
+      'measure_duration',
+      'child_lock',
+      'consumable_blade',
+      'consumable_brush',
+      'consumable_robot',
+    ],
+  },
 ];
 
 // Capabilities removed — stripped from existing installs on next init
@@ -490,6 +518,20 @@ class MowerDevice extends Homey.Device {
         await this.setCapabilityValue('cmd_dock', false).catch(() => {});
       }
     });
+
+    if (this.hasCapability('cmd_maintenance_point')) {
+      this.registerCapabilityListener('cmd_maintenance_point', async (value) => {
+        if (!value) return;
+        try {
+          this.log('[cmd] btn: maintenance point → goToMaintenancePoint()');
+          await this._safeWrite('cmd_maintenance_point', () => this._api.goToMaintenancePoint(did, this._activeMapIndex ?? 0));
+        } catch (err) {
+          this.error('[cmd_maintenance_point] listener error:', err.message);
+        } finally {
+          await this.setCapabilityValue('cmd_maintenance_point', false).catch(() => {});
+        }
+      });
+    }
 
     this.registerCapabilityListener('mower_volume', async (value) => {
       try {
@@ -1557,10 +1599,11 @@ class MowerDevice extends Homey.Device {
 
     // Reset action buttons when the mower reaches a resting state
     if (HOME_STATUSES.has(status)) {
-      if (this.hasCapability('cmd_dock'))          await this.setCapabilityValue('cmd_dock',          false).catch(() => {});
-      if (this.hasCapability('cmd_stop'))          await this.setCapabilityValue('cmd_stop',          false).catch(() => {});
-      if (this.hasCapability('cmd_start_mowing'))      await this.setCapabilityValue('cmd_start_mowing',      false).catch(() => {});
-      if (this.hasCapability('cmd_start_spot_mowing')) await this.setCapabilityValue('cmd_start_spot_mowing', false).catch(() => {});
+      if (this.hasCapability('cmd_dock'))                await this.setCapabilityValue('cmd_dock',                false).catch(() => {});
+      if (this.hasCapability('cmd_stop'))                await this.setCapabilityValue('cmd_stop',                false).catch(() => {});
+      if (this.hasCapability('cmd_start_mowing'))        await this.setCapabilityValue('cmd_start_mowing',        false).catch(() => {});
+      if (this.hasCapability('cmd_start_spot_mowing'))   await this.setCapabilityValue('cmd_start_spot_mowing',   false).catch(() => {});
+      if (this.hasCapability('cmd_maintenance_point'))   await this.setCapabilityValue('cmd_maintenance_point',   false).catch(() => {});
     }
 
     // Reset pause button once the mower confirms it is paused
@@ -1763,6 +1806,11 @@ class MowerDevice extends Homey.Device {
     this._cachedPRE            = pre;
     this._cuttingHeightWriteTs = Date.now();
     await this._setCap('cutting_height', height);
+  }
+
+  async cmdGoToMaintenancePoint() {
+    this.log('[cmd] goToMaintenancePoint');
+    await this._api.goToMaintenancePoint(this.getData().id, this._activeMapIndex ?? 0);
   }
 
   async cmdSetEfficiencyMode(mode) {

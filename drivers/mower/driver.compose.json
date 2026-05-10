@@ -10,6 +10,7 @@
     "cmd_pause",
     "cmd_stop",
     "cmd_dock",
+    "cmd_maintenance_point",
     "mower_status",
     "mow_zone",
     "cutting_height",

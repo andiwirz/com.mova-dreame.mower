@@ -1,0 +1,12 @@
+{
+  "type": "boolean",
+  "title": { "en": "Go to Maintenance Point", "de": "Gehe zum Wartungspunkt" },
+  "getable": true,
+  "setable": true,
+  "uiComponent": "button",
+  "icon": "/assets/capabilities/cmd_maintenance_point.svg",
+  "hint": {
+    "en": "Sends the mower to its configured maintenance point.",
+    "de": "Fährt den Mähroboter zu seinem konfigurierten Wartungspunkt."
+  }
+}

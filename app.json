@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.mova-dreame.mower",
-  "version": "0.0.44",
+  "version": "1.0.0",
   "compatibility": ">=12.0.0",
   "sdk": 3,
   "name": {
@@ -216,6 +216,14 @@
     "0.0.44": {
       "en": "Added 6 new flow cards: 'Mowing started' trigger, 'Consumable needs replacement' trigger, 'Set cutting height' action, 'Set efficiency mode' action, 'Mow efficiency is efficient' condition, 'Battery above/below X%' condition.",
       "de": "6 neue Flow-Karten hinzugefügt: Auslöser 'Mähen gestartet', Auslöser 'Verbrauchsmaterial muss ersetzt werden', Aktion 'Schnitthöhe setzen', Aktion 'Mäheffizienz-Modus setzen', Bedingung 'Mäheffizienz ist Effizient', Bedingung 'Akku über/unter X%'."
+    },
+    "0.0.45": {
+      "en": "Added 'Go to Maintenance Point' button to the device card and as a flow action. The mower drives to its configured maintenance point (confirmed via packet capture, op-code 109).",
+      "de": "Schaltfläche 'Gehe zum Wartungspunkt' zur Gerätekarte und als Flow-Aktion hinzugefügt. Der Mähroboter fährt zu seinem konfigurierten Wartungspunkt (per Packet Capture bestätigt, Op-Code 109)."
+    },
+    "1.0.0": {
+      "en": "Initial public release.",
+      "de": "Erste öffentliche Version."
     }
   },
   "flow": {
@@ -670,6 +678,20 @@
       },
       {
         "title": {
+          "en": "Go to maintenance point",
+          "de": "Zum Wartungspunkt fahren"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "go_to_maintenance_point"
+      },
+      {
+        "title": {
           "en": "Pause mowing",
           "de": "Mähen pausieren"
         },
@@ -1010,6 +1032,7 @@
         "cmd_pause",
         "cmd_stop",
         "cmd_dock",
+        "cmd_maintenance_point",
         "mower_status",
         "mow_zone",
         "cutting_height",
@@ -2141,6 +2164,21 @@
       "getable": true,
       "setable": true,
       "uiComponent": "button"
+    },
+    "cmd_maintenance_point": {
+      "type": "boolean",
+      "title": {
+        "en": "Go to Maintenance Point",
+        "de": "Gehe zum Wartungspunkt"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_maintenance_point.svg",
+      "hint": {
+        "en": "Sends the mower to its configured maintenance point.",
+        "de": "Fährt den Mähroboter zu seinem konfigurierten Wartungspunkt."
+      }
     },
     "cmd_pause": {
       "type": "boolean",
