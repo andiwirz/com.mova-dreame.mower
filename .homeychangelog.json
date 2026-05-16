@@ -182,5 +182,9 @@
   "1.0.0": {
     "en": "Initial public release.",
     "de": "Erste öffentliche Version."
+  },
+  "1.0.1": {
+    "en": "Added 'Border Patrol' flow action (drives the mower along the boundary of a selected zone, op-code 108). Fixed session duration always showing 0 after an app restart. Added lifetime mowing statistics (total area, total time, total sessions). Removed 'Obstacle detected' flow trigger.",
+    "de": "Flow-Aktion 'Randpatrouille' hinzugefügt (fährt den Mähroboter entlang der Grenze einer gewählten Zone, Op-Code 108). Sitzungsdauer nach App-Neustart nicht mehr dauerhaft 0. Gesamte Mähstatistiken hinzugefügt (Gesamtfläche, Gesamtlaufzeit, Gesamtanzahl Mähvorgänge). Flow-Auslöser 'Hindernis erkannt' entfernt."
   }
 }

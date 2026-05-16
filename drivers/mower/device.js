@@ -341,6 +341,45 @@ const MIGRATIONS = [
       'consumable_robot',
     ],
   },
+  {
+    // Re-add lifetime statistics capabilities sourced from MIHIS action (mowing history).
+    // Previously removed due to missing API endpoint — now confirmed via packet capture.
+    // caps-only (no reorder) to avoid resetting existing capability values on existing installs.
+    key: 'capabilities_migrated_v27',
+    caps: ['meter_area_total', 'meter_time_total', 'meter_count_total'],
+  },
+  {
+    // Reorder to place the three MIHIS statistics after measure_duration.
+    // Separated from v27 so the caps-add step doesn't accidentally clear existing values.
+    key: 'capabilities_migrated_v28',
+    reorder: [
+      'cmd_start_mowing',
+      'cmd_start_spot_mowing',
+      'cmd_pause',
+      'cmd_stop',
+      'cmd_dock',
+      'cmd_maintenance_point',
+      'mower_status',
+      'mow_zone',
+      'cutting_height',
+      'mower_volume',
+      'mow_spot',
+      'charging_status',
+      'measure_battery',
+      'alarm_generic',
+      'mow_efficiency',
+      'collision_avoidance',
+      'firmware_update',
+      'measure_duration',
+      'meter_area_total',
+      'meter_time_total',
+      'meter_count_total',
+      'child_lock',
+      'consumable_blade',
+      'consumable_brush',
+      'consumable_robot',
+    ],
+  },
 ];
 
 // Capabilities removed — stripped from existing installs on next init
@@ -351,7 +390,6 @@ const REMOVE_CAPABILITIES = [
   'mower_error_code',
   'mower_progress',
   'measure_area',
-  'meter_area_total', 'meter_time_total', 'meter_count_total',
   // v9: replaced by action buttons
   'mower_mode',
   // v11: removed — redundant with mower_status
@@ -380,8 +418,12 @@ class MowerDevice extends Homey.Device {
     // listeners never see `undefined` even if _migrate() or _initApi() throws.
     this._api                  = null;
     this._pollTimer            = null;
-    this._wasMowing            = false;
-    this._sessionStartTime     = null;
+    // Initialise from persisted state so the session timer survives app restarts.
+    // If the mower was already mowing before the restart, _wasMowing stays true and
+    // _sessionStartTime is restored from the store (falls back to now if not stored yet).
+    this._wasMowing        = this.getCapabilityValue('mower_status') === 'mowing';
+    this._sessionStartTime = (await this.getStoreValue('session_start_time'))
+                             ?? (this._wasMowing ? Date.now() : null);
     this._persistedTokenExpiry = 0;
     this._lastBindDomain       = null;  // track last seen bindDomain to avoid redundant setBindDomain calls
     this._activeMapIndex       = 0;     // active map index, updated from MAP data each poll
@@ -389,9 +431,8 @@ class MowerDevice extends Homey.Device {
     this._lastZonePickerKey    = null;  // cache key for _updateZonePicker change-guard
     this._lastSpotPickerKey    = null;  // cache key for _updateSpotPicker change-guard
     this._cfgPollCounter       = 0;     // reads CFG (WRP etc.) on first poll and every 10th thereafter
-    this._uid                  = null;  // device uid, extracted from first poll info response
-    this._model                = null;  // raw model string (e.g. "mova.mower.g2529d"), for obstacle photo API
-    this._cachedPRE              = null;  // last known PRE array; used for cutting_height read-modify-write
+    this._mihisPollCounter     = 0;     // reads MIHIS (lifetime stats) on first poll and every 10th thereafter
+    this._cachedPRE              = await this.getStoreValue('cached_pre') ?? null;  // last known PRE array; used for cutting_height read-modify-write
     this._cuttingHeightWriteTs   = 0;    // timestamp of last successful cutting_height write; guards poll snap-back
     this._preWriteCuttingHeight  = null; // capability value before last write; used to detect snap-back vs external change
 
@@ -406,7 +447,6 @@ class MowerDevice extends Homey.Device {
     this._trgDocked           = this.homey.flow.getDeviceTriggerCard('mower_docked');
     this._trgFirmwareUpdate   = this.homey.flow.getDeviceTriggerCard('firmware_update_available');
     this._trgBatteryLow       = this.homey.flow.getDeviceTriggerCard('battery_low');
-    this._trgObstacleDetected = this.homey.flow.getDeviceTriggerCard('obstacle_detected');
     this._trgConsumable       = this.homey.flow.getDeviceTriggerCard('consumable_needs_replacement');
 
     // ── Picker listeners ───────────────────────────────────────────────────────
@@ -542,13 +582,8 @@ class MowerDevice extends Homey.Device {
     });
 
     this.registerCapabilityListener('cutting_height', async (value) => {
-      // Read-modify-write using the PRE array reconstructed from SETTINGS on every poll.
-      // _cachedPRE is populated by _buildPREFromSettings() in _applyMOVASettings.
       try {
-        if (!this._cachedPRE || this._cachedPRE.length < 19) {
-          this.error('[cutting_height] PRE not available yet — retry after next poll');
-          throw new Error('PRE not available');
-        }
+        this._ensureCachedPRE();
         const pre = [...this._cachedPRE];
         pre[4] = Math.round(value);
         this._preWriteCuttingHeight = this.getCapabilityValue('cutting_height');
@@ -565,10 +600,7 @@ class MowerDevice extends Homey.Device {
 
     this.registerCapabilityListener('mow_efficiency', async (value) => {
       try {
-        if (!this._cachedPRE || this._cachedPRE.length < 19) {
-          this.error('[mow_efficiency] PRE not available yet — retry after next poll');
-          throw new Error('PRE not available');
-        }
+        this._ensureCachedPRE();
         const pre = [...this._cachedPRE];
         pre[3] = value === 'efficient' ? 1 : 0;
         this.log(`[mow_efficiency] writing PRE[3]=${pre[3]} (${value})`);
@@ -593,8 +625,15 @@ class MowerDevice extends Homey.Device {
     });
     if (cfg) await this._applyCFGSettings(cfg);
 
-    // Skip the redundant getCFG on the very first poll since we just fetched it.
-    this._cfgPollCounter = 1;
+    const mihis = await this._api.getMowingHistory(did).catch((e) => {
+      this.error('[init] getMowingHistory failed:', e.message);
+      return null;
+    });
+    if (mihis) await this._applyMIHIS(mihis);
+
+    // Skip the redundant getCFG / MIHIS on the very first poll since we fetch them at init.
+    this._cfgPollCounter   = 1;
+    this._mihisPollCounter = 1;
 
     this._startPolling();
   }
@@ -630,18 +669,15 @@ class MowerDevice extends Homey.Device {
     };
     const preKeys = Object.keys(PRE_SETTINGS_MAP).filter((k) => changedKeys.includes(k));
     if (preKeys.length > 0) {
-      if (!this._cachedPRE || this._cachedPRE.length < 19) {
-        this.error('[settings] PRE not available — retry after next poll');
-      } else {
-        const pre = [...this._cachedPRE];
-        for (const key of preKeys) {
-          const { index, bool } = PRE_SETTINGS_MAP[key];
-          pre[index] = bool ? (newSettings[key] ? 1 : 0) : Number(newSettings[key]);
-        }
-        this.log(`[settings] PRE update for: ${preKeys.join(', ')}`);
-        await this._safeWrite('pre', () => this._api.writePRE(did, pre));
-        this._cachedPRE = pre;
+      this._ensureCachedPRE();
+      const pre = [...this._cachedPRE];
+      for (const key of preKeys) {
+        const { index, bool } = PRE_SETTINGS_MAP[key];
+        pre[index] = bool ? (newSettings[key] ? 1 : 0) : Number(newSettings[key]);
       }
+      this.log(`[settings] PRE update for: ${preKeys.join(', ')}`);
+      await this._safeWrite('pre', () => this._api.writePRE(did, pre));
+      this._cachedPRE = pre;
     }
 
     // Child lock
@@ -886,12 +922,6 @@ class MowerDevice extends Homey.Device {
       this._api.setBindDomain(info.bindDomain);
     }
 
-    // ── Capture uid + model once (needed for obstacle photo checks) ──────────
-    if (info.masterUid != null && this._uid == null) {
-      this._uid   = String(info.masterUid);
-      this._model = info.model || '';
-    }
-
     // ── Read-only device info → settings (change-guarded) ───────────────────
     {
       const infoUpdate = {};
@@ -949,11 +979,22 @@ class MowerDevice extends Homey.Device {
     }
     this._cfgPollCounter++;
 
+    // ── Mowing history (MIHIS) — first poll and every 10th thereafter ─────────
+    if (this._mihisPollCounter % 10 === 0) {
+      const mihis = await this._api.getMowingHistory(did).catch((e) => {
+        this.error('[mihis] getMowingHistory failed:', e.message);
+        return null;
+      });
+      if (mihis) await this._applyMIHIS(mihis);
+    }
+    this._mihisPollCounter++;
+
     // ── SETTINGS.0 / OTA_INFO.0 / MAP zone detection ────────────────────────
     if (rawResult.status === 'fulfilled') {
       const rawData = rawResult.value?.data;
       if (rawData && typeof rawData === 'object' && !Array.isArray(rawData)) {
-        await this._applyMOVASettings(rawData);
+await this._applyMOVASettings(rawData);
+        await this._applyOTAInfo(rawData);
         await this._detectAndSyncZones(rawData);
       }
     } else {
@@ -971,8 +1012,9 @@ class MowerDevice extends Homey.Device {
    * @param {object} [s]  Settings object; omit to read from this.getSetting().
    */
   _applyCuttingHeightOptions(s) {
-    const min = Number((s ?? this).getSetting('cutting_height_min') ?? 20) || 20;
-    const max = Number((s ?? this).getSetting('cutting_height_max') ?? 70) || 70;
+    const get = (key, def) => s ? (s[key] ?? def) : (this.getSetting(key) ?? def);
+    const min = Number(get('cutting_height_min', 20)) || 20;
+    const max = Number(get('cutting_height_max', 70)) || 70;
     this.log(`[cutting_height] options → min=${min}mm max=${max}mm`);
     this.setCapabilityOptions('cutting_height', { min, max }).catch((e) =>
       this.error('[cutting_height] setCapabilityOptions:', e.message),
@@ -1180,6 +1222,46 @@ class MowerDevice extends Homey.Device {
   // ─── SETTINGS.0 / OTA_INFO.0 mapping ─────────────────────────────────────
 
   /**
+   * Build a fallback PRE array from current Homey capability values and device settings.
+   * Used when _cachedPRE is null (SETTINGS.0 not yet received after a restart).
+   * All obstacle/edge fields are read from synced device settings; height and efficiency
+   * from current capability values. Remaining fields use confirmed safe defaults.
+   */
+  /** Ensure _cachedPRE is populated, falling back to a device-settings reconstruction. */
+  _ensureCachedPRE() {
+    if (!this._cachedPRE || this._cachedPRE.length < 19) {
+      this.log('[pre] _cachedPRE unavailable — rebuilding from device settings');
+      this._cachedPRE = this._buildPREFallback();
+    }
+  }
+
+  _buildPREFallback() {
+    const b = (v) => (v ? 1 : 0);
+    const heightMm = this.getCapabilityValue('cutting_height') ?? 40;
+    return [
+      0,                                                                         // [0]  reserved
+      0,                                                                         // [1]  reserved
+      0,                                                                         // [2]  reserved
+      this.getCapabilityValue('mow_efficiency') === 'efficient' ? 1 : 0,        // [3]  efficientMode
+      Math.round(heightMm),                                                      // [4]  mowingHeight (mm)
+      1,                                                                         // [5]  edgeMowingWalkMode
+      0,                                                                         // [6]  mowingDirection
+      b(this.getSetting('edge_mowing_auto')      ?? true),                       // [7]  edgeMowingAuto
+      b(this.getSetting('edge_mowing_safe')      ?? true),                       // [8]  edgeMowingSafe
+      b(this.getSetting('edge_mowing_ultratrim') ?? true),                       // [9]  cutterPosition
+      1,                                                                         // [10] edgeMowingNum
+      b(this.getSetting('edge_mowing_obstacle')  ?? true),                       // [11] edgeMowingObstacleAvoidance
+      1,                                                                         // [12] mowingDirectionMode
+      Number(this.getSetting('obstacle_height')   ?? 15),                        // [13] obstacleAvoidanceHeight
+      Number(this.getSetting('obstacle_distance') ?? 15),                        // [14] obstacleAvoidanceDistance
+      Number(this.getSetting('obstacle_ai')       ?? 7),                         // [15] obstacleAvoidanceAi
+      b(this.getSetting('obstacle_lidar')         ?? true),                      // [16] obstacleAvoidanceEnabled
+      1,                                                                         // [17] ridingMowingmode
+      5,                                                                         // [18] ridingMowingDistance
+    ];
+  }
+
+  /**
    * Reconstruct the 19-element PRE config array from the zone-0 SETTINGS object.
    *
    * The device does not expose PRE via any readable API (getCFG returns a [0,0]
@@ -1217,6 +1299,28 @@ class MowerDevice extends Homey.Device {
   }
 
   /**
+   * Apply lifetime mowing statistics from the MIHIS action response.
+   *
+   * MIHIS response d-object: { area: m², count: sessions, time: minutes, start: unixTs }
+   * Confirmed via packet capture — siid:2, aiid:50, in:[{m:'g', t:'MIHIS'}].
+   * @param {object} result  The out[0] object returned by getMowingHistory()
+   */
+  async _applyMIHIS(result) {
+    const d = result?.d;
+    if (!d) {
+      this.error('[mihis] no d-object in result:', JSON.stringify(result));
+      return;
+    }
+    this.log(`[mihis] area=${d.area} time=${d.time} count=${d.count}`);
+    await Promise.all([
+      d.area  != null && this.hasCapability('meter_area_total')  && this._setCap('meter_area_total',  Math.round(d.area)),
+      // d.time is total minutes; convert to hours with 1 decimal: Math.round(min/6)/10 = Math.round(h*10)/10
+      d.time  != null && this.hasCapability('meter_time_total')  && this._setCap('meter_time_total',  Math.round(d.time / 6) / 10),
+      d.count != null && this.hasCapability('meter_count_total') && this._setCap('meter_count_total', d.count),
+    ]);
+  }
+
+  /**
    * Parse the SETTINGS.0 key-value blob and map known fields to
    * Homey capabilities and device settings.
    *
@@ -1225,15 +1329,28 @@ class MowerDevice extends Homey.Device {
    * We use zone 0 / settings["0"] as the active device-wide configuration.
    */
   async _applyMOVASettings(raw) {
-    // SETTINGS is paginated: SETTINGS.0, SETTINGS.1, … must be concatenated before parsing.
-    const parts = [];
-    for (let i = 0; raw[`SETTINGS.${i}`] != null; i++) parts.push(raw[`SETTINGS.${i}`]);
-    const settingsStr = parts.join('');
-    if (!settingsStr) return;
-
-    let zones;
-    try { zones = JSON.parse(settingsStr); } catch { return; }
-    if (!Array.isArray(zones) || zones.length === 0) return;
+    // SETTINGS pages are byte-chunked. Each boundary may land mid-JSON, so we concatenate
+    // pages one-by-one and stop at the first successful parse. Known behaviour: SETTINGS.0
+    // alone is truncated; SETTINGS.0+SETTINGS.1 produces a complete zones array. Additional
+    // pages (SETTINGS.2+) contain supplementary zone data that would overflow the closed array
+    // — they cannot be appended and are intentionally ignored here.
+    let zones = null;
+    let accumulated = '';
+    for (let i = 0; raw[`SETTINGS.${i}`] != null; i++) {
+      accumulated += raw[`SETTINGS.${i}`] ?? '';
+      try {
+        const parsed = JSON.parse(accumulated);
+        if (Array.isArray(parsed) && parsed.length > 0) { zones = parsed; break; }
+      } catch { /* incomplete chunk — append next page and retry */ }
+    }
+    if (accumulated === '') {
+      this.log('[settings] SETTINGS.0 not present in this poll response');
+      return;
+    }
+    if (!zones) {
+      this.log('[settings] could not parse SETTINGS into a valid zones array');
+      return;
+    }
 
     // Use the active map's settings; fall back to map 0 if not yet detected.
     const mapEntry = zones[this._activeMapIndex ?? 0] ?? zones[0];
@@ -1243,7 +1360,11 @@ class MowerDevice extends Homey.Device {
     // fresh and ready for cutting_height write operations (read-modify-write).
     // The device doesn't expose PRE via any readable API; we reconstruct it here.
     const builtPRE = this._buildPREFromSettings(s);
-    if (builtPRE) this._cachedPRE = builtPRE;
+    if (builtPRE) {
+      const changed = JSON.stringify(builtPRE) !== JSON.stringify(this._cachedPRE);
+      this._cachedPRE = builtPRE;
+      if (changed) this.setStoreValue('cached_pre', builtPRE).catch((e) => this.error('[settings] cached_pre store failed:', e.message));
+    }
 
     // Capability updates (change-guarded)
     if (s.efficientMode != null) {
@@ -1296,17 +1417,6 @@ class MowerDevice extends Homey.Device {
     const clProp = raw['prop.s_child_lock'] ?? raw['prop.child_lock'];
     if (clProp != null && this.hasCapability('child_lock')) {
       await this._applyBoolCap('child_lock', clProp === '1' || clProp === 1 || clProp === true);
-    }
-
-    // OTA_INFO.0 = "[state, updateAvailable]" — index 1 > 0 means update is available.
-    const otaStr = raw['OTA_INFO.0'];
-    if (otaStr) {
-      try {
-        const ota = JSON.parse(otaStr);
-        if (Array.isArray(ota) && ota.length >= 2) {
-          await this._applyFirmwareState(ota[1]);
-        }
-      } catch { /* malformed OTA_INFO, skip */ }
     }
   }
 
@@ -1510,6 +1620,22 @@ class MowerDevice extends Homey.Device {
     }
   }
 
+  /**
+   * Parse OTA_INFO.0 from the raw poll response and update firmware_update capability.
+   * Called directly from the poll loop so it runs even when SETTINGS.0 is absent.
+   * OTA_INFO.0 = JSON array "[state, updateAvailable]" — index 1 === 1 means update available.
+   */
+  async _applyOTAInfo(raw) {
+    const otaStr = raw['OTA_INFO.0'];
+    if (!otaStr) return;
+    try {
+      const ota = JSON.parse(otaStr);
+      if (Array.isArray(ota) && ota.length >= 2) {
+        await this._applyFirmwareState(ota[1]);
+      }
+    } catch { /* malformed OTA_INFO, skip */ }
+  }
+
   // ─── Capability helpers ───────────────────────────────────────────────────
 
   async _applyFirmwareState(state) {
@@ -1576,12 +1702,18 @@ class MowerDevice extends Homey.Device {
 
     // Session duration tracking
     if (isMowing && !this._wasMowing) {
+      // New mowing session started — record and persist the start time.
       this._sessionStartTime = Date.now();
+      this.setStoreValue('session_start_time', this._sessionStartTime).catch(() => {});
       if (this.hasCapability('measure_duration')) {
         await this._setCap('measure_duration', 0);
       }
       this._trgMowingStarted.trigger(this, {}, {})
         .catch((e) => this.error('mowing_started trigger:', e.message));
+    } else if (!isMowing && this._wasMowing) {
+      // Session ended — clear the persisted start time.
+      this._sessionStartTime = null;
+      this.setStoreValue('session_start_time', null).catch(() => {});
     }
 
     // Error alarm
@@ -1623,10 +1755,6 @@ class MowerDevice extends Homey.Device {
     if (this._wasMowing && HOME_STATUSES.has(status)) {
       this._trgMowingCompleted.trigger(this, {}, {})
         .catch((e) => this.error('mowing_completed trigger:', e.message));
-      // Check for AI obstacle photos from the session that just ended.
-      // Delay 60 s to give the server time to finalize the session file.
-      const did = this.getData().id;
-      this.homey.setTimeout(() => this._checkObstaclePhotos(did), 60_000);
     }
 
     this._wasMowing = isMowing;
@@ -1638,59 +1766,6 @@ class MowerDevice extends Homey.Device {
     // Route through _applyStatus so the status-changed flow trigger fires
     // and session-start tracking is handled consistently.
     await this._applyStatus('mowing');
-  }
-
-  // ─── AI obstacle photo check ──────────────────────────────────────────────
-
-  async _checkObstaclePhotos(did) {
-    if (!this._uid || !this._model) return;
-
-    // Only look at sessions newer than the last check (default: last 48 h).
-    const since = await this.getStoreValue('lastObstacleTs') || null;
-
-    const res = await this._api.getObstacleHistory(did, this._uid, since).catch((e) => {
-      this.error('[obstacle] history fetch failed:', e.message); return null;
-    });
-
-    const list = res?.data?.list ?? [];
-    if (list.length === 0) return;
-
-    // Advance the watermark immediately so a crash/restart doesn't re-fire old events.
-    await this.setStoreValue('lastObstacleTs', Math.floor(Date.now() / 1000));
-
-    for (const entry of list) {
-      let history;
-      try { history = JSON.parse(entry.history); } catch { continue; }
-
-      const fileEntry = history.find((p) => p.piid === 9);
-      if (!fileEntry?.value) continue;
-
-      const urlRes = await this._api.getObstacleFileUrl(did, this._model, this._uid, fileEntry.value).catch(() => null);
-      if (!urlRes?.data) continue;
-
-      const sessionJson = await this._api.fetchSignedUrl(urlRes.data).catch(() => null);
-      const aiObstacles = sessionJson?.ai_obstacle ?? [];
-
-      for (const obs of aiObstacles) {
-        const [, , , obstacleType, fileId] = obs;
-
-        const photoRes = await this._api.getObstaclePhoto(did, fileId).catch(() => null);
-        const photoUrl = photoRes?.code === 0 ? (photoRes.data ?? '') : '';
-
-        // Wrap in a Homey Image so the token works natively in image-aware
-        // flow actions (push notifications with preview, Telegram, etc.).
-        let photo = null;
-        if (photoUrl) {
-          photo = await this.homey.images.createImage();
-          photo.setUrl(photoUrl);
-        }
-
-        this.log(`[obstacle] type=${obstacleType} fileId=${fileId} photo=${photo ? 'ok' : 'none'}`);
-
-        this._trgObstacleDetected.trigger(this, { photo, obstacle_type: obstacleType }, {})
-          .catch((e) => this.error('[obstacle] trigger failed:', e.message));
-      }
-    }
   }
 
   // ─── Public commands (called by flow cards) ────────────────────────────────
@@ -1753,6 +1828,14 @@ class MowerDevice extends Homey.Device {
     await this._setMowingStarted();
   }
 
+  async cmdStartBorderPatrol(zoneNum) {
+    const did    = this.getData().id;
+    const mapIdx = this._activeMapIndex ?? 0;
+    this.log(`[cmd] startBorderPatrol zone=${zoneNum} mapIndex=${mapIdx}`);
+    await this._api.startBorderPatrol(did, Number(zoneNum), mapIdx);
+    await this._setMowingStarted();
+  }
+
   async cmdStartSpotMowing(spotsStr) {
     const did     = this.getData().id;
     const spotIds = spotsStr.split(',').map((s) => s.trim()).filter(Boolean);
@@ -1796,9 +1879,7 @@ class MowerDevice extends Homey.Device {
 
   async cmdSetCuttingHeight(height) {
     this.log(`[cmd] setCuttingHeight height=${height}mm`);
-    if (!this._cachedPRE || this._cachedPRE.length < 19) {
-      throw new Error('PRE not available yet — retry after next poll');
-    }
+    this._ensureCachedPRE();
     const pre = [...this._cachedPRE];
     pre[4] = Math.round(height);
     this._preWriteCuttingHeight = this.getCapabilityValue('cutting_height');
@@ -1815,9 +1896,7 @@ class MowerDevice extends Homey.Device {
 
   async cmdSetEfficiencyMode(mode) {
     this.log(`[cmd] setEfficiencyMode mode=${mode}`);
-    if (!this._cachedPRE || this._cachedPRE.length < 19) {
-      throw new Error('PRE not available yet — retry after next poll');
-    }
+    this._ensureCachedPRE();
     const pre = [...this._cachedPRE];
     pre[3] = mode === 'efficient' ? 1 : 0;
     await this._api.writePRE(this.getData().id, pre);

@@ -1,0 +1,12 @@
+{
+  "type": "number",
+  "title": { "en": "Total Mowed Area", "de": "Gesamte gemähte Fläche" },
+  "units": { "en": "m²", "de": "m²" },
+  "getable": true,
+  "setable": false,
+  "insights": true,
+  "uiComponent": "sensor",
+  "decimals": 0,
+  "min": 0,
+  "icon": "/assets/capabilities/meter_area_total.svg"
+}

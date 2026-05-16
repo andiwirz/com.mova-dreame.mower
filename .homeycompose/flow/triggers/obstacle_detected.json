@@ -1,8 +1,0 @@
-{
-  "title": { "en": "Obstacle detected by AI camera", "de": "Hindernis von KI-Kamera erkannt" },
-  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }],
-  "tokens": [
-    { "name": "photo",         "type": "image",  "title": { "en": "Photo",         "de": "Foto"         } },
-    { "name": "obstacle_type", "type": "number", "title": { "en": "Obstacle Type", "de": "Hindernistyp" } }
-  ]
-}

@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.mova-dreame.mower",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "compatibility": ">=12.0.0",
   "sdk": 3,
   "name": {
@@ -27,6 +27,7 @@
     "email": "andi@wirzfamily.ch"
   },
   "homeyCommunityTopicId": 154425,
+  "homepage": "https://community.homey.app/t/app-pro-mova-dreame-mower/154425",
   "source": "https://github.com/andiwirz/com.mova-dreame.mower",
   "bugs": {
     "url": "https://github.com/andiwirz/com.mova-dreame.mower/issues"
@@ -459,38 +460,6 @@
           }
         ],
         "id": "mowing_started"
-      },
-      {
-        "title": {
-          "en": "Obstacle detected by AI camera",
-          "de": "Hindernis von KI-Kamera erkannt"
-        },
-        "args": [
-          {
-            "name": "device",
-            "type": "device",
-            "filter": "driver_id=mower"
-          }
-        ],
-        "tokens": [
-          {
-            "name": "photo",
-            "type": "image",
-            "title": {
-              "en": "Photo",
-              "de": "Foto"
-            }
-          },
-          {
-            "name": "obstacle_type",
-            "type": "number",
-            "title": {
-              "en": "Obstacle Type",
-              "de": "Hindernistyp"
-            }
-          }
-        ],
-        "id": "obstacle_detected"
       }
     ],
     "conditions": [
@@ -740,7 +709,7 @@
               "en": "Height (mm)",
               "de": "Höhe (mm)"
             },
-            "min": 20,
+            "min": 30,
             "max": 100,
             "step": 5,
             "placeholder": {
@@ -855,6 +824,39 @@
           }
         ],
         "id": "set_mowing_mode"
+      },
+      {
+        "title": {
+          "en": "Start border patrol for zone",
+          "de": "Randpatrouille für Zone starten"
+        },
+        "titleFormatted": {
+          "en": "Start border patrol for zone [[zone]]",
+          "de": "Randpatrouille für Zone [[zone]] starten"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "zone",
+            "type": "number",
+            "title": {
+              "en": "Zone number",
+              "de": "Zonennummer"
+            },
+            "placeholder": {
+              "en": "1",
+              "de": "1"
+            },
+            "min": 1,
+            "max": 5,
+            "step": 1
+          }
+        ],
+        "id": "start_border_patrol"
       },
       {
         "title": {
@@ -1045,6 +1047,9 @@
         "collision_avoidance",
         "firmware_update",
         "measure_duration",
+        "meter_area_total",
+        "meter_time_total",
+        "meter_count_total",
         "child_lock",
         "consumable_blade",
         "consumable_brush",
@@ -2399,6 +2404,60 @@
       "setable": false,
       "uiComponent": "sensor",
       "decimals": 0,
+      "min": 0,
+      "icon": "/assets/capabilities/measure_duration.svg"
+    },
+    "meter_area_total": {
+      "type": "number",
+      "title": {
+        "en": "Total Mowed Area",
+        "de": "Gesamte gemähte Fläche"
+      },
+      "units": {
+        "en": "m²",
+        "de": "m²"
+      },
+      "getable": true,
+      "setable": false,
+      "insights": true,
+      "uiComponent": "sensor",
+      "decimals": 0,
+      "min": 0,
+      "icon": "/assets/capabilities/meter_area_total.svg"
+    },
+    "meter_count_total": {
+      "type": "number",
+      "title": {
+        "en": "Total Mowing Sessions",
+        "de": "Mähsessions gesamt"
+      },
+      "units": {
+        "en": "",
+        "de": ""
+      },
+      "getable": true,
+      "setable": false,
+      "insights": true,
+      "uiComponent": "sensor",
+      "decimals": 0,
+      "min": 0,
+      "icon": "/assets/capabilities/meter_count_total.svg"
+    },
+    "meter_time_total": {
+      "type": "number",
+      "title": {
+        "en": "Total Mowing Time",
+        "de": "Gesamte Mähzeit"
+      },
+      "units": {
+        "en": "h",
+        "de": "h"
+      },
+      "getable": true,
+      "setable": false,
+      "insights": true,
+      "uiComponent": "sensor",
+      "decimals": 1,
       "min": 0,
       "icon": "/assets/capabilities/measure_duration.svg"
     },

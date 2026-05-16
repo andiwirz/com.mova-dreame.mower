@@ -23,6 +23,9 @@ class MowerDriver extends Homey.Driver {
     flow.getActionCard('start_edge_zone_mowing')
       .registerRunListener(({ device, zone }) => device.cmdStartEdgeZoneMowing(zone));
 
+    flow.getActionCard('start_border_patrol')
+      .registerRunListener(({ device, zone }) => device.cmdStartBorderPatrol(zone));
+
     flow.getActionCard('start_edge_mowing')
       .registerRunListener(({ device }) => device.cmdStartEdgeMowing());
 

@@ -15,11 +15,12 @@ MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct
 - **Lighting** — configure the LED activation time window and per-scenario light behaviour (standby, mowing, charging, error)
 - **Do Not Disturb** — set a quiet window during which the mower will not start automatically and returns to dock if already mowing
 - **Low Speed at Night** — set a time window during which the mower slows down automatically to protect animals active at night
+- **Lifetime mowing statistics** — total mowed area (m²), total mowing time (h), and total mowing sessions, sourced from the device's built-in mowing history (MIHIS); visible in Homey Insights
+- **Session duration** — running minute counter for the current mowing session; persists across app restarts so the timer is never reset mid-session
 - **Consumable status** — blade life, cleaning brush life, and robot maintenance remaining (%) read from the device
 - **Battery settings** — configure the return-to-dock threshold, task-resume threshold, and auto-resume after charging
 - **Voice Announcements** — configure which voice modes the mower uses (notifications, work status, special status, errors)
 - **Anti-Theft Alarm** — enable lift alarm: mower locks and triggers an audible alarm when lifted
-- **AI Obstacle Photos** — enable photo capture of AI-detected obstacles; fires an "Obstacle detected" flow trigger with a photo and obstacle type after each mowing session
 - **Auto-reset action buttons** when the mower reaches a new state (e.g. dock button resets when mower docks)
 - Full flow card support for automation
 - Built-in **Debug Console** in the app settings for diagnostics, device discovery and compatibility checks
@@ -60,7 +61,6 @@ MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct
 | Anti-Theft — Lift Alarm | When enabled, the mower locks and triggers an alarm immediately when lifted |
 | Anti-Theft — Map Alarm | Triggers an alarm when the mower leaves the mapped area (requires Link module) |
 | Anti-Theft — Real-time Location | Enables real-time GPS location tracking (requires Link module) |
-| AI Obstacle Photos | When enabled, the mower photographs AI-detected obstacles so you can view them in the manufacturer app |
 | Poll interval | How often Homey checks the mower status (seconds, default 30) |
 
 Device info (model, firmware, serial, MAC, email, brand, region) and zone count are read-only labels updated automatically.
@@ -94,6 +94,7 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 | Start edge mowing | Starts edge mowing along the full perimeter |
 | Start zone mowing | Mows one or more specific zones (comma-separated zone IDs) |
 | Start edge zone mowing | Edge-mows a specific zone by number |
+| Start border patrol for zone | Mower traces the zone boundary without cutting — used to verify or demonstrate the boundary |
 | Start spot mowing | Mows at specific spot locations (comma-separated spot IDs) |
 | Pause mowing | Pauses the mower in place |
 | Stop mowing | Stops the current mowing session |
@@ -117,7 +118,6 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 - Battery drops below X% *(arg: threshold %)*
 - Consumable drops below X% *(arg: threshold %; tokens: consumable type, remaining %)*
 - Firmware update available
-- Obstacle detected by AI camera *(fires once per obstacle after each mowing session, with a photo and obstacle type token — requires AI obstacle photo capture to be enabled in device settings)*
 
 **And...**
 - Mower is / is not mowing
@@ -133,6 +133,7 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 - Start edge mowing
 - Start zone mowing *(comma-separated zone IDs)*
 - Start edge zone mowing *(zone number)*
+- Start border patrol for zone *(zone number)* — traces boundary without cutting
 - Start spot mowing *(comma-separated spot IDs)*
 - Pause mowing
 - Stop mowing
@@ -249,6 +250,7 @@ Action: `siid:2, aiid:50`. Payload item: `{ m:'a', p:<mapIndex>, o:<opcode>, d:{
 | 101 | Edge mowing — full perimeter | `{}` (all boundaries) or `{ edge:[[zoneId, mapIdx]] }` (single zone) | ✓ |
 | 102 | Zone mowing | `{ region:[zoneId, …] }` — flat array of numeric zone IDs | ✓ |
 | 103 | Spot mowing | `{ area:[areaId, …] }` — flat array of numeric area/spot IDs | ✓ |
+| 108 | Border patrol | `{ edge:[[zoneId, mapIdx]] }` — mower traces zone boundary without cutting (Randpatrouille) | ✓ |
 | 109 | Go to maintenance point | `{ point:[1] }` — `point` array references the maintenance point index | ✓ |
 
 `p` is the active map index (typically `0`). Omitting the `edge` array in op-code 101 lets the device mow all stored boundaries automatically — passing unknown boundary-segment IDs causes a "zone unreachable" error.
@@ -259,6 +261,8 @@ Action: `siid:2, aiid:50`. Payload item: `{ m:'a', p:<mapIndex>, o:<opcode>, d:{
 
 Read all: `in:[{ m:'g', t:'CFG' }]` → response `data.result.out[0].d` contains all keys.  
 Write one: `in:[{ m:'s', t:'<KEY>', d:{…} }]`.
+
+Mowing history: `in:[{ m:'g', t:'MIHIS' }]` → response `data.result.out[0].d` contains `{ area, count, time, start }` — `area` in m², `time` in minutes, `count` = total sessions, `start` = Unix timestamp of first use. Read-only.
 
 | Key | GET `d` format | SET `d` format | Description | Confirmed |
 |-----|----------------|----------------|-------------|-----------|

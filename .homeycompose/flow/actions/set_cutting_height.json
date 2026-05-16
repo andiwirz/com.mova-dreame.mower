@@ -6,7 +6,7 @@
     {
       "name": "height", "type": "number",
       "title": { "en": "Height (mm)", "de": "Höhe (mm)" },
-      "min": 20, "max": 100, "step": 5,
+      "min": 30, "max": 100, "step": 5,
       "placeholder": { "en": "40", "de": "40" }
     }
   ]

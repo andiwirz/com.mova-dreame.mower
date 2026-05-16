@@ -1,6 +1,6 @@
 {
   "id": "com.mova-dreame.mower",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "compatibility": ">=12.0.0",
   "sdk": 3,
   "name": {
@@ -26,6 +26,7 @@
     "email": "andi@wirzfamily.ch"
   },
   "homeyCommunityTopicId": 154425,
+  "homepage": "https://community.homey.app/t/app-pro-mova-dreame-mower/154425",
   "source": "https://github.com/andiwirz/com.mova-dreame.mower",
   "bugs": {
     "url": "https://github.com/andiwirz/com.mova-dreame.mower/issues"
