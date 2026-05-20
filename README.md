@@ -2,7 +2,7 @@ MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct
 
 ## Features
 
-- **Action buttons** on the device card: Start Mowing, Start Spot Mowing, Pause, Stop, Return to Dock
+- **Action buttons** on the device card: Start Mowing, Start Spot Mowing, Pause, Stop, Return to Dock, Go to Maintenance Point
 - **Zone picker** — select a zone, the full area, or edge mowing from a dynamic list built from your map; press Start Mowing to begin
 - **Spot picker** — select a configured spot from your map; press Start Spot Mowing to begin
 - **Live status**: battery level, charging status, mower status (mowing / paused / docked / error / …)
@@ -29,26 +29,31 @@ MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct
 
 | Icon | Capability | Description |
 |:----:|-----------|-------------|
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_start_mowing.svg" width="28"> | **Start Mowing** | Button — starts mowing using the selection in the Zone picker |
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_start_spot_mowing.svg" width="28"> | **Start Spot Mowing** | Button — starts mowing at the location selected in the Spot picker |
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_pause.svg" width="28"> | **Pause** | Button — pauses the mower; it waits in place until resumed |
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_stop.svg" width="28"> | **Stop** | Button — stops mowing and keeps the mower where it is |
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_dock.svg" width="28"> | **Return to Dock** | Button — sends the mower back to the charging station |
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_maintenance_point.svg" width="28"> | **Go to Maintenance Point** | Button — drives the mower to its configured maintenance point |
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/mower_status.svg" width="28"> | **Mower Status** | Current state: mowing · paused · docked · charging · error · … |
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/charging_status.svg" width="28"> | **Charging Status** | Charging · not charging · charging completed |
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cutting_height.svg" width="28"> | **Cutting Height** | Slider — blade height in mm; read and set directly from the device card |
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/mow_efficiency.svg" width="28"> | **Mow Efficiency** | Picker — Standard or Efficient mowing mode |
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/mower_volume.svg" width="28"> | **Volume** | Slider — speaker volume (0–100) |
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/child_lock.svg" width="28"> | **Child Lock** | Toggle — locks / unlocks physical buttons on the mower |
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/collision_avoidance.svg" width="28"> | **Collision Avoidance** | Toggle — enables or disables LiDAR obstacle avoidance |
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/firmware_update.svg" width="28"> | **Firmware Update** | Indicator — lights up when a firmware update is available |
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/measure_duration.svg" width="28"> | **Session Duration** | Running duration of the current mowing session (minutes); persists across restarts |
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/consumable_blade.svg" width="28"> | **Blade Life** | Remaining blade life (%) |
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/consumable_brush.svg" width="28"> | **Brush Life** | Remaining cleaning brush life (%) |
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/consumable_robot.svg" width="28"> | **Robot Service** | Remaining robot maintenance life (%) |
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/meter_area_total.svg" width="28"> | **Total Area Mowed** | Lifetime total mowed area (m²) — visible in Homey Insights |
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/meter_count_total.svg" width="28"> | **Total Sessions** | Lifetime total number of completed mowing sessions |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_start_mowing.svg" width="28" height="28"> | **Start Mowing** | Button — starts mowing using the selection in the Zone picker |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_start_spot_mowing.svg" width="28" height="28"> | **Start Spot Mowing** | Button — starts mowing at the location selected in the Spot picker |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_pause.svg" width="28" height="28"> | **Pause** | Button — pauses the mower; it waits in place until resumed |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_stop.svg" width="28" height="28"> | **Stop** | Button — stops mowing and keeps the mower where it is |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_dock.svg" width="28" height="28"> | **Return to Dock** | Button — sends the mower back to the charging station |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_maintenance_point.svg" width="28" height="28"> | **Go to Maintenance Point** | Button — drives the mower to its configured maintenance point |
+| | **Battery** | Battery level (0–100 %) |
+| | **Error Alarm** | Active when the mower reports an error condition |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/mower_status.svg" width="28" height="28"> | **Mower Status** | Current state: `mowing` · `paused` · `returning` · `docked` · `charging` · `idle` · `standby` · `mapping` · `updating` · `remote_control` · `error` |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/charging_status.svg" width="28" height="28"> | **Charging Status** | `charging` · `not_charging` · `charging_completed` · `returning` |
+| | **Zone Picker** | Select what to mow: Full Area, individual zones, or edge mowing — populated automatically from the map |
+| | **Spot Picker** | Select a named spot to mow — populated automatically from the map |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cutting_height.svg" width="28" height="28"> | **Cutting Height** | Slider — blade height in mm; read and set directly from the device card |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/mow_efficiency.svg" width="28" height="28"> | **Mow Efficiency** | Picker — Standard or Efficient mowing mode |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/mower_volume.svg" width="28" height="28"> | **Volume** | Slider — speaker volume (0–100) |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/child_lock.svg" width="28" height="28"> | **Child Lock** | Toggle — locks / unlocks physical buttons on the mower |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/collision_avoidance.svg" width="28" height="28"> | **Collision Avoidance** | Toggle — enables or disables LiDAR obstacle avoidance |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/firmware_update.svg" width="28" height="28"> | **Firmware Update** | Indicator — lights up when a firmware update is available |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/measure_duration.svg" width="28" height="28"> | **Session Duration** | Running duration of the current mowing session (minutes); persists across restarts |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/consumable_blade.svg" width="28" height="28"> | **Blade Life** | Remaining blade life (%) |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/consumable_brush.svg" width="28" height="28"> | **Brush Life** | Remaining cleaning brush life (%) |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/consumable_robot.svg" width="28" height="28"> | **Robot Service** | Remaining robot maintenance life (%) |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/meter_area_total.svg" width="28" height="28"> | **Total Area Mowed** | Lifetime total mowed area (m²) — visible in Homey Insights |
+| | **Total Mowing Time** | Lifetime total mowing time (h) — visible in Homey Insights |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/meter_count_total.svg" width="28" height="28"> | **Total Sessions** | Lifetime total number of completed mowing sessions |
 
 ## Device Settings
 
@@ -92,6 +97,12 @@ Device info (model, firmware, serial, MAC, email, brand, region) and zone count 
 
 > **Note:** Settings that are read from the mower (Frost Protection, Rain Protection, Do Not Disturb, Low Speed at Night, Lighting time window, Edge Mowing, Obstacle Avoidance) are refreshed on startup and every ~5 minutes during normal operation. Changes made in the manufacturer app will appear in Homey within that window.
 
+## Requirements
+
+- **Homey Pro (2023)** or newer — the app requires Homey firmware `≥ 12.0.0`
+- An active MOVA or Dreame account with at least one linked mower
+- Internet access (the integration communicates via the official cloud API)
+
 ## Pairing
 
 Open the Homey app, add a new device and select MOVA or Dreame as brand and your region. Enter the same email address and password you use in the official MOVA or Dreame smartphone app. The integration will discover all mowers linked to your account.
@@ -110,6 +121,8 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 | Go to Maintenance Point | Drives the mower to its configured maintenance point |
 | Zone picker | Select what to mow: Full Area, individual zones, edge mowing (full perimeter), or edge mowing for a single zone — options are populated automatically from your map |
 | Spot picker | Select a named spot to mow — options are populated automatically from your map |
+
+> **Mowing mode and the Start Mowing flow action:** The "Start mowing" flow action uses the *mowing mode* stored on the device — set it first with "Set mowing mode" (all area / edge / zone / spot / manual). Zone and spot IDs for zone/spot mode can be pre-configured with the dedicated zone/spot flow actions. The device card Start Mowing button always uses the current Zone picker selection instead.
 
 ### Flow Card Actions
 
