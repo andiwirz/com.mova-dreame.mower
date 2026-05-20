@@ -27,37 +27,28 @@ MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct
 
 ## Capabilities
 
-<table>
-<tr>
-  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_start_mowing.svg" width="36"><br><sub>Start Mowing</sub></td>
-  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_start_spot_mowing.svg" width="36"><br><sub>Start Spot Mowing</sub></td>
-  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_pause.svg" width="36"><br><sub>Pause</sub></td>
-  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_stop.svg" width="36"><br><sub>Stop</sub></td>
-  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_dock.svg" width="36"><br><sub>Return to Dock</sub></td>
-  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_maintenance_point.svg" width="36"><br><sub>Maintenance Point</sub></td>
-</tr>
-<tr>
-  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/mower_status.svg" width="36"><br><sub>Mower Status</sub></td>
-  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/charging_status.svg" width="36"><br><sub>Charging Status</sub></td>
-  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cutting_height.svg" width="36"><br><sub>Cutting Height</sub></td>
-  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/mow_efficiency.svg" width="36"><br><sub>Mow Efficiency</sub></td>
-  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/mower_volume.svg" width="36"><br><sub>Volume</sub></td>
-  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/measure_duration.svg" width="36"><br><sub>Session Duration</sub></td>
-</tr>
-<tr>
-  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/child_lock.svg" width="36"><br><sub>Child Lock</sub></td>
-  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/collision_avoidance.svg" width="36"><br><sub>Collision Avoidance</sub></td>
-  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/firmware_update.svg" width="36"><br><sub>Firmware Update</sub></td>
-  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/consumable_blade.svg" width="36"><br><sub>Blade Life</sub></td>
-  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/consumable_brush.svg" width="36"><br><sub>Brush Life</sub></td>
-  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/consumable_robot.svg" width="36"><br><sub>Robot Service</sub></td>
-</tr>
-<tr>
-  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/meter_area_total.svg" width="36"><br><sub>Total Area</sub></td>
-  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/meter_count_total.svg" width="36"><br><sub>Total Sessions</sub></td>
-  <td></td><td></td><td></td><td></td>
-</tr>
-</table>
+| Icon | Capability | Description |
+|:----:|-----------|-------------|
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_start_mowing.svg" width="28"> | **Start Mowing** | Button — starts mowing using the selection in the Zone picker |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_start_spot_mowing.svg" width="28"> | **Start Spot Mowing** | Button — starts mowing at the location selected in the Spot picker |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_pause.svg" width="28"> | **Pause** | Button — pauses the mower; it waits in place until resumed |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_stop.svg" width="28"> | **Stop** | Button — stops mowing and keeps the mower where it is |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_dock.svg" width="28"> | **Return to Dock** | Button — sends the mower back to the charging station |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_maintenance_point.svg" width="28"> | **Go to Maintenance Point** | Button — drives the mower to its configured maintenance point |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/mower_status.svg" width="28"> | **Mower Status** | Current state: mowing · paused · docked · charging · error · … |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/charging_status.svg" width="28"> | **Charging Status** | Charging · not charging · charging completed |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cutting_height.svg" width="28"> | **Cutting Height** | Slider — blade height in mm; read and set directly from the device card |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/mow_efficiency.svg" width="28"> | **Mow Efficiency** | Picker — Standard or Efficient mowing mode |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/mower_volume.svg" width="28"> | **Volume** | Slider — speaker volume (0–100) |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/child_lock.svg" width="28"> | **Child Lock** | Toggle — locks / unlocks physical buttons on the mower |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/collision_avoidance.svg" width="28"> | **Collision Avoidance** | Toggle — enables or disables LiDAR obstacle avoidance |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/firmware_update.svg" width="28"> | **Firmware Update** | Indicator — lights up when a firmware update is available |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/measure_duration.svg" width="28"> | **Session Duration** | Running duration of the current mowing session (minutes); persists across restarts |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/consumable_blade.svg" width="28"> | **Blade Life** | Remaining blade life (%) |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/consumable_brush.svg" width="28"> | **Brush Life** | Remaining cleaning brush life (%) |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/consumable_robot.svg" width="28"> | **Robot Service** | Remaining robot maintenance life (%) |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/meter_area_total.svg" width="28"> | **Total Area Mowed** | Lifetime total mowed area (m²) — visible in Homey Insights |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/meter_count_total.svg" width="28"> | **Total Sessions** | Lifetime total number of completed mowing sessions |
 
 ## Device Settings
 
