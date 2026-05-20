@@ -25,6 +25,40 @@ MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct
 - Full flow card support for automation
 - Built-in **Debug Console** in the app settings for diagnostics, device discovery and compatibility checks
 
+## Capabilities
+
+<table>
+<tr>
+  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_start_mowing.svg" width="36"><br><sub>Start Mowing</sub></td>
+  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_start_spot_mowing.svg" width="36"><br><sub>Start Spot Mowing</sub></td>
+  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_pause.svg" width="36"><br><sub>Pause</sub></td>
+  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_stop.svg" width="36"><br><sub>Stop</sub></td>
+  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_dock.svg" width="36"><br><sub>Return to Dock</sub></td>
+  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_maintenance_point.svg" width="36"><br><sub>Maintenance Point</sub></td>
+</tr>
+<tr>
+  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/mower_status.svg" width="36"><br><sub>Mower Status</sub></td>
+  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/charging_status.svg" width="36"><br><sub>Charging Status</sub></td>
+  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cutting_height.svg" width="36"><br><sub>Cutting Height</sub></td>
+  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/mow_efficiency.svg" width="36"><br><sub>Mow Efficiency</sub></td>
+  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/mower_volume.svg" width="36"><br><sub>Volume</sub></td>
+  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/measure_duration.svg" width="36"><br><sub>Session Duration</sub></td>
+</tr>
+<tr>
+  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/child_lock.svg" width="36"><br><sub>Child Lock</sub></td>
+  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/collision_avoidance.svg" width="36"><br><sub>Collision Avoidance</sub></td>
+  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/firmware_update.svg" width="36"><br><sub>Firmware Update</sub></td>
+  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/consumable_blade.svg" width="36"><br><sub>Blade Life</sub></td>
+  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/consumable_brush.svg" width="36"><br><sub>Brush Life</sub></td>
+  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/consumable_robot.svg" width="36"><br><sub>Robot Service</sub></td>
+</tr>
+<tr>
+  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/meter_area_total.svg" width="36"><br><sub>Total Area</sub></td>
+  <td align="center"><img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/meter_count_total.svg" width="36"><br><sub>Total Sessions</sub></td>
+  <td></td><td></td><td></td><td></td>
+</tr>
+</table>
+
 ## Device Settings
 
 | Setting | Description |
