@@ -1,0 +1,165 @@
+name: Bug Report
+description: Report a problem with the app or your mower device.
+title: "[Bug] "
+labels: ["bug"]
+assignees:
+  - andiwirz
+
+body:
+
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to report an issue. Please fill in as many fields as possible — the more detail you provide, the faster the problem can be diagnosed and fixed.
+
+  # ── Environment ───────────────────────────────────────────────────────────────
+
+  - type: dropdown
+    id: brand
+    attributes:
+      label: Brand
+      description: Which brand is your mower?
+      options:
+        - MOVA
+        - Dreame
+    validations:
+      required: true
+
+  - type: dropdown
+    id: region
+    attributes:
+      label: Cloud Region
+      description: Which region did you select during pairing?
+      options:
+        - Europe (EU)
+        - China (CN)
+        - North America (US)
+        - Asia (SG)
+    validations:
+      required: true
+
+  - type: input
+    id: device_model
+    attributes:
+      label: Device Model
+      description: The display name of your mower (e.g. "MOVA LiDAX Ultra 1200").
+      placeholder: e.g. MOVA LiDAX Ultra 1200
+    validations:
+      required: true
+
+  - type: input
+    id: model_id
+    attributes:
+      label: Model Identifier
+      description: The internal model ID shown in the Homey device settings page (e.g. `mova.mower.g2529d`).
+      placeholder: e.g. mova.mower.g2529d
+    validations:
+      required: false
+
+  - type: input
+    id: app_version
+    attributes:
+      label: App Version
+      description: The version of the MOVA & Dreame Mower app (visible in Homey → Apps).
+      placeholder: e.g. 1.0.1
+    validations:
+      required: true
+
+  - type: input
+    id: homey_firmware
+    attributes:
+      label: Homey Firmware Version
+      description: The firmware version of your Homey Pro (visible in Homey → More → About).
+      placeholder: e.g. 12.3.0
+    validations:
+      required: true
+
+  # ── Problem Description ────────────────────────────────────────────────────────
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear and concise description of the problem.
+      placeholder: Describe what went wrong...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+      placeholder: Describe the expected behaviour...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Step-by-step instructions to trigger the problem.
+      placeholder: |
+        1. Open the Homey app
+        2. Tap the device card
+        3. Press "Start Mowing"
+        4. ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: How often does this happen?
+      options:
+        - Always (every time)
+        - Often (more than half the time)
+        - Sometimes (occasionally)
+        - Once (happened only once)
+    validations:
+      required: true
+
+  # ── Logs ──────────────────────────────────────────────────────────────────────
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Debug Log Output
+      description: |
+        Open the Homey app → Apps → MOVA & Dreame Mower → Settings → Debug Console, run a poll or reproduce the issue, then paste the log output here.
+      render: text
+      placeholder: Paste log output here...
+    validations:
+      required: false
+
+  - type: textarea
+    id: debug_poll
+    attributes:
+      label: Raw Poll Response (optional)
+      description: |
+        In the Debug Console, tap "Poll Now" and paste the full raw response. This helps identify which properties the API returns for your device.
+      render: json
+      placeholder: Paste raw poll JSON here...
+    validations:
+      required: false
+
+  # ── Additional Context ─────────────────────────────────────────────────────────
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Anything else that might help — screenshots, flow card configuration, settings that differ from the default, etc.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Before submitting
+      options:
+        - label: I have checked the existing issues and this is not a duplicate.
+          required: true
+        - label: I am using Homey Pro (2023) or newer with firmware ≥ 12.0.0.
+          required: true
+        - label: I have included the app version and Homey firmware version above.
+          required: true
