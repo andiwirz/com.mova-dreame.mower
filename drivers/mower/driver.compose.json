@@ -78,6 +78,9 @@
   "pair": [
     { "id": "pair" }
   ],
+  "repair": [
+    { "id": "repair" }
+  ],
   "settings": [
     {
       "type": "group",

@@ -1194,6 +1194,25 @@ await this._applyMOVASettings(rawData);
       .catch((e) => this.error('setCapabilityOptions mow_spot:', e.message));
   }
 
+  // ─── Repair / re-authentication ───────────────────────────────────────────
+
+  /**
+   * Called by the repair flow after the user has re-authenticated.
+   * Updates the in-memory API instance and forces the next _persistTokensIfChanged
+   * to write the new tokens to the store immediately.
+   */
+  async updateTokens({ accessToken, refreshToken, tokenExpiry }) {
+    this._api.setTokens({ accessToken, refreshToken, tokenExpiry });
+    this._persistedTokenExpiry = 0; // force persist on next successful poll
+    await Promise.all([
+      this.setStoreValue('access_token',  accessToken),
+      this.setStoreValue('refresh_token', refreshToken),
+      this.setStoreValue('token_expiry',  tokenExpiry),
+    ]);
+    await this.setAvailable();
+    this.log('[repair] tokens updated — device marked available');
+  }
+
   // ─── Poll helpers ─────────────────────────────────────────────────────────
 
   /** Persist refreshed tokens only when they actually changed (saves ~6,900 store writes/day). */

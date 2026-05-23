@@ -183,6 +183,10 @@
     "en": "Initial public release.",
     "de": "Erste öffentliche Version."
   },
+  "1.0.2": {
+    "en": "Added repair flow: if your MOVA or Dreame password changes, tap 'Repair' on the device in Homey to re-authenticate without losing any settings or flows.",
+    "de": "Reparatur-Flow hinzugefügt: Bei einer Passwortänderung in der MOVA- oder Dreame-App kann die Verbindung über 'Reparieren' am Gerät in Homey wiederhergestellt werden — alle Einstellungen und Flows bleiben erhalten."
+  },
   "1.0.1": {
     "en": "Added 'Border Patrol' flow action (drives the mower along the boundary of a selected zone, op-code 108). Fixed session duration always showing 0 after an app restart. Added lifetime mowing statistics (total area, total time, total sessions). Removed 'Obstacle detected' flow trigger.",
     "de": "Flow-Aktion 'Randpatrouille' hinzugefügt (fährt den Mähroboter entlang der Grenze einer gewählten Zone, Op-Code 108). Sitzungsdauer nach App-Neustart nicht mehr dauerhaft 0. Gesamte Mähstatistiken hinzugefügt (Gesamtfläche, Gesamtlaufzeit, Gesamtanzahl Mähvorgänge). Flow-Auslöser 'Hindernis erkannt' entfernt."

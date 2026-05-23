@@ -108,6 +108,31 @@ class MowerDriver extends Homey.Driver {
       .registerRunListener((_args, state) => state.pct <= _args.threshold);
   }
 
+  // ─── Repair (re-authentication after password change) ─────────────────────
+
+  async onRepair(session, device) {
+    let api = null;
+
+    // Let the repair page pre-select the correct brand and region.
+    session.setHandler('get_repair_settings', async () => ({
+      brand:  await device.getStoreValue('brand')  || 'mova',
+      region: await device.getStoreValue('region') || 'eu',
+    }));
+
+    session.setHandler('login', async ({ brand, region, username, password }) => {
+      api = new MovaApi({ brand, region, log: (...a) => this.log(...a) });
+      await api.login(username, password);
+      return true;
+    });
+
+    session.setHandler('repair_credentials', async () => {
+      if (!api) throw new Error('Not authenticated — please log in first.');
+      const tokens = api.getTokens();
+      await device.updateTokens(tokens);
+      return true;
+    });
+  }
+
   // ─── Pairing ───────────────────────────────────────────────────────────────
 
   async onPair(session) {
