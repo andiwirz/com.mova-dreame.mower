@@ -24,6 +24,7 @@ MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct
 - **Auto-reset action buttons** when the mower reaches a new state (e.g. dock button resets when mower docks)
 - Full flow card support for automation
 - Built-in **Debug Console** in the app settings for diagnostics, device discovery and compatibility checks
+- **Re-authentication without device removal** — if you change your MOVA or Dreame password, tap *Repair* on the device in Homey to restore the connection; all settings, capabilities, and flows are preserved
 
 ## Capabilities
 
@@ -102,6 +103,23 @@ Device info (model, firmware, serial, MAC, email, brand, region) and zone count 
 - **Homey Pro (2023)** or newer — the app requires Homey firmware `≥ 12.0.0`
 - An active MOVA or Dreame account with at least one linked mower
 - Internet access (the integration communicates via the official cloud API)
+
+## Troubleshooting
+
+### Password changed — device shows "Unavailable"
+
+The app uses an OAuth token to communicate with the MOVA / Dreame cloud. If you change your password in the manufacturer app, the server invalidates the token and the mower device in Homey will show as *Unavailable*.
+
+**Fix — no need to remove and re-add the device:**
+
+1. Open the **Homey** app and go to **Devices**.
+2. Long-press the mower and tap **Repair** (wrench icon).
+3. Enter your updated email and password.
+4. Tap **Sign In & Restore Connection**.
+
+The connection is restored immediately. All settings, capabilities, and flows remain unchanged.
+
+---
 
 ## Pairing
 
