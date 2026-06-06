@@ -39,7 +39,7 @@ MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct
 | | **Battery** | Battery level (0–100 %) |
 | | **Error Alarm** | Active when the mower reports an error condition |
 | <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/mower_status.svg" width="28" height="28"> | **Mower Status** | Current state: `mowing` · `paused` · `returning` · `docked` · `charging` · `idle` · `standby` · `mapping` · `updating` · `remote_control` · `error` |
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/charging_status.svg" width="28" height="28"> | **Charging Status** | `charging` · `not_charging` · `charging_completed` · `returning` |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/charging_status.svg" width="28" height="28"> | **Charging Status** | `charging` · `not_charging` · `charging_completed` · `returning` · `paused_cold` |
 | | **Zone Picker** | Select what to mow: Full Area, individual zones, or edge mowing — populated automatically from the map |
 | | **Spot Picker** | Select a named spot to mow — populated automatically from the map |
 | <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cutting_height.svg" width="28" height="28"> | **Cutting Height** | Slider — blade height in mm; read and set directly from the device card |
@@ -47,7 +47,7 @@ MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct
 | <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/mower_volume.svg" width="28" height="28"> | **Volume** | Slider — speaker volume (0–100) |
 | <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/child_lock.svg" width="28" height="28"> | **Child Lock** | Toggle — locks / unlocks physical buttons on the mower |
 | <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/collision_avoidance.svg" width="28" height="28"> | **Collision Avoidance** | Toggle — enables or disables LiDAR obstacle avoidance |
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/firmware_update.svg" width="28" height="28"> | **Firmware Update** | Indicator — lights up when a firmware update is available |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/firmware_update.svg" width="28" height="28"> | **Firmware Status** | `up_to_date` · `available` · `installing` · `download_failed` |
 | <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/measure_duration.svg" width="28" height="28"> | **Session Duration** | Running duration of the current mowing session (minutes); persists across restarts |
 | <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/consumable_blade.svg" width="28" height="28"> | **Blade Life** | Remaining blade life (%) |
 | <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/consumable_brush.svg" width="28" height="28"> | **Brush Life** | Remaining cleaning brush life (%) |

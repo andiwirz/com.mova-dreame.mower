@@ -1,4 +1,8 @@
 {
   "title": { "en": "Start mowing", "de": "Mähen starten" },
+  "hint": {
+    "en": "Starts mowing using the mode configured with 'Set mowing mode'. Use 'Set mowing mode' before this action to choose all area, zone, edge, or spot. This action does not use the Zone or Spot picker on the device card.",
+    "de": "Startet das Mähen mit dem Modus, der mit 'Mähmodus setzen' festgelegt wurde. Vorher 'Mähmodus setzen' verwenden um Gesamtfläche, Zone, Kante oder Spot auszuwählen. Diese Aktion nutzt nicht den Zonen- oder Spot-Picker auf der Gerätekarte."
+  },
   "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
 }

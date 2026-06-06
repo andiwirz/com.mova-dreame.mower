@@ -100,8 +100,11 @@ class MowerDriver extends Homey.Driver {
     // ─── Trigger run-listeners (for arg-filtered triggers) ────────────────────
 
     flow.getDeviceTriggerCard('battery_low')
-      .registerRunListener(({ device, threshold }) =>
-        device.getCapabilityValue('measure_battery') < threshold,
+      // Fire only when the battery level crosses below the configured threshold in this
+      // poll step (prev >= threshold && pct < threshold). This prevents the trigger from
+      // re-firing on every subsequent poll while the battery stays below the threshold.
+      .registerRunListener((_args, { pct, prev }) =>
+        prev >= _args.threshold && pct < _args.threshold,
       );
 
     flow.getDeviceTriggerCard('consumable_needs_replacement')

@@ -4,7 +4,6 @@
   "units": { "en": "", "de": "" },
   "getable": true,
   "setable": false,
-  "insights": true,
   "uiComponent": "sensor",
   "decimals": 0,
   "min": 0,

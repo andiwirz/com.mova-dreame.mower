@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.mova-dreame.mower",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "compatibility": ">=12.0.0",
   "sdk": 3,
   "name": {
@@ -910,6 +910,10 @@
           "en": "Start mowing",
           "de": "Mähen starten"
         },
+        "hint": {
+          "en": "Starts mowing using the mode configured with 'Set mowing mode'. Use 'Set mowing mode' before this action to choose all area, zone, edge, or spot. This action does not use the Zone or Spot picker on the device card.",
+          "de": "Startet das Mähen mit dem Modus, der mit 'Mähmodus setzen' festgelegt wurde. Vorher 'Mähmodus setzen' verwenden um Gesamtfläche, Zone, Kante oder Spot auszuwählen. Diese Aktion nutzt nicht den Zonen- oder Spot-Picker auf der Gerätekarte."
+        },
         "args": [
           {
             "name": "device",
@@ -1007,8 +1011,8 @@
           "de": "Behebbaren Fehler quittieren"
         },
         "hint": {
-          "en": "Dismisses a recoverable error so the mower can resume operation. Only works if the underlying issue (e.g. stuck wheel) has been resolved.",
-          "de": "Quittiert einen behebbaren Fehler damit der Mähroboter weitermähen kann. Funktioniert nur wenn die Ursache (z.B. eingeklemmtes Rad) beseitigt wurde."
+          "en": "Dismisses a recoverable error so the mower can resume operation. Only works if the underlying issue (e.g. stuck wheel) has been resolved. Note: not supported on all MOVA models — the mower may ignore the command.",
+          "de": "Quittiert einen behebbaren Fehler damit der Mähroboter weitermähen kann. Funktioniert nur wenn die Ursache (z.B. eingeklemmtes Rad) beseitigt wurde. Hinweis: Wird von einigen MOVA-Modellen nicht unterstützt — der Befehl könnte ignoriert werden."
         },
         "args": [
           {
@@ -2385,11 +2389,41 @@
       "icon": "/assets/capabilities/cutting_height.svg"
     },
     "firmware_update": {
-      "type": "boolean",
+      "type": "enum",
       "title": {
-        "en": "Firmware Update Available",
-        "de": "Firmware-Update verfügbar"
+        "en": "Firmware Status",
+        "de": "Firmware-Status"
       },
+      "values": [
+        {
+          "id": "up_to_date",
+          "title": {
+            "en": "Up to Date",
+            "de": "Aktuell"
+          }
+        },
+        {
+          "id": "available",
+          "title": {
+            "en": "Update Available",
+            "de": "Update verfügbar"
+          }
+        },
+        {
+          "id": "installing",
+          "title": {
+            "en": "Installing…",
+            "de": "Wird installiert…"
+          }
+        },
+        {
+          "id": "download_failed",
+          "title": {
+            "en": "Download Failed",
+            "de": "Download fehlgeschlagen"
+          }
+        }
+      ],
       "getable": true,
       "setable": false,
       "uiComponent": "sensor",
@@ -2424,7 +2458,6 @@
       },
       "getable": true,
       "setable": false,
-      "insights": true,
       "uiComponent": "sensor",
       "decimals": 0,
       "min": 0,
@@ -2442,7 +2475,6 @@
       },
       "getable": true,
       "setable": false,
-      "insights": true,
       "uiComponent": "sensor",
       "decimals": 0,
       "min": 0,
@@ -2460,7 +2492,6 @@
       },
       "getable": true,
       "setable": false,
-      "insights": true,
       "uiComponent": "sensor",
       "decimals": 1,
       "min": 0,

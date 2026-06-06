@@ -4,7 +4,6 @@
   "units": { "en": "m²", "de": "m²" },
   "getable": true,
   "setable": false,
-  "insights": true,
   "uiComponent": "sensor",
   "decimals": 0,
   "min": 0,

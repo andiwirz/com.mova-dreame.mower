@@ -7,5 +7,5 @@
   "min": 0,
   "max": 100,
   "step": 1,
-"icon": "/assets/capabilities/mower_volume.svg"
+  "icon": "/assets/capabilities/mower_volume.svg"
 }

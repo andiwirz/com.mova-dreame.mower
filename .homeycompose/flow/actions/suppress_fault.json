@@ -1,5 +1,8 @@
 {
   "title": { "en": "Clear recoverable error", "de": "Behebbaren Fehler quittieren" },
-  "hint": { "en": "Dismisses a recoverable error so the mower can resume operation. Only works if the underlying issue (e.g. stuck wheel) has been resolved.", "de": "Quittiert einen behebbaren Fehler damit der Mähroboter weitermähen kann. Funktioniert nur wenn die Ursache (z.B. eingeklemmtes Rad) beseitigt wurde." },
+  "hint": {
+    "en": "Dismisses a recoverable error so the mower can resume operation. Only works if the underlying issue (e.g. stuck wheel) has been resolved. Note: not supported on all MOVA models — the mower may ignore the command.",
+    "de": "Quittiert einen behebbaren Fehler damit der Mähroboter weitermähen kann. Funktioniert nur wenn die Ursache (z.B. eingeklemmtes Rad) beseitigt wurde. Hinweis: Wird von einigen MOVA-Modellen nicht unterstützt — der Befehl könnte ignoriert werden."
+  },
   "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
 }

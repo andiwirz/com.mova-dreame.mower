@@ -1,6 +1,12 @@
 {
-  "type": "boolean",
-  "title": { "en": "Firmware Update Available", "de": "Firmware-Update verfügbar" },
+  "type": "enum",
+  "title": { "en": "Firmware Status", "de": "Firmware-Status" },
+  "values": [
+    { "id": "up_to_date",      "title": { "en": "Up to Date",          "de": "Aktuell"                  } },
+    { "id": "available",       "title": { "en": "Update Available",    "de": "Update verfügbar"         } },
+    { "id": "installing",      "title": { "en": "Installing…",         "de": "Wird installiert…"        } },
+    { "id": "download_failed", "title": { "en": "Download Failed",     "de": "Download fehlgeschlagen"  } }
+  ],
   "getable": true,
   "setable": false,
   "uiComponent": "sensor",

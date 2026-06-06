@@ -31,15 +31,18 @@ const STATUS_MAP = {
 
 // charging_status code → enum
 // Source: EvotecIT/homeassistant-dreamelawnmower types.py DreameMowerChargingStatus enum
+// Source: antondaubert/dreame-mower property/service5.py (code 16)
 const CHARGING_MAP = {
-  1: 'charging',
-  2: 'not_charging',
-  3: 'charging_completed',
-  5: 'returning',
+  1:  'charging',
+  2:  'not_charging',
+  3:  'charging_completed',
+  5:  'returning',
+  16: 'paused_cold',        // CHARGING_PAUSED_LOW_TEMPERATURE
 };
 
-// Statuses that count as "home" for mowing-completed detection
-const HOME_STATUSES = new Set(['idle', 'standby', 'docked', 'charging', 'updating']);
+// Statuses that count as "home" for mowing-completed detection.
+// 'updating' intentionally excluded — a firmware update is not a mowing completion.
+const HOME_STATUSES = new Set(['idle', 'standby', 'docked', 'charging']);
 
 // ─── Versioned migrations ─────────────────────────────────────────────────────
 const MIGRATIONS = [
@@ -77,8 +80,9 @@ const MIGRATIONS = [
   {
     key: 'capabilities_migrated_v8',
     caps: [
-      // Re-enabled as read-only sensors
-      'mower_task_status', 'child_lock',
+      // Re-enabled as read-only sensor. mower_task_status intentionally excluded:
+      // it is listed in REMOVE_CAPABILITIES and would be stripped again immediately.
+      'child_lock',
     ],
   },
   {
@@ -197,31 +201,9 @@ const MIGRATIONS = [
     ],
   },
   {
-    // Move cutting_height above mower_volume.
+    // v21 was identical to v20 — converted to no-op to avoid a redundant reorder cycle.
     key: 'capabilities_migrated_v21',
-    reorder: [
-      'cmd_start_mowing',
-      'cmd_start_spot_mowing',
-      'cutting_height',
-      'mower_volume',
-      'cmd_pause',
-      'cmd_stop',
-      'cmd_dock',
-      'mower_status',
-      'mow_zone',
-      'mow_spot',
-      'charging_status',
-      'measure_battery',
-      'alarm_generic',
-      'mow_efficiency',
-      'collision_avoidance',
-      'firmware_update',
-      'measure_duration',
-      'child_lock',
-      'consumable_blade',
-      'consumable_brush',
-      'consumable_robot',
-    ],
+    caps: [],
   },
   {
     // Move mower_status and mow_zone before cutting_height so the slider appears
@@ -380,6 +362,39 @@ const MIGRATIONS = [
       'consumable_robot',
     ],
   },
+  {
+    // Re-add firmware_update as a 4-state enum (was boolean).
+    // States: up_to_date / available / installing / download_failed.
+    // Source: antondaubert/dreame-mower OTA_INFO.0 install_state values.
+    key: 'capabilities_migrated_v29',
+    reorder: [
+      'cmd_start_mowing',
+      'cmd_start_spot_mowing',
+      'cmd_pause',
+      'cmd_stop',
+      'cmd_dock',
+      'cmd_maintenance_point',
+      'mower_status',
+      'mow_zone',
+      'cutting_height',
+      'mower_volume',
+      'mow_spot',
+      'charging_status',
+      'measure_battery',
+      'alarm_generic',
+      'mow_efficiency',
+      'collision_avoidance',
+      'firmware_update',
+      'measure_duration',
+      'meter_area_total',
+      'meter_time_total',
+      'meter_count_total',
+      'child_lock',
+      'consumable_blade',
+      'consumable_brush',
+      'consumable_robot',
+    ],
+  },
 ];
 
 // Capabilities removed — stripped from existing installs on next init
@@ -430,8 +445,8 @@ class MowerDevice extends Homey.Device {
     this._activeZoneIds        = [];    // detected zone IDs from MAP data (e.g. [1, 2, 3])
     this._lastZonePickerKey    = null;  // cache key for _updateZonePicker change-guard
     this._lastSpotPickerKey    = null;  // cache key for _updateSpotPicker change-guard
-    this._cfgPollCounter       = 0;     // reads CFG (WRP etc.) on first poll and every 10th thereafter
-    this._mihisPollCounter     = 0;     // reads MIHIS (lifetime stats) on first poll and every 10th thereafter
+    this._cfgPollCounter       = 0;     // reads CFG (WRP etc.) on poll 0, 10, 20, …
+    this._mihisPollCounter     = 5;     // reads MIHIS (lifetime stats) on poll 5, 15, 25, … (staggered vs CFG)
     this._cachedPRE              = await this.getStoreValue('cached_pre') ?? null;  // last known PRE array; used for cutting_height read-modify-write
     this._cuttingHeightWriteTs   = 0;    // timestamp of last successful cutting_height write; guards poll snap-back
     this._preWriteCuttingHeight  = null; // capability value before last write; used to detect snap-back vs external change
@@ -993,7 +1008,7 @@ class MowerDevice extends Homey.Device {
     if (rawResult.status === 'fulfilled') {
       const rawData = rawResult.value?.data;
       if (rawData && typeof rawData === 'object' && !Array.isArray(rawData)) {
-await this._applyMOVASettings(rawData);
+        await this._applyMOVASettings(rawData);
         await this._applyOTAInfo(rawData);
         await this._detectAndSyncZones(rawData);
       }
@@ -1642,7 +1657,12 @@ await this._applyMOVASettings(rawData);
   /**
    * Parse OTA_INFO.0 from the raw poll response and update firmware_update capability.
    * Called directly from the poll loop so it runs even when SETTINGS.0 is absent.
-   * OTA_INFO.0 = JSON array "[state, updateAvailable]" — index 1 === 1 means update available.
+   *
+   * OTA_INFO.0 = JSON array "[installState, flag]"
+   *   installState (index 0): 1=up_to_date, 2=available, 3=installing, 4=download_failed
+   *   flag         (index 1): legacy boolean-like fallback (1 = update available)
+   *
+   * Source: antondaubert/dreame-mower property/device.py OTA_INFO handling
    */
   async _applyOTAInfo(raw) {
     const otaStr = raw['OTA_INFO.0'];
@@ -1650,18 +1670,31 @@ await this._applyMOVASettings(rawData);
     try {
       const ota = JSON.parse(otaStr);
       if (Array.isArray(ota) && ota.length >= 2) {
-        await this._applyFirmwareState(ota[1]);
+        await this._applyFirmwareState(ota[0], ota[1]);
       }
     } catch { /* malformed OTA_INFO, skip */ }
   }
 
   // ─── Capability helpers ───────────────────────────────────────────────────
 
-  async _applyFirmwareState(state) {
-    const updateAvailable = state === 1;
+  /**
+   * Map OTA install-state code to the firmware_update enum capability.
+   * @param {number} installState  0 index of OTA_INFO array (1–4)
+   * @param {number} fallbackFlag  1 index of OTA_INFO array (legacy boolean-like)
+   */
+  async _applyFirmwareState(installState, fallbackFlag = 0) {
+    let state;
+    switch (installState) {
+      case 1:  state = 'up_to_date';      break;
+      case 2:  state = 'available';       break;
+      case 3:  state = 'installing';      break;
+      case 4:  state = 'download_failed'; break;
+      default: state = fallbackFlag === 1 ? 'available' : 'up_to_date';
+    }
+
     const prev = this.getCapabilityValue('firmware_update');
-    await this._setCap('firmware_update', updateAvailable);
-    if (updateAvailable && !prev) {
+    await this._setCap('firmware_update', state);
+    if (state === 'available' && prev !== 'available') {
       this._trgFirmwareUpdate.trigger(this, {}, {})
         .catch((e) => this.error('firmware_update_available trigger:', e.message));
     }
@@ -1681,8 +1714,11 @@ await this._applyMOVASettings(rawData);
   async _applyBattery(pct) {
     const prev = this.getCapabilityValue('measure_battery');
     await this._setCap('measure_battery', pct);
+    // Pass { pct, prev } as trigger state so the run-listener can detect an exact
+    // threshold crossing (prev >= threshold > pct). This ensures each configured
+    // threshold fires at most once per descent, rather than on every poll decrement.
     if (prev !== null && pct < prev) {
-      this._trgBatteryLow.trigger(this, {}, {})
+      this._trgBatteryLow.trigger(this, {}, { pct, prev })
         .catch((e) => this.error('battery_low trigger:', e.message));
     }
   }
