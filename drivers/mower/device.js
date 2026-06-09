@@ -450,6 +450,7 @@ class MowerDevice extends Homey.Device {
     this._cachedPRE              = await this.getStoreValue('cached_pre') ?? null;  // last known PRE array; used for cutting_height read-modify-write
     this._cuttingHeightWriteTs   = 0;    // timestamp of last successful cutting_height write; guards poll snap-back
     this._preWriteCuttingHeight  = null; // capability value before last write; used to detect snap-back vs external change
+    this._cachedMapData          = null; // last parsed map data for the map widget
 
     await this._migrate();
 
@@ -1065,6 +1066,21 @@ class MowerDevice extends Homey.Device {
     }
 
     this._activeZoneIds = detectedIds;
+
+    // Parse and cache map data for the map widget.
+    // Map geometry (zones, forbidden areas) only changes when md5sum changes.
+    // livePath (M_PATH) updates every poll during mowing — refresh it independently.
+    // When livePath is empty (mower docked, M_PATH.0="[]"), preserve last known
+    // position so the robot marker stays visible on the map.
+    const parsed = this._parseMapDataChunks(raw);
+    if (parsed) {
+      if (parsed.md5sum !== this._cachedMapData?.md5sum) {
+        this._cachedMapData = parsed;
+        this.log(`[map] cached: ${parsed.name}, ${parsed.mowingAreas.length} zones, ${parsed.livePath.length} path pts`);
+      } else if (this._cachedMapData && parsed.livePath.length > 0) {
+        this._cachedMapData = { ...this._cachedMapData, livePath: parsed.livePath };
+      }
+    }
 
     if (detectedIds.length > 0) {
       const capped  = Math.min(detectedIds.length, 5);
@@ -1957,6 +1973,107 @@ class MowerDevice extends Homey.Device {
     await this._api.writePRE(this.getData().id, pre);
     this._cachedPRE = pre;
     await this._setCap('mow_efficiency', mode);
+  }
+
+  // ─── Map widget data ──────────────────────────────────────────────────────
+
+  /**
+   * Parse MAP.N + M_PATH.N raw chunks into structured polygon data for the map widget.
+   * Returns null when no MAP data is present.
+   *
+   * MAP.N chunks form a JSON array of double-encoded strings:
+   *   ["<map0-json-string>", "<map1-json-string>"]
+   * Each inner string is a full map object with mowingAreas, forbiddenAreas, etc.
+   *
+   * M_PATH.N chunks form a flat JSON array of [x,y] coordinate pairs; [32767,-32768]
+   * marks a pen-lift (start new sub-path); null entries are inert gaps.
+   */
+  _parseMapDataChunks(raw) {
+    // ── MAP chunks → zone polygons ─────────────────────────────────────────
+    const mapParts = [];
+    for (let i = 0; raw[`MAP.${i}`] != null; i++) mapParts.push(raw[`MAP.${i}`]);
+    if (!mapParts.length) return null;
+
+    let mapObj = null;
+    try {
+      // Some firmware appends extra data after the closing ] of the outer array.
+      // Walk the string character-by-character to find where the first top-level
+      // JSON array actually ends, then truncate before passing to JSON.parse.
+      let combined = mapParts.join('');
+      {
+        let depth = 0, inStr = false, esc = false;
+        for (let ci = 0; ci < combined.length; ci++) {
+          const ch = combined[ci];
+          if (esc)               { esc = false; continue; }
+          if (ch === '\\' && inStr) { esc = true; continue; }
+          if (ch === '"')         { inStr = !inStr; continue; }
+          if (inStr) continue;
+          if (ch === '[' || ch === '{') depth++;
+          if ((ch === ']' || ch === '}') && --depth === 0) { combined = combined.slice(0, ci + 1); break; }
+        }
+      }
+      const outer = JSON.parse(combined);
+      if (Array.isArray(outer)) {
+        // Prefer the entry whose mapIndex matches the active map; fall back to first with boundary
+        const candidates = outer.filter((e) => typeof e === 'string');
+        for (const pass of [0, 1]) {
+          for (const entry of candidates) {
+            try {
+              const m = JSON.parse(entry);
+              if (!m.boundary) continue;
+              if (pass === 0 && m.mapIndex !== this._activeMapIndex) continue;
+              mapObj = m;
+              break;
+            } catch {}
+          }
+          if (mapObj) break;
+        }
+      }
+    } catch (e) {
+      this.error('[map] outer parse error:', e.message);
+      return null;
+    }
+    if (!mapObj) return null;
+
+    // ── M_PATH chunks → live mowing path ──────────────────────────────────
+    const pathParts = [];
+    for (let i = 0; raw[`M_PATH.${i}`] != null; i++) pathParts.push(raw[`M_PATH.${i}`]);
+
+    let livePath = [];
+    if (pathParts.length) {
+      try {
+        const full = JSON.parse(pathParts.join(''));
+        if (Array.isArray(full)) {
+          // Downsample real coordinate points to max 800 to keep widget payload manageable
+          const realCount = full.filter((p) => Array.isArray(p) && p[0] !== 32767).length;
+          const step = realCount > 800 ? Math.ceil(realCount / 800) : 1;
+          let ri = 0;
+          for (const pt of full) {
+            if (pt === null) continue;
+            if (Array.isArray(pt) && pt[0] === 32767) { livePath.push(pt); continue; }
+            if (Array.isArray(pt) && ri++ % step === 0) livePath.push(pt);
+          }
+        }
+      } catch (e) {
+        this.error('[m_path] parse error:', e.message);
+      }
+    }
+
+    return {
+      boundary:       mapObj.boundary,
+      name:           mapObj.name           || 'Map',
+      md5sum:         mapObj.md5sum         || '',
+      mowingAreas:    mapObj.mowingAreas?.value    || [],
+      forbiddenAreas: mapObj.forbiddenAreas?.value || [],
+      spotAreas:      mapObj.spotAreas?.value      || [],
+      contours:       mapObj.contours?.value       || [],
+      livePath,
+    };
+  }
+
+  /** Return the last parsed map data; called by the map widget handler in app.js. */
+  getMapData() {
+    return this._cachedMapData;
   }
 
   // ─── Debug API (called by settings/index.html via api.js) ─────────────────

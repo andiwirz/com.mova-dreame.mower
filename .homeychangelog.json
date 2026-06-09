@@ -187,6 +187,10 @@
     "en": "Firmware status now shows 4 states: Up to Date, Update Available, Installing, and Download Failed. Added charging status 'Paused (Cold)'. Fixed: 'Mowing completed' trigger no longer fires during a firmware update. Fixed: 'Battery low' trigger now fires exactly once per threshold crossing. Added hints to the 'Start mowing' and 'Clear error' flow actions. Internal improvements: device list cached, CFG and history polls staggered.",
     "de": "Firmware-Status zeigt jetzt 4 Zustände: Aktuell, Update verfügbar, Wird installiert und Download fehlgeschlagen. Ladestatus 'Pausiert (Kälte)' hinzugefügt. Behoben: Flow-Auslöser 'Mähen abgeschlossen' wird nicht mehr bei Firmware-Updates ausgelöst. Behoben: Flow-Auslöser 'Akku niedrig' feuert jetzt genau einmal pro Schwellenunterschreitung. Hinweise zu den Flow-Aktionen 'Mähen starten' und 'Fehler quittieren' ergänzt. Interne Verbesserungen: Geräteliste gecacht, CFG- und Mähhistorie-Abfragen zeitversetzt."
   },
+  "1.0.4": {
+    "en": "Added map widget: live SVG map showing mowing zones, forbidden areas, spot areas and the mower's current position. The map updates every 60 seconds. Widget height adjusts automatically to the map aspect ratio.",
+    "de": "Karten-Widget hinzugefügt: Live-SVG-Karte mit Mähzonen, Verbotsbereichen, Spotbereichen und der aktuellen Position des Mähroboters. Die Karte aktualisiert sich alle 60 Sekunden. Die Widget-Höhe passt sich automatisch dem Seitenverhältnis der Karte an."
+  },
   "1.0.2": {
     "en": "Added repair flow: if your MOVA or Dreame password changes, tap 'Repair' on the device in Homey to re-authenticate without losing any settings or flows.",
     "de": "Reparatur-Flow hinzugefügt: Bei einer Passwortänderung in der MOVA- oder Dreame-App kann die Verbindung über 'Reparieren' am Gerät in Homey wiederhergestellt werden — alle Einstellungen und Flows bleiben erhalten."

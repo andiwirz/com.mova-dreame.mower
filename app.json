@@ -1,8 +1,8 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.mova-dreame.mower",
-  "version": "1.0.3",
-  "compatibility": ">=12.0.0",
+  "version": "1.0.4",
+  "compatibility": ">=12.3.0",
   "sdk": 3,
   "name": {
     "en": "MOVA & Dreame Mower",
@@ -225,6 +225,10 @@
     "1.0.0": {
       "en": "Initial public release.",
       "de": "Erste öffentliche Version."
+    },
+    "1.0.4": {
+      "en": "Added map widget: live SVG map showing mowing zones, forbidden areas, spot areas and the mower's current position. The map updates every 60 seconds. Widget height adjusts automatically to the map aspect ratio.",
+      "de": "Karten-Widget hinzugefügt: Live-SVG-Karte mit Mähzonen, Verbotsbereichen, Spotbereichen und der aktuellen Position des Mähroboters. Die Karte aktualisiert sich alle 60 Sekunden. Die Widget-Höhe passt sich automatisch dem Seitenverhältnis der Karte an."
     }
   },
   "flow": {
@@ -2012,6 +2016,27 @@
       "id": "mower"
     }
   ],
+  "widgets": {
+    "map": {
+      "name": {
+        "en": "Mower Map",
+        "de": "Mäherkarte"
+      },
+      "height": "100%",
+      "devices": {
+        "type": "app",
+        "singular": true
+      },
+      "api": {
+        "getMapData": {
+          "method": "GET",
+          "path": "/"
+        }
+      },
+      "id": "map",
+      "settings": []
+    }
+  },
   "capabilities": {
     "charging_status": {
       "type": "enum",

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; }
+    body {
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    #map-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      min-height: 0;
+    }
+    #map-wrap svg { width: 100%; height: 100%; display: block; }
+    #footer {
+      font-size: 10px;
+      color: var(--homey-text-color, rgba(255,255,255,0.45));
+      text-align: center;
+      padding: 2px 6px 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .msg {
+      color: var(--homey-text-color, rgba(255,255,255,0.5));
+      font-size: 12px;
+      text-align: center;
+      padding: 8px;
+      line-height: 1.4;
+    }
+    .msg.err { color: #e74c3c; }
+  </style>
+</head>
+<body>
+  <div id="map-wrap"><div class="msg">Loading map…</div></div>
+  <div id="footer"></div>
+
+  <script>
+    'use strict';
+
+    var _homey = null;
+
+    function showMsg(text, isErr) {
+      document.getElementById('map-wrap').innerHTML =
+        '<div class="msg' + (isErr ? ' err' : '') + '">' + text + '</div>';
+    }
+
+    function onMapData(data) {
+      if (!data || !data.boundary) {
+        showMsg('No map data yet — run a mowing session first');
+        return;
+      }
+      try {
+        document.getElementById('map-wrap').innerHTML = buildSvg(data);
+        const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('footer').textContent = data.name + ' · ' + ts;
+        const b = data.boundary;
+        const W = b.x2 - b.x1, H = b.y2 - b.y1;
+        if (W > 0 && H > 0 && _homey && _homey.setHeight) {
+          const containerW = window.innerWidth || 300;
+          const footerH = document.getElementById('footer').offsetHeight || 16;
+          _homey.setHeight(Math.round(containerW * H / W) + footerH);
+        }
+      } catch (e) {
+        showMsg('Render error: ' + e.message, true);
+      }
+    }
+
+    // ── SVG builder ──────────────────────────────────────────────────────────
+
+    function buildSvg(data) {
+      const { boundary, mowingAreas, forbiddenAreas, spotAreas, contours, livePath } = data;
+      const bx1 = boundary.x1, by1 = boundary.y1, bx2 = boundary.x2, by2 = boundary.y2;
+      const W = bx2 - bx1;
+      const H = by2 - by1;
+
+      const tx = function(x) { return x - bx1; };
+      const ty = function(y) { return by2 - y; };
+
+      function toPoints(path) {
+        if (!Array.isArray(path) || !path.length) return '';
+        return path.map(function(p) {
+          return tx(p.x).toFixed(1) + ',' + ty(p.y).toFixed(1);
+        }).join(' ');
+      }
+
+      const sw = (W + H) * 0.0015;
+      const ZONE_COLORS = ['#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#00BCD4'];
+
+      let g = '';
+
+      // Contours (LiDAR terrain boundaries)
+      for (let i = 0; i < contours.length; i++) {
+        const entry = contours[i];
+        const zone = Array.isArray(entry) ? entry[1] : null;
+        if (!zone || !zone.path || !zone.path.length) continue;
+        g += '<polygon points="' + toPoints(zone.path) + '" fill="rgba(74,95,58,0.45)" stroke="rgba(110,145,80,0.7)" stroke-width="' + sw + '"/>';
+      }
+
+      // Mowing zones
+      let zi = 0;
+      for (let i = 0; i < mowingAreas.length; i++) {
+        const entry = mowingAreas[i];
+        if (!Array.isArray(entry)) continue;
+        const zone = entry[1];
+        if (!zone || !zone.path || !zone.path.length) continue;
+        const c = ZONE_COLORS[zi++ % ZONE_COLORS.length];
+        g += '<polygon points="' + toPoints(zone.path) + '" fill="' + c + '2a" stroke="' + c + '" stroke-width="' + (sw * 1.6) + '"/>';
+        if (zone.name) {
+          const cx = zone.path.reduce(function(s, p) { return s + p.x; }, 0) / zone.path.length;
+          const cy = zone.path.reduce(function(s, p) { return s + p.y; }, 0) / zone.path.length;
+          const fs = (Math.min(W, H) * 0.038).toFixed(0);
+          g += '<text x="' + tx(cx).toFixed(0) + '" y="' + ty(cy).toFixed(0) + '" text-anchor="middle" dominant-baseline="middle" fill="' + c + '" font-size="' + fs + '" font-family="system-ui,sans-serif" font-weight="bold">' + zone.name + '</text>';
+        }
+      }
+
+      // Forbidden areas
+      for (let i = 0; i < forbiddenAreas.length; i++) {
+        const entry = forbiddenAreas[i];
+        if (!Array.isArray(entry)) continue;
+        const zone = entry[1];
+        if (!zone || !zone.path || !zone.path.length) continue;
+        if (zone.shapeType === 3) {
+          const p1 = zone.path[0], p2 = zone.path[1];
+          g += '<line x1="' + tx(p1.x).toFixed(1) + '" y1="' + ty(p1.y).toFixed(1) + '" x2="' + tx(p2.x).toFixed(1) + '" y2="' + ty(p2.y).toFixed(1) + '" stroke="rgba(231,76,60,0.85)" stroke-width="' + (sw * 2.5) + '" stroke-linecap="round"/>';
+        } else {
+          const cx = zone.path.reduce(function(s, p) { return s + tx(p.x); }, 0) / zone.path.length;
+          const cy = zone.path.reduce(function(s, p) { return s + ty(p.y); }, 0) / zone.path.length;
+          const rot = zone.angle ? (zone.angle).toFixed(3) : '0';
+          g += '<polygon points="' + toPoints(zone.path) + '" fill="rgba(231,76,60,0.22)" stroke="rgba(231,76,60,0.85)" stroke-width="' + sw + '" stroke-dasharray="' + (sw * 4) + ',' + (sw * 2) + '" transform="rotate(' + rot + ',' + cx.toFixed(1) + ',' + cy.toFixed(1) + ')"/>';
+        }
+      }
+
+      // Spot areas
+      for (let i = 0; i < spotAreas.length; i++) {
+        const entry = spotAreas[i];
+        if (!Array.isArray(entry)) continue;
+        const zone = entry[1];
+        if (!zone || !zone.path || !zone.path.length) continue;
+        g += '<polygon points="' + toPoints(zone.path) + '" fill="rgba(255,152,0,0.28)" stroke="rgba(255,152,0,0.9)" stroke-width="' + (sw * 1.4) + '"/>';
+        if (zone.name) {
+          const cx = zone.path.reduce(function(s, p) { return s + p.x; }, 0) / zone.path.length;
+          const cy = zone.path.reduce(function(s, p) { return s + p.y; }, 0) / zone.path.length;
+          const fs = (Math.min(W, H) * 0.038).toFixed(0);
+          g += '<text x="' + tx(cx).toFixed(0) + '" y="' + ty(cy).toFixed(0) + '" text-anchor="middle" dominant-baseline="middle" fill="rgba(255,152,0,0.9)" font-size="' + fs + '" font-family="system-ui,sans-serif" font-weight="bold">' + zone.name + '</text>';
+        }
+      }
+
+      // Live mowing path + robot position marker
+      if (Array.isArray(livePath) && livePath.length) {
+        let d = '';
+        let penDown = false;
+        let lastPt = null;
+        for (let i = 0; i < livePath.length; i++) {
+          const pt = livePath[i];
+          if (pt === null || (Array.isArray(pt) && pt[0] === 32767)) {
+            penDown = false;
+            continue;
+          }
+          if (!Array.isArray(pt)) continue;
+          lastPt = pt;
+          const sx = tx(pt[0]).toFixed(1);
+          const sy = ty(pt[1]).toFixed(1);
+          d += penDown ? ('L' + sx + ',' + sy) : ('M' + sx + ',' + sy);
+          penDown = true;
+        }
+        if (d) {
+          g += '<path d="' + d + '" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="' + (sw * 2.2) + '" stroke-linecap="round" stroke-linejoin="round"/>';
+        }
+        if (lastPt) {
+          const rx = tx(lastPt[0]).toFixed(1);
+          const ry = ty(lastPt[1]).toFixed(1);
+          const r = (Math.min(W, H) * 0.012).toFixed(1);
+          g += '<circle cx="' + rx + '" cy="' + ry + '" r="' + r + '" fill="#4fc3f7" stroke="#fff" stroke-width="' + (sw * 1.5) + '"/>';
+        }
+      }
+
+      return '<svg viewBox="0 0 ' + W.toFixed(0) + ' ' + H.toFixed(0) + '" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">'
+        + '<rect width="' + W.toFixed(0) + '" height="' + H.toFixed(0) + '" fill="#0a180a" rx="' + (Math.min(W, H) * 0.01).toFixed(0) + '"/>'
+        + g
+        + '</svg>';
+    }
+
+    // ── Entry point ──────────────────────────────────────────────────────────
+
+    function onHomeyReady(Homey) {
+      _homey = Homey;
+      const ids = Homey.getDeviceIds();
+      const deviceId = ids && ids[0];
+
+      if (!deviceId) {
+        Homey.ready();
+        showMsg('Open widget settings and select a device');
+        return;
+      }
+
+      function loadMap() {
+        Homey.api('GET', '/?deviceId=' + encodeURIComponent(deviceId), {})
+          .then(onMapData)
+          .catch(function(err) { showMsg(err.message || 'Error loading map', true); });
+      }
+
+      loadMap();
+      setInterval(loadMap, 60000);
+      Homey.ready();
+    }
+  </script>
+</body>
+</html>

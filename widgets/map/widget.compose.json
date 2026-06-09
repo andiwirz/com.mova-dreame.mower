@@ -1,0 +1,17 @@
+{
+  "name": {
+    "en": "Mower Map",
+    "de": "Mäherkarte"
+  },
+  "height": "100%",
+  "devices": {
+    "type": "app",
+    "singular": true
+  },
+  "api": {
+    "getMapData": {
+      "method": "GET",
+      "path": "/"
+    }
+  }
+}
