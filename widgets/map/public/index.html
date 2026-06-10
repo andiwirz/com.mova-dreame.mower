@@ -214,9 +214,10 @@
             if (Array.isArray(pt) && pt[0] !== 32767) { lastPt = pt; break; }
           }
         }
-        if (showRobot && lastPt) {
-          const rx = tx(lastPt[0]).toFixed(1);
-          const ry = ty(lastPt[1]).toFixed(1);
+        const markerPt = (Array.isArray(data.robotPos) && data.robotPos.length === 2) ? data.robotPos : lastPt;
+        if (showRobot && markerPt) {
+          const rx = tx(markerPt[0]).toFixed(1);
+          const ry = ty(markerPt[1]).toFixed(1);
           const r = (Math.min(W, H) * 0.012).toFixed(1);
           g += '<circle cx="' + rx + '" cy="' + ry + '" r="' + r + '" fill="#4fc3f7" stroke="#fff" stroke-width="' + (sw * 1.5) + '"/>';
         }

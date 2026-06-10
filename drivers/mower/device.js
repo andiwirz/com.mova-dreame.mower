@@ -2049,20 +2049,68 @@ class MowerDevice extends Homey.Device {
       const skip = parseInt(raw['M_PATH.info'] || '0', 10) || 0;
       const searchStr = skip > 0 ? pathStr.slice(skip) : pathStr;
       const re = /\[(-?\d+),(-?\d+)\]/g;
-      const allPts = [];
+      const rawPts = [];
       let m;
       while ((m = re.exec(searchStr)) !== null) {
         const px = parseInt(m[1], 10), py = parseInt(m[2], 10);
-        // Keep sentinel as-is; scale all other coordinates by 10 (M_PATH uses 1/10th unit)
-        allPts.push(px === 32767 && py === -32768 ? [32767, -32768] : [px * 10, py * 10]);
+        rawPts.push(px === 32767 && py === -32768 ? [32767, -32768] : [px * 10, py * 10]);
       }
-      // Downsample real coordinate points to max 800 to keep widget payload manageable
+      // Insert pen-lifts at session boundaries: M_PATH contains multiple recorded sessions
+      // concatenated without sentinels between them. A jump > 3 m signals a session break.
+      const JUMP_SQ = 3000 * 3000;
+      const allPts = [];
+      let prevReal = null;
+      for (const pt of rawPts) {
+        if (pt[0] === 32767) {
+          allPts.push(pt);
+          prevReal = null;
+        } else {
+          if (prevReal !== null) {
+            const dx = pt[0] - prevReal[0], dy = pt[1] - prevReal[1];
+            if (dx * dx + dy * dy > JUMP_SQ) allPts.push([32767, -32768]);
+          }
+          allPts.push(pt);
+          prevReal = pt;
+        }
+      }
+      // Downsample real coordinate points to max 800 to keep widget payload manageable.
+      // Always include the last real point so the robot marker is at the true last position.
       const realCount = allPts.filter((p) => p[0] !== 32767).length;
       const step = realCount > 800 ? Math.ceil(realCount / 800) : 1;
       let ri = 0;
-      for (const pt of allPts) {
+      let lastRealIdx = -1;
+      for (let i = allPts.length - 1; i >= 0; i--) {
+        if (allPts[i][0] !== 32767) { lastRealIdx = i; break; }
+      }
+      for (let i = 0; i < allPts.length; i++) {
+        const pt = allPts[i];
         if (pt[0] === 32767 && pt[1] === -32768) { livePath.push(pt); continue; }
-        if (ri++ % step === 0) livePath.push(pt);
+        if (ri++ % step === 0 || i === lastRealIdx) livePath.push(pt);
+      }
+    }
+
+    // Derive charger position: centroid of the forbidden-area polygon whose centre
+    // is closest to the M_PATH endpoint. The dock zone is the only forbidden area
+    // within ~3 m of the robot when it returns home.
+    let chargerPos = null;
+    if (livePath.length > 0) {
+      let lastReal = null;
+      for (let i = livePath.length - 1; i >= 0; i--) {
+        if (livePath[i][0] !== 32767) { lastReal = livePath[i]; break; }
+      }
+      if (lastReal) {
+        const fba = mapObj.forbiddenAreas?.value ?? [];
+        let minDist = Infinity;
+        for (const entry of fba) {
+          if (!Array.isArray(entry)) continue;
+          const zone = entry[1];
+          if (!zone?.path?.length) continue;
+          const cx = zone.path.reduce((s, p) => s + p.x, 0) / zone.path.length;
+          const cy = zone.path.reduce((s, p) => s + p.y, 0) / zone.path.length;
+          const dist = Math.sqrt((cx - lastReal[0]) ** 2 + (cy - lastReal[1]) ** 2);
+          if (dist < minDist) { minDist = dist; chargerPos = { x: cx, y: cy }; }
+        }
+        if (minDist > 3000) chargerPos = null;
       }
     }
 
@@ -2074,12 +2122,20 @@ class MowerDevice extends Homey.Device {
       forbiddenAreas: mapObj.forbiddenAreas?.value || [],
       spotAreas:      mapObj.spotAreas?.value      || [],
       contours:       mapObj.contours?.value       || [],
+      chargerPos,
+      mapRawKeys:     Object.keys(mapObj),
       livePath,
     };
   }
 
   /** Return the last parsed map data; called by the map widget handler in app.js. */
   getMapData() {
+    if (!this._cachedMapData) return null;
+    const status = this.getCapabilityValue('mower_status');
+    if (['docked', 'charging', 'idle', 'standby'].includes(status) && this._cachedMapData.chargerPos) {
+      const { x, y } = this._cachedMapData.chargerPos;
+      return { ...this._cachedMapData, robotPos: [x, y] };
+    }
     return this._cachedMapData;
   }
 
@@ -2090,10 +2146,11 @@ class MowerDevice extends Homey.Device {
 
     const did = this.getData().id;
 
-    const [rawResponse, deviceStatus, cfgResult] = await Promise.allSettled([
+    const [rawResponse, deviceStatus, cfgResult, mihisResult] = await Promise.allSettled([
       this._api.getRawProperties(did),
       this._api.getDeviceStatus(did),
       this._api.getCFG(did),
+      this._api.getMowingHistory(did),
     ]);
 
     // Capability snapshot
@@ -2122,6 +2179,22 @@ class MowerDevice extends Homey.Device {
 
     const cfgData = cfgResult.status === 'fulfilled' ? cfgResult.value : { error: cfgResult.reason?.message };
 
+    // Include decoded map snapshot (omit livePath coords to keep payload small)
+    const cachedMap = this._cachedMapData ? {
+      name:            this._cachedMapData.name,
+      md5sum:          this._cachedMapData.md5sum,
+      mowingAreas:     this._cachedMapData.mowingAreas,
+      forbiddenAreas:  this._cachedMapData.forbiddenAreas,
+      spotAreas:       this._cachedMapData.spotAreas,
+      contours:        this._cachedMapData.contours,
+      boundary:        this._cachedMapData.boundary,
+      chargerPos:      this._cachedMapData.chargerPos,
+      mapRawKeys:      this._cachedMapData.mapRawKeys,
+      livePathLength:  this._cachedMapData.livePath?.length ?? 0,
+      livePathHead:    this._cachedMapData.livePath?.slice(0, 5),
+      livePathTail:    this._cachedMapData.livePath?.slice(-5),
+    } : null;
+
     return {
       timestamp:        new Date().toISOString(),
       appVersion:       this.homey.manifest.version,
@@ -2136,6 +2209,8 @@ class MowerDevice extends Homey.Device {
       rawResponse:      rawResponse.status  === 'fulfilled' ? rawResponse.value  : { error: rawResponse.reason?.message },
       deviceStatus:     deviceStatus.status === 'fulfilled' ? deviceStatus.value : { error: deviceStatus.reason?.message },
       cfgData,
+      mihisData:        mihisResult.status === 'fulfilled' ? mihisResult.value : { error: mihisResult.reason?.message },
+      cachedMapData:    cachedMap,
       capabilityValues,
       storeValues,
       deviceSettings,
