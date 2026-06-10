@@ -8,6 +8,44 @@
     "type": "app",
     "singular": true
   },
+  "settings": [
+    {
+      "id": "show_zones",
+      "type": "checkbox",
+      "label": { "en": "Show mowing zones", "de": "Mähzonen anzeigen" },
+      "value": true
+    },
+    {
+      "id": "show_forbidden",
+      "type": "checkbox",
+      "label": { "en": "Show forbidden areas", "de": "Verbotsbereiche anzeigen" },
+      "value": true
+    },
+    {
+      "id": "show_spots",
+      "type": "checkbox",
+      "label": { "en": "Show spot areas", "de": "Spotbereiche anzeigen" },
+      "value": true
+    },
+    {
+      "id": "show_contours",
+      "type": "checkbox",
+      "label": { "en": "Show contours", "de": "Konturlinien anzeigen" },
+      "value": true
+    },
+    {
+      "id": "show_path",
+      "type": "checkbox",
+      "label": { "en": "Show mowing path", "de": "Mähspur anzeigen" },
+      "value": true
+    },
+    {
+      "id": "show_robot",
+      "type": "checkbox",
+      "label": { "en": "Show robot position", "de": "Mäherposition anzeigen" },
+      "value": true
+    }
+  ],
   "api": {
     "getMapData": {
       "method": "GET",

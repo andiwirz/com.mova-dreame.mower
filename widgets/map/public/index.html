@@ -48,6 +48,8 @@
     'use strict';
 
     var _homey = null;
+    var _settings = {};
+    var _lastData = null;
 
     function showMsg(text, isErr) {
       document.getElementById('map-wrap').innerHTML =
@@ -59,11 +61,18 @@
         showMsg('No map data yet — run a mowing session first');
         return;
       }
+      _lastData = data;
+      renderMap();
+    }
+
+    function renderMap() {
+      if (!_lastData) return;
       try {
-        document.getElementById('map-wrap').innerHTML = buildSvg(data);
+        document.getElementById('map-wrap').innerHTML = buildSvg(_lastData, _settings);
         const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        document.getElementById('footer').textContent = data.name + ' · ' + ts;
-        const b = data.boundary;
+        const dbg = 'z:' + _settings.show_zones + ' f:' + _settings.show_forbidden + ' s:' + _settings.show_spots + ' c:' + _settings.show_contours + ' p:' + _settings.show_path + ' r:' + _settings.show_robot;
+        document.getElementById('footer').textContent = _lastData.name + ' · ' + ts + ' | ' + dbg;
+        const b = _lastData.boundary;
         const W = b.x2 - b.x1, H = b.y2 - b.y1;
         if (W > 0 && H > 0 && _homey && _homey.setHeight) {
           const containerW = window.innerWidth || 300;
@@ -77,7 +86,15 @@
 
     // ── SVG builder ──────────────────────────────────────────────────────────
 
-    function buildSvg(data) {
+    function buildSvg(data, s) {
+      s = s || {};
+      var showZones    = s.show_zones    !== false;
+      var showForbidden = s.show_forbidden !== false;
+      var showSpots    = s.show_spots    !== false;
+      var showContours = s.show_contours !== false;
+      var showPath     = s.show_path     !== false;
+      var showRobot    = s.show_robot    !== false;
+
       const { boundary, mowingAreas, forbiddenAreas, spotAreas, contours, livePath } = data;
       const bx1 = boundary.x1, by1 = boundary.y1, bx2 = boundary.x2, by2 = boundary.y2;
       const W = bx2 - bx1;
@@ -99,84 +116,105 @@
       let g = '';
 
       // Contours (LiDAR terrain boundaries)
-      for (let i = 0; i < contours.length; i++) {
-        const entry = contours[i];
-        const zone = Array.isArray(entry) ? entry[1] : null;
-        if (!zone || !zone.path || !zone.path.length) continue;
-        g += '<polygon points="' + toPoints(zone.path) + '" fill="rgba(74,95,58,0.45)" stroke="rgba(110,145,80,0.7)" stroke-width="' + sw + '"/>';
+      if (showContours) {
+        for (let i = 0; i < contours.length; i++) {
+          const entry = contours[i];
+          const zone = Array.isArray(entry) ? entry[1] : null;
+          if (!zone || !zone.path || !zone.path.length) continue;
+          g += '<polygon points="' + toPoints(zone.path) + '" fill="rgba(74,95,58,0.45)" stroke="rgba(110,145,80,0.7)" stroke-width="' + sw + '"/>';
+        }
       }
 
       // Mowing zones
-      let zi = 0;
-      for (let i = 0; i < mowingAreas.length; i++) {
-        const entry = mowingAreas[i];
-        if (!Array.isArray(entry)) continue;
-        const zone = entry[1];
-        if (!zone || !zone.path || !zone.path.length) continue;
-        const c = ZONE_COLORS[zi++ % ZONE_COLORS.length];
-        g += '<polygon points="' + toPoints(zone.path) + '" fill="' + c + '2a" stroke="' + c + '" stroke-width="' + (sw * 1.6) + '"/>';
-        if (zone.name) {
-          const cx = zone.path.reduce(function(s, p) { return s + p.x; }, 0) / zone.path.length;
-          const cy = zone.path.reduce(function(s, p) { return s + p.y; }, 0) / zone.path.length;
-          const fs = (Math.min(W, H) * 0.038).toFixed(0);
-          g += '<text x="' + tx(cx).toFixed(0) + '" y="' + ty(cy).toFixed(0) + '" text-anchor="middle" dominant-baseline="middle" fill="' + c + '" font-size="' + fs + '" font-family="system-ui,sans-serif" font-weight="bold">' + zone.name + '</text>';
+      if (showZones) {
+        let zi = 0;
+        for (let i = 0; i < mowingAreas.length; i++) {
+          const entry = mowingAreas[i];
+          if (!Array.isArray(entry)) continue;
+          const zone = entry[1];
+          if (!zone || !zone.path || !zone.path.length) continue;
+          const c = ZONE_COLORS[zi++ % ZONE_COLORS.length];
+          g += '<polygon points="' + toPoints(zone.path) + '" fill="' + c + '2a" stroke="' + c + '" stroke-width="' + (sw * 1.6) + '"/>';
+          if (zone.name) {
+            const cx = zone.path.reduce(function(s, p) { return s + p.x; }, 0) / zone.path.length;
+            const cy = zone.path.reduce(function(s, p) { return s + p.y; }, 0) / zone.path.length;
+            const fs = (Math.min(W, H) * 0.038).toFixed(0);
+            g += '<text x="' + tx(cx).toFixed(0) + '" y="' + ty(cy).toFixed(0) + '" text-anchor="middle" dominant-baseline="middle" fill="' + c + '" font-size="' + fs + '" font-family="system-ui,sans-serif" font-weight="bold">' + zone.name + '</text>';
+          }
         }
       }
 
       // Forbidden areas
-      for (let i = 0; i < forbiddenAreas.length; i++) {
-        const entry = forbiddenAreas[i];
-        if (!Array.isArray(entry)) continue;
-        const zone = entry[1];
-        if (!zone || !zone.path || !zone.path.length) continue;
-        if (zone.shapeType === 3) {
-          const p1 = zone.path[0], p2 = zone.path[1];
-          g += '<line x1="' + tx(p1.x).toFixed(1) + '" y1="' + ty(p1.y).toFixed(1) + '" x2="' + tx(p2.x).toFixed(1) + '" y2="' + ty(p2.y).toFixed(1) + '" stroke="rgba(231,76,60,0.85)" stroke-width="' + (sw * 2.5) + '" stroke-linecap="round"/>';
-        } else {
-          const cx = zone.path.reduce(function(s, p) { return s + tx(p.x); }, 0) / zone.path.length;
-          const cy = zone.path.reduce(function(s, p) { return s + ty(p.y); }, 0) / zone.path.length;
-          const rot = zone.angle ? (zone.angle).toFixed(3) : '0';
-          g += '<polygon points="' + toPoints(zone.path) + '" fill="rgba(231,76,60,0.22)" stroke="rgba(231,76,60,0.85)" stroke-width="' + sw + '" stroke-dasharray="' + (sw * 4) + ',' + (sw * 2) + '" transform="rotate(' + rot + ',' + cx.toFixed(1) + ',' + cy.toFixed(1) + ')"/>';
+      if (showForbidden) {
+        for (let i = 0; i < forbiddenAreas.length; i++) {
+          const entry = forbiddenAreas[i];
+          if (!Array.isArray(entry)) continue;
+          const zone = entry[1];
+          if (!zone || !zone.path || !zone.path.length) continue;
+          if (zone.shapeType === 3 && zone.path.length >= 2) {
+            // Two opposite bounding-box corners → approximate as ellipse polygon
+            const p1 = zone.path[0], p2 = zone.path[1];
+            const ecx = (p1.x + p2.x) / 2, ecy = (p1.y + p2.y) / 2;
+            const erx = Math.abs(p2.x - p1.x) / 2, ery = Math.abs(p2.y - p1.y) / 2;
+            let epts = '';
+            for (let k = 0; k < 36; k++) {
+              const theta = 2 * Math.PI * k / 36;
+              epts += (k ? ' ' : '') + tx(ecx + erx * Math.cos(theta)).toFixed(1) + ',' + ty(ecy + ery * Math.sin(theta)).toFixed(1);
+            }
+            g += '<polygon points="' + epts + '" fill="rgba(231,76,60,0.22)" stroke="rgba(231,76,60,0.85)" stroke-width="' + sw + '"/>';
+          } else {
+            const cx = zone.path.reduce(function(s, p) { return s + tx(p.x); }, 0) / zone.path.length;
+            const cy = zone.path.reduce(function(s, p) { return s + ty(p.y); }, 0) / zone.path.length;
+            const rot = zone.angle ? (zone.angle).toFixed(3) : '0';
+            g += '<polygon points="' + toPoints(zone.path) + '" fill="rgba(231,76,60,0.22)" stroke="rgba(231,76,60,0.85)" stroke-width="' + sw + '" stroke-dasharray="' + (sw * 4) + ',' + (sw * 2) + '" transform="rotate(' + rot + ',' + cx.toFixed(1) + ',' + cy.toFixed(1) + ')"/>';
+          }
         }
       }
 
       // Spot areas
-      for (let i = 0; i < spotAreas.length; i++) {
-        const entry = spotAreas[i];
-        if (!Array.isArray(entry)) continue;
-        const zone = entry[1];
-        if (!zone || !zone.path || !zone.path.length) continue;
-        g += '<polygon points="' + toPoints(zone.path) + '" fill="rgba(255,152,0,0.28)" stroke="rgba(255,152,0,0.9)" stroke-width="' + (sw * 1.4) + '"/>';
-        if (zone.name) {
-          const cx = zone.path.reduce(function(s, p) { return s + p.x; }, 0) / zone.path.length;
-          const cy = zone.path.reduce(function(s, p) { return s + p.y; }, 0) / zone.path.length;
-          const fs = (Math.min(W, H) * 0.038).toFixed(0);
-          g += '<text x="' + tx(cx).toFixed(0) + '" y="' + ty(cy).toFixed(0) + '" text-anchor="middle" dominant-baseline="middle" fill="rgba(255,152,0,0.9)" font-size="' + fs + '" font-family="system-ui,sans-serif" font-weight="bold">' + zone.name + '</text>';
+      if (showSpots) {
+        for (let i = 0; i < spotAreas.length; i++) {
+          const entry = spotAreas[i];
+          if (!Array.isArray(entry)) continue;
+          const zone = entry[1];
+          if (!zone || !zone.path || !zone.path.length) continue;
+          g += '<polygon points="' + toPoints(zone.path) + '" fill="rgba(255,152,0,0.28)" stroke="rgba(255,152,0,0.9)" stroke-width="' + (sw * 1.4) + '"/>';
+          if (zone.name) {
+            const cx = zone.path.reduce(function(s, p) { return s + p.x; }, 0) / zone.path.length;
+            const cy = zone.path.reduce(function(s, p) { return s + p.y; }, 0) / zone.path.length;
+            const fs = (Math.min(W, H) * 0.038).toFixed(0);
+            g += '<text x="' + tx(cx).toFixed(0) + '" y="' + ty(cy).toFixed(0) + '" text-anchor="middle" dominant-baseline="middle" fill="rgba(255,152,0,0.9)" font-size="' + fs + '" font-family="system-ui,sans-serif" font-weight="bold">' + zone.name + '</text>';
+          }
         }
       }
 
       // Live mowing path + robot position marker
       if (Array.isArray(livePath) && livePath.length) {
-        let d = '';
-        let penDown = false;
         let lastPt = null;
-        for (let i = 0; i < livePath.length; i++) {
-          const pt = livePath[i];
-          if (pt === null || (Array.isArray(pt) && pt[0] === 32767)) {
-            penDown = false;
-            continue;
+        if (showPath) {
+          let d = '';
+          let penDown = false;
+          for (let i = 0; i < livePath.length; i++) {
+            const pt = livePath[i];
+            if (pt === null || (Array.isArray(pt) && pt[0] === 32767)) { penDown = false; continue; }
+            if (!Array.isArray(pt)) continue;
+            lastPt = pt;
+            const sx = tx(pt[0]).toFixed(1);
+            const sy = ty(pt[1]).toFixed(1);
+            d += penDown ? ('L' + sx + ',' + sy) : ('M' + sx + ',' + sy);
+            penDown = true;
           }
-          if (!Array.isArray(pt)) continue;
-          lastPt = pt;
-          const sx = tx(pt[0]).toFixed(1);
-          const sy = ty(pt[1]).toFixed(1);
-          d += penDown ? ('L' + sx + ',' + sy) : ('M' + sx + ',' + sy);
-          penDown = true;
+          if (d) {
+            g += '<path d="' + d + '" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="' + (sw * 2.2) + '" stroke-linecap="round" stroke-linejoin="round"/>';
+          }
+        } else {
+          // Still find lastPt for robot marker even when path is hidden
+          for (let i = livePath.length - 1; i >= 0; i--) {
+            const pt = livePath[i];
+            if (Array.isArray(pt) && pt[0] !== 32767) { lastPt = pt; break; }
+          }
         }
-        if (d) {
-          g += '<path d="' + d + '" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="' + (sw * 2.2) + '" stroke-linecap="round" stroke-linejoin="round"/>';
-        }
-        if (lastPt) {
+        if (showRobot && lastPt) {
           const rx = tx(lastPt[0]).toFixed(1);
           const ry = ty(lastPt[1]).toFixed(1);
           const r = (Math.min(W, H) * 0.012).toFixed(1);
@@ -209,8 +247,24 @@
           .catch(function(err) { showMsg(err.message || 'Error loading map', true); });
       }
 
-      loadMap();
-      setInterval(loadMap, 60000);
+      function start() {
+        loadMap();
+        setInterval(loadMap, 60000);
+      }
+
+      start();
+
+      setInterval(function() {
+        if (typeof Homey.getSettings !== 'function') return;
+        Homey.getSettings().then(function(s) {
+          var next = JSON.stringify(s || {});
+          if (next !== JSON.stringify(_settings)) {
+            _settings = s || {};
+            renderMap();
+          }
+        }).catch(function() {});
+      }, 3000);
+
       Homey.ready();
     }
   </script>

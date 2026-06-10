@@ -2041,21 +2041,28 @@ class MowerDevice extends Homey.Device {
 
     let livePath = [];
     if (pathParts.length) {
-      try {
-        const full = JSON.parse(pathParts.join(''));
-        if (Array.isArray(full)) {
-          // Downsample real coordinate points to max 800 to keep widget payload manageable
-          const realCount = full.filter((p) => Array.isArray(p) && p[0] !== 32767).length;
-          const step = realCount > 800 ? Math.ceil(realCount / 800) : 1;
-          let ri = 0;
-          for (const pt of full) {
-            if (pt === null) continue;
-            if (Array.isArray(pt) && pt[0] === 32767) { livePath.push(pt); continue; }
-            if (Array.isArray(pt) && ri++ % step === 0) livePath.push(pt);
-          }
-        }
-      } catch (e) {
-        this.error('[m_path] parse error:', e.message);
+      // Use regex instead of JSON.parse: chunks split at byte boundaries mean the joined
+      // string is not valid JSON. M_PATH.info is the number of leading chars to skip
+      // (e.g. "2" skips the "[]" placeholder in M_PATH.0). Regex finds all complete
+      // [x,y] pairs regardless of chunk boundaries — same approach as the HA integration.
+      const pathStr = pathParts.join('');
+      const skip = parseInt(raw['M_PATH.info'] || '0', 10) || 0;
+      const searchStr = skip > 0 ? pathStr.slice(skip) : pathStr;
+      const re = /\[(-?\d+),(-?\d+)\]/g;
+      const allPts = [];
+      let m;
+      while ((m = re.exec(searchStr)) !== null) {
+        const px = parseInt(m[1], 10), py = parseInt(m[2], 10);
+        // Keep sentinel as-is; scale all other coordinates by 10 (M_PATH uses 1/10th unit)
+        allPts.push(px === 32767 && py === -32768 ? [32767, -32768] : [px * 10, py * 10]);
+      }
+      // Downsample real coordinate points to max 800 to keep widget payload manageable
+      const realCount = allPts.filter((p) => p[0] !== 32767).length;
+      const step = realCount > 800 ? Math.ceil(realCount / 800) : 1;
+      let ri = 0;
+      for (const pt of allPts) {
+        if (pt[0] === 32767 && pt[1] === -32768) { livePath.push(pt); continue; }
+        if (ri++ % step === 0) livePath.push(pt);
       }
     }
 
