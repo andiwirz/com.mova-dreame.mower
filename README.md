@@ -25,6 +25,8 @@ MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct
 - Full flow card support for automation
 - Built-in **Debug Console** in the app settings for diagnostics, device discovery and compatibility checks
 - **Re-authentication without device removal** — if you change your MOVA or Dreame password, tap *Repair* on the device in Homey to restore the connection; all settings, capabilities, and flows are preserved
+- **Live Map widget** — real-time SVG map of the lawn with zone boundaries, forbidden areas, dock position, and live robot position during mowing
+- **Mowing History widget** — browse past sessions with a mini-map, time-gradient trajectory, obstacle photo carousel, and session statistics
 
 ## Capabilities
 
@@ -97,6 +99,34 @@ MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct
 Device info (model, firmware, serial, MAC, email, brand, region) and zone count are read-only labels updated automatically.
 
 > **Note:** Settings that are read from the mower (Frost Protection, Rain Protection, Do Not Disturb, Low Speed at Night, Lighting time window, Edge Mowing, Obstacle Avoidance) are refreshed on startup and every ~5 minutes during normal operation. Changes made in the manufacturer app will appear in Homey within that window.
+
+## Widgets
+
+Both widgets are available as Homey dashboard widgets. Add them via the Homey app dashboard editor and select your mower device in the widget settings.
+
+### Live Map
+
+Displays a real-time SVG map of the lawn, built from the mower's internal map data:
+
+- **Lawn boundary** — outer perimeter of the mapped area
+- **Mowing zones** — coloured areas for each configured zone
+- **Forbidden areas** — red exclusion zones
+- **Dock position** — charging station marker
+- **Live robot position** — the mower's current position is updated during active mowing using GPS-to-map coordinate conversion; the marker disappears when docked
+
+### Mowing History
+
+Lets you browse completed mowing sessions fetched from the cloud activity log:
+
+- **Session dropdown** — lists past sessions with date, mowing mode (Alles / Rand / Zone), area, and photo count; photo count and mode label are filled in after the session loads
+- **Meta bar** — shows date, mowed area (precise float from the activity file), duration, map name, mowing mode, number of AI-detected humans, and fault count if any
+- **Mini-map** — SVG trajectory of the selected session:
+  - Mowing path coloured with a time gradient (dark = start → bright = end)
+  - Green = area mowing, amber = edge mowing (type 7)
+  - White circle = mowing start point
+  - White ring = dock position
+  - Coloured dot markers for each AI-detected obstacle (grey = obstacle, red = person, orange = animal, blue = vehicle, purple = toy); tapping a marker jumps to the photo in the carousel
+- **Obstacle photo carousel** — full-width photos of AI-detected obstacles with previous/next navigation and dot indicators; photos are fetched on demand via the file-bridge API and cached for the session
 
 ## Requirements
 
@@ -243,6 +273,9 @@ All requests are HTTPS POST to port **13267**. Host: `<region><brand-host>` (e.g
 | `/dreame-user-iot/iotuserdata/getDeviceData` | `Dreame-Auth: <token>` | Read MiOT properties |
 | `/dreame-user-iot/iotuserdata/setDeviceData` | `Dreame-Auth: <token>` | Write MiOT properties |
 | `/dreame-iot-com<bindHost>/device/sendCommand` | `Dreame-Auth: <token>` | Execute MiOT actions (`bindHost` = `-<first segment of bindDomain>`, e.g. `-20000`) |
+| `/dreame-user-iot/iotstatus/history` | `Dreame-Auth: <token>` | Fetch activity history — body: `{ did, uid (masterUid), region, eiid:'1', key:'4.1', siid:'4', type:3, limit, from:0, time_start:0, time_end:<now> }` → `data.list[]` |
+| `/dreame-user-iot/iotfile/getDownloadUrl` | `Dreame-Auth: <token>` | Get signed OSS download URL for an activity JSON file — body: `{ did, uid, model, filename }` → `data` (URL string) |
+| `/file-bridge/user/getDeiviceFile` | `Dreame-Auth: <token>` + `Authorization: Basic <brand-credentials>` | Fetch an AI obstacle photo — body: `{ did, fileinfo:<filename.jpg> }` → Brotli-compressed JPEG (~60–70 KB) |
 
 Password is MD5-hashed with salt `RAylYC%fmSKp7%Tq` before sending. Both brands share the same Basic auth credentials and salt.
 
