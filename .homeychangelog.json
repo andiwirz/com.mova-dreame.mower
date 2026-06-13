@@ -200,6 +200,11 @@
     "de": "Flow-Aktion 'Randpatrouille' hinzugefügt (fährt den Mähroboter entlang der Grenze einer gewählten Zone, Op-Code 108). Sitzungsdauer nach App-Neustart nicht mehr dauerhaft 0. Gesamte Mähstatistiken hinzugefügt (Gesamtfläche, Gesamtlaufzeit, Gesamtanzahl Mähvorgänge). Flow-Auslöser 'Hindernis erkannt' entfernt."
   },
   "1.0.5": {
-    "en": "update map"
+    "en": "Fixed map widget layer visibility: toggling zones, forbidden areas, spots, contours, path or robot position in widget settings now takes effect immediately. Fixed mower position when docked: the blue dot is now placed using the dock coordinates reported directly by the device instead of an approximate centroid.",
+    "de": "Sichtbarkeit der Karten-Widget-Ebenen korrigiert: Das Ein-/Ausblenden von Zonen, Verbotsbereichen, Spots, Konturlinien, Mähspur oder Mäherposition wird jetzt sofort übernommen. Mäherposition bei angedocktem Gerät korrigiert: Der blaue Punkt wird jetzt anhand der vom Gerät gemeldeten Ladestation-Koordinaten positioniert."
+  },
+  "1.0.6": {
+    "en": "Added Mowing History widget: browse completed mowing sessions with a mini-map, time-gradient trajectory (green = area mowing, amber = edge mowing), tappable obstacle markers, and a full-width photo carousel with previous/next navigation. Fixed obstacle photos not loading: the file-bridge API now receives the required Authorization header and correctly decompresses Brotli-encoded JPEG responses.",
+    "de": "Mähverlauf-Widget hinzugefügt: Abgeschlossene Mähsessions mit Mini-Karte, zeitbasiertem Farbverlauf (grün = Flächenmähen, bernstein = Kantenmähen), anklickbaren Hindernismarkierungen und einem Foto-Karussell mit Vor-/Zurück-Navigation durchsuchen. Hindernisfotos werden jetzt korrekt geladen: Die Dateibrücken-API erhält den erforderlichen Authorization-Header und dekomprimiert Brotli-kodierte JPEG-Antworten korrekt."
   }
 }
