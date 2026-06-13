@@ -1,6 +1,6 @@
 {
   "id": "com.mova-dreame.mower",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "compatibility": ">=12.3.0",
   "sdk": 3,
   "name": {
@@ -228,6 +228,10 @@
     "1.0.4": {
       "en": "Added map widget: live SVG map showing mowing zones, forbidden areas, spot areas and the mower's current position. The map updates every 60 seconds. Widget height adjusts automatically to the map aspect ratio.",
       "de": "Karten-Widget hinzugefügt: Live-SVG-Karte mit Mähzonen, Verbotsbereichen, Spotbereichen und der aktuellen Position des Mähroboters. Die Karte aktualisiert sich alle 60 Sekunden. Die Widget-Höhe passt sich automatisch dem Seitenverhältnis der Karte an."
+    },
+    "1.0.5": {
+      "en": "Fixed map widget layer visibility: toggling zones, forbidden areas, spots, contours, path or robot position in widget settings now takes effect immediately. Fixed mower position when docked: the blue dot is now placed using the dock coordinates reported directly by the device (t:DOCK) instead of an approximate forbidden-area centroid.",
+      "de": "Sichtbarkeit der Karten-Widget-Ebenen korrigiert: Das Ein-/Ausblenden von Zonen, Verbotsbereichen, Spots, Konturlinien, Mähspur oder Mäherposition in den Widget-Einstellungen wird jetzt sofort übernommen. Mäherposition bei angedocktem Gerät korrigiert: Der blaue Punkt wird jetzt anhand der vom Gerät gemeldeten Ladestation-Koordinaten (t:DOCK) positioniert statt über einen angenäherten Verbotsbereicsh-Mittelpunkt."
     }
   }
 }

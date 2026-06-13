@@ -447,6 +447,10 @@ class MowerDevice extends Homey.Device {
     this._lastSpotPickerKey    = null;  // cache key for _updateSpotPicker change-guard
     this._cfgPollCounter       = 0;     // reads CFG (WRP etc.) on poll 0, 10, 20, …
     this._mihisPollCounter     = 5;     // reads MIHIS (lifetime stats) on poll 5, 15, 25, … (staggered vs CFG)
+    this._dockPollCounter      = 3;     // reads DOCK position on poll 3, 13, 23, … (staggered vs CFG/MIHIS)
+    this._dockPos              = null;  // last known dock position { x, y } in map mm (raw × 10)
+    this._dockYaw              = null;  // dock orientation in degrees (from DOCK API), used for map rotation
+    this._livePos              = null;  // last known live position { x, y } in map mm from MITRC (direct mm, no × 10)
     this._cachedPRE              = await this.getStoreValue('cached_pre') ?? null;  // last known PRE array; used for cutting_height read-modify-write
     this._cuttingHeightWriteTs   = 0;    // timestamp of last successful cutting_height write; guards poll snap-back
     this._preWriteCuttingHeight  = null; // capability value before last write; used to detect snap-back vs external change
@@ -647,9 +651,20 @@ class MowerDevice extends Homey.Device {
     });
     if (mihis) await this._applyMIHIS(mihis);
 
-    // Skip the redundant getCFG / MIHIS on the very first poll since we fetch them at init.
+    const dock = await this._api.getDockPosition(did).catch((e) => {
+      this.error('[init] getDockPosition failed:', e.message);
+      return null;
+    });
+    if (dock) {
+      this._dockPos = { x: dock.x * 10, y: dock.y * 10 };
+      this._dockYaw = dock.yaw ?? null;
+      this.log(`[init] dockPos: (${this._dockPos.x}, ${this._dockPos.y}) mm  yaw=${this._dockYaw}`);
+    }
+
+    // Skip the redundant getCFG / MIHIS / DOCK on the very first poll since we fetch them at init.
     this._cfgPollCounter   = 1;
     this._mihisPollCounter = 1;
+    this._dockPollCounter  = 1;
 
     this._startPolling();
   }
@@ -1017,6 +1032,30 @@ class MowerDevice extends Homey.Device {
       this.error('[poll] rawProperties failed:', rawResult.reason?.message);
     }
 
+    // ── Live position (MITRC) — every poll ───────────────────────────────────
+    const mitrcTrack = await this._api.getMITRC(did, this._activeMapIndex, 2000).catch(() => null);
+    if (mitrcTrack) {
+      const pos = this._parseMITRCPosition(mitrcTrack);
+      this.log('[mitrc] track len=' + mitrcTrack.length + ' pos=' + (pos ? pos.x + ',' + pos.y : 'null'));
+      if (pos) this._livePos = pos;
+    } else {
+      this.log('[mitrc] no track returned');
+    }
+
+    // ── Dock position — first poll and every 10th thereafter ─────────────────
+    if (this._dockPollCounter % 10 === 0) {
+      const dock = await this._api.getDockPosition(did).catch((e) => {
+        this.error('[dock] getDockPosition failed:', e.message);
+        return null;
+      });
+      if (dock) {
+        this._dockPos = { x: dock.x * 10, y: dock.y * 10 };
+        this._dockYaw = dock.yaw ?? this._dockYaw;
+        if (this._cachedMapData) this._cachedMapData.chargerPos = this._dockPos;
+      }
+    }
+    this._dockPollCounter++;
+
     if (!this.getAvailable()) await this.setAvailable();
   }
 
@@ -1050,6 +1089,32 @@ class MowerDevice extends Homey.Device {
     }
   }
 
+  // ─── Map helpers ──────────────────────────────────────────────────────────
+
+  /**
+   * Parse a MITRC base64 track string into the most recent mower position.
+   * Binary format: 5-byte records — int16LE x, int16LE y, uint8 flag.
+   *   flag=0x00, |x|>100, x≠32767 → position point (map mm, no ×10 scaling)
+   *   flag=0xF8, x=32767          → pen-lift (session boundary)
+   *   flag=0xFF or |x|≤100        → metadata / heading records (ignored)
+   * Returns {x, y} in map mm, or null if no valid position found.
+   */
+  _parseMITRCPosition(track) {
+    const buf = Buffer.from(track, 'base64');
+    let lastX = null;
+    let lastY = null;
+    for (let i = 0; i + 4 < buf.length; i += 5) {
+      const x    = buf.readInt16LE(i);
+      const y    = buf.readInt16LE(i + 2);
+      const flag = buf[i + 4];
+      if (flag === 0 && x !== 32767 && Math.abs(x) > 100) {
+        lastX = x;
+        lastY = y;
+      }
+    }
+    return lastX !== null ? { x: lastX, y: lastY } : null;
+  }
+
   // ─── Picker management ────────────────────────────────────────────────────
 
   /**
@@ -1078,7 +1143,7 @@ class MowerDevice extends Homey.Device {
         this._cachedMapData = parsed;
         this.log(`[map] cached: ${parsed.name}, ${parsed.mowingAreas.length} zones, ${parsed.livePath.length} path pts`);
       } else if (this._cachedMapData && parsed.livePath.length > 0) {
-        this._cachedMapData = { ...this._cachedMapData, livePath: parsed.livePath };
+        this._cachedMapData = { ...this._cachedMapData, livePath: parsed.livePath, chargerPos: parsed.chargerPos };
       }
     }
 
@@ -2035,6 +2100,12 @@ class MowerDevice extends Homey.Device {
     }
     if (!mapObj) return null;
 
+    // Log all top-level keys and flag any position/path candidates
+    this.log('[map] keys:', Object.keys(mapObj).join(', '));
+    const posKeys = Object.keys(mapObj).filter(k => /pos|robot|cur|loc|coord|point|r_p|rp|rob|^tr$|^path|^track|trajec/i.test(k));
+    if (posKeys.length) this.log('[map] position/path keys:', JSON.stringify(Object.fromEntries(posKeys.map(k => [k, typeof mapObj[k] === 'string' ? mapObj[k].slice(0, 120) : mapObj[k]]))));
+    if (mapObj.tr) this.log('[map] tr sample:', String(mapObj.tr).slice(0, 200));
+
     // ── M_PATH chunks → live mowing path ──────────────────────────────────
     const pathParts = [];
     for (let i = 0; raw[`M_PATH.${i}`] != null; i++) pathParts.push(raw[`M_PATH.${i}`]);
@@ -2089,30 +2160,12 @@ class MowerDevice extends Homey.Device {
       }
     }
 
-    // Derive charger position: centroid of the forbidden-area polygon whose centre
-    // is closest to the M_PATH endpoint. The dock zone is the only forbidden area
-    // within ~3 m of the robot when it returns home.
-    let chargerPos = null;
-    if (livePath.length > 0) {
-      let lastReal = null;
-      for (let i = livePath.length - 1; i >= 0; i--) {
-        if (livePath[i][0] !== 32767) { lastReal = livePath[i]; break; }
-      }
-      if (lastReal) {
-        const fba = mapObj.forbiddenAreas?.value ?? [];
-        let minDist = Infinity;
-        for (const entry of fba) {
-          if (!Array.isArray(entry)) continue;
-          const zone = entry[1];
-          if (!zone?.path?.length) continue;
-          const cx = zone.path.reduce((s, p) => s + p.x, 0) / zone.path.length;
-          const cy = zone.path.reduce((s, p) => s + p.y, 0) / zone.path.length;
-          const dist = Math.sqrt((cx - lastReal[0]) ** 2 + (cy - lastReal[1]) ** 2);
-          if (dist < minDist) { minDist = dist; chargerPos = { x: cx, y: cy }; }
-        }
-        if (minDist > 3000) chargerPos = null;
-      }
-    }
+    // Use the dock position reported directly by the device (fetched via t:"DOCK" action).
+    // Falls back to null if not yet fetched; getMapData() will omit the robot marker when null.
+    const chargerPos = this._dockPos ?? null;
+
+    // paths.value is a planned mowing path (sparse waypoints), not the actual robot track.
+    // Log its structure for reference but do not use it for position.
 
     return {
       boundary:       mapObj.boundary,
@@ -2124,6 +2177,7 @@ class MowerDevice extends Homey.Device {
       contours:       mapObj.contours?.value       || [],
       chargerPos,
       mapRawKeys:     Object.keys(mapObj),
+      mapTrSample:    mapObj.tr ? String(mapObj.tr).slice(0, 300) : null,
       livePath,
     };
   }
@@ -2131,12 +2185,34 @@ class MowerDevice extends Homey.Device {
   /** Return the last parsed map data; called by the map widget handler in app.js. */
   getMapData() {
     if (!this._cachedMapData) return null;
+    const base = { ...this._cachedMapData, mapRotation: this._dockYaw ?? 0 };
     const status = this.getCapabilityValue('mower_status');
-    if (['docked', 'charging', 'idle', 'standby'].includes(status) && this._cachedMapData.chargerPos) {
-      const { x, y } = this._cachedMapData.chargerPos;
-      return { ...this._cachedMapData, robotPos: [x, y] };
+    const ACTIVE = ['mowing', 'edge_mowing', 'leaving', 'returning'];
+    const AT_DOCK = ['docked', 'charging', 'idle', 'standby', 'paused'];
+
+    // When actively mowing: prefer MITRC live position, then last M_PATH tail point
+    if (ACTIVE.includes(status)) {
+      if (this._livePos) return { ...base, robotPos: [this._livePos.x, this._livePos.y] };
+      const tail = this._lastMPathPos();
+      if (tail) return { ...base, robotPos: tail };
     }
-    return this._cachedMapData;
+
+    // When docked / idle / unknown: show charger position
+    if (this._cachedMapData.chargerPos) {
+      const { x, y } = this._cachedMapData.chargerPos;
+      return { ...base, robotPos: [x, y] };
+    }
+    return base;
+  }
+
+  /** Return the last real [x, y] from the cached livePath (M_PATH), in map mm. */
+  _lastMPathPos() {
+    const path = this._cachedMapData?.livePath;
+    if (!path) return null;
+    for (let i = path.length - 1; i >= 0; i--) {
+      if (path[i][0] !== 32767) return path[i];
+    }
+    return null;
   }
 
   // ─── Debug API (called by settings/index.html via api.js) ─────────────────
@@ -2190,6 +2266,8 @@ class MowerDevice extends Homey.Device {
       boundary:        this._cachedMapData.boundary,
       chargerPos:      this._cachedMapData.chargerPos,
       mapRawKeys:      this._cachedMapData.mapRawKeys,
+      mapTrSample:     this._cachedMapData.mapTrSample,
+      lastMPathPos:    this._lastMPathPos(),
       livePathLength:  this._cachedMapData.livePath?.length ?? 0,
       livePathHead:    this._cachedMapData.livePath?.slice(0, 5),
       livePathTail:    this._cachedMapData.livePath?.slice(-5),

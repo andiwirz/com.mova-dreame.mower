@@ -24,12 +24,33 @@
     #footer {
       font-size: 10px;
       color: var(--homey-text-color, rgba(255,255,255,0.45));
-      text-align: center;
-      padding: 2px 6px 3px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 2px 4px 3px 6px;
       white-space: nowrap;
       overflow: hidden;
-      text-overflow: ellipsis;
     }
+    #footer-text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+    #refresh-btn {
+      background: none;
+      border: none;
+      color: var(--homey-text-color, rgba(255,255,255,0.45));
+      cursor: pointer;
+      font-size: 13px;
+      line-height: 1;
+      padding: 2px 4px;
+      flex-shrink: 0;
+      opacity: 0.7;
+      transition: opacity 0.15s;
+    }
+    #refresh-btn:hover { opacity: 1; }
+    #refresh-btn.loading { animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
     .msg {
       color: var(--homey-text-color, rgba(255,255,255,0.5));
       font-size: 12px;
@@ -42,14 +63,18 @@
 </head>
 <body>
   <div id="map-wrap"><div class="msg">Loading map…</div></div>
-  <div id="footer"></div>
+  <div id="footer">
+    <span id="footer-text"></span>
+    <button id="refresh-btn" title="Karte aktualisieren">↻</button>
+  </div>
 
   <script>
     'use strict';
 
     var _homey = null;
-    var _settings = {};
+    var _settings = { show_zones: true, show_forbidden: true, show_spots: true, show_contours: true, show_path: true, show_robot: true };
     var _lastData = null;
+    var _lastVbW = 0, _lastVbH = 0;
 
     function showMsg(text, isErr) {
       document.getElementById('map-wrap').innerHTML =
@@ -70,14 +95,11 @@
       try {
         document.getElementById('map-wrap').innerHTML = buildSvg(_lastData, _settings);
         const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const dbg = 'z:' + _settings.show_zones + ' f:' + _settings.show_forbidden + ' s:' + _settings.show_spots + ' c:' + _settings.show_contours + ' p:' + _settings.show_path + ' r:' + _settings.show_robot;
-        document.getElementById('footer').textContent = _lastData.name + ' · ' + ts + ' | ' + dbg;
-        const b = _lastData.boundary;
-        const W = b.x2 - b.x1, H = b.y2 - b.y1;
-        if (W > 0 && H > 0 && _homey && _homey.setHeight) {
+        document.getElementById('footer-text').textContent = _lastData.name + ' · ' + ts;
+        if (_lastVbW > 0 && _lastVbH > 0 && _homey && _homey.setHeight) {
           const containerW = window.innerWidth || 300;
           const footerH = document.getElementById('footer').offsetHeight || 16;
-          _homey.setHeight(Math.round(containerW * H / W) + footerH);
+          _homey.setHeight(Math.round(containerW * _lastVbH / _lastVbW) + footerH);
         }
       } catch (e) {
         showMsg('Render error: ' + e.message, true);
@@ -88,17 +110,15 @@
 
     function buildSvg(data, s) {
       s = s || {};
-      var showZones    = s.show_zones    !== false;
-      var showForbidden = s.show_forbidden !== false;
-      var showSpots    = s.show_spots    !== false;
-      var showContours = s.show_contours !== false;
-      var showPath     = s.show_path     !== false;
-      var showRobot    = s.show_robot    !== false;
+      var showZones     = s.show_zones     !== false;
+      var showForbidden = s.show_forbidden  !== false;
+      var showSpots     = s.show_spots     !== false;
+      var showContours  = s.show_contours  !== false;
+      var showPath      = s.show_path      !== false;
+      var showRobot     = s.show_robot     !== false;
 
       const { boundary, mowingAreas, forbiddenAreas, spotAreas, contours, livePath } = data;
       const bx1 = boundary.x1, by1 = boundary.y1, bx2 = boundary.x2, by2 = boundary.y2;
-      const W = bx2 - bx1;
-      const H = by2 - by1;
 
       const tx = function(x) { return x - bx1; };
       const ty = function(y) { return by2 - y; };
@@ -110,8 +130,50 @@
         }).join(' ');
       }
 
-      const sw = (W + H) * 0.0015;
-      const ZONE_COLORS = ['#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#00BCD4'];
+      // Pre-compute tight viewBox so all sizing can use garden dimensions
+      var featureMinX = Infinity, featureMinY = Infinity, featureMaxX = -Infinity, featureMaxY = -Infinity;
+      function expandBbox(path) {
+        for (var pi = 0; pi < path.length; pi++) {
+          var sx = tx(path[pi].x), sy = ty(path[pi].y);
+          if (sx < featureMinX) featureMinX = sx;
+          if (sx > featureMaxX) featureMaxX = sx;
+          if (sy < featureMinY) featureMinY = sy;
+          if (sy > featureMaxY) featureMaxY = sy;
+        }
+      }
+      // Use only mowing + forbidden zones (not full-scan contours) for the tight viewBox
+      for (var mi = 0; mi < mowingAreas.length; mi++) {
+        var me = mowingAreas[mi];
+        if (Array.isArray(me) && me[1] && me[1].path) expandBbox(me[1].path);
+      }
+      for (var fi = 0; fi < forbiddenAreas.length; fi++) {
+        var fe = forbiddenAreas[fi];
+        if (Array.isArray(fe) && fe[1] && fe[1].path) expandBbox(fe[1].path);
+      }
+      if (Array.isArray(data.robotPos) && data.robotPos.length === 2) {
+        var rpsx = tx(data.robotPos[0]), rpsy = ty(data.robotPos[1]);
+        if (rpsx < featureMinX) featureMinX = rpsx; if (rpsx > featureMaxX) featureMaxX = rpsx;
+        if (rpsy < featureMinY) featureMinY = rpsy; if (rpsy > featureMaxY) featureMaxY = rpsy;
+      }
+      var vbX, vbY, vbW, vbH;
+      if (featureMinX === Infinity) {
+        const W0 = bx2 - bx1, H0 = by2 - by1;
+        vbX = 0; vbY = 0; vbW = W0; vbH = H0;
+      } else {
+        var padX = (featureMaxX - featureMinX) * 0.06;
+        var padY = (featureMaxY - featureMinY) * 0.06;
+        vbX = featureMinX - padX; vbY = featureMinY - padY;
+        vbW = (featureMaxX - featureMinX) + 2 * padX;
+        vbH = (featureMaxY - featureMinY) + 2 * padY;
+      }
+      _lastVbW = vbW; _lastVbH = vbH;
+
+      // Scale all sizes to the garden (not the full LiDAR scan boundary)
+      const refSize = Math.min(vbW, vbH);
+      const sw = refSize * 0.004;
+      const fontSize = (refSize * 0.055).toFixed(0);
+      const markerR  = (refSize * 0.018).toFixed(1);
+      const markerRi = (refSize * 0.009).toFixed(1);
 
       let g = '';
 
@@ -121,30 +183,27 @@
           const entry = contours[i];
           const zone = Array.isArray(entry) ? entry[1] : null;
           if (!zone || !zone.path || !zone.path.length) continue;
-          g += '<polygon points="' + toPoints(zone.path) + '" fill="rgba(74,95,58,0.45)" stroke="rgba(110,145,80,0.7)" stroke-width="' + sw + '"/>';
+          g += '<polygon points="' + toPoints(zone.path) + '" fill="rgba(55,80,45,0.6)" stroke="rgba(90,125,65,0.8)" stroke-width="' + sw + '"/>';
         }
       }
 
-      // Mowing zones
+      // Mowing zones — MOVA style: solid green fill, bright green border
       if (showZones) {
-        let zi = 0;
         for (let i = 0; i < mowingAreas.length; i++) {
           const entry = mowingAreas[i];
           if (!Array.isArray(entry)) continue;
           const zone = entry[1];
           if (!zone || !zone.path || !zone.path.length) continue;
-          const c = ZONE_COLORS[zi++ % ZONE_COLORS.length];
-          g += '<polygon points="' + toPoints(zone.path) + '" fill="' + c + '2a" stroke="' + c + '" stroke-width="' + (sw * 1.6) + '"/>';
+          g += '<polygon points="' + toPoints(zone.path) + '" fill="rgba(76,175,80,0.35)" stroke="#4CAF50" stroke-width="' + (sw * 1.8) + '"/>';
           if (zone.name) {
-            const cx = zone.path.reduce(function(s, p) { return s + p.x; }, 0) / zone.path.length;
-            const cy = zone.path.reduce(function(s, p) { return s + p.y; }, 0) / zone.path.length;
-            const fs = (Math.min(W, H) * 0.038).toFixed(0);
-            g += '<text x="' + tx(cx).toFixed(0) + '" y="' + ty(cy).toFixed(0) + '" text-anchor="middle" dominant-baseline="middle" fill="' + c + '" font-size="' + fs + '" font-family="system-ui,sans-serif" font-weight="bold">' + zone.name + '</text>';
+            const zcx = zone.path.reduce(function(s, p) { return s + p.x; }, 0) / zone.path.length;
+            const zcy = zone.path.reduce(function(s, p) { return s + p.y; }, 0) / zone.path.length;
+            g += '<text x="' + tx(zcx).toFixed(0) + '" y="' + ty(zcy).toFixed(0) + '" text-anchor="middle" dominant-baseline="middle" fill="#a5d6a7" font-size="' + fontSize + '" font-family="system-ui,sans-serif" font-weight="600">' + zone.name + '</text>';
           }
         }
       }
 
-      // Forbidden areas
+      // Forbidden areas — MOVA style: salmon fill, red dashed border
       if (showForbidden) {
         for (let i = 0; i < forbiddenAreas.length; i++) {
           const entry = forbiddenAreas[i];
@@ -152,7 +211,6 @@
           const zone = entry[1];
           if (!zone || !zone.path || !zone.path.length) continue;
           if (zone.shapeType === 3 && zone.path.length >= 2) {
-            // Two opposite bounding-box corners → approximate as ellipse polygon
             const p1 = zone.path[0], p2 = zone.path[1];
             const ecx = (p1.x + p2.x) / 2, ecy = (p1.y + p2.y) / 2;
             const erx = Math.abs(p2.x - p1.x) / 2, ery = Math.abs(p2.y - p1.y) / 2;
@@ -161,12 +219,12 @@
               const theta = 2 * Math.PI * k / 36;
               epts += (k ? ' ' : '') + tx(ecx + erx * Math.cos(theta)).toFixed(1) + ',' + ty(ecy + ery * Math.sin(theta)).toFixed(1);
             }
-            g += '<polygon points="' + epts + '" fill="rgba(231,76,60,0.22)" stroke="rgba(231,76,60,0.85)" stroke-width="' + sw + '"/>';
+            g += '<polygon points="' + epts + '" fill="rgba(220,80,60,0.25)" stroke="rgba(220,80,60,0.9)" stroke-width="' + sw + '" stroke-dasharray="' + (sw * 3) + ',' + (sw * 2) + '"/>';
           } else {
-            const cx = zone.path.reduce(function(s, p) { return s + tx(p.x); }, 0) / zone.path.length;
-            const cy = zone.path.reduce(function(s, p) { return s + ty(p.y); }, 0) / zone.path.length;
+            const fcx = zone.path.reduce(function(s, p) { return s + tx(p.x); }, 0) / zone.path.length;
+            const fcy = zone.path.reduce(function(s, p) { return s + ty(p.y); }, 0) / zone.path.length;
             const rot = zone.angle ? (zone.angle).toFixed(3) : '0';
-            g += '<polygon points="' + toPoints(zone.path) + '" fill="rgba(231,76,60,0.22)" stroke="rgba(231,76,60,0.85)" stroke-width="' + sw + '" stroke-dasharray="' + (sw * 4) + ',' + (sw * 2) + '" transform="rotate(' + rot + ',' + cx.toFixed(1) + ',' + cy.toFixed(1) + ')"/>';
+            g += '<polygon points="' + toPoints(zone.path) + '" fill="rgba(220,80,60,0.25)" stroke="rgba(220,80,60,0.9)" stroke-width="' + sw + '" stroke-dasharray="' + (sw * 3) + ',' + (sw * 2) + '" transform="rotate(' + rot + ',' + fcx.toFixed(1) + ',' + fcy.toFixed(1) + ')"/>';
           }
         }
       }
@@ -178,12 +236,11 @@
           if (!Array.isArray(entry)) continue;
           const zone = entry[1];
           if (!zone || !zone.path || !zone.path.length) continue;
-          g += '<polygon points="' + toPoints(zone.path) + '" fill="rgba(255,152,0,0.28)" stroke="rgba(255,152,0,0.9)" stroke-width="' + (sw * 1.4) + '"/>';
+          g += '<polygon points="' + toPoints(zone.path) + '" fill="rgba(255,183,77,0.3)" stroke="rgba(255,183,77,0.9)" stroke-width="' + (sw * 1.4) + '"/>';
           if (zone.name) {
-            const cx = zone.path.reduce(function(s, p) { return s + p.x; }, 0) / zone.path.length;
-            const cy = zone.path.reduce(function(s, p) { return s + p.y; }, 0) / zone.path.length;
-            const fs = (Math.min(W, H) * 0.038).toFixed(0);
-            g += '<text x="' + tx(cx).toFixed(0) + '" y="' + ty(cy).toFixed(0) + '" text-anchor="middle" dominant-baseline="middle" fill="rgba(255,152,0,0.9)" font-size="' + fs + '" font-family="system-ui,sans-serif" font-weight="bold">' + zone.name + '</text>';
+            const scx = zone.path.reduce(function(s, p) { return s + p.x; }, 0) / zone.path.length;
+            const scy = zone.path.reduce(function(s, p) { return s + p.y; }, 0) / zone.path.length;
+            g += '<text x="' + tx(scx).toFixed(0) + '" y="' + ty(scy).toFixed(0) + '" text-anchor="middle" dominant-baseline="middle" fill="rgba(255,183,77,0.9)" font-size="' + fontSize + '" font-family="system-ui,sans-serif" font-weight="600">' + zone.name + '</text>';
           }
         }
       }
@@ -205,10 +262,9 @@
             penDown = true;
           }
           if (d) {
-            g += '<path d="' + d + '" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="' + (sw * 2.2) + '" stroke-linecap="round" stroke-linejoin="round"/>';
+            g += '<path d="' + d + '" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="' + (sw * 2) + '" stroke-linecap="round" stroke-linejoin="round"/>';
           }
         } else {
-          // Still find lastPt for robot marker even when path is hidden
           for (let i = livePath.length - 1; i >= 0; i--) {
             const pt = livePath[i];
             if (Array.isArray(pt) && pt[0] !== 32767) { lastPt = pt; break; }
@@ -218,13 +274,13 @@
         if (showRobot && markerPt) {
           const rx = tx(markerPt[0]).toFixed(1);
           const ry = ty(markerPt[1]).toFixed(1);
-          const r = (Math.min(W, H) * 0.012).toFixed(1);
-          g += '<circle cx="' + rx + '" cy="' + ry + '" r="' + r + '" fill="#4fc3f7" stroke="#fff" stroke-width="' + (sw * 1.5) + '"/>';
+          g += '<circle cx="' + rx + '" cy="' + ry + '" r="' + markerR + '" fill="#29b6f6" stroke="#fff" stroke-width="' + (sw * 2) + '"/>';
+          g += '<circle cx="' + rx + '" cy="' + ry + '" r="' + markerRi + '" fill="#fff"/>';
         }
       }
 
-      return '<svg viewBox="0 0 ' + W.toFixed(0) + ' ' + H.toFixed(0) + '" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">'
-        + '<rect width="' + W.toFixed(0) + '" height="' + H.toFixed(0) + '" fill="#0a180a" rx="' + (Math.min(W, H) * 0.01).toFixed(0) + '"/>'
+      return '<svg viewBox="' + vbX.toFixed(0) + ' ' + vbY.toFixed(0) + ' ' + vbW.toFixed(0) + ' ' + vbH.toFixed(0) + '" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">'
+        + '<rect x="' + vbX.toFixed(0) + '" y="' + vbY.toFixed(0) + '" width="' + vbW.toFixed(0) + '" height="' + vbH.toFixed(0) + '" fill="#0d1f0d" rx="' + (Math.min(vbW, vbH) * 0.02).toFixed(0) + '"/>'
         + g
         + '</svg>';
     }
@@ -243,28 +299,53 @@
       }
 
       function loadMap() {
-        Homey.api('GET', '/?deviceId=' + encodeURIComponent(deviceId), {})
+        return Homey.api('GET', '/?deviceId=' + encodeURIComponent(deviceId), {})
           .then(onMapData)
           .catch(function(err) { showMsg(err.message || 'Error loading map', true); });
       }
 
+      var refreshBtn = document.getElementById('refresh-btn');
+      refreshBtn.addEventListener('click', function() {
+        refreshBtn.classList.add('loading');
+        refreshBtn.disabled = true;
+        loadMap().then(function() {
+          refreshBtn.classList.remove('loading');
+          refreshBtn.disabled = false;
+        });
+      });
+
       function start() {
         loadMap();
-        setInterval(loadMap, 60000);
+        setInterval(loadMap, 30000);
       }
 
       start();
 
-      setInterval(function() {
-        if (typeof Homey.getSettings !== 'function') return;
-        Homey.getSettings().then(function(s) {
-          var next = JSON.stringify(s || {});
-          if (next !== JSON.stringify(_settings)) {
-            _settings = s || {};
-            renderMap();
+      function applySettings(s) {
+        if (!s || typeof s !== 'object') return;
+        var changed = false;
+        var keys = ['show_zones', 'show_forbidden', 'show_spots', 'show_contours', 'show_path', 'show_robot'];
+        for (var ki = 0; ki < keys.length; ki++) {
+          var k = keys[ki];
+          if (s[k] !== undefined && s[k] !== _settings[k]) { _settings[k] = s[k]; changed = true; }
+        }
+        if (changed) renderMap();
+      }
+
+      function loadSettings() {
+        try {
+          var result = Homey.getSettings();
+          if (result && typeof result.then === 'function') {
+            result.then(applySettings).catch(function() {});
+          } else {
+            applySettings(result);
           }
-        }).catch(function() {});
-      }, 3000);
+        } catch (e) {}
+      }
+
+      try { Homey.on('settings', applySettings); } catch (e) {}
+      loadSettings();
+      setInterval(loadSettings, 5000);
 
       Homey.ready();
     }
