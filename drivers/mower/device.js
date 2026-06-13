@@ -1016,6 +1016,19 @@ class MowerDevice extends Homey.Device {
       await this._setCap('measure_duration', mins);
     }
 
+    // ── Temporary: probe siid:4 live session properties during mowing ────────
+    if (this.getCapabilityValue('mower_status') === 'mowing') {
+      const liveSession = await this._api.getProperties(did, [
+        [4, 8],   // startTs
+        [4, 14],  // duration (min)
+        [4, 60],  // area (m²)
+        [4, 16],  // mapName
+        [4, 4],   // mode
+        [4, 9],   // filename
+      ]).catch(() => null);
+      this.log('[session-live] siid:4 props:', JSON.stringify(liveSession));
+    }
+
     // ── CFG settings (WRP etc.) — first poll and every 10th thereafter ───────
     if (this._cfgPollCounter % 10 === 0) {
       const cfg = await this._api.getCFG(did).catch((e) => {
