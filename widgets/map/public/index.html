@@ -72,7 +72,7 @@
     'use strict';
 
     var _homey = null;
-    var _settings = { show_zones: true, show_forbidden: true, show_spots: true, show_contours: true, show_path: true, show_robot: true };
+    var _settings = { show_zones: true, show_forbidden: true, show_spots: true, show_robot: true, show_obstacles: true };
     var _lastData = null;
     var _lastVbW = 0, _lastVbH = 0;
 
@@ -110,12 +110,13 @@
 
     function buildSvg(data, s) {
       s = s || {};
-      var showZones     = s.show_zones     !== false;
-      var showForbidden = s.show_forbidden  !== false;
-      var showSpots     = s.show_spots     !== false;
-      var showContours  = s.show_contours  !== false;
-      var showPath      = s.show_path      !== false;
-      var showRobot     = s.show_robot     !== false;
+      var showZones      = s.show_zones      !== false;
+      var showForbidden  = s.show_forbidden  !== false;
+      var showSpots      = s.show_spots      !== false;
+      var showContours   = false;
+      var showPath       = false;
+      var showRobot      = s.show_robot      !== false;
+      var showObstacles  = s.show_obstacles  !== false;
 
       const { boundary, mowingAreas, forbiddenAreas, spotAreas, contours, livePath } = data;
       const bx1 = boundary.x1, by1 = boundary.y1, bx2 = boundary.x2, by2 = boundary.y2;
@@ -245,38 +246,48 @@
         }
       }
 
-      // Live mowing path + robot position marker
-      if (Array.isArray(livePath) && livePath.length) {
-        let lastPt = null;
-        if (showPath) {
-          let d = '';
-          let penDown = false;
-          for (let i = 0; i < livePath.length; i++) {
-            const pt = livePath[i];
-            if (pt === null || (Array.isArray(pt) && pt[0] === 32767)) { penDown = false; continue; }
-            if (!Array.isArray(pt)) continue;
-            lastPt = pt;
-            const sx = tx(pt[0]).toFixed(1);
-            const sy = ty(pt[1]).toFixed(1);
-            d += penDown ? ('L' + sx + ',' + sy) : ('M' + sx + ',' + sy);
-            penDown = true;
-          }
-          if (d) {
-            g += '<path d="' + d + '" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="' + (sw * 2) + '" stroke-linecap="round" stroke-linejoin="round"/>';
-          }
-        } else {
-          for (let i = livePath.length - 1; i >= 0; i--) {
-            const pt = livePath[i];
-            if (Array.isArray(pt) && pt[0] !== 32767) { lastPt = pt; break; }
-          }
+      // Live mowing path
+      if (showPath && Array.isArray(livePath) && livePath.length) {
+        let d = '';
+        let penDown = false;
+        for (let i = 0; i < livePath.length; i++) {
+          const pt = livePath[i];
+          if (pt === null || (Array.isArray(pt) && pt[0] === 32767)) { penDown = false; continue; }
+          if (!Array.isArray(pt)) continue;
+          const sx = tx(pt[0]).toFixed(1);
+          const sy = ty(pt[1]).toFixed(1);
+          d += penDown ? ('L' + sx + ',' + sy) : ('M' + sx + ',' + sy);
+          penDown = true;
         }
-        const markerPt = (Array.isArray(data.robotPos) && data.robotPos.length === 2) ? data.robotPos : lastPt;
-        if (showRobot && markerPt) {
-          const rx = tx(markerPt[0]).toFixed(1);
-          const ry = ty(markerPt[1]).toFixed(1);
-          g += '<circle cx="' + rx + '" cy="' + ry + '" r="' + markerR + '" fill="#29b6f6" stroke="#fff" stroke-width="' + (sw * 2) + '"/>';
-          g += '<circle cx="' + rx + '" cy="' + ry + '" r="' + markerRi + '" fill="#fff"/>';
+        if (d) {
+          g += '<path d="' + d + '" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="' + (sw * 2) + '" stroke-linecap="round" stroke-linejoin="round"/>';
         }
+      }
+
+      // Obstacle markers from MAP JSON (orange warning circles)
+      if (showObstacles && Array.isArray(data.mapObstacles) && data.mapObstacles.length) {
+        const obsR  = (refSize * 0.022).toFixed(1);
+        const obsFt = (refSize * 0.030).toFixed(0);
+        for (let i = 0; i < data.mapObstacles.length; i++) {
+          const obs = data.mapObstacles[i];
+          if (!obs) continue;
+          // Handle different coordinate property names the firmware might use
+          const ox = obs.x !== undefined ? obs.x : (obs.px !== undefined ? obs.px : (obs.position ? obs.position.x : undefined));
+          const oy = obs.y !== undefined ? obs.y : (obs.py !== undefined ? obs.py : (obs.position ? obs.position.y : undefined));
+          if (ox == null || oy == null) continue;
+          const osx = tx(ox).toFixed(1);
+          const osy = ty(oy).toFixed(1);
+          g += '<circle cx="' + osx + '" cy="' + osy + '" r="' + obsR + '" fill="rgba(255,152,0,0.85)" stroke="#fff" stroke-width="' + sw + '"/>';
+          g += '<text x="' + osx + '" y="' + osy + '" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="' + obsFt + '" font-family="system-ui,sans-serif" font-weight="800">!</text>';
+        }
+      }
+
+      // Robot position marker — always drawn at robotPos (charger when docked, MITRC when mowing)
+      if (showRobot && Array.isArray(data.robotPos) && data.robotPos.length === 2) {
+        const rx = tx(data.robotPos[0]).toFixed(1);
+        const ry = ty(data.robotPos[1]).toFixed(1);
+        g += '<circle cx="' + rx + '" cy="' + ry + '" r="' + markerR + '" fill="#29b6f6" stroke="#fff" stroke-width="' + (sw * 2) + '"/>';
+        g += '<circle cx="' + rx + '" cy="' + ry + '" r="' + markerRi + '" fill="#fff"/>';
       }
 
       return '<svg viewBox="' + vbX.toFixed(0) + ' ' + vbY.toFixed(0) + ' ' + vbW.toFixed(0) + ' ' + vbH.toFixed(0) + '" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">'
@@ -324,7 +335,7 @@
       function applySettings(s) {
         if (!s || typeof s !== 'object') return;
         var changed = false;
-        var keys = ['show_zones', 'show_forbidden', 'show_spots', 'show_contours', 'show_path', 'show_robot'];
+        var keys = ['show_zones', 'show_forbidden', 'show_spots', 'show_contours', 'show_path', 'show_robot', 'show_obstacles'];
         for (var ki = 0; ki < keys.length; ki++) {
           var k = keys[ki];
           if (s[k] !== undefined && s[k] !== _settings[k]) { _settings[k] = s[k]; changed = true; }

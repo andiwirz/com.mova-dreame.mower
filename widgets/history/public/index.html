@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; overflow: hidden; }
+    body {
+      background: transparent;
+      font-family: system-ui, -apple-system, sans-serif;
+      color: var(--homey-text-color, rgba(255,255,255,0.9));
+      font-size: 13px;
+      padding: 8px;
+    }
+
+    .select-wrapper {
+      position: relative;
+      width: 100%;
+    }
+    .select-wrapper::after {
+      content: '▾';
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      font-size: 14px;
+      color: var(--homey-text-color, rgba(255,255,255,0.5));
+    }
+    select {
+      width: 100%;
+      background: var(--homey-background-color, rgba(255,255,255,0.08));
+      color: var(--homey-text-color, rgba(255,255,255,0.9));
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 8px;
+      padding: 7px 28px 7px 10px;
+      font-size: 13px;
+      appearance: none;
+      cursor: pointer;
+      outline: none;
+    }
+    select:focus { border-color: rgba(255,255,255,0.5); }
+
+    #meta {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+      padding: 6px 0;
+      font-size: 11px;
+      color: var(--homey-text-color, rgba(255,255,255,0.5));
+      opacity: 0.7;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      flex-wrap: wrap;
+    }
+    #meta span { display: flex; align-items: center; gap: 3px; }
+    #meta.hidden { display: none; }
+
+    /* ── Carousel ─────────────────────────────── */
+    #carousel {
+      margin-top: 8px;
+      display: none;
+    }
+    #carousel-slide {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4/3;
+      border-radius: 10px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.06);
+    }
+    #carousel-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+    #carousel-img.visible { display: block; }
+
+    /* skeleton pulse while loading */
+    #carousel-slide.loading::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.05);
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+    .slide-label {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.65));
+      color: #fff;
+      font-size: 12px;
+      padding: 24px 44px 8px;
+      text-align: center;
+    }
+
+    .nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(0,0,0,0.45);
+      color: #fff;
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+      z-index: 2;
+    }
+    .nav-btn:hover { background: rgba(0,0,0,0.65); }
+    .nav-btn:disabled { opacity: 0.2; cursor: default; }
+    #prev-btn { left: 6px; }
+    #next-btn { right: 6px; }
+
+    #carousel-counter {
+      display: flex;
+      justify-content: center;
+      gap: 5px;
+      margin-top: 6px;
+      min-height: 8px;
+    }
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      transition: background 0.2s;
+    }
+    .dot.active { background: rgba(255,255,255,0.85); }
+
+    /* ── Mini-map ─────────────────────────────── */
+    #minimap {
+      margin-top: 8px;
+      width: 100%;
+      border-radius: 10px;
+      background: rgba(0,0,0,0.35);
+      overflow: hidden;
+      display: none;
+    }
+    #minimap svg { display: block; width: 100%; height: auto; }
+
+    /* ── Messages ─────────────────────────────── */
+    .msg {
+      color: var(--homey-text-color, rgba(255,255,255,0.4));
+      font-size: 12px;
+      text-align: center;
+      padding: 20px 8px;
+      line-height: 1.5;
+    }
+    #photo-msg { margin-top: 10px; }
+
+  </style>
+</head>
+<body>
+  <div class="select-wrapper">
+    <select id="session-select"><option value="">Wird geladen…</option></select>
+  </div>
+  <div id="meta" class="hidden"></div>
+  <div id="minimap"></div>
+
+  <div id="carousel">
+    <div id="carousel-slide" class="loading">
+      <img id="carousel-img" src="" alt="">
+      <div id="carousel-label" class="slide-label"></div>
+      <button id="prev-btn" class="nav-btn">&#8249;</button>
+      <button id="next-btn" class="nav-btn">&#8250;</button>
+    </div>
+    <div id="carousel-counter"></div>
+  </div>
+  <div id="photo-msg" class="msg" style="display:none"></div>
+
+
+<script>
+(function () {
+  var _homey, _deviceId, _sessions = [], _photoCache = {};
+  var _photos = [], _photoIdx = 0;
+
+  function fmtDate(ts) {
+    if (!ts) return '—';
+    var d = new Date(ts * 1000);
+    return d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
+      + ' ' + d.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function obsTypeLabel(typeCode, idx) {
+    var labels = { 0: 'Hindernis', 1: 'Mensch', 2: 'Tier', 3: 'Fahrzeug', 4: 'Spielzeug' };
+    return (labels[typeCode] || 'Hindernis') + ' ' + (idx + 1);
+  }
+
+  function fmtDuration(min) {
+    if (min == null) return null;
+    var h = Math.floor(min / 60), m = min % 60;
+    return h > 0 ? h + ' h ' + (m > 0 ? m + ' min' : '') : m + ' min';
+  }
+
+  function updateHeight() {
+    if (_homey && _homey.setHeight) _homey.setHeight(document.body.scrollHeight + 4);
+  }
+
+  function showMsg(text) {
+    var el = document.getElementById('photo-msg');
+    el.textContent = text;
+    el.style.display = text ? 'block' : 'none';
+  }
+
+  // mode from activity JSON: 100=aborted/auto, 101=Rand, 102=Zone/Fläche (provisional)
+  var MODE_LABELS = { 0: 'Alles', 1: 'Zone', 2: 'Rand', 3: 'Spot', 6: 'Zone', 8: 'Rand',
+                      100: 'Alles', 101: 'Rand', 102: 'Zone' };
+
+  function renderMeta(session) {
+    var meta = document.getElementById('meta');
+    if (!session) { meta.classList.add('hidden'); return; }
+    var parts = [];
+    if (session.startTs) parts.push('<span>📅 ' + fmtDate(session.startTs) + '</span>');
+    if (session.area != null && session.area > 0) parts.push('<span>📐 ' + session.area + ' m²</span>');
+    if (session.duration != null) { var d = fmtDuration(session.duration); if (d) parts.push('<span>⏱ ' + d + '</span>'); }
+    if (session.mapName) parts.push('<span>🗺 ' + session.mapName + '</span>');
+    if (session.mode != null && MODE_LABELS[session.mode]) parts.push('<span>🔧 ' + MODE_LABELS[session.mode] + '</span>');
+    meta.innerHTML = parts.join('');
+    meta.classList.remove('hidden');
+  }
+
+  function updateMetaActivity(faults, humanDetected, preciseArea, actMode) {
+    var meta = document.getElementById('meta');
+    if (!meta || meta.classList.contains('hidden')) return;
+    meta.querySelectorAll('.act-extra').forEach(function (el) { el.remove(); });
+
+    // Replace area with precise float from activity JSON if available
+    if (preciseArea != null && preciseArea > 0) {
+      var areaSpan = meta.querySelector('span[data-field="area"]');
+      var label = '📐 ' + (Math.round(preciseArea * 10) / 10) + ' m²';
+      if (areaSpan) { areaSpan.textContent = label; }
+      else {
+        var s = document.createElement('span');
+        s.className = 'act-extra'; s.setAttribute('data-field', 'area');
+        s.textContent = label; meta.appendChild(s);
+      }
+    }
+
+    // Mode from activity JSON (overrides piid:4 if present)
+    if (actMode != null && MODE_LABELS[actMode]) {
+      var modeSpan = meta.querySelector('span[data-field="mode"]');
+      var ml = '🔧 ' + MODE_LABELS[actMode];
+      if (modeSpan) { modeSpan.textContent = ml; }
+      else {
+        var s = document.createElement('span');
+        s.className = 'act-extra'; s.setAttribute('data-field', 'mode');
+        s.textContent = ml; meta.appendChild(s);
+      }
+    }
+
+    var count = Array.isArray(humanDetected) ? humanDetected.length : (humanDetected > 0 ? humanDetected : 0);
+    if (count > 0) {
+      var s = document.createElement('span');
+      s.className = 'act-extra';
+      s.textContent = '🚶 ' + count + '× erkannt';
+      meta.appendChild(s);
+    }
+
+    var fc = Array.isArray(faults) ? faults.length : 0;
+    if (fc > 0) {
+      var s = document.createElement('span');
+      s.className = 'act-extra';
+      s.style.color = 'rgba(255,120,80,0.9)';
+      s.textContent = '⚠️ ' + fc + ' Fehler';
+      meta.appendChild(s);
+    }
+  }
+
+  // ── Mini-map ───────────────────────────────────────────────────────────────
+
+  var OBS_COLORS = { 0: '#aaaaaa', 1: '#ff5555', 2: '#ff9f3f', 3: '#5599ff', 4: '#cc77ff' };
+
+  function lerpColor(r1,g1,b1, r2,g2,b2, t) {
+    return 'rgb('+Math.round(r1+(r2-r1)*t)+','+Math.round(g1+(g2-g1)*t)+','+Math.round(b1+(b2-b1)*t)+')';
+  }
+
+  function renderMiniMap(trajectory, dock, photos, faults, trap) {
+    var el = document.getElementById('minimap');
+    el.innerHTML = '';
+    el.style.display = 'none';
+
+    if (!trajectory || !trajectory.length) return;
+
+    var NS = 'http://www.w3.org/2000/svg';
+
+    // Bounding box from trajectory only — obstacles can span far outside and would compress the view
+    var allPts = [];
+    trajectory.forEach(function (seg) {
+      (seg.data || []).forEach(function (p) { allPts.push([p[0], -p[1]]); });
+    });
+    if (dock) allPts.push([dock[0], -dock[1]]);
+    if (allPts.length < 2) return;
+
+    var xs = allPts.map(function (p) { return p[0]; });
+    var ys = allPts.map(function (p) { return p[1]; });
+    var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+    var minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
+    var span = Math.max(maxX - minX, maxY - minY) || 1;
+    var pad  = span * 0.07;
+    var vbX  = minX - pad, vbY = minY - pad;
+    var vbW  = maxX - minX + pad * 2, vbH = maxY - minY + pad * 2;
+    var sw   = span * 0.010;
+
+    var svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', [vbX, vbY, vbW, vbH].join(' '));
+    svg.setAttribute('xmlns', NS);
+
+    // Trajectory — time gradient: dark=start → bright=end
+    // Edge (type 7): dark amber → bright amber; Area: dark green → bright green
+    var totalSegs = trajectory.length;
+    var firstPt = null;
+    trajectory.forEach(function (seg, si) {
+      if (!seg.data || seg.data.length < 2) return;
+      if (!firstPt) firstPt = seg.data[0];
+      var t = totalSegs > 1 ? si / (totalSegs - 1) : 1;
+      var color = seg.type === 7
+        ? lerpColor(160, 100, 10,  255, 215, 80,  t)
+        : lerpColor( 30, 120, 40,  120, 240, 100, t);
+      var pts = seg.data.map(function (p) { return p[0] + ',' + (-p[1]); }).join(' ');
+      var pl = document.createElementNS(NS, 'polyline');
+      pl.setAttribute('points', pts);
+      pl.setAttribute('fill', 'none');
+      pl.setAttribute('stroke', color);
+      pl.setAttribute('stroke-width', sw);
+      pl.setAttribute('stroke-linecap', 'round');
+      pl.setAttribute('stroke-linejoin', 'round');
+      svg.appendChild(pl);
+    });
+
+    // Start marker — small bright circle at first trajectory point
+    if (firstPt) {
+      var sc = document.createElementNS(NS, 'circle');
+      sc.setAttribute('cx', firstPt[0]); sc.setAttribute('cy', -firstPt[1]);
+      sc.setAttribute('r', sw * 1.4); sc.setAttribute('fill', 'rgba(255,255,255,0.95)');
+      sc.setAttribute('stroke', 'rgba(0,0,0,0.4)'); sc.setAttribute('stroke-width', sw * 0.3);
+      svg.appendChild(sc);
+    }
+
+    // Dock marker (white ring + dark centre)
+    if (dock) {
+      var dr = sw * 2.2;
+      var dcx = dock[0], dcy = -dock[1];
+      var dOuter = document.createElementNS(NS, 'circle');
+      dOuter.setAttribute('cx', dcx); dOuter.setAttribute('cy', dcy);
+      dOuter.setAttribute('r', dr); dOuter.setAttribute('fill', 'rgba(255,255,255,0.9)');
+      svg.appendChild(dOuter);
+      var dInner = document.createElementNS(NS, 'circle');
+      dInner.setAttribute('cx', dcx); dInner.setAttribute('cy', dcy);
+      dInner.setAttribute('r', dr * 0.45); dInner.setAttribute('fill', 'rgba(20,20,20,0.9)');
+      svg.appendChild(dInner);
+    }
+
+    // Obstacle markers — coloured by type, clickable → jump to photo in carousel
+    // Obstacle coords are in mm; trajectory/dock use 10mm units → divide by 10
+    var mr = sw * 2.5;
+    (photos || []).forEach(function (obs, i) {
+      if (!Array.isArray(obs) || obs[0] == null) return;
+      var cx = obs[0] / 10, cy = -obs[1] / 10;
+      var typeCode = obs[3] != null ? obs[3] : 0;
+      var color = OBS_COLORS[typeCode] || OBS_COLORS[0];
+
+      var g = document.createElementNS(NS, 'g');
+      g.setAttribute('style', 'cursor:pointer');
+
+      var ring = document.createElementNS(NS, 'circle');
+      ring.setAttribute('cx', cx); ring.setAttribute('cy', cy);
+      ring.setAttribute('r', mr * 1.35);
+      ring.setAttribute('fill', 'rgba(0,0,0,0.55)');
+      g.appendChild(ring);
+
+      var dot = document.createElementNS(NS, 'circle');
+      dot.setAttribute('cx', cx); dot.setAttribute('cy', cy);
+      dot.setAttribute('r', mr);
+      dot.setAttribute('fill', color);
+      g.appendChild(dot);
+
+      g.addEventListener('click', function () { showPhoto(i); });
+      svg.appendChild(g);
+    });
+
+    // Fault markers — orange X at position if available, else skip (counted in meta)
+    (Array.isArray(faults) ? faults : []).forEach(function (f) {
+      var fx = (f.x != null ? f.x : (f.pos && f.pos[0] != null ? f.pos[0] : null));
+      var fy = (f.y != null ? f.y : (f.pos && f.pos[1] != null ? f.pos[1] : null));
+      if (fx == null || fy == null) return;
+      fx = fx / 10; fy = -fy / 10;
+      var r = sw * 1.6;
+      var fc = document.createElementNS(NS, 'g');
+      var bg = document.createElementNS(NS, 'circle');
+      bg.setAttribute('cx', fx); bg.setAttribute('cy', fy);
+      bg.setAttribute('r', r * 1.3); bg.setAttribute('fill', 'rgba(255,100,30,0.85)');
+      fc.appendChild(bg);
+      // X lines
+      [[-0.6,-0.6,0.6,0.6],[0.6,-0.6,-0.6,0.6]].forEach(function (l) {
+        var ln = document.createElementNS(NS, 'line');
+        ln.setAttribute('x1', fx + l[0]*r); ln.setAttribute('y1', fy + l[1]*r);
+        ln.setAttribute('x2', fx + l[2]*r); ln.setAttribute('y2', fy + l[3]*r);
+        ln.setAttribute('stroke', '#fff'); ln.setAttribute('stroke-width', sw * 0.35);
+        ln.setAttribute('stroke-linecap', 'round');
+        fc.appendChild(ln);
+      });
+      svg.appendChild(fc);
+    });
+
+    // Trap markers — yellow diamond where boundary was triggered
+    (Array.isArray(trap) ? trap : []).forEach(function (t) {
+      var tx = (t.x != null ? t.x : (Array.isArray(t) ? t[0] : null));
+      var ty = (t.y != null ? t.y : (Array.isArray(t) ? t[1] : null));
+      if (tx == null || ty == null) return;
+      tx = tx / 10; ty = -ty / 10;
+      var r = sw * 1.3;
+      var points = [tx+','+( ty-r), (tx+r)+','+ty, tx+','+(ty+r), (tx-r)+','+ty].join(' ');
+      var diamond = document.createElementNS(NS, 'polygon');
+      diamond.setAttribute('points', points);
+      diamond.setAttribute('fill', 'rgba(255,220,0,0.9)');
+      diamond.setAttribute('stroke', 'rgba(0,0,0,0.4)');
+      diamond.setAttribute('stroke-width', sw * 0.2);
+      svg.appendChild(diamond);
+    });
+
+    el.appendChild(svg);
+    el.style.display = 'block';
+    updateHeight();
+  }
+
+  // ── Carousel ───────────────────────────────────────────────────────────────
+
+  function obsFilename(obs) {
+    return Array.isArray(obs) ? (obs[4] || null) : (obs.filename || obs.file || obs.photo || null);
+  }
+  function obsTypeCode(obs) {
+    return Array.isArray(obs) ? obs[3] : (obs.type != null ? obs.type : null);
+  }
+
+  function updateDots() {
+    var counter = document.getElementById('carousel-counter');
+    counter.innerHTML = '';
+    if (_photos.length <= 1) return;
+    _photos.forEach(function (_, i) {
+      var dot = document.createElement('div');
+      dot.className = 'dot' + (i === _photoIdx ? ' active' : '');
+      counter.appendChild(dot);
+    });
+  }
+
+  function updateNavButtons() {
+    document.getElementById('prev-btn').disabled = _photoIdx <= 0;
+    document.getElementById('next-btn').disabled = _photoIdx >= _photos.length - 1;
+  }
+
+  function setSlide(src, label) {
+    var slide = document.getElementById('carousel-slide');
+    var img   = document.getElementById('carousel-img');
+    var lbl   = document.getElementById('carousel-label');
+    lbl.textContent = label || '';
+    if (src) {
+      img.src = src;
+      img.className = 'visible';
+      slide.classList.remove('loading');
+    } else {
+      img.className = '';
+      img.src = '';
+      slide.classList.add('loading');
+    }
+  }
+
+  function showPhoto(idx) {
+    if (!_photos.length) return;
+    idx = Math.max(0, Math.min(idx, _photos.length - 1));
+    _photoIdx = idx;
+    updateDots();
+    updateNavButtons();
+
+    var obs      = _photos[idx];
+    var filename = obsFilename(obs);
+    var label    = obsTypeLabel(obsTypeCode(obs), idx);
+
+    if (!filename) { setSlide(null, label); return; }
+
+    if (_photoCache[filename]) {
+      setSlide(_photoCache[filename], label);
+      preloadPhoto(idx + 1);
+      return;
+    }
+
+    setSlide(null, label);
+    _homey.api('GET', '/photo?deviceId=' + encodeURIComponent(_deviceId)
+        + '&photoId=' + encodeURIComponent(filename))
+      .then(function (res) {
+        if (_photoIdx !== idx) return;
+        if (!res || !res.data) { setSlide(null, label + ' (nicht verfügbar)'); return; }
+        var src = 'data:' + (res.mime || 'image/jpeg') + ';base64,' + res.data;
+        _photoCache[filename] = src;
+        if (_photoIdx === idx) {
+          setSlide(src, label);
+          preloadPhoto(idx + 1);
+        }
+      })
+      .catch(function () { if (_photoIdx === idx) setSlide(null, label); });
+  }
+
+  function preloadPhoto(idx) {
+    if (idx < 0 || idx >= _photos.length) return;
+    var filename = obsFilename(_photos[idx]);
+    if (!filename || _photoCache[filename]) return;
+    _homey.api('GET', '/photo?deviceId=' + encodeURIComponent(_deviceId)
+        + '&photoId=' + encodeURIComponent(filename))
+      .then(function (res) {
+        if (res && res.data) {
+          _photoCache[filename] = 'data:' + (res.mime || 'image/jpeg') + ';base64,' + res.data;
+        }
+      })
+      .catch(function () {});
+  }
+
+  function initCarousel(photos) {
+    _photos   = photos || [];
+    _photoIdx = 0;
+    var carousel = document.getElementById('carousel');
+
+    if (!_photos.length) {
+      carousel.style.display = 'none';
+      showMsg('Keine Hindernisse in dieser Session erkannt');
+      updateHeight();
+      return;
+    }
+
+    showMsg('');
+    carousel.style.display = 'block';
+    document.getElementById('prev-btn').style.display = _photos.length > 1 ? '' : 'none';
+    document.getElementById('next-btn').style.display = _photos.length > 1 ? '' : 'none';
+    updateHeight();
+    showPhoto(0);
+  }
+
+  // ── Option count ───────────────────────────────────────────────────────────
+
+  function updateOptionLabel(filename, actMode, photoCount) {
+    var sel = document.getElementById('session-select');
+    for (var i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value !== filename) continue;
+      var session = _sessions.find(function (s) { return s.filename === filename; });
+      if (!session) break;
+      var parts = [fmtDate(session.startTs)];
+      var modeLabel = actMode != null ? MODE_LABELS[actMode] : null;
+      if (modeLabel) parts.push(modeLabel);
+      else if (session.mapName) parts.push(session.mapName);
+      if (session.area != null && session.area > 0) parts.push(session.area + ' m²');
+      var photos = photoCount + (photoCount === 1 ? ' Foto' : ' Fotos');
+      sel.options[i].textContent = parts.join(' · ') + ' (' + photos + ')';
+      break;
+    }
+  }
+
+  // ── Load photos for a session ──────────────────────────────────────────────
+
+  function loadPhotos(filename) {
+    _photos = [];
+    document.getElementById('carousel').style.display = 'none';
+    document.getElementById('minimap').style.display = 'none';
+    showMsg('');
+    if (!filename) return;
+
+    // skeleton while fetching list
+    setSlide(null, '');
+    document.getElementById('carousel').style.display = 'block';
+    updateHeight();
+
+    _homey.api('GET', '/photos?deviceId=' + encodeURIComponent(_deviceId)
+        + '&filename=' + encodeURIComponent(filename))
+      .then(function (res) {
+        var photos     = (res && res.photos)        ? res.photos        : (Array.isArray(res) ? res : []);
+        var trajectory = (res && res.trajectory)    ? res.trajectory    : [];
+        var dock       = (res && res.dock)          ? res.dock          : null;
+        var faults     = (res && res.faults)        ? res.faults        : [];
+        var trap       = (res && res.trap)          ? res.trap          : [];
+        var human      = (res && res.humanDetected) ? res.humanDetected : null;
+        var areas      = (res && res.areas   != null) ? res.areas      : null;
+        var actMode    = (res && res.mode    != null) ? res.mode        : null;
+        updateOptionLabel(filename, actMode, photos.length);
+        updateMetaActivity(faults, human, areas, actMode);
+        renderMiniMap(trajectory, dock, photos, faults, trap);
+        initCarousel(photos);
+      })
+      .catch(function () {
+        document.getElementById('carousel').style.display = 'none';
+        showMsg('Fehler beim Laden der Fotos');
+        updateHeight();
+      });
+  }
+
+  // ── Sessions dropdown ──────────────────────────────────────────────────────
+
+  function fmtSessionLabel(s) {
+    var parts = [fmtDate(s.startTs)];
+    if (s.mapName) parts.push(s.mapName);
+    if (s.area != null && s.area > 0) parts.push(s.area + ' m²');
+    return parts.join(' · ');
+  }
+
+  function populateSessions(sessions) {
+    _sessions = sessions;
+    var sel = document.getElementById('session-select');
+    sel.innerHTML = '';
+    if (!sessions || sessions.length === 0) {
+      sel.innerHTML = '<option value="">Keine Sessions vorhanden</option>';
+      updateHeight();
+      return;
+    }
+    sessions.forEach(function (s) {
+      var opt = document.createElement('option');
+      opt.value = s.filename;
+      opt.textContent = fmtSessionLabel(s);
+      sel.appendChild(opt);
+    });
+    renderMeta(sessions[0]);
+    loadPhotos(sessions[0].filename);
+  }
+
+  // ── Event listeners ────────────────────────────────────────────────────────
+
+  document.getElementById('session-select').addEventListener('change', function (e) {
+    var filename = e.target.value;
+    var session  = _sessions.find(function (s) { return s.filename === filename; });
+    renderMeta(session || null);
+    if (filename) loadPhotos(filename);
+  });
+
+  document.getElementById('prev-btn').addEventListener('click', function (e) {
+    e.stopPropagation();
+    showPhoto(_photoIdx - 1);
+  });
+  document.getElementById('next-btn').addEventListener('click', function (e) {
+    e.stopPropagation();
+    showPhoto(_photoIdx + 1);
+  });
+
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+
+  function onHomeyReady(Homey) {
+    _homey    = Homey;
+    var ids   = Homey.getDeviceIds();
+    _deviceId = ids && ids[0];
+
+    if (!_deviceId) {
+      document.getElementById('session-select').innerHTML =
+        '<option value="">Widget-Einstellungen: Gerät auswählen</option>';
+      Homey.ready();
+      updateHeight();
+      return;
+    }
+
+    Homey.api('GET', '/sessions?deviceId=' + encodeURIComponent(_deviceId))
+      .then(function (sessions) {
+        populateSessions(sessions);
+        Homey.ready();
+      })
+      .catch(function (err) {
+        document.getElementById('session-select').innerHTML =
+          '<option value="">Fehler beim Laden</option>';
+        showMsg(err && err.message ? err.message : 'Verbindungsfehler');
+        Homey.ready();
+        updateHeight();
+      });
+  }
+
+  window.onHomeyReady = onHomeyReady;
+})();
+</script>
+</body>
+</html>

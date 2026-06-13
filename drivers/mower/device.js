@@ -1,5 +1,7 @@
 'use strict';
 
+const zlib   = require('zlib');
+const crypto = require('crypto');
 const Homey = require('homey');
 const MovaApi = require('../../lib/MovaApi');
 
@@ -448,13 +450,20 @@ class MowerDevice extends Homey.Device {
     this._cfgPollCounter       = 0;     // reads CFG (WRP etc.) on poll 0, 10, 20, …
     this._mihisPollCounter     = 5;     // reads MIHIS (lifetime stats) on poll 5, 15, 25, … (staggered vs CFG)
     this._dockPollCounter      = 3;     // reads DOCK position on poll 3, 13, 23, … (staggered vs CFG/MIHIS)
+    this._obsPollCounter       = 7;     // reads MAPI/AIOBS/OBS on poll 7, 17, 27, … (staggered vs others)
     this._dockPos              = null;  // last known dock position { x, y } in map mm (raw × 10)
     this._dockYaw              = null;  // dock orientation in degrees (from DOCK API), used for map rotation
-    this._livePos              = null;  // last known live position { x, y } in map mm from MITRC (direct mm, no × 10)
+    this._dockGPS              = null;  // dock GPS reference { lon, lat } captured from LOCN while docked
+    this._devUid               = null;  // masterUid (e.g. "UG006574") for activity history API calls
+    this._devModel             = null;  // device model string (e.g. "mova.mower.g2529d") for activity file URL
+    this._livePos              = null;  // last known live position { x, y } in map mm (dock-relative MITRC converted)
     this._cachedPRE              = await this.getStoreValue('cached_pre') ?? null;  // last known PRE array; used for cutting_height read-modify-write
     this._cuttingHeightWriteTs   = 0;    // timestamp of last successful cutting_height write; guards poll snap-back
     this._preWriteCuttingHeight  = null; // capability value before last write; used to detect snap-back vs external change
     this._cachedMapData          = null; // last parsed map data for the map widget
+    this._cachedObstacles        = null; // last obstacle data { aiobs, obs } from AIOBS/OBS commands
+    this._cachedMAPI             = null; // last MAPI response (raw, for format discovery)
+    this._cachedArMapPos         = null; // last parsed ARMap robot/charger position from binary blob
 
     await this._migrate();
 
@@ -659,6 +668,13 @@ class MowerDevice extends Homey.Device {
       this._dockPos = { x: dock.x * 10, y: dock.y * 10 };
       this._dockYaw = dock.yaw ?? null;
       this.log(`[init] dockPos: (${this._dockPos.x}, ${this._dockPos.y}) mm  yaw=${this._dockYaw}`);
+    }
+
+    // Cache masterUid for activity history API (used for AI photo/obstacle post-session data)
+    const devInfo = await this._api.getDeviceStatus(did).catch(() => null);
+    if (devInfo) {
+      this._devUid   = devInfo.masterUid ?? devInfo.uid ?? null;
+      this._devModel = devInfo.model ?? null;
     }
 
     // Skip the redundant getCFG / MIHIS / DOCK on the very first poll since we fetch them at init.
@@ -1032,14 +1048,65 @@ class MowerDevice extends Homey.Device {
       this.error('[poll] rawProperties failed:', rawResult.reason?.message);
     }
 
-    // ── Live position (MITRC) — every poll ───────────────────────────────────
-    const mitrcTrack = await this._api.getMITRC(did, this._activeMapIndex, 2000).catch(() => null);
-    if (mitrcTrack) {
-      const pos = this._parseMITRCPosition(mitrcTrack);
-      this.log('[mitrc] track len=' + mitrcTrack.length + ' pos=' + (pos ? pos.x + ',' + pos.y : 'null'));
-      if (pos) this._livePos = pos;
-    } else {
-      this.log('[mitrc] no track returned');
+    // ── Live position — every poll ────────────────────────────────────────────
+    // Priority: LOCN (official app method) → siid:1:4 → MITRC (fallback)
+    const posStatus = this.getCapabilityValue('mower_status');
+    const ACTIVE_STATUSES = ['mowing', 'edge_mowing', 'leaving', 'returning'];
+
+    // LOCN — GPS position from official MOVA app API. Returns {"pos":[lon,lat]} (WGS84).
+    // While docked: capture as dock GPS reference anchor (refreshed every poll).
+    // While active: convert GPS delta → mm offset → map position.
+    const AT_DOCK_STATUSES = ['docked', 'charging', 'idle', 'standby'];
+    const locn = await this._api.getLOCN(did).catch(() => null);
+    const locnPos = locn?.pos && Array.isArray(locn.pos) && locn.pos.length >= 2 ? locn.pos : null;
+    if (locnPos) {
+      const [lon, lat] = locnPos;
+      if (AT_DOCK_STATUSES.includes(posStatus)) {
+        this._dockGPS = { lon, lat };
+        this.log(`[locn] docked — GPS anchor: lon=${lon} lat=${lat}`);
+      } else if (ACTIVE_STATUSES.includes(posStatus)) {
+        if (this._dockGPS && this._dockPos) {
+          // 1° lat ≈ 111 320 m; 1° lon ≈ 111 320 × cos(lat) m — convert to mm
+          const R = 111320000; // mm per degree latitude
+          const dx = (lon - this._dockGPS.lon) * R * Math.cos(lat * Math.PI / 180);
+          const dy = (lat - this._dockGPS.lat) * R;
+          const mapX = this._dockPos.x + dx;
+          const mapY = this._dockPos.y + dy;
+          this.log(`[locn] GPS→map: lon=${lon} lat=${lat} dx=${dx.toFixed(0)} dy=${dy.toFixed(0)} map=(${mapX.toFixed(0)},${mapY.toFixed(0)}) status=${posStatus}`);
+          this._livePos = { x: mapX, y: mapY };
+        } else {
+          this.log(`[locn] active but no dock GPS anchor yet — lon=${lon} lat=${lat}`);
+        }
+      }
+    }
+
+    // siid:1:4 and MITRC are only needed when LOCN didn't provide a live position
+    if (!this._livePos) {
+      const mowerPos = await this._api.getMowerPosition(did).catch(() => null);
+      if (mowerPos) {
+        this.log(`[pos1:4] x=${mowerPos.x} y=${mowerPos.y} angle=${mowerPos.angle} status=${posStatus}`);
+        if (ACTIVE_STATUSES.includes(posStatus)) this._livePos = { x: mowerPos.x, y: mowerPos.y };
+      }
+    }
+
+    if (!this._livePos && ACTIVE_STATUSES.includes(posStatus)) {
+      // Fallback: MITRC track (dock-relative, requires transform)
+      const mitrcTrack = await this._api.getMITRC(did, this._activeMapIndex, 65535).catch(() => null);
+      if (mitrcTrack) {
+        const pos = this._parseMITRCPosition(mitrcTrack);
+        const dockRef = this._dockPos ? `dock=(${this._dockPos.x},${this._dockPos.y})` : 'dock=?';
+        // MITRC X is dock-relative mm (same sign). MITRC Y is inverted vs MAP Y axis.
+        const mapPos = (pos && this._dockPos)
+          ? { x: this._dockPos.x + pos.x, y: this._dockPos.y - pos.y }
+          : null;
+        this.log('[mitrc] track len=' + mitrcTrack.length
+          + ' raw=' + (pos ? pos.x + ',' + pos.y : 'null')
+          + ' map=' + (mapPos ? mapPos.x + ',' + mapPos.y : 'null')
+          + ' ' + dockRef + ' status=' + posStatus);
+        if (mapPos) this._livePos = mapPos;
+      } else if (!locnPos) {
+        this.log('[pos] no position data (LOCN null, siid:1:4 null, MITRC null)');
+      }
     }
 
     // ── Dock position — first poll and every 10th thereafter ─────────────────
@@ -1055,6 +1122,34 @@ class MowerDevice extends Homey.Device {
       }
     }
     this._dockPollCounter++;
+
+    // ── MAPI / AIOBS / OBS — every 10th poll (staggered) ─────────────────────
+    if (this._obsPollCounter % 10 === 0) {
+      const [mapiRes, aiobsRes, obsRes] = await Promise.allSettled([
+        this._api.getMAPI(did, this._activeMapIndex),
+        this._api.getAIOBS(did, { idx: this._activeMapIndex }),
+        this._api.getOBS(did, { idx: this._activeMapIndex }),
+      ]);
+
+      if (mapiRes.status === 'fulfilled') {
+        this._cachedMAPI = mapiRes.value;
+        this.log('[mapi] response:', JSON.stringify(this._cachedMAPI)?.slice(0, 400));
+      } else {
+        this.log('[mapi] failed:', mapiRes.reason?.message);
+      }
+
+      const aiobs = aiobsRes.status === 'fulfilled' ? aiobsRes.value : null;
+      const obs   = obsRes.status   === 'fulfilled' ? obsRes.value   : null;
+      if (aiobs !== null || obs !== null) {
+        this._cachedObstacles = { aiobs, obs };
+        this.log('[aiobs] response:', JSON.stringify(aiobs)?.slice(0, 600));
+        this.log('[obs]   response:', JSON.stringify(obs)?.slice(0, 300));
+      } else {
+        this.log('[aiobs] failed:', aiobsRes.reason?.message);
+        this.log('[obs]   failed:', obsRes.reason?.message);
+      }
+    }
+    this._obsPollCounter++;
 
     if (!this.getAvailable()) await this.setAvailable();
   }
@@ -1094,25 +1189,94 @@ class MowerDevice extends Homey.Device {
   /**
    * Parse a MITRC base64 track string into the most recent mower position.
    * Binary format: 5-byte records — int16LE x, int16LE y, uint8 flag.
-   *   flag=0x00, |x|>100, x≠32767 → position point (map mm, no ×10 scaling)
-   *   flag=0xF8, x=32767          → pen-lift (session boundary)
-   *   flag=0xFF or |x|≤100        → metadata / heading records (ignored)
-   * Returns {x, y} in map mm, or null if no valid position found.
+   *   flag=0x00, x≠32767 → position point (dock-relative mm)
+   *   flag=0xF8, x=32767 → pen-lift (session boundary)
+   *   flag≠0             → metadata / heading records (ignored)
+   * Returns dock-relative {x, y} in mm (same axis orientation as MAP). Caller adds dock position.
    */
   _parseMITRCPosition(track) {
     const buf = Buffer.from(track, 'base64');
     let lastX = null;
     let lastY = null;
+    const flagCounts = {};
     for (let i = 0; i + 4 < buf.length; i += 5) {
       const x    = buf.readInt16LE(i);
       const y    = buf.readInt16LE(i + 2);
       const flag = buf[i + 4];
-      if (flag === 0 && x !== 32767 && Math.abs(x) > 100) {
-        lastX = x;
-        lastY = y;
-      }
+      flagCounts[flag] = (flagCounts[flag] || 0) + 1;
+      if (flag === 0 && x !== 32767) { lastX = x; lastY = y; }
     }
+    this.log(`[mitrc] records=${Math.floor(buf.length / 5)} flags=${JSON.stringify(flagCounts)} last=(${lastX},${lastY})`);
     return lastX !== null ? { x: lastX, y: lastY } : null;
+  }
+
+  /**
+   * Decode the ARMap binary blob embedded in the MAP JSON.
+   * Format: base64([optional-AES-key,]deflated-binary)
+   * Binary header (little-endian):
+   *   bytes  0–1: map_id      bytes  4: frame_type (must be 73)
+   *   bytes  5–6: robotPos.x  bytes  7–8: robotPos.y   bytes  9–10: robotPos.angle
+   *   bytes 11–12: chargerPos.x  bytes 13–14: chargerPos.y
+   *   bytes 17–18: gridWidth (mm/cell)  bytes 19–20: width  bytes 21–22: height
+   *   bytes 23–24: originX    bytes 25–26: originY
+   *   bytes 27+: mapInfo (width×height bytes) + JSON expands
+   * Returns { robot:{x,y,angle}, charger:{x,y}, gridWidth } or null.
+   */
+  _parseARMap(arMapStr) {
+    if (!arMapStr || typeof arMapStr !== 'string') return null;
+    try {
+      let base64Data = arMapStr;
+      let encKey = null;
+      if (arMapStr.includes(',')) {
+        const parts = arMapStr.split(',');
+        base64Data = parts[0];
+        encKey = parts[1];
+      }
+      base64Data = base64Data.replace(/-/g, '+').replace(/_/g, '/');
+      let buf = Buffer.from(base64Data, 'base64');
+
+      if (encKey) {
+        const keyHex = crypto.createHash('sha256').update(encKey).digest('hex');
+        const aesKey = Buffer.from(keyHex.slice(0, 32), 'utf8');
+        const iv = Buffer.alloc(16, 0);
+        const dec = crypto.createDecipheriv('aes-256-cbc', aesKey, iv);
+        buf = Buffer.concat([dec.update(buf), dec.final()]);
+      }
+
+      let inflated;
+      try { inflated = zlib.inflateSync(buf); } catch (_) { inflated = zlib.inflateRawSync(buf); }
+      if (inflated.length < 27) return null;
+
+      const frameType = inflated.readInt8(4);
+      if (frameType !== 73) { this.log('[armap] frame_type=' + frameType + ' (expected 73)'); return null; }
+
+      let robotX   = inflated.readInt16LE(5);
+      let robotY   = inflated.readInt16LE(7);
+      let robotAng = inflated.readInt16LE(9);
+      let chargerX = inflated.readInt16LE(11);
+      let chargerY = inflated.readInt16LE(13);
+      const gridWidth = inflated.readInt16LE(17);
+      const mapW      = inflated.readInt16LE(19);
+      const mapH      = inflated.readInt16LE(21);
+      const originX   = inflated.readInt16LE(23);
+      const originY   = inflated.readInt16LE(25);
+
+      // expands JSON (may override header positions)
+      const dataEnd = 27 + mapW * mapH;
+      if (inflated.length > dataEnd) {
+        try {
+          const expStr = inflated.slice(dataEnd).toString('utf8').replace(/\0+$/, '');
+          const exp = JSON.parse(expStr);
+          if (Array.isArray(exp.robot)   && exp.robot.length   >= 2) { robotX = exp.robot[0];   robotY = exp.robot[1];   }
+          if (Array.isArray(exp.charger) && exp.charger.length >= 2) { chargerX = exp.charger[0]; chargerY = exp.charger[1]; }
+        } catch (_) {}
+      }
+
+      return { robot: { x: robotX, y: robotY, angle: robotAng }, charger: { x: chargerX, y: chargerY }, gridWidth, mapW, mapH, originX, originY };
+    } catch (e) {
+      this.log('[armap] parse error:', e.message);
+      return null;
+    }
   }
 
   // ─── Picker management ────────────────────────────────────────────────────
@@ -1838,7 +2002,10 @@ class MowerDevice extends Homey.Device {
 
     // Session duration tracking
     if (isMowing && !this._wasMowing) {
-      // New mowing session started — record and persist the start time.
+      // New mowing session started — clear stale MITRC position so the map widget
+      // shows the dock location until the first fresh MITRC fix arrives.
+      this._livePos = null;
+      // Record and persist the start time.
       this._sessionStartTime = Date.now();
       this.setStoreValue('session_start_time', this._sessionStartTime).catch(() => {});
       if (this.hasCapability('measure_duration')) {
@@ -2105,6 +2272,26 @@ class MowerDevice extends Homey.Device {
     const posKeys = Object.keys(mapObj).filter(k => /pos|robot|cur|loc|coord|point|r_p|rp|rob|^tr$|^path|^track|trajec/i.test(k));
     if (posKeys.length) this.log('[map] position/path keys:', JSON.stringify(Object.fromEntries(posKeys.map(k => [k, typeof mapObj[k] === 'string' ? mapObj[k].slice(0, 120) : mapObj[k]]))));
     if (mapObj.tr) this.log('[map] tr sample:', String(mapObj.tr).slice(0, 200));
+    if (mapObj.obstacles) this.log('[map] obstacles raw:', JSON.stringify(mapObj.obstacles).slice(0, 600));
+
+    // ── ARMap binary → extract robot + charger position ───────────────────
+    {
+      const arRaw = mapObj.ARMap;
+      const arType = typeof arRaw;
+      const arLen  = arRaw ? String(arRaw).length : 0;
+      this.log(`[armap] field: type=${arType} len=${arLen} truthy=${!!arRaw}`);
+      if (arRaw) {
+        const ar = this._parseARMap(arRaw);
+        if (ar) {
+          const dockStr = this._dockPos ? `dock=(${this._dockPos.x},${this._dockPos.y})` : 'dock=?';
+          this.log(`[armap] robot=(${ar.robot.x},${ar.robot.y}) angle=${ar.robot.angle}`
+            + ` charger=(${ar.charger.x},${ar.charger.y})`
+            + ` grid=${ar.gridWidth}mm origin=(${ar.originX},${ar.originY})`
+            + ` map=${ar.mapW}×${ar.mapH} ${dockStr}`);
+          this._cachedArMapPos = ar;
+        }
+      }
+    }
 
     // ── M_PATH chunks → live mowing path ──────────────────────────────────
     const pathParts = [];
@@ -2167,6 +2354,22 @@ class MowerDevice extends Homey.Device {
     // paths.value is a planned mowing path (sparse waypoints), not the actual robot track.
     // Log its structure for reference but do not use it for position.
 
+    // Parse obstacle list from the MAP JSON.
+    // Format varies: value is either a flat array of {x,y,...} objects,
+    // or a Map-style [[id, {x,y,...}], ...] array.
+    // Coordinates are in map units (÷10 = mm, same as mowingArea boundary points).
+    const mapObstacles = (() => {
+      const raw = mapObj.obstacles?.value;
+      if (!Array.isArray(raw) || raw.length === 0) return [];
+      const first = raw[0];
+      // Map-style: [[id, obj], ...]
+      if (Array.isArray(first) && first.length === 2 && typeof first[1] === 'object') {
+        return raw.map(([, obj]) => obj).filter(Boolean);
+      }
+      // Flat style: [{x,y,...}, ...]
+      return raw.filter((o) => o && typeof o === 'object');
+    })();
+
     return {
       boundary:       mapObj.boundary,
       name:           mapObj.name           || 'Map',
@@ -2175,6 +2378,7 @@ class MowerDevice extends Homey.Device {
       forbiddenAreas: mapObj.forbiddenAreas?.value || [],
       spotAreas:      mapObj.spotAreas?.value      || [],
       contours:       mapObj.contours?.value       || [],
+      mapObstacles,
       chargerPos,
       mapRawKeys:     Object.keys(mapObj),
       mapTrSample:    mapObj.tr ? String(mapObj.tr).slice(0, 300) : null,
@@ -2185,16 +2389,19 @@ class MowerDevice extends Homey.Device {
   /** Return the last parsed map data; called by the map widget handler in app.js. */
   getMapData() {
     if (!this._cachedMapData) return null;
-    const base = { ...this._cachedMapData, mapRotation: this._dockYaw ?? 0 };
+    const base = { ...this._cachedMapData, mapRotation: this._dockYaw ?? 0, obstacles: this._cachedObstacles };
     const status = this.getCapabilityValue('mower_status');
     const ACTIVE = ['mowing', 'edge_mowing', 'leaving', 'returning'];
     const AT_DOCK = ['docked', 'charging', 'idle', 'standby', 'paused'];
 
-    // When actively mowing: prefer MITRC live position, then last M_PATH tail point
+    // When actively mowing: prefer MITRC live position, then last M_PATH tail point.
+    // If position is unknown, return without robotPos — never fall through to chargerPos
+    // while mowing, as that would display the dock marker as the mower position.
     if (ACTIVE.includes(status)) {
       if (this._livePos) return { ...base, robotPos: [this._livePos.x, this._livePos.y] };
       const tail = this._lastMPathPos();
       if (tail) return { ...base, robotPos: tail };
+      return base;
     }
 
     // When docked / idle / unknown: show charger position
@@ -2289,10 +2496,78 @@ class MowerDevice extends Homey.Device {
       cfgData,
       mihisData:        mihisResult.status === 'fulfilled' ? mihisResult.value : { error: mihisResult.reason?.message },
       cachedMapData:    cachedMap,
+      cachedObstacles:  this._cachedObstacles,
+      cachedMAPI:       this._cachedMAPI,
       capabilityValues,
       storeValues,
       deviceSettings,
     };
+  }
+
+  // ─── Activity history (history widget) ──────────────────────────────────────
+
+  async getActivitySessions(limit = 30) {
+    if (!this._devUid) return [];
+    const did = this.getData().id;
+    const res = await this._api.getActivityHistory(did, this._devUid, { limit }).catch(() => null);
+    const records = res?.data?.list ?? [];
+    if (records.length > 0) {
+      let firstProps = [];
+      try { firstProps = JSON.parse(records[0].history); } catch { /* */ }
+      this.log('[history] available piids in first record:', JSON.stringify(firstProps.map((p) => ({ piid: p.piid, value: p.value }))));
+    }
+    return records.map((r) => {
+      let props = [];
+      try { props = JSON.parse(r.history); } catch { /* */ }
+      const get = (piid) => props.find((p) => p.piid === piid)?.value ?? null;
+      return {
+        id:         r.id,
+        startTs:    get(8),
+        filename:   get(9),
+        area:       get(60),
+        duration:   get(14),
+        mapName:    get(16),
+        mode:       get(4),
+        status:     get(7),
+        zoneCount:  get(15),
+        coverage:   get(1),
+      };
+    }).filter((s) => s.filename);
+  }
+
+  async getSessionPhotos(filename) {
+    if (!this._devUid) return { photos: [], trajectory: [], dock: null };
+    const did = this.getData().id;
+    const urlRes = await this._api.getActivityFileUrl(did, this._devUid, this._devModel, filename).catch(() => null);
+    const ossUrl = urlRes?.data ?? null;
+    if (!ossUrl) return { photos: [], trajectory: [], dock: null };
+    const actJson = await this._api.fetchActivityJson(ossUrl).catch(() => null);
+    const photos        = actJson?.ai_obstacle    ?? [];
+    const trajectory    = actJson?.trajectory     ?? [];
+    const dock          = actJson?.dock           ?? null;
+    const areas         = actJson?.areas          ?? null;
+    const faults        = actJson?.faults         ?? [];
+    const humanDetected = actJson?.human_detected ?? null;
+    const trap          = actJson?.trap           ?? [];
+    const mode          = actJson?.mode           ?? null;
+    this.log('[history] ai_obstacle:', photos.length, 'trajectory segments:', trajectory.length,
+      'faults:', JSON.stringify(faults).substring(0, 200),
+      'human_detected:', JSON.stringify(humanDetected),
+      'trap:', JSON.stringify(trap).substring(0, 200),
+      'mode:', mode);
+    if (areas != null) this.log('[history] areas:', JSON.stringify(areas).substring(0, 600));
+    return { photos, trajectory, dock, areas, faults, humanDetected, trap, mode };
+  }
+
+  async getObstaclePhotoBase64(photoId) {
+    const did = this.getData().id;
+    const filename = /\.\w{2,4}$/.test(photoId) ? photoId : photoId + '.jpg';
+    const buf = await this._api.getAIObsFile(did, filename).catch(() => null);
+    if (!buf || buf.length < 200) return null;
+    const mime = buf[0] === 0xFF && buf[1] === 0xD8 ? 'image/jpeg'
+               : buf[0] === 0x89 && buf[1] === 0x50 ? 'image/png'
+               : 'application/octet-stream';
+    return { data: buf.toString('base64'), mime, size: buf.length };
   }
 }
 

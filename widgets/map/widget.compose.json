@@ -28,21 +28,15 @@
       "value": true
     },
     {
-      "id": "show_contours",
-      "type": "checkbox",
-      "label": { "en": "Show contours", "de": "Konturlinien anzeigen" },
-      "value": true
-    },
-    {
-      "id": "show_path",
-      "type": "checkbox",
-      "label": { "en": "Show mowing path", "de": "Mähspur anzeigen" },
-      "value": true
-    },
-    {
       "id": "show_robot",
       "type": "checkbox",
       "label": { "en": "Show robot position", "de": "Mäherposition anzeigen" },
+      "value": true
+    },
+    {
+      "id": "show_obstacles",
+      "type": "checkbox",
+      "label": { "en": "Show obstacles", "de": "Hindernisse anzeigen" },
       "value": true
     }
   ],

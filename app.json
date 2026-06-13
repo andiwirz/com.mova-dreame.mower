@@ -2021,6 +2021,33 @@
     }
   ],
   "widgets": {
+    "history": {
+      "name": {
+        "en": "Mowing History",
+        "de": "Mähverlauf"
+      },
+      "height": "100%",
+      "devices": {
+        "type": "app",
+        "singular": true
+      },
+      "settings": [],
+      "api": {
+        "getSessions": {
+          "method": "GET",
+          "path": "/sessions"
+        },
+        "getPhotos": {
+          "method": "GET",
+          "path": "/photos"
+        },
+        "getPhoto": {
+          "method": "GET",
+          "path": "/photo"
+        }
+      },
+      "id": "history"
+    },
     "map": {
       "name": {
         "en": "Mower Map",
@@ -2060,29 +2087,20 @@
           "value": true
         },
         {
-          "id": "show_contours",
-          "type": "checkbox",
-          "label": {
-            "en": "Show contours",
-            "de": "Konturlinien anzeigen"
-          },
-          "value": true
-        },
-        {
-          "id": "show_path",
-          "type": "checkbox",
-          "label": {
-            "en": "Show mowing path",
-            "de": "Mähspur anzeigen"
-          },
-          "value": true
-        },
-        {
           "id": "show_robot",
           "type": "checkbox",
           "label": {
             "en": "Show robot position",
             "de": "Mäherposition anzeigen"
+          },
+          "value": true
+        },
+        {
+          "id": "show_obstacles",
+          "type": "checkbox",
+          "label": {
+            "en": "Show obstacles",
+            "de": "Hindernisse anzeigen"
           },
           "value": true
         }

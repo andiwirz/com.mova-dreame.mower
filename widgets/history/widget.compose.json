@@ -1,0 +1,26 @@
+{
+  "name": {
+    "en": "Mowing History",
+    "de": "Mähverlauf"
+  },
+  "height": "100%",
+  "devices": {
+    "type": "app",
+    "singular": true
+  },
+  "settings": [],
+  "api": {
+    "getSessions": {
+      "method": "GET",
+      "path": "/sessions"
+    },
+    "getPhotos": {
+      "method": "GET",
+      "path": "/photos"
+    },
+    "getPhoto": {
+      "method": "GET",
+      "path": "/photo"
+    }
+  }
+}
