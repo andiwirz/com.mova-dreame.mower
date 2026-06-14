@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.mova-dreame.mower",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "compatibility": ">=12.3.0",
   "sdk": 3,
   "name": {
@@ -237,6 +237,10 @@
     "1.0.6": {
       "en": "Added Mowing History widget: browse completed mowing sessions with a mini-map, time-gradient trajectory (green = area mowing, amber = edge mowing), tappable obstacle markers, and a full-width photo carousel with previous/next navigation. Fixed obstacle photos not loading: the file-bridge API now receives the required Authorization header and correctly decompresses Brotli-encoded JPEG responses.",
       "de": "Mähverlauf-Widget hinzugefügt: Abgeschlossene Mähsessions mit Mini-Karte, zeitbasiertem Farbverlauf (grün = Flächenmähen, bernstein = Kantenmähen), anklickbaren Hindernismarkierungen und einem Foto-Karussell mit Vor-/Zurück-Navigation durchsuchen. Hindernisfotos werden jetzt korrekt geladen: Die Dateibrücken-API erhält den erforderlichen Authorization-Header und dekomprimiert Brotli-kodierte JPEG-Antworten korrekt."
+    },
+    "1.0.7": {
+      "en": "Added 'Set lift alarm' and 'Set child lock' flow actions (On/Off dropdown). Added 'When button pressed' triggers for all 6 device card buttons: Start Mowing, Start Spot Mowing, Pause, Stop, Return to Dock, and Go to Maintenance Point.",
+      "de": "Flow-Aktionen 'Hebealarm setzen' und 'Kindersicherung setzen' hinzugefügt (Ein/Aus-Auswahl). 'Wenn Knopf gedrückt'-Auslöser für alle 6 Gerätekarten-Knöpfe hinzugefügt: Mähen starten, Spot mähen starten, Pausieren, Mähen beenden, Zurück zur Station und Gehe zum Wartungspunkt."
     }
   },
   "flow": {
@@ -277,6 +281,90 @@
           }
         ],
         "id": "battery_low"
+      },
+      {
+        "title": {
+          "en": "Go to Maintenance Point button pressed",
+          "de": "Knopf 'Gehe zum Wartungspunkt' gedrückt"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "btn_maintenance_point"
+      },
+      {
+        "title": {
+          "en": "Pause button pressed",
+          "de": "Knopf 'Mähen pausieren' gedrückt"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "btn_pause"
+      },
+      {
+        "title": {
+          "en": "Return to Dock button pressed",
+          "de": "Knopf 'Zurück zur Station' gedrückt"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "btn_return_to_dock"
+      },
+      {
+        "title": {
+          "en": "Start Mowing button pressed",
+          "de": "Knopf 'Mähen starten' gedrückt"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "btn_start_mowing"
+      },
+      {
+        "title": {
+          "en": "Start Spot Mowing button pressed",
+          "de": "Knopf 'Spot mähen starten' gedrückt"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "btn_start_spot_mowing"
+      },
+      {
+        "title": {
+          "en": "Stop button pressed",
+          "de": "Knopf 'Mähen beenden' gedrückt"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "btn_stop"
       },
       {
         "title": {
@@ -701,6 +789,48 @@
       },
       {
         "title": {
+          "en": "Set child lock",
+          "de": "Kindersicherung setzen"
+        },
+        "titleFormatted": {
+          "en": "Set child lock [[enabled]]",
+          "de": "Kindersicherung [[enabled]]"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "enabled",
+            "type": "dropdown",
+            "title": {
+              "en": "State",
+              "de": "Zustand"
+            },
+            "values": [
+              {
+                "id": "true",
+                "label": {
+                  "en": "On",
+                  "de": "Ein"
+                }
+              },
+              {
+                "id": "false",
+                "label": {
+                  "en": "Off",
+                  "de": "Aus"
+                }
+              }
+            ]
+          }
+        ],
+        "id": "set_child_lock"
+      },
+      {
+        "title": {
           "en": "Set cutting height",
           "de": "Schnitthöhe setzen"
         },
@@ -773,6 +903,48 @@
           }
         ],
         "id": "set_efficiency_mode"
+      },
+      {
+        "title": {
+          "en": "Set lift alarm",
+          "de": "Hebealarm setzen"
+        },
+        "titleFormatted": {
+          "en": "Set lift alarm [[enabled]]",
+          "de": "Hebealarm [[enabled]]"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "enabled",
+            "type": "dropdown",
+            "title": {
+              "en": "State",
+              "de": "Zustand"
+            },
+            "values": [
+              {
+                "id": "true",
+                "label": {
+                  "en": "On",
+                  "de": "Ein"
+                }
+              },
+              {
+                "id": "false",
+                "label": {
+                  "en": "Off",
+                  "de": "Aus"
+                }
+              }
+            ]
+          }
+        ],
+        "id": "set_lift_alarm"
       },
       {
         "title": {

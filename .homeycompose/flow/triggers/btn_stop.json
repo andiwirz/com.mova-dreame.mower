@@ -1,0 +1,4 @@
+{
+  "title": { "en": "Stop button pressed", "de": "Knopf 'Mähen beenden' gedrückt" },
+  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
+}

@@ -1,0 +1,4 @@
+{
+  "title": { "en": "Start Mowing button pressed", "de": "Knopf 'Mähen starten' gedrückt" },
+  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
+}

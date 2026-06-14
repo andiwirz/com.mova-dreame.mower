@@ -191,6 +191,8 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 | Set cutting height | Sets the blade height in mm via flow |
 | Set mow efficiency mode | Switches between Standard and Efficient mowing mode via flow |
 | Go to maintenance point | Drives the mower to its configured maintenance point |
+| Set lift alarm | Enables or disables the lift alarm (anti-theft) via flow |
+| Set child lock | Enables or disables the child lock via flow |
 
 ## Flow Cards
 
@@ -204,6 +206,12 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 - Battery drops below X% *(arg: threshold %)*
 - Consumable drops below X% *(arg: threshold %; tokens: consumable type, remaining %)*
 - Firmware update available
+- Start Mowing button pressed
+- Start Spot Mowing button pressed
+- Pause button pressed
+- Stop button pressed
+- Return to Dock button pressed
+- Go to Maintenance Point button pressed
 
 **And...**
 - Mower is / is not mowing
@@ -229,6 +237,8 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 - Set mowing mode *(dropdown: all area / zone / edge / spot / manual)*
 - Set cutting height *(number: mm)*
 - Set mow efficiency mode *(dropdown: Standard / Efficient)*
+- Set lift alarm *(dropdown: On / Off)*
+- Set child lock *(dropdown: On / Off)*
 
 ## Supported Brands & Regions
 

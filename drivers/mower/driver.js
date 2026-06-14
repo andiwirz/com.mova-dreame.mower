@@ -59,6 +59,12 @@ class MowerDriver extends Homey.Driver {
     flow.getActionCard('set_efficiency_mode')
       .registerRunListener(({ device, mode }) => device.cmdSetEfficiencyMode(mode));
 
+    flow.getActionCard('set_lift_alarm')
+      .registerRunListener(({ device, enabled }) => device.cmdSetLiftAlarm(enabled === 'true'));
+
+    flow.getActionCard('set_child_lock')
+      .registerRunListener(({ device, enabled }) => device.cmdSetChildLock(enabled === 'true'));
+
     // ─── Conditions ───────────────────────────────────────────────────────────
 
     flow.getConditionCard('is_mowing')

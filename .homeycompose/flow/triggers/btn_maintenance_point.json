@@ -1,0 +1,4 @@
+{
+  "title": { "en": "Go to Maintenance Point button pressed", "de": "Knopf 'Gehe zum Wartungspunkt' gedrückt" },
+  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
+}

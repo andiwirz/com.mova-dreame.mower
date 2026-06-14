@@ -1,0 +1,4 @@
+{
+  "title": { "en": "Return to Dock button pressed", "de": "Knopf 'Zurück zur Station' gedrückt" },
+  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
+}

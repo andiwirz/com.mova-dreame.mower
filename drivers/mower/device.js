@@ -520,6 +520,7 @@ class MowerDevice extends Homey.Device {
         }
 
         await this._setMowingStarted();
+        this._fireBtnTrigger('btn_start_mowing');
       } catch (err) {
         this.error('[cmd_start_mowing] listener error:', err.message);
       } finally {
@@ -543,6 +544,7 @@ class MowerDevice extends Homey.Device {
         this.log(`[cmd] start spot mowing: spot ${spotId} mapIndex=${mapIdx}`);
         await this._safeWrite(`mow_spot:${spotId}`, () => this._api.startSpotMowing(did, [spotId], mapIdx));
         await this._setMowingStarted();
+        this._fireBtnTrigger('btn_start_spot_mowing');
       } catch (err) {
         this.error('[cmd_start_spot_mowing] listener error:', err.message);
       } finally {
@@ -555,6 +557,7 @@ class MowerDevice extends Homey.Device {
       try {
         this.log('[cmd] btn: stop → sendAction(5,2)');
         await this._safeWrite('cmd_stop', () => this._api.stopMowing(did));
+        this._fireBtnTrigger('btn_stop');
       } catch (err) {
         this.error('[cmd_stop] listener error:', err.message);
       } finally {
@@ -568,6 +571,7 @@ class MowerDevice extends Homey.Device {
         this.log('[cmd] btn: pause → sendAction(5,4)');
         await this._safeWrite('cmd_pause', () => this._api.pause(did));
         await this._applyStatus('paused');
+        this._fireBtnTrigger('btn_pause');
       } catch (err) {
         this.error('[cmd_pause] listener error:', err.message);
       } finally {
@@ -581,6 +585,7 @@ class MowerDevice extends Homey.Device {
         this.log('[cmd] btn: dock → dock()');
         await this._safeWrite('cmd_dock', () => this._api.dock(did));
         await this._applyStatus('returning');
+        this._fireBtnTrigger('btn_return_to_dock');
       } catch (err) {
         this.error('[cmd_dock] listener error:', err.message);
       } finally {
@@ -594,6 +599,7 @@ class MowerDevice extends Homey.Device {
         try {
           this.log('[cmd] btn: maintenance point → goToMaintenancePoint()');
           await this._safeWrite('cmd_maintenance_point', () => this._api.goToMaintenancePoint(did, this._activeMapIndex ?? 0));
+          this._fireBtnTrigger('btn_maintenance_point');
         } catch (err) {
           this.error('[cmd_maintenance_point] listener error:', err.message);
         } finally {
@@ -2208,6 +2214,28 @@ class MowerDevice extends Homey.Device {
     await this._api.writePRE(this.getData().id, pre);
     this._cachedPRE = pre;
     await this._setCap('mow_efficiency', mode);
+  }
+
+  _fireBtnTrigger(cardId) {
+    this.homey.flow.getDeviceTriggerCard(cardId).trigger(this).catch(() => {});
+  }
+
+  async cmdSetLiftAlarm(enabled) {
+    this.log(`[cmd] setLiftAlarm enabled=${enabled}`);
+    const did = this.getData().id;
+    const lift     = enabled;
+    const mapAlarm = this.getSetting('ata_map_alarm') ?? false;
+    const realtime = this.getSetting('ata_realtime')  ?? false;
+    await this._api.setAntiTheftAlarm(did, { lift, mapAlarm, realtime });
+    await this.setSettings({ ata_lift: enabled });
+  }
+
+  async cmdSetChildLock(enabled) {
+    this.log(`[cmd] setChildLock enabled=${enabled}`);
+    const did = this.getData().id;
+    await this._api.setChildLock(did, enabled);
+    await this.setSettings({ cls_enabled: enabled });
+    if (this.hasCapability('child_lock')) await this._applyBoolCap('child_lock', enabled);
   }
 
   // ─── Map widget data ──────────────────────────────────────────────────────

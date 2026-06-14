@@ -1,0 +1,15 @@
+{
+  "title": { "en": "Set child lock", "de": "Kindersicherung setzen" },
+  "titleFormatted": { "en": "Set child lock [[enabled]]", "de": "Kindersicherung [[enabled]]" },
+  "args": [
+    { "name": "device", "type": "device", "filter": "driver_id=mower" },
+    {
+      "name": "enabled", "type": "dropdown",
+      "title": { "en": "State", "de": "Zustand" },
+      "values": [
+        { "id": "true",  "label": { "en": "On",  "de": "Ein" } },
+        { "id": "false", "label": { "en": "Off", "de": "Aus" } }
+      ]
+    }
+  ]
+}

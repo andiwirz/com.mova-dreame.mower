@@ -1,0 +1,4 @@
+{
+  "title": { "en": "Start Spot Mowing button pressed", "de": "Knopf 'Spot mähen starten' gedrückt" },
+  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
+}

@@ -206,5 +206,9 @@
   "1.0.6": {
     "en": "Added Mowing History widget: browse completed mowing sessions with a mini-map, time-gradient trajectory (green = area mowing, amber = edge mowing), tappable obstacle markers, and a full-width photo carousel with previous/next navigation. Fixed obstacle photos not loading: the file-bridge API now receives the required Authorization header and correctly decompresses Brotli-encoded JPEG responses.",
     "de": "Mähverlauf-Widget hinzugefügt: Abgeschlossene Mähsessions mit Mini-Karte, zeitbasiertem Farbverlauf (grün = Flächenmähen, bernstein = Kantenmähen), anklickbaren Hindernismarkierungen und einem Foto-Karussell mit Vor-/Zurück-Navigation durchsuchen. Hindernisfotos werden jetzt korrekt geladen: Die Dateibrücken-API erhält den erforderlichen Authorization-Header und dekomprimiert Brotli-kodierte JPEG-Antworten korrekt."
+  },
+  "1.0.7": {
+    "en": "Added 'Set lift alarm' and 'Set child lock' flow actions (On/Off dropdown). Added 'When button pressed' triggers for all 6 device card buttons: Start Mowing, Start Spot Mowing, Pause, Stop, Return to Dock, and Go to Maintenance Point.",
+    "de": "Flow-Aktionen 'Hebealarm setzen' und 'Kindersicherung setzen' hinzugefügt (Ein/Aus-Auswahl). 'Wenn Knopf gedrückt'-Auslöser für alle 6 Gerätekarten-Knöpfe hinzugefügt: Mähen starten, Spot mähen starten, Pausieren, Mähen beenden, Zurück zur Station und Gehe zum Wartungspunkt."
   }
 }
