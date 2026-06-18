@@ -252,7 +252,7 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 | Device | Model | Status |
 |--------|-------|--------|
 | MOVA LiDAX Ultra 1200 | `mova.mower.g2529d` | ✅ Fully implemented |
-| MOVA 1000 | — | ✅ Works |
+| MOVA 1000 | `mova.mower.g2405c` | ✅ Works |
 | MOVA ViAX 250 | — | ✅ Works |
 | MOVA ViAX 300 | `mova.mower.g2420b` | ✅ Works |
 | Dreame A1 | — | ✅ Works |
