@@ -17,6 +17,7 @@
   "author": "Andi Wirz <andi@wirzfamily.ch>",
   "license": "MIT",
   "dependencies": {
+    "mqtt": "^5.15.1",
     "node-fetch": "2.7.0"
   },
   "engines": {

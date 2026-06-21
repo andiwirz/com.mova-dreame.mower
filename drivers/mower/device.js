@@ -2,6 +2,7 @@
 
 const zlib   = require('zlib');
 const crypto = require('crypto');
+const mqtt   = require('mqtt');
 const Homey = require('homey');
 const MovaApi = require('../../lib/MovaApi');
 
@@ -801,10 +802,12 @@ class MowerDevice extends Homey.Device {
 
 
     this._startPolling();
+    this._connectMqtt();
   }
 
   async onDeleted() {
     this._stopPolling();
+    this._disconnectMqtt();
   }
 
   async onSettings({ changedKeys, newSettings }) {
@@ -2240,8 +2243,9 @@ class MowerDevice extends Homey.Device {
     // Pickers (mow_zone / mow_spot) intentionally keep their selection so the user
     // can re-run the same zone or spot by pressing cmd_start_mowing again.
 
-    // Docked trigger
+    // Docked trigger + clear live position so map shows charger
     if (status === 'docked' || status === 'charging' || status === 'charging_completed') {
+      this._livePos = null;
       this._trgDocked.trigger(this, {}, {})
         .catch((e) => this.error('mower_docked trigger:', e.message));
     }
@@ -2464,6 +2468,104 @@ class MowerDevice extends Homey.Device {
     this._trgMapChanged.trigger(this, { map_name: name, map_index: mapIndex }).catch(() => {});
   }
 
+  // ─── MQTT live position ─────────────────────────────────────────────────
+
+  _connectMqtt() {
+    const did = this.getData().id;
+    const tokens = this._api.getTokens();
+    const { fallback } = this._api.getMqttConfig();
+    const bindDomain = this.getStoreValue('bind_domain');
+    const uid = this._api.getUid() || this._devUid || 'homey';
+    const model = this._devModel || this.getSetting('device_model') || '';
+    const region = this.getSetting('region') || 'eu';
+
+    const host = bindDomain || fallback;
+    const url = `mqtts://${host}`;
+    const clientId = `p_${crypto.randomBytes(8).toString('hex')}`;
+
+    this._mqttTopic = `/status/${did}/${uid}/${model}/${region}/`;
+    this.log(`[mqtt] connecting to ${url} uid=${uid} topic=${this._mqttTopic}`);
+
+    try {
+      this._mqttClient = mqtt.connect(url, {
+        clientId,
+        username: String(uid),
+        password: tokens.accessToken,
+        rejectUnauthorized: false,
+        reconnectPeriod: 30000,
+        connectTimeout: 10000,
+      });
+
+      this._mqttClient.on('connect', () => {
+        this.log(`[mqtt] connected — subscribing to ${this._mqttTopic}`);
+        this._mqttClient.subscribe(this._mqttTopic, (err) => {
+          if (err) this.error('[mqtt] subscribe error:', err.message);
+          else this.log('[mqtt] subscribed successfully');
+        });
+      });
+
+      this._mqttClient.on('message', (topic, message) => {
+        try {
+          this._handleMqttMessage(topic, message);
+        } catch (e) {
+          this.error('[mqtt] message error:', e.message);
+        }
+      });
+
+      this._mqttClient.on('error', (err) => {
+        this.error('[mqtt] error:', err.message);
+      });
+
+      this._mqttClient.on('close', () => {
+        this.log('[mqtt] connection closed');
+      });
+    } catch (e) {
+      this.error('[mqtt] connect failed:', e.message);
+    }
+  }
+
+  _disconnectMqtt() {
+    if (this._mqttClient) {
+      this._mqttClient.end(true);
+      this._mqttClient = null;
+      this.log('[mqtt] disconnected');
+    }
+  }
+
+  _handleMqttMessage(topic, message) {
+    let parsed;
+    try {
+      parsed = JSON.parse(message.toString());
+    } catch {
+      this.log(`[mqtt] non-JSON message: ${message.toString().substring(0, 200)}`);
+      return;
+    }
+
+    if (parsed.data?.method === 'properties_changed' && Array.isArray(parsed.data.params)) {
+      for (const prop of parsed.data.params) {
+        if (prop.siid === 1 && prop.piid === 4) {
+          const val = prop.value;
+          const buf = Array.isArray(val) ? Buffer.from(val) : null;
+          if (buf && buf.length >= 6 && buf[0] === 0xce) {
+            const x     = (buf[3] << 28 | buf[2] << 20 | buf[1] << 12) >> 12;
+            const y     = (buf[5] << 24 | buf[4] << 16 | buf[3] << 8)  >> 12;
+            const angle = buf.length > 6 ? Math.round(buf[6] / 255 * 360) : 0;
+            const newPos = { x: x * 10, y: y * 10 };
+            const moved = !this._livePos || Math.abs(newPos.x - this._livePos.x) > 50 || Math.abs(newPos.y - this._livePos.y) > 50;
+            this._livePos = newPos;
+            if (moved) this.log(`[mqtt] pos: (${newPos.x}, ${newPos.y}) angle=${angle}°`);
+          } else {
+            this.log(`[mqtt] siid:1 piid:4 value: ${JSON.stringify(val)?.substring(0, 200)}`);
+          }
+        } else if (prop.siid === 2 && prop.piid === 1) {
+          this.log(`[mqtt] status: ${prop.value}`);
+        }
+      }
+    } else {
+      this.log(`[mqtt] msg method=${parsed.data?.method} keys=${Object.keys(parsed.data || {}).join(',')}`);
+    }
+  }
+
   // ─── Map widget data ──────────────────────────────────────────────────────
 
   /**
@@ -2651,18 +2753,18 @@ class MowerDevice extends Homey.Device {
     const ACTIVE = ['mowing', 'edge_mowing', 'leaving', 'returning'];
     const AT_DOCK = ['docked', 'charging', 'idle', 'standby', 'paused'];
 
-    // When actively mowing: prefer MITRC live position, then last M_PATH tail point.
-    // If position is unknown, return without robotPos — never fall through to chargerPos
-    // while mowing, as that would display the dock marker as the mower position.
+    // MQTT live position — always prefer if available (updated every ~3s)
+    if (this._livePos) return { ...base, robotPos: [this._livePos.x, this._livePos.y] };
+
+    // Fallback for active states: last M_PATH tail point
     if (ACTIVE.includes(status)) {
-      if (this._livePos) return { ...base, robotPos: [this._livePos.x, this._livePos.y] };
       const tail = this._lastMPathPos();
       if (tail) return { ...base, robotPos: tail };
       return base;
     }
 
     // When docked / idle / unknown: show charger position
-    if (this._cachedMapData.chargerPos) {
+    if (AT_DOCK.includes(status) && this._cachedMapData.chargerPos) {
       const { x, y } = this._cachedMapData.chargerPos;
       return { ...base, robotPos: [x, y] };
     }

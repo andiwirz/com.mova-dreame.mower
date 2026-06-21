@@ -1,6 +1,6 @@
 {
   "id": "com.mova-dreame.mower",
-  "version": "1.0.10",
+  "version": "1.1.0",
   "compatibility": ">=12.3.0",
   "sdk": 3,
   "name": {
@@ -252,6 +252,10 @@
     "1.0.10": {
       "en": "Fixed map picker briefly reverting to the previous map after switching — a 2-minute cooldown now prevents the MAPL poll from overriding a manual switch. Fixed Refresh button staying in pressed state — it now resets immediately while the poll runs in the background.",
       "de": "Kartenpicker springt nach dem Wechsel nicht mehr kurz auf die vorherige Karte zurück — ein 2-Minuten-Cooldown verhindert, dass der MAPL-Poll einen manuellen Wechsel überschreibt. Aktualisieren-Knopf bleibt nicht mehr im gedrückten Zustand — er setzt sich sofort zurück, während der Poll im Hintergrund läuft."
+    },
+    "1.1.0": {
+      "en": "Live robot position via MQTT: the app now connects to the MOVA/Dreame MQTT broker and receives real-time position updates (siid:1 piid:4) every ~3 seconds. The Live Map widget refresh interval has been reduced from 30s to 5s so the robot marker moves in near real-time. Position is shown regardless of mower status (mowing, transit, idle at maintenance point) and resets to charger when docked.",
+      "de": "Live-Roboterposition via MQTT: Die App verbindet sich jetzt mit dem MOVA/Dreame MQTT-Broker und empfängt Echtzeit-Positionsupdates (siid:1 piid:4) alle ~3 Sekunden. Das Aktualisierungsintervall des Live-Map-Widgets wurde von 30s auf 5s reduziert, sodass sich der Roboter-Marker nahezu in Echtzeit bewegt. Die Position wird unabhängig vom Mäherstatus angezeigt (Mähen, Transit, Leerlauf am Wartungspunkt) und springt beim Andocken zur Ladestation zurück."
     }
   }
 }
