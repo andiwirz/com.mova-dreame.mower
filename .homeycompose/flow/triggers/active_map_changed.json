@@ -1,0 +1,8 @@
+{
+  "title": { "en": "Active map changed", "de": "Aktive Karte gewechselt" },
+  "tokens": [
+    { "name": "map_name", "type": "string", "title": { "en": "Map name", "de": "Kartenname" } },
+    { "name": "map_index", "type": "number", "title": { "en": "Map index", "de": "Kartenindex" } }
+  ],
+  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
+}

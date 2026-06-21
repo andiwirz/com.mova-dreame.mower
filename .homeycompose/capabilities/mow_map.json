@@ -1,0 +1,10 @@
+{
+  "type": "enum",
+  "title": { "en": "Map Selection", "de": "Kartenauswahl" },
+  "values": [
+    { "id": "map_0", "title": { "en": "Map 1", "de": "Karte 1" } }
+  ],
+  "getable": true,
+  "setable": true,
+  "uiComponent": "picker"
+}

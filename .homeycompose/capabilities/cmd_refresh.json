@@ -1,0 +1,12 @@
+{
+  "type": "boolean",
+  "title": { "en": "Refresh", "de": "Aktualisieren" },
+  "getable": true,
+  "setable": true,
+  "uiComponent": "button",
+  "icon": "/assets/capabilities/cmd_refresh.svg",
+  "hint": {
+    "en": "Forces a full data refresh: status, map, zones, spots, settings, and all pickers are updated immediately.",
+    "de": "Erzwingt eine vollständige Datenaktualisierung: Status, Karte, Zonen, Spots, Einstellungen und alle Picker werden sofort aktualisiert."
+  }
+}

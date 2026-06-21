@@ -65,6 +65,13 @@ class MowerDriver extends Homey.Driver {
     flow.getActionCard('set_child_lock')
       .registerRunListener(({ device, enabled }) => device.cmdSetChildLock(enabled === 'true'));
 
+    const setMapCard = flow.getActionCard('set_active_map');
+    setMapCard.registerRunListener(({ device, map_name }) => device.cmdSetActiveMap(Number(map_name.id)));
+    setMapCard.registerArgumentAutocompleteListener('map_name', (query, { device }) => device.getMapAutocomplete(query));
+
+    flow.getActionCard('refresh_data')
+      .registerRunListener(({ device }) => device.cmdRefreshData());
+
     // ─── Conditions ───────────────────────────────────────────────────────────
 
     flow.getConditionCard('is_mowing')
@@ -102,6 +109,12 @@ class MowerDriver extends Homey.Driver {
       .registerRunListener(({ device, percentage }) =>
         device.getCapabilityValue('measure_battery') >= percentage,
       );
+
+    const activeMapCard = flow.getConditionCard('active_map_is');
+    activeMapCard.registerRunListener(({ device, map_name }) =>
+      device.getCapabilityValue('mow_map') === `map_${map_name.id}`,
+    );
+    activeMapCard.registerArgumentAutocompleteListener('map_name', (query, { device }) => device.getMapAutocomplete(query));
 
     // ─── Trigger run-listeners (for arg-filtered triggers) ────────────────────
 

@@ -1,0 +1,12 @@
+{
+  "title": { "en": "Set active map", "de": "Aktive Karte setzen" },
+  "titleFormatted": { "en": "Set active map to [[map_name]]", "de": "Aktive Karte auf [[map_name]] setzen" },
+  "args": [
+    { "name": "device", "type": "device", "filter": "driver_id=mower" },
+    {
+      "name": "map_name", "type": "autocomplete",
+      "title": { "en": "Map", "de": "Karte" },
+      "placeholder": { "en": "Search map…", "de": "Karte suchen…" }
+    }
+  ]
+}

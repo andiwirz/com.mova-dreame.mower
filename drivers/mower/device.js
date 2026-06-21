@@ -397,6 +397,69 @@ const MIGRATIONS = [
       'consumable_robot',
     ],
   },
+  {
+    key: 'capabilities_migrated_v30',
+    reorder: [
+      'cmd_start_mowing',
+      'cmd_start_spot_mowing',
+      'cmd_pause',
+      'cmd_stop',
+      'cmd_dock',
+      'cmd_maintenance_point',
+      'mower_status',
+      'mow_map',
+      'mow_zone',
+      'cutting_height',
+      'mower_volume',
+      'mow_spot',
+      'charging_status',
+      'measure_battery',
+      'alarm_generic',
+      'mow_efficiency',
+      'collision_avoidance',
+      'firmware_update',
+      'measure_duration',
+      'meter_area_total',
+      'meter_time_total',
+      'meter_count_total',
+      'child_lock',
+      'consumable_blade',
+      'consumable_brush',
+      'consumable_robot',
+    ],
+  },
+  {
+    key: 'capabilities_migrated_v31',
+    reorder: [
+      'cmd_start_mowing',
+      'cmd_start_spot_mowing',
+      'cmd_pause',
+      'cmd_stop',
+      'cmd_dock',
+      'cmd_maintenance_point',
+      'cmd_refresh',
+      'mower_status',
+      'mow_map',
+      'mow_zone',
+      'cutting_height',
+      'mower_volume',
+      'mow_spot',
+      'charging_status',
+      'measure_battery',
+      'alarm_generic',
+      'mow_efficiency',
+      'collision_avoidance',
+      'firmware_update',
+      'measure_duration',
+      'meter_area_total',
+      'meter_time_total',
+      'meter_count_total',
+      'child_lock',
+      'consumable_blade',
+      'consumable_brush',
+      'consumable_robot',
+    ],
+  },
 ];
 
 // Capabilities removed — stripped from existing installs on next init
@@ -443,8 +506,10 @@ class MowerDevice extends Homey.Device {
                              ?? (this._wasMowing ? Date.now() : null);
     this._persistedTokenExpiry = 0;
     this._lastBindDomain       = null;  // track last seen bindDomain to avoid redundant setBindDomain calls
-    this._activeMapIndex       = 0;     // active map index, updated from MAP data each poll
+    this._activeMapIndex       = (await this.getStoreValue('active_map_index')) ?? 0;
     this._activeZoneIds        = [];    // detected zone IDs from MAP data (e.g. [1, 2, 3])
+    this._discoveredMaps       = [];    // all discovered maps [{ index, name }] for autocomplete
+    this._lastMapPickerKey     = null;  // cache key for _updateMapPicker change-guard
     this._lastZonePickerKey    = null;  // cache key for _updateZonePicker change-guard
     this._lastSpotPickerKey    = null;  // cache key for _updateSpotPicker change-guard
     this._cfgPollCounter       = 0;     // reads CFG (WRP etc.) on poll 0, 10, 20, …
@@ -477,6 +542,7 @@ class MowerDevice extends Homey.Device {
     this._trgFirmwareUpdate   = this.homey.flow.getDeviceTriggerCard('firmware_update_available');
     this._trgBatteryLow       = this.homey.flow.getDeviceTriggerCard('battery_low');
     this._trgConsumable       = this.homey.flow.getDeviceTriggerCard('consumable_needs_replacement');
+    this._trgMapChanged       = this.homey.flow.getDeviceTriggerCard('active_map_changed');
 
     // ── Picker listeners ───────────────────────────────────────────────────────
     const did = this.getData().id;
@@ -490,6 +556,20 @@ class MowerDevice extends Homey.Device {
     if (this.hasCapability('mow_spot')) {
       this.registerCapabilityListener('mow_spot', (value) => {
         this.log(`[mow_spot] selected: ${value}`);
+      });
+    }
+
+    if (this.hasCapability('mow_map')) {
+      this.registerCapabilityListener('mow_map', async (value) => {
+        const idx = parseInt(value.replace('map_', ''), 10);
+        this.log(`[mow_map] selected: ${value} → mapIndex=${idx}`);
+        if (idx !== this._activeMapIndex) {
+          await this._api.switchMap(did, idx);
+          this._activeMapIndex = idx;
+          await this.setStoreValue('active_map_index', idx);
+          this._lastZonePickerKey = null;
+          this._lastSpotPickerKey = null;
+        }
       });
     }
 
@@ -608,6 +688,27 @@ class MowerDevice extends Homey.Device {
       });
     }
 
+    if (this.hasCapability('cmd_refresh')) {
+      this.registerCapabilityListener('cmd_refresh', async (value) => {
+        if (!value) return;
+        try {
+          this.log('[cmd] btn: refresh → forcing full poll');
+          this._cfgPollCounter   = 0;
+          this._mihisPollCounter = 0;
+          this._dockPollCounter  = 0;
+          this._obsPollCounter   = 0;
+          this._lastZonePickerKey  = null;
+          this._lastSpotPickerKey  = null;
+          this._lastMapPickerKey   = null;
+          await this._poll();
+        } catch (err) {
+          this.error('[cmd_refresh] listener error:', err.message);
+        } finally {
+          await this.setCapabilityValue('cmd_refresh', false).catch(() => {});
+        }
+      });
+    }
+
     this.registerCapabilityListener('mower_volume', async (value) => {
       try {
         await this._safeWrite('mower_volume', () => this._api.setVolume(did, value));
@@ -676,6 +777,17 @@ class MowerDevice extends Homey.Device {
       this.log(`[init] dockPos: (${this._dockPos.x}, ${this._dockPos.y}) mm  yaw=${this._dockYaw}`);
     }
 
+    // Detect active map from MAPL (d[i][1]===1 = active)
+    const mapl = await this._api.getMapList(did).catch(() => null);
+    if (mapl?.d && Array.isArray(mapl.d)) {
+      const active = mapl.d.find((e) => Array.isArray(e) && e[1] === 1);
+      if (active) {
+        this._activeMapIndex = active[0];
+        await this.setStoreValue('active_map_index', active[0]);
+        this.log(`[init] active map from MAPL: ${active[0]}`);
+      }
+    }
+
     // Cache masterUid for activity history API (used for AI photo/obstacle post-session data)
     const devInfo = await this._api.getDeviceStatus(did).catch(() => null);
     if (devInfo) {
@@ -687,6 +799,7 @@ class MowerDevice extends Homey.Device {
     this._cfgPollCounter   = 1;
     this._mihisPollCounter = 1;
     this._dockPollCounter  = 1;
+
 
     this._startPolling();
   }
@@ -1046,9 +1159,7 @@ class MowerDevice extends Homey.Device {
     if (rawResult.status === 'fulfilled') {
       const rawData = rawResult.value?.data;
       if (rawData && typeof rawData === 'object' && !Array.isArray(rawData)) {
-        // Temporary: log FBD_NTYPE content
-        if (rawData['FBD_NTYPE.0']    != null) this.log('[fbd] FBD_NTYPE.0:',    JSON.stringify(rawData['FBD_NTYPE.0']).substring(0, 600));
-        if (rawData['FBD_NTYPE.info'] != null) this.log('[fbd] FBD_NTYPE.info:', JSON.stringify(rawData['FBD_NTYPE.info']).substring(0, 200));
+        this._lastRawData = rawData;
         await this._applyMOVASettings(rawData);
         await this._applyOTAInfo(rawData);
         await this._detectAndSyncZones(rawData);
@@ -1131,6 +1242,26 @@ class MowerDevice extends Homey.Device {
       }
     }
     this._dockPollCounter++;
+
+    // ── MAPL — active map detection, every poll ────────────────────────────────
+    {
+      const mapl = await this._api.getMapList(did).catch(() => null);
+      if (mapl?.d && Array.isArray(mapl.d)) {
+        const active = mapl.d.find((e) => Array.isArray(e) && e[1] === 1);
+        if (active && active[0] !== this._activeMapIndex) {
+          this.log(`[mapl] active map changed: ${this._activeMapIndex} → ${active[0]}`);
+          this._activeMapIndex = active[0];
+          await this.setStoreValue('active_map_index', active[0]);
+          this._lastZonePickerKey = null;
+          this._lastSpotPickerKey = null;
+          if (this.hasCapability('mow_map')) {
+            await this.setCapabilityValue('mow_map', `map_${active[0]}`).catch(() => {});
+          }
+          if (this._lastRawData) await this._detectAndSyncZones(this._lastRawData);
+          this._fireMapChangedTrigger(active[0]);
+        }
+      }
+    }
 
     // ── MAPI / AIOBS / OBS — every 10th poll (staggered) ─────────────────────
     if (this._obsPollCounter % 10 === 0) {
@@ -1296,14 +1427,14 @@ class MowerDevice extends Homey.Device {
    * Called every poll cycle (cheap due to change-guard caches).
    */
   async _detectAndSyncZones(raw) {
-    const { ids: detectedIds, spotIds, mapIndex } = this._extractMapInfo(raw);
-
-    if (mapIndex !== this._activeMapIndex) {
-      this.log(`[zones] active map index: ${this._activeMapIndex} → ${mapIndex}`);
-      this._activeMapIndex = mapIndex;
-    }
+    const { ids: detectedIds, spotIds, maps } = this._extractMapInfo(raw);
 
     this._activeZoneIds = detectedIds;
+
+    if (maps.length > 0) {
+      this._discoveredMaps = maps;
+      await this._updateMapPicker(maps);
+    }
 
     // Parse and cache map data for the map widget.
     // Map geometry (zones, forbidden areas) only changes when md5sum changes.
@@ -1336,31 +1467,66 @@ class MowerDevice extends Homey.Device {
   }
 
   /**
-   * Concatenate MAP.N chunks and extract:
-   *   - ids:      sorted list of distinct mowing zone IDs (e.g. [1, 2, 3])
-   *   - spotIds:  sorted list of distinct clean spot IDs (e.g. [1001, 1002])
-   *   - mapIndex: the active map's mapIndex value (0-based)
+   * Concatenate MAP.N chunks, parse the outer JSON array, and extract:
+   *   - ids:      sorted zone IDs from the active map (e.g. [1, 2, 3])
+   *   - spotIds:  sorted spot IDs from the active map (e.g. [1001, 1002])
+   *   - maps:     all discovered maps [{ index, name }]
    *
-   * Zone entries: [N,{ where N is 1–99 inside the mowingAreas section.
-   * Spot entries: [N,{ where N is 1000–9999 inside the cleanSpots section.
-   * Returns { ids: [], spotIds: [], mapIndex: 0 } when no map data is present.
+   * Zone/spot extraction is scoped to the map entry matching _activeMapIndex.
+   * Returns { ids: [], spotIds: [], maps: [] } when no MAP data is present.
    */
   _extractMapInfo(raw) {
     const parts = [];
     for (let i = 0; raw[`MAP.${i}`] != null; i++) parts.push(raw[`MAP.${i}`]);
     const mapStr = parts.join('');
-    if (!mapStr) return { ids: [], spotIds: [], mapIndex: 0 };
+    if (!mapStr) return { ids: [], spotIds: [], maps: [] };
 
-    // Extract active mapIndex (first occurrence — belongs to the active map)
-    const mapIndexMatch = mapStr.match(/"mapIndex":(\d+)/);
-    const mapIndex = mapIndexMatch ? parseInt(mapIndexMatch[1], 10) : 0;
+    // MAP chunks form a JSON array of double-encoded strings: ["<map0>","<map1>"]
+    // Parse the outer array to discover maps and extract zones/spots per map.
+    const maps = [];
+    let activeMapStr = null;
+    try {
+      let combined = mapStr;
+      {
+        let depth = 0, inStr = false, esc = false;
+        for (let ci = 0; ci < combined.length; ci++) {
+          const ch = combined[ci];
+          if (esc)               { esc = false; continue; }
+          if (ch === '\\' && inStr) { esc = true; continue; }
+          if (ch === '"')         { inStr = !inStr; continue; }
+          if (inStr) continue;
+          if (ch === '[' || ch === '{') depth++;
+          if ((ch === ']' || ch === '}') && --depth === 0) { combined = combined.slice(0, ci + 1); break; }
+        }
+      }
+      const outer = JSON.parse(combined);
+      if (Array.isArray(outer)) {
+        const seen = new Set();
+        for (const entry of outer) {
+          if (typeof entry !== 'string') continue;
+          try {
+            const m = JSON.parse(entry);
+            const idx = typeof m.mapIndex === 'number' ? m.mapIndex : -1;
+            if (idx < 0 || seen.has(idx)) continue;
+            if (!m.boundary) continue;
+            seen.add(idx);
+            maps.push({ index: idx, name: m.name || `Map ${idx + 1}` });
+            if (idx === this._activeMapIndex) activeMapStr = entry;
+          } catch {}
+        }
+        maps.sort((a, b) => a.index - b.index);
+      }
+    } catch {}
+
+    // Use only the active map's JSON for zone/spot extraction
+    const searchStr = activeMapStr || mapStr;
 
     // ── Zone IDs from mowingAreas section ──────────────────────────────────
     const idSet = new Set();
-    const maIdx = mapStr.indexOf('mowingAreas');
+    const maIdx = searchStr.indexOf('mowingAreas');
     if (maIdx !== -1) {
-      const endIdx = mapStr.indexOf('forbiddenAreas', maIdx);
-      const section = mapStr.slice(maIdx, endIdx === -1 ? maIdx + 4000 : endIdx);
+      const endIdx = searchStr.indexOf('forbiddenAreas', maIdx);
+      const section = searchStr.slice(maIdx, endIdx === -1 ? maIdx + 4000 : endIdx);
       for (const m of section.matchAll(/\[(\d{1,3}),\{/g)) {
         const id = parseInt(m[1], 10);
         if (id >= 1 && id <= 99) idSet.add(id);
@@ -1368,24 +1534,19 @@ class MowerDevice extends Homey.Device {
     }
 
     // ── Spot IDs ────────────────────────────────────────────────────────────
-    // Spot IDs are ≥ 1000. The containing key varies by firmware/brand:
-    // known candidates are cleanSpots, spots, customAreas, virtualSpots.
-    // Strategy: try each candidate name; if none matched, fall back to a
-    // whole-map scan for [NNNN,{ patterns outside the mowingAreas section.
     const spotSet = new Set();
     const SPOT_SECTION_NAMES = ['cleanSpots', 'spots', 'customAreas', 'virtualSpots'];
     let spotSectionFound = false;
 
     for (const name of SPOT_SECTION_NAMES) {
-      const idx = mapStr.indexOf(name);
+      const idx = searchStr.indexOf(name);
       if (idx === -1) continue;
       spotSectionFound = true;
-      const section = mapStr.slice(idx, idx + 8000);
+      const section = searchStr.slice(idx, idx + 8000);
       for (const m of section.matchAll(/\[(\d{4,5}),\{/g)) {
         const id = parseInt(m[1], 10);
         if (id >= 1000 && id <= 99999) spotSet.add(id);
       }
-      // Also match {"id":NNNN} style entries in the same section
       for (const m of section.matchAll(/"id"\s*:\s*(\d{4,5})/g)) {
         const id = parseInt(m[1], 10);
         if (id >= 1000 && id <= 99999) spotSet.add(id);
@@ -1394,10 +1555,7 @@ class MowerDevice extends Homey.Device {
     }
 
     if (!spotSectionFound) {
-      // Fallback: scan the whole MAP string (excluding mowingAreas) for 4-digit IDs
-
-      // Still try to find 4-digit IDs outside of the mowingAreas section
-      const noMa = maIdx !== -1 ? mapStr.slice(0, maIdx) + mapStr.slice(maIdx + 4000) : mapStr;
+      const noMa = maIdx !== -1 ? searchStr.slice(0, maIdx) + searchStr.slice(maIdx + 4000) : searchStr;
       for (const m of noMa.matchAll(/\[(\d{4,5}),\{/g)) {
         const id = parseInt(m[1], 10);
         if (id >= 1000 && id <= 99999) spotSet.add(id);
@@ -1411,8 +1569,34 @@ class MowerDevice extends Homey.Device {
     return {
       ids:      [...idSet].sort((a, b) => a - b),
       spotIds:  [...spotSet].sort((a, b) => a - b),
-      mapIndex,
+      maps,
     };
+  }
+
+  /**
+   * Rebuild the mow_map picker values from discovered maps.
+   * Change-guarded — no-ops when the map list is unchanged.
+   */
+  async _updateMapPicker(maps) {
+    if (!this.hasCapability('mow_map')) return;
+    const key = maps.map((m) => `${m.index}:${m.name}`).join(',');
+    if (key === this._lastMapPickerKey) return;
+    this._lastMapPickerKey = key;
+
+    const values = maps.map((m) => ({
+      id: `map_${m.index}`,
+      title: { en: m.name, de: m.name },
+    }));
+
+    this.log(`[picker] mow_map updated: ${values.map((v) => `${v.id} "${v.title.en}"`).join(', ')}`);
+    await this.setCapabilityOptions('mow_map', { values })
+      .catch((e) => this.error('setCapabilityOptions mow_map:', e.message));
+
+    const currentVal = this.getCapabilityValue('mow_map');
+    const activeId = `map_${this._activeMapIndex}`;
+    if (currentVal !== activeId && values.some((v) => v.id === activeId)) {
+      await this.setCapabilityValue('mow_map', activeId).catch(() => {});
+    }
   }
 
   /**
@@ -2236,6 +2420,48 @@ class MowerDevice extends Homey.Device {
     await this._api.setChildLock(did, enabled);
     await this.setSettings({ cls_enabled: enabled });
     if (this.hasCapability('child_lock')) await this._applyBoolCap('child_lock', enabled);
+  }
+
+  async cmdSetActiveMap(mapIndex) {
+    this.log(`[cmd] setActiveMap mapIndex=${mapIndex}`);
+    const did = this.getData().id;
+    await this._api.switchMap(did, mapIndex);
+    this._activeMapIndex = mapIndex;
+    await this.setStoreValue('active_map_index', mapIndex);
+    this._lastZonePickerKey = null;
+    this._lastSpotPickerKey = null;
+    if (this.hasCapability('mow_map')) {
+      await this.setCapabilityValue('mow_map', `map_${mapIndex}`).catch(() => {});
+    }
+    if (this._lastRawData) await this._detectAndSyncZones(this._lastRawData);
+    this._fireMapChangedTrigger(mapIndex);
+  }
+
+  async cmdRefreshData() {
+    this.log('[cmd] refreshData → forcing full poll');
+    this._cfgPollCounter   = 0;
+    this._mihisPollCounter = 0;
+    this._dockPollCounter  = 0;
+    this._obsPollCounter   = 0;
+    this._lastZonePickerKey  = null;
+    this._lastSpotPickerKey  = null;
+    this._lastMapPickerKey   = null;
+    await this._poll();
+  }
+
+  getMapAutocomplete(query) {
+    const maps = this._discoveredMaps || [];
+    const q = (query || '').toLowerCase();
+    return maps
+      .filter((m) => m.name.toLowerCase().includes(q))
+      .map((m) => ({ id: String(m.index), name: m.name }));
+  }
+
+  _fireMapChangedTrigger(mapIndex) {
+    const maps = this._discoveredMaps || [];
+    const map = maps.find((m) => m.index === mapIndex);
+    const name = map ? map.name : `Map ${mapIndex + 1}`;
+    this._trgMapChanged.trigger(this, { map_name: name, map_index: mapIndex }).catch(() => {});
   }
 
   // ─── Map widget data ──────────────────────────────────────────────────────

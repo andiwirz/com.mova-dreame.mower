@@ -1,6 +1,6 @@
 {
   "id": "com.mova-dreame.mower",
-  "version": "1.0.7",
+  "version": "1.0.9",
   "compatibility": ">=12.3.0",
   "sdk": 3,
   "name": {
@@ -240,6 +240,14 @@
     "1.0.7": {
       "en": "Added 'Set lift alarm' and 'Set child lock' flow actions (On/Off dropdown). Added 'When button pressed' triggers for all 6 device card buttons: Start Mowing, Start Spot Mowing, Pause, Stop, Return to Dock, and Go to Maintenance Point.",
       "de": "Flow-Aktionen 'Hebealarm setzen' und 'Kindersicherung setzen' hinzugefügt (Ein/Aus-Auswahl). 'Wenn Knopf gedrückt'-Auslöser für alle 6 Gerätekarten-Knöpfe hinzugefügt: Mähen starten, Spot mähen starten, Pausieren, Mähen beenden, Zurück zur Station und Gehe zum Wartungspunkt."
+    },
+    "1.0.8": {
+      "en": "Added multi-map support: new Map picker on the device card to switch between maps. Active map is detected automatically via MAPL polling — external map changes (e.g. from the MOVA app) are synced within one poll cycle. Zone and spot pickers now show only the zones and spots of the active map. Map switching sends op-code 200 to the device.",
+      "de": "Multi-Map-Unterstützung hinzugefügt: Neuer Karten-Picker auf der Gerätekarte zum Wechseln zwischen Karten. Die aktive Karte wird automatisch per MAPL-Polling erkannt — externe Kartenwechsel (z.B. über die MOVA App) werden innerhalb eines Poll-Zyklus synchronisiert. Zonen- und Spot-Picker zeigen nur die Zonen und Spots der aktiven Karte. Der Kartenwechsel sendet Op-Code 200 an das Gerät."
+    },
+    "1.0.9": {
+      "en": "Added Refresh button on device card to force an immediate full data refresh. Added 'Set active map' flow action, 'Active map changed' trigger (with map name and index tokens), 'Active map is' condition, and 'Refresh all data' flow action. Map flow cards use autocomplete with discovered map names.",
+      "de": "Aktualisieren-Knopf auf der Gerätekarte hinzugefügt, der eine sofortige vollständige Datenaktualisierung erzwingt. Flow-Aktion 'Aktive Karte setzen', Auslöser 'Aktive Karte gewechselt' (mit Kartenname und Index als Token), Bedingung 'Aktive Karte ist' und Flow-Aktion 'Alle Daten aktualisieren' hinzugefügt. Karten-Flow-Cards nutzen Autovervollständigung mit erkannten Kartennamen."
     }
   }
 }

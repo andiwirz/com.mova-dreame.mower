@@ -1,0 +1,12 @@
+{
+  "title": { "en": "Active map !{{is|is not}}", "de": "Aktive Karte !{{ist|ist nicht}}" },
+  "titleFormatted": { "en": "Active map !{{is|is not}} [[map_name]]", "de": "Aktive Karte !{{ist|ist nicht}} [[map_name]]" },
+  "args": [
+    { "name": "device", "type": "device", "filter": "driver_id=mower" },
+    {
+      "name": "map_name", "type": "autocomplete",
+      "title": { "en": "Map", "de": "Karte" },
+      "placeholder": { "en": "Search map…", "de": "Karte suchen…" }
+    }
+  ]
+}
