@@ -95,6 +95,16 @@
           "value": ""
         },
         {
+          "id": "device_model_id",
+          "type": "label",
+          "label": { "en": "Device Model ID", "de": "Gerätemodell-ID" },
+          "value": "",
+          "hint": {
+            "en": "Technical model identifier (e.g. mova.mower.g2529d)",
+            "de": "Technische Modellkennung (z.B. mova.mower.g2529d)"
+          }
+        },
+        {
           "id": "firmware_version",
           "type": "label",
           "label": { "en": "Firmware Version", "de": "Firmware-Version" },

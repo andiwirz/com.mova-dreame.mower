@@ -1097,6 +1097,8 @@ class MowerDevice extends Homey.Device {
       // the internal model string; fall back to info.model if absent.
       const displayName = info.deviceInfo?.displayName || info.model || '';
       if (displayName && displayName !== this.getSetting('device_model'))       infoUpdate.device_model     = displayName;
+      const modelId = info.model || '';
+      if (modelId && modelId !== this.getSetting('device_model_id'))            infoUpdate.device_model_id  = modelId;
       if (info.ver    && info.ver    !== this.getSetting('firmware_version'))   infoUpdate.firmware_version = info.ver;
       if (info.sn     && info.sn     !== this.getSetting('serial_number'))      infoUpdate.serial_number    = info.sn;
       if (info.mac    && info.mac    !== this.getSetting('mac_address'))        infoUpdate.mac_address      = info.mac;
@@ -2243,9 +2245,8 @@ class MowerDevice extends Homey.Device {
     // Pickers (mow_zone / mow_spot) intentionally keep their selection so the user
     // can re-run the same zone or spot by pressing cmd_start_mowing again.
 
-    // Docked trigger + clear live position so map shows charger
+    // Docked trigger
     if (status === 'docked' || status === 'charging' || status === 'charging_completed') {
-      this._livePos = null;
       this._trgDocked.trigger(this, {}, {})
         .catch((e) => this.error('mower_docked trigger:', e.message));
     }
@@ -2476,7 +2477,7 @@ class MowerDevice extends Homey.Device {
     const { fallback } = this._api.getMqttConfig();
     const bindDomain = this.getStoreValue('bind_domain');
     const uid = this._api.getUid() || this._devUid || 'homey';
-    const model = this._devModel || this.getSetting('device_model') || '';
+    const model = this._devModel || this.getSetting('device_model_id') || '';
     const region = this.getSetting('region') || 'eu';
 
     const host = bindDomain || fallback;
