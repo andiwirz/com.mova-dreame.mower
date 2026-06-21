@@ -509,6 +509,7 @@ class MowerDevice extends Homey.Device {
     this._activeMapIndex       = (await this.getStoreValue('active_map_index')) ?? 0;
     this._activeZoneIds        = [];    // detected zone IDs from MAP data (e.g. [1, 2, 3])
     this._discoveredMaps       = [];    // all discovered maps [{ index, name }] for autocomplete
+    this._mapSwitchCooldown    = 0;     // timestamp until which MAPL override is suppressed after manual switch
     this._lastMapPickerKey     = null;  // cache key for _updateMapPicker change-guard
     this._lastZonePickerKey    = null;  // cache key for _updateZonePicker change-guard
     this._lastSpotPickerKey    = null;  // cache key for _updateSpotPicker change-guard
@@ -566,9 +567,12 @@ class MowerDevice extends Homey.Device {
         if (idx !== this._activeMapIndex) {
           await this._api.switchMap(did, idx);
           this._activeMapIndex = idx;
+          this._mapSwitchCooldown = Date.now() + 120000;
           await this.setStoreValue('active_map_index', idx);
           this._lastZonePickerKey = null;
           this._lastSpotPickerKey = null;
+          if (this._lastRawData) await this._detectAndSyncZones(this._lastRawData);
+          this._fireMapChangedTrigger(idx);
         }
       });
     }
@@ -691,21 +695,16 @@ class MowerDevice extends Homey.Device {
     if (this.hasCapability('cmd_refresh')) {
       this.registerCapabilityListener('cmd_refresh', async (value) => {
         if (!value) return;
-        try {
-          this.log('[cmd] btn: refresh → forcing full poll');
-          this._cfgPollCounter   = 0;
-          this._mihisPollCounter = 0;
-          this._dockPollCounter  = 0;
-          this._obsPollCounter   = 0;
-          this._lastZonePickerKey  = null;
-          this._lastSpotPickerKey  = null;
-          this._lastMapPickerKey   = null;
-          await this._poll();
-        } catch (err) {
-          this.error('[cmd_refresh] listener error:', err.message);
-        } finally {
-          await this.setCapabilityValue('cmd_refresh', false).catch(() => {});
-        }
+        await this.setCapabilityValue('cmd_refresh', false).catch(() => {});
+        this.log('[cmd] btn: refresh → forcing full poll');
+        this._cfgPollCounter   = 0;
+        this._mihisPollCounter = 0;
+        this._dockPollCounter  = 0;
+        this._obsPollCounter   = 0;
+        this._lastZonePickerKey  = null;
+        this._lastSpotPickerKey  = null;
+        this._lastMapPickerKey   = null;
+        this._poll().catch((err) => this.error('[cmd_refresh] poll error:', err.message));
       });
     }
 
@@ -1244,7 +1243,7 @@ class MowerDevice extends Homey.Device {
     this._dockPollCounter++;
 
     // ── MAPL — active map detection, every poll ────────────────────────────────
-    {
+    if (Date.now() > this._mapSwitchCooldown) {
       const mapl = await this._api.getMapList(did).catch(() => null);
       if (mapl?.d && Array.isArray(mapl.d)) {
         const active = mapl.d.find((e) => Array.isArray(e) && e[1] === 1);
@@ -2427,6 +2426,7 @@ class MowerDevice extends Homey.Device {
     const did = this.getData().id;
     await this._api.switchMap(did, mapIndex);
     this._activeMapIndex = mapIndex;
+    this._mapSwitchCooldown = Date.now() + 120000;
     await this.setStoreValue('active_map_index', mapIndex);
     this._lastZonePickerKey = null;
     this._lastSpotPickerKey = null;
