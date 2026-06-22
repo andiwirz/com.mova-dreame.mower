@@ -196,6 +196,8 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 | Go to maintenance point | Drives the mower to its configured maintenance point |
 | Set lift alarm | Enables or disables the lift alarm (anti-theft) via flow |
 | Set child lock | Enables or disables the child lock via flow |
+| Set active map | Switches the active map (autocomplete with map names) |
+| Refresh all data | Forces an immediate full data refresh |
 
 ## Flow Cards
 
@@ -203,12 +205,14 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 - Mowing started
 - Mowing completed
 - Mower docked at station
+- Mower returning to dock
 - Mower status changed *(token: status)*
 - Charging status changed *(token: status)*
 - Mower error occurred *(tokens: error code, error description)*
 - Battery drops below X% *(arg: threshold %)*
 - Consumable drops below X% *(arg: threshold %; tokens: consumable type, remaining %)*
 - Firmware update available
+- Active map changed *(tokens: map name, map index)*
 - Start Mowing button pressed
 - Start Spot Mowing button pressed
 - Pause button pressed
@@ -224,6 +228,7 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 - Mowing mode is / is not *(dropdown: all area / zone / edge / spot / manual)*
 - Mow efficiency is / is not set to efficient
 - Battery is above / is below X% *(arg: percentage %)*
+- Active map is / is not *(autocomplete: map name)*
 
 **Then...**
 - Start mowing (full area)
@@ -235,6 +240,7 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 - Pause mowing
 - Stop mowing
 - Return to dock
+- Go to maintenance point
 - Find mower with audible alert
 - Clear recoverable error
 - Set mowing mode *(dropdown: all area / zone / edge / spot / manual)*
@@ -242,6 +248,8 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 - Set mow efficiency mode *(dropdown: Standard / Efficient)*
 - Set lift alarm *(dropdown: On / Off)*
 - Set child lock *(dropdown: On / Off)*
+- Set active map *(autocomplete: map name)*
+- Refresh all data
 
 ## Supported Brands & Regions
 
