@@ -271,18 +271,58 @@
         for (let i = 0; i < data.mapObstacles.length; i++) {
           const obs = data.mapObstacles[i];
           if (!obs) continue;
-          // Handle different coordinate property names the firmware might use
-          const ox = obs.x !== undefined ? obs.x : (obs.px !== undefined ? obs.px : (obs.position ? obs.position.x : undefined));
-          const oy = obs.y !== undefined ? obs.y : (obs.py !== undefined ? obs.py : (obs.position ? obs.position.y : undefined));
+          var ox = obs.x !== undefined ? obs.x : (obs.px !== undefined ? obs.px : (obs.position ? obs.position.x : undefined));
+          var oy = obs.y !== undefined ? obs.y : (obs.py !== undefined ? obs.py : (obs.position ? obs.position.y : undefined));
           if (ox == null || oy == null) continue;
-          const osx = tx(ox).toFixed(1);
-          const osy = ty(oy).toFixed(1);
+          var osx = tx(ox).toFixed(1);
+          var osy = ty(oy).toFixed(1);
           g += '<circle cx="' + osx + '" cy="' + osy + '" r="' + obsR + '" fill="rgba(255,152,0,0.85)" stroke="#fff" stroke-width="' + sw + '"/>';
           g += '<text x="' + osx + '" y="' + osy + '" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="' + obsFt + '" font-family="system-ui,sans-serif" font-weight="800">!</text>';
         }
       }
 
-      // Robot position marker — always drawn at robotPos (charger when docked, MITRC when mowing)
+      // OBS obstacles — polygon outlines from the OBS/AIOBS commands
+      if (showObstacles && data.obstacles) {
+        var obsData = null;
+        try {
+          var rawObs = data.obstacles.obs && data.obstacles.obs.data;
+          if (typeof rawObs === 'string') obsData = JSON.parse(rawObs);
+          else if (Array.isArray(rawObs)) obsData = rawObs;
+        } catch(e) {}
+        if (Array.isArray(obsData) && obsData.length) {
+          for (var oi = 0; oi < obsData.length; oi++) {
+            var ob = obsData[oi];
+            if (!ob || !Array.isArray(ob.data) || ob.data.length < 2) continue;
+            var pts = '';
+            var cx = 0, cy = 0;
+            for (var pi = 0; pi < ob.data.length; pi++) {
+              var px = tx(ob.data[pi][0] * 10).toFixed(1);
+              var py = ty(ob.data[pi][1] * 10).toFixed(1);
+              pts += px + ',' + py + ' ';
+              cx += parseFloat(px); cy += parseFloat(py);
+            }
+            cx = (cx / ob.data.length).toFixed(1);
+            cy = (cy / ob.data.length).toFixed(1);
+            g += '<polygon points="' + pts.trim() + '" fill="rgba(255,152,0,0.3)" stroke="rgba(255,152,0,0.8)" stroke-width="' + sw + '"/>';
+            var oR = (refSize * 0.015).toFixed(1);
+            g += '<circle cx="' + cx + '" cy="' + cy + '" r="' + oR + '" fill="rgba(255,152,0,0.85)"/>';
+          }
+        }
+      }
+
+      // Dock / base station marker — house icon
+      if (data.chargerPos && data.chargerPos.x != null) {
+        const dx = tx(data.chargerPos.x).toFixed(1);
+        const dy = ty(data.chargerPos.y).toFixed(1);
+        const ds = (refSize * 0.035).toFixed(1);
+        g += '<g transform="translate(' + dx + ',' + dy + ')">'
+          + '<rect x="' + (-ds * 0.5) + '" y="' + (-ds * 0.3) + '" width="' + ds + '" height="' + (ds * 0.7) + '" rx="' + (ds * 0.08) + '" fill="rgba(255,255,255,0.85)" stroke="#555" stroke-width="' + sw + '"/>'
+          + '<polygon points="' + (-ds * 0.6) + ','+  (-ds * 0.3) + ' 0,' + (-ds * 0.75) + ' ' + (ds * 0.6) + ',' + (-ds * 0.3) + '" fill="rgba(255,255,255,0.85)" stroke="#555" stroke-width="' + sw + '"/>'
+          + '<rect x="' + (-ds * 0.12) + '" y="' + (ds * 0.05) + '" width="' + (ds * 0.24) + '" height="' + (ds * 0.35) + '" fill="#555"/>'
+          + '</g>';
+      }
+
+      // Robot position marker (blue dot)
       if (showRobot && Array.isArray(data.robotPos) && data.robotPos.length === 2) {
         const rx = tx(data.robotPos[0]).toFixed(1);
         const ry = ty(data.robotPos[1]).toFixed(1);
