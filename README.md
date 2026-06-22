@@ -251,12 +251,15 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 
 | Device | Model | Status |
 |--------|-------|--------|
-| MOVA LiDAX Ultra 1200 | `mova.mower.g2529d` | ✅ Fully implemented |
+| MOVA LiDAX Ultra 1000 | `mova.mower.g2529c` | ✅ Works |
+| MOVA LiDAX Ultra 1200 | `mova.mower.g2529d` | ✅ Fully tested |
+| MOVA LiDAX Ultra 2000 | `mova.mower.g2529e` | ✅ Works |
 | MOVA 1000 | `mova.mower.g2405c` | ✅ Works |
-| MOVA ViAX 250 | — | ✅ Works |
+| MOVA ViAX 250 | `mova.mower.g2420a` | ✅ Works |
 | MOVA ViAX 300 | `mova.mower.g2420b` | ✅ Works |
 | Dreame A1 | — | ✅ Works |
-| Dreame A2 | `dreame.mower.g2422` | 🟡 Basic tests ok |
+| Dreame A1 Pro | `dreame.mower.g2540d` | ✅ Works |
+| Dreame A2 | `dreame.mower.g2422` | ✅ Works |
 | Dreame A3 AWD Pro 3500 | `dreame.mower.g2541e` | ✅ Works |
 
 Other MOVA and Dreame robotic mowers using the same cloud API are expected to work. If you test a different model, feel free to open an issue or pull request to get it added here.
