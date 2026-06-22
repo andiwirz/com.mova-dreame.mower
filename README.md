@@ -21,11 +21,14 @@ MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct
 - **Battery settings** — configure the return-to-dock threshold, task-resume threshold, and auto-resume after charging
 - **Voice Announcements** — configure which voice modes the mower uses (notifications, work status, special status, errors)
 - **Anti-Theft Alarm** — enable lift alarm: mower locks and triggers an audible alarm when lifted
+- **Multi-map support** — Map picker on the device card to switch between maps (e.g. front yard / backyard); active map is auto-detected via MAPL polling and synced when changed in the MOVA app
+- **Refresh button** — forces an immediate full data refresh of all sensors, pickers and settings
+- **Live robot position via MQTT** — real-time position updates every ~3 seconds via the MOVA/Dreame MQTT broker; the robot marker on the map widget moves in near real-time during mowing, transit, and idle
 - **Auto-reset action buttons** when the mower reaches a new state (e.g. dock button resets when mower docks)
 - Full flow card support for automation
 - Built-in **Debug Console** in the app settings for diagnostics, device discovery and compatibility checks
 - **Re-authentication without device removal** — if you change your MOVA or Dreame password, tap *Repair* on the device in Homey to restore the connection; all settings, capabilities, and flows are preserved
-- **Live Map widget** — real-time SVG map of the lawn with zone boundaries, forbidden areas, dock position, and live robot position during mowing
+- **Live Map widget** — real-time SVG map of the lawn with zone boundaries, forbidden areas, dock position, and live robot position (MQTT, ~3s updates)
 - **Mowing History widget** — browse past sessions with a mini-map, time-gradient trajectory, obstacle photo carousel, and session statistics
 
 ## Capabilities
