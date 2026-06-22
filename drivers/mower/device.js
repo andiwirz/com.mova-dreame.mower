@@ -544,6 +544,7 @@ class MowerDevice extends Homey.Device {
     this._trgFirmwareUpdate   = this.homey.flow.getDeviceTriggerCard('firmware_update_available');
     this._trgBatteryLow       = this.homey.flow.getDeviceTriggerCard('battery_low');
     this._trgConsumable       = this.homey.flow.getDeviceTriggerCard('consumable_needs_replacement');
+    this._trgReturning        = this.homey.flow.getDeviceTriggerCard('mower_returning');
     this._trgMapChanged       = this.homey.flow.getDeviceTriggerCard('active_map_changed');
 
     // ── Picker listeners ───────────────────────────────────────────────────────
@@ -2244,6 +2245,12 @@ class MowerDevice extends Homey.Device {
     }
     // Pickers (mow_zone / mow_spot) intentionally keep their selection so the user
     // can re-run the same zone or spot by pressing cmd_start_mowing again.
+
+    // Returning trigger
+    if (status === 'returning') {
+      this._trgReturning.trigger(this, {}, {})
+        .catch((e) => this.error('mower_returning trigger:', e.message));
+    }
 
     // Docked trigger
     if (status === 'docked' || status === 'charging' || status === 'charging_completed') {

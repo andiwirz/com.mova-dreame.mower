@@ -230,5 +230,9 @@
   "1.1.1": {
     "en": "The map widget now always shows the last known MQTT position — the robot marker stays at the actual mower location even when docked. Added 'Device Model ID' field to device settings showing the technical model identifier (e.g. mova.mower.g2529d). Fixed MQTT topic using display name instead of technical model ID.",
     "de": "Das Karten-Widget zeigt jetzt immer die letzte bekannte MQTT-Position — der Roboter-Marker bleibt an der tatsächlichen Mäherposition, auch wenn angedockt. Feld 'Gerätemodell-ID' in den Geräteeinstellungen hinzugefügt, das die technische Modellkennung anzeigt (z.B. mova.mower.g2529d). MQTT-Topic verwendet jetzt die technische Modell-ID statt des Anzeigenamens."
+  },
+  "1.1.2": {
+    "en": "Added 'Mower returning to dock' flow trigger — fires as soon as the mower starts heading home (e.g. after mowing, from maintenance point, or via Return to Dock button). Useful for automations like opening a garage door before the mower arrives.",
+    "de": "'Mäher fährt zur Station zurück' Flow-Auslöser hinzugefügt — feuert sobald der Mäher zur Ladestation zurückkehrt (z.B. nach dem Mähen, vom Wartungspunkt oder über den Zurück-zur-Station-Knopf). Nützlich für Automationen wie das Öffnen einer Garagentür bevor der Mäher ankommt."
   }
 }

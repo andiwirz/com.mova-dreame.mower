@@ -1,0 +1,4 @@
+{
+  "title": { "en": "Mower returning to dock", "de": "Mäher fährt zur Station zurück" },
+  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
+}
