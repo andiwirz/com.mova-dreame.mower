@@ -2017,10 +2017,13 @@ class MowerDevice extends Homey.Device {
     }
 
     // CMS — consumable maintenance: array [bladeMin, brushMin, robotMin] = minutes used since last replacement.
-    // Max life: blade=6000 min (100h), brush=30000 min (500h), robot=3600 min (60h).
-    // Confirmed via getCFG response and cross-checked against MOVA app percentages.
+    // Max life configurable per device (default: blade=100h, brush=500h, robot=60h).
     if (Array.isArray(cfg.CMS) && cfg.CMS.length >= 3) {
-      const CMS_MAX   = [6000, 30000, 3600];
+      const CMS_MAX = [
+        (this.getSetting('cms_blade_max') || 100) * 60,
+        (this.getSetting('cms_brush_max') || 500) * 60,
+        (this.getSetting('cms_robot_max') || 60)  * 60,
+      ];
       const caps      = ['consumable_blade', 'consumable_brush', 'consumable_robot'];
       const typeNames = ['blade', 'brush', 'robot'];
       await Promise.all(caps.map(async (cap, i) => {
@@ -2258,10 +2261,20 @@ class MowerDevice extends Homey.Device {
         .catch((e) => this.error('mower_docked trigger:', e.message));
     }
 
-    // Mowing completed: was mowing → now home
+    // Mowing completed: was mowing → now home.
+    // Suppress during mid-program charge breaks: if battery is below the resume threshold
+    // and auto-resume is enabled, the mower will resume after charging — not truly complete.
     if (this._wasMowing && HOME_STATUSES.has(status)) {
-      this._trgMowingCompleted.trigger(this, {}, {})
-        .catch((e) => this.error('mowing_completed trigger:', e.message));
+      const battery       = this.getCapabilityValue('measure_battery') ?? 100;
+      const resumePct     = this.getSetting('bat_resume_pct') ?? 100;
+      const autoResume    = this.getSetting('bat_auto_resume') ?? false;
+      const isChargeBreak = autoResume && battery < resumePct;
+      if (!isChargeBreak) {
+        this._trgMowingCompleted.trigger(this, {}, {})
+          .catch((e) => this.error('mowing_completed trigger:', e.message));
+      } else {
+        this.log(`[trigger] mowing_completed suppressed — charge break (battery=${battery}% < resume=${resumePct}%)`);
+      }
     }
 
     this._wasMowing = isMowing;

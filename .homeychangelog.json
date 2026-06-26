@@ -238,5 +238,9 @@
   "1.1.3": {
     "en": "Added base station marker (house icon) to the Live Map widget — always visible at the charger position. Added OBS obstacle polygons to the Live Map widget showing detected obstacles from the mower's sensors. Added 'Device Model ID' field to device settings. Updated tested devices list.",
     "de": "Ladestation-Marker (Haus-Symbol) zum Live-Map-Widget hinzugefügt — immer sichtbar an der Ladestation-Position. OBS-Hindernis-Polygone zum Live-Map-Widget hinzugefügt, die erkannte Hindernisse der Mähersensoren anzeigen. Feld 'Gerätemodell-ID' in den Geräteeinstellungen hinzugefügt. Getestete Geräteliste aktualisiert."
+  },
+  "1.1.4": {
+    "en": "Consumable max life values (blade, brush, robot maintenance) are now configurable per device in settings — fixes percentage mismatch on models with non-default intervals. Fixed 'Mowing completed' trigger firing during mid-program charge breaks — the trigger is now suppressed when auto-resume is enabled and the battery is below the resume threshold.",
+    "de": "Maximale Verbrauchsmaterial-Lebensdauer (Klinge, Bürste, Roboterwartung) ist jetzt pro Gerät in den Einstellungen konfigurierbar — behebt Prozentabweichungen bei Modellen mit abweichenden Intervallen. Flow-Auslöser 'Mähen abgeschlossen' wird nicht mehr bei Lade-Unterbrechungen mitten im Mähprogramm ausgelöst — der Auslöser wird unterdrückt wenn Auto-Fortsetzung aktiv ist und der Akku unter dem Fortsetzungs-Schwellwert liegt."
   }
 }

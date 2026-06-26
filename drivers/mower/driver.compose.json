@@ -681,6 +681,51 @@
     },
     {
       "type": "group",
+      "label": { "en": "Consumable Max Life", "de": "Verbrauchsmaterial Maximalwerte" },
+      "children": [
+        {
+          "id": "cms_blade_max",
+          "type": "number",
+          "label": { "en": "Blade max (hours)", "de": "Klinge max (Stunden)" },
+          "value": 100,
+          "min": 10,
+          "max": 500,
+          "step": 10,
+          "hint": {
+            "en": "Maximum blade life in hours. Default: 100h. Adjust if the percentage doesn't match the manufacturer app.",
+            "de": "Maximale Klingenlebensdauer in Stunden. Standard: 100h. Anpassen, falls der Prozentwert nicht mit der Hersteller-App übereinstimmt."
+          }
+        },
+        {
+          "id": "cms_brush_max",
+          "type": "number",
+          "label": { "en": "Brush max (hours)", "de": "Bürste max (Stunden)" },
+          "value": 500,
+          "min": 50,
+          "max": 2000,
+          "step": 50,
+          "hint": {
+            "en": "Maximum brush life in hours. Default: 500h.",
+            "de": "Maximale Bürstenlebensdauer in Stunden. Standard: 500h."
+          }
+        },
+        {
+          "id": "cms_robot_max",
+          "type": "number",
+          "label": { "en": "Robot maintenance max (hours)", "de": "Roboterwartung max (Stunden)" },
+          "value": 60,
+          "min": 10,
+          "max": 200,
+          "step": 10,
+          "hint": {
+            "en": "Maximum robot maintenance interval in hours. Default: 60h. Some models use 42h or 50h — adjust if the percentage doesn't match the manufacturer app.",
+            "de": "Maximales Roboter-Wartungsintervall in Stunden. Standard: 60h. Einige Modelle verwenden 42h oder 50h — anpassen, falls der Prozentwert nicht mit der Hersteller-App übereinstimmt."
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
       "label": { "en": "Connection", "de": "Verbindung" },
       "children": [
         {
