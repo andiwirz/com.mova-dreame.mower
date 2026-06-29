@@ -1,6 +1,6 @@
 {
   "id": "com.mova-dreame.mower",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "compatibility": ">=12.3.0",
   "sdk": 3,
   "name": {
@@ -272,6 +272,10 @@
     "1.1.4": {
       "en": "Consumable max life values (blade, brush, robot maintenance) are now configurable per device in settings — fixes percentage mismatch on models with non-default intervals. Fixed 'Mowing completed' trigger firing during mid-program charge breaks — the trigger is now suppressed when auto-resume is enabled and the battery is below the resume threshold.",
       "de": "Maximale Verbrauchsmaterial-Lebensdauer (Klinge, Bürste, Roboterwartung) ist jetzt pro Gerät in den Einstellungen konfigurierbar — behebt Prozentabweichungen bei Modellen mit abweichenden Intervallen. Flow-Auslöser 'Mähen abgeschlossen' wird nicht mehr bei Lade-Unterbrechungen mitten im Mähprogramm ausgelöst — der Auslöser wird unterdrückt wenn Auto-Fortsetzung aktiv ist und der Akku unter dem Fortsetzungs-Schwellwert liegt."
+    },
+    "1.1.5": {
+      "en": "Fixed 'Mowing completed' trigger being suppressed for all events — the charge-break detection used a wrong default for the resume threshold, causing all completion triggers to be silently dropped.",
+      "de": "Flow-Auslöser 'Mähen abgeschlossen' wurde fälschlicherweise bei allen Ereignissen unterdrückt — die Ladepausen-Erkennung verwendete einen falschen Standardwert für den Fortsetzungs-Schwellwert, wodurch alle Abschluss-Trigger stillschweigend verworfen wurden."
     }
   }
 }

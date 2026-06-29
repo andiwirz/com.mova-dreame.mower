@@ -2266,7 +2266,7 @@ class MowerDevice extends Homey.Device {
     // and auto-resume is enabled, the mower will resume after charging — not truly complete.
     if (this._wasMowing && HOME_STATUSES.has(status)) {
       const battery       = this.getCapabilityValue('measure_battery') ?? 100;
-      const resumePct     = this.getSetting('bat_resume_pct') ?? 100;
+      const resumePct     = this.getSetting('bat_resume_pct') ?? 0;
       const autoResume    = this.getSetting('bat_auto_resume') ?? false;
       const isChargeBreak = autoResume && battery < resumePct;
       if (!isChargeBreak) {
