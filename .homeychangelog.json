@@ -246,5 +246,9 @@
   "1.1.5": {
     "en": "Fixed 'Mowing completed' trigger being suppressed for all events — the charge-break detection used a wrong default for the resume threshold, causing all completion triggers to be silently dropped.",
     "de": "Flow-Auslöser 'Mähen abgeschlossen' wurde fälschlicherweise bei allen Ereignissen unterdrückt — die Ladepausen-Erkennung verwendete einen falschen Standardwert für den Fortsetzungs-Schwellwert, wodurch alle Abschluss-Trigger stillschweigend verworfen wurden."
+  },
+  "1.1.6": {
+    "en": "Fixed charge-break detection for 'Mowing completed' trigger — now compares battery against the return threshold (bat_return_pct) instead of the resume threshold, so the trigger fires correctly when mowing finishes or is manually stopped, and is only suppressed when the mower genuinely returned due to low battery.",
+    "de": "Ladepausen-Erkennung für 'Mähen abgeschlossen' korrigiert — der Akkustand wird jetzt mit dem Rückkehr-Schwellwert (bat_return_pct) verglichen statt mit dem Fortsetzungs-Schwellwert, sodass der Auslöser korrekt feuert wenn das Mähen abgeschlossen oder manuell gestoppt wurde."
   }
 }

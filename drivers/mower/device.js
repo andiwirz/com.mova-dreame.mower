@@ -2265,15 +2265,19 @@ class MowerDevice extends Homey.Device {
     // Suppress during mid-program charge breaks: if battery is below the resume threshold
     // and auto-resume is enabled, the mower will resume after charging — not truly complete.
     if (this._wasMowing && HOME_STATUSES.has(status)) {
-      const battery       = this.getCapabilityValue('measure_battery') ?? 100;
-      const resumePct     = this.getSetting('bat_resume_pct') ?? 0;
-      const autoResume    = this.getSetting('bat_auto_resume') ?? false;
-      const isChargeBreak = autoResume && battery < resumePct;
+      const battery    = this.getCapabilityValue('measure_battery') ?? 100;
+      const returnPct  = this.getSetting('bat_return_pct')  ?? 15;
+      const autoResume = this.getSetting('bat_auto_resume') ?? false;
+      // A charge break means the mower returned because the battery hit the return
+      // threshold — so battery at docking will be close to bat_return_pct.
+      // Add 5% tolerance for polling lag. If battery is well above returnPct
+      // the mower finished or was manually stopped — fire the trigger normally.
+      const isChargeBreak = autoResume && battery <= (returnPct + 5);
       if (!isChargeBreak) {
         this._trgMowingCompleted.trigger(this, {}, {})
           .catch((e) => this.error('mowing_completed trigger:', e.message));
       } else {
-        this.log(`[trigger] mowing_completed suppressed — charge break (battery=${battery}% < resume=${resumePct}%)`);
+        this.log(`[trigger] mowing_completed suppressed — charge break (battery=${battery}% ≤ returnPct=${returnPct}%+5)`);
       }
     }
 
