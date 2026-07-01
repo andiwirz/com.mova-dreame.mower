@@ -258,5 +258,9 @@
   "1.1.8": {
     "en": "Improved 'Mowing completed' trigger — now fires at the mowing→returning transition (the exact moment the session ends) instead of at docking. Charge-break detection is also more accurate at this point since the battery reading reflects the moment the mower decided to return.",
     "de": "Flow-Auslöser 'Mähen abgeschlossen' verbessert — feuert jetzt beim Übergang Mähen→Zurückfahren (dem genauen Moment des Sessionsendes) statt beim Andocken. Die Ladepausen-Erkennung ist an diesem Punkt ebenfalls präziser, da der Akkustand den Moment widerspiegelt, in dem der Mäher die Entscheidung zur Rückkehr getroffen hat."
+  },
+  "1.1.9": {
+    "en": "Added app store search tags (mower, robot mower, lawn mower, garden, MOVA, Dreame, …) to improve discoverability.",
+    "de": "App-Store-Suchbegriffe hinzugefügt (Mähroboter, Rasenmäher, Garten, MOVA, Dreame, …) um die Auffindbarkeit zu verbessern."
   }
 }
