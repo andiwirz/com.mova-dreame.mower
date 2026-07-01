@@ -250,5 +250,13 @@
   "1.1.6": {
     "en": "Fixed charge-break detection for 'Mowing completed' trigger — now compares battery against the return threshold (bat_return_pct) instead of the resume threshold, so the trigger fires correctly when mowing finishes or is manually stopped, and is only suppressed when the mower genuinely returned due to low battery.",
     "de": "Ladepausen-Erkennung für 'Mähen abgeschlossen' korrigiert — der Akkustand wird jetzt mit dem Rückkehr-Schwellwert (bat_return_pct) verglichen statt mit dem Fortsetzungs-Schwellwert, sodass der Auslöser korrekt feuert wenn das Mähen abgeschlossen oder manuell gestoppt wurde."
+  },
+  "1.1.7": {
+    "en": "Fixed 'Mowing completed' trigger not firing after a mowing session — the status sequence mowing→returning→charging caused the internal tracking flag to reset during the returning phase, so the trigger was never reached. The flag now persists through the returning phase and fires when the mower actually docks.",
+    "de": "Flow-Auslöser 'Mähen abgeschlossen' feuerte nach einer Mähsession nicht — die Statusfolge Mähen→Zurückfahren→Laden setzte das interne Tracking-Flag während der Rückfahrt zurück, sodass der Auslöser nie erreicht wurde. Das Flag bleibt nun während der Rückfahrt erhalten und feuert wenn der Mäher tatsächlich andockt."
+  },
+  "1.1.8": {
+    "en": "Improved 'Mowing completed' trigger — now fires at the mowing→returning transition (the exact moment the session ends) instead of at docking. Charge-break detection is also more accurate at this point since the battery reading reflects the moment the mower decided to return.",
+    "de": "Flow-Auslöser 'Mähen abgeschlossen' verbessert — feuert jetzt beim Übergang Mähen→Zurückfahren (dem genauen Moment des Sessionsendes) statt beim Andocken. Die Ladepausen-Erkennung ist an diesem Punkt ebenfalls präziser, da der Akkustand den Moment widerspiegelt, in dem der Mäher die Entscheidung zur Rückkehr getroffen hat."
   }
 }
