@@ -2261,11 +2261,12 @@ class MowerDevice extends Homey.Device {
         .catch((e) => this.error('mower_docked trigger:', e.message));
     }
 
-    // Mowing completed: was mowing → now returning.
-    // Fired at the returning transition (not at docking) — this is the exact moment
-    // the mowing session ends. Suppress if it's a mid-program charge break: battery
-    // at this transition is right when the device decided to return, making it the
-    // most reliable point to compare against the return threshold.
+    // Mowing completed: two cases —
+    // 1. mowing → returning: normal completion or manual "Return to Dock".
+    //    Check for charge break: battery at this point reflects why the mower decided
+    //    to return. Suppress if auto-resume is on and battery ≤ returnPct + 2%.
+    // 2. mowing → idle/docked/charging: manual "End" in the app (no returning phase).
+    //    Always fire — a charge break always goes through returning, never directly to idle.
     if (this._wasMowing && isReturning) {
       const battery    = this.getCapabilityValue('measure_battery') ?? 100;
       const returnPct  = this.getSetting('bat_return_pct')  ?? 15;
@@ -2277,6 +2278,9 @@ class MowerDevice extends Homey.Device {
       } else {
         this.log(`[trigger] mowing_completed suppressed — charge break (battery=${battery}% ≤ returnPct=${returnPct}%+2)`);
       }
+    } else if (this._wasMowing && HOME_STATUSES.has(status)) {
+      this._trgMowingCompleted.trigger(this, {}, {})
+        .catch((e) => this.error('mowing_completed trigger:', e.message));
     }
 
     this._wasMowing = isMowing;

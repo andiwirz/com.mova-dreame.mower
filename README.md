@@ -220,6 +220,13 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 - Return to Dock button pressed
 - Go to Maintenance Point button pressed
 
+> **How "Mowing completed" fires:** The trigger fires as soon as the mowing session ends — not when the mower physically arrives at the dock. Two paths are supported:
+>
+> - **Natural end / Return to Dock button:** fires when the mower transitions from `mowing` to `returning`. The mower is on its way home, but the session is already over.
+> - **"End" button in the Dreame/MOVA app:** fires immediately when the mower transitions from `mowing` to `idle`. The mower stays where it is.
+>
+> **Charge-break suppression:** If *Battery → Resume mowing after charging* is enabled and the mower's battery at the `returning` transition is at or below *Battery → Return threshold + 2 %*, the trigger is suppressed — this indicates a mid-session charge break (the mower paused to recharge and will resume automatically). The trigger will fire once the full session genuinely ends.
+
 **And...**
 - Mower is / is not mowing
 - Mower is / is not docked
