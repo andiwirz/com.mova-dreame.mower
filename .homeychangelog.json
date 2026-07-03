@@ -266,5 +266,9 @@
   "1.1.10": {
     "en": "Fixed 'Mowing completed' trigger not firing when a session is ended via the 'End' button in the Dreame app — the mower transitions directly to idle in this case (no returning phase). The trigger now covers both paths: mowing→returning (natural end or Return to Dock) and mowing→idle (manual End).",
     "de": "Flow-Auslöser 'Mähen abgeschlossen' feuerte nicht wenn eine Session über den 'Beenden'-Knopf in der Dreame App beendet wurde — der Mäher wechselt in diesem Fall direkt in den Bereit-Status (ohne Zurückfahren-Phase). Der Auslöser deckt nun beide Pfade ab: Mähen→Zurückfahren (normales Ende oder Zurück zur Station) und Mähen→Bereit (manuelles Beenden)."
+  },
+  "1.1.11": {
+    "en": "Fixed 'Mowing completed' trigger not firing when a session is paused and then ended (mowing→paused→idle). A new session flag now persists through the paused state so the trigger correctly fires when the mower stops from a paused state.",
+    "de": "Flow-Auslöser 'Mähen abgeschlossen' feuerte nicht wenn eine Session pausiert und dann beendet wurde (Mähen→Pausiert→Bereit). Ein neues Session-Flag bleibt nun während des Pausierten-Status erhalten, sodass der Auslöser korrekt feuert wenn der Mäher aus dem pausierten Zustand heraus gestoppt wird."
   }
 }

@@ -503,6 +503,7 @@ class MowerDevice extends Homey.Device {
     // If the mower was already mowing before the restart, _wasMowing stays true and
     // _sessionStartTime is restored from the store (falls back to now if not stored yet).
     this._wasMowing        = this.getCapabilityValue('mower_status') === 'mowing';
+    this._wasMowingSession = ['mowing', 'paused'].includes(this.getCapabilityValue('mower_status'));
     this._sessionStartTime = (await this.getStoreValue('session_start_time'))
                              ?? (this._wasMowing ? Date.now() : null);
     this._persistedTokenExpiry = 0;
@@ -2261,13 +2262,15 @@ class MowerDevice extends Homey.Device {
         .catch((e) => this.error('mower_docked trigger:', e.message));
     }
 
-    // Mowing completed: two cases —
+    // Mowing completed: three cases —
     // 1. mowing → returning: normal completion or manual "Return to Dock".
     //    Check for charge break: battery at this point reflects why the mower decided
     //    to return. Suppress if auto-resume is on and battery ≤ returnPct + 2%.
     // 2. mowing → idle/docked/charging: manual "End" in the app (no returning phase).
     //    Always fire — a charge break always goes through returning, never directly to idle.
-    if (this._wasMowing && isReturning) {
+    // 3. mowing → paused → idle: user paused then ended without resuming.
+    //    _wasMowingSession stays true through paused, so this path is caught by case 2.
+    if (this._wasMowingSession && isReturning) {
       const battery    = this.getCapabilityValue('measure_battery') ?? 100;
       const returnPct  = this.getSetting('bat_return_pct')  ?? 15;
       const autoResume = this.getSetting('bat_auto_resume') ?? false;
@@ -2278,12 +2281,14 @@ class MowerDevice extends Homey.Device {
       } else {
         this.log(`[trigger] mowing_completed suppressed — charge break (battery=${battery}% ≤ returnPct=${returnPct}%+2)`);
       }
-    } else if (this._wasMowing && HOME_STATUSES.has(status)) {
+    } else if (this._wasMowingSession && HOME_STATUSES.has(status)) {
       this._trgMowingCompleted.trigger(this, {}, {})
         .catch((e) => this.error('mowing_completed trigger:', e.message));
     }
 
     this._wasMowing = isMowing;
+    if (isMowing) this._wasMowingSession = true;
+    else if (status !== 'paused') this._wasMowingSession = false;
   }
 
   // ─── Shared mowing state helper ───────────────────────────────────────────
