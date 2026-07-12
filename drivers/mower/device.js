@@ -1118,7 +1118,11 @@ class MowerDevice extends Homey.Device {
     if (info.latestStatus != null) {
       const mowerStatus = STATUS_MAP[info.latestStatus] ?? 'idle';
       // Dreame/MOVA device list may expose the fault code under different field names.
-      const faultCode = info.latestFaultCode ?? info.faultCode ?? info.errorCode ?? 0;
+      const faultCode = info.latestFaultCode ?? info.faultCode ?? info.errorCode
+                     ?? info.deviceCode ?? info.device_code ?? info.latestCode ?? info.errCode ?? 0;
+      if (mowerStatus === 'error') {
+        this.log(`[error] faultCode=${faultCode} — info keys: ${Object.keys(info).join(', ')}`);
+      }
       await this._applyStatus(mowerStatus, faultCode);
 
       // Derive charging_status from mower status.

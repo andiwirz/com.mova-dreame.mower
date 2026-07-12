@@ -270,5 +270,9 @@
   "1.1.11": {
     "en": "Fixed 'Mowing completed' trigger not firing when a session is paused and then ended (mowing→paused→idle). A new session flag now persists through the paused state so the trigger correctly fires when the mower stops from a paused state.",
     "de": "Flow-Auslöser 'Mähen abgeschlossen' feuerte nicht wenn eine Session pausiert und dann beendet wurde (Mähen→Pausiert→Bereit). Ein neues Session-Flag bleibt nun während des Pausierten-Status erhalten, sodass der Auslöser korrekt feuert wenn der Mäher aus dem pausierten Zustand heraus gestoppt wird."
+  },
+  "1.1.12": {
+    "en": "Improved error code detection for the 'Mower error occurred' trigger: the app now checks additional field names returned by the device list API so the correct fault code is found on more device models. A diagnostic log entry is written on every error detection to help identify the API field name if the error description still shows 'Normal operation'.",
+    "de": "Verbesserte Fehlercode-Erkennung für den Auslöser 'Mäher-Fehler aufgetreten': Die App prüft nun weitere Feldnamen der Geräteliste-API, sodass der korrekte Fehlercode auf mehr Gerätemodellen gefunden wird. Bei jeder Fehlererkennung wird ein Diagnose-Logeintrag geschrieben, um den API-Feldnamen zu identifizieren falls die Fehlerbeschreibung weiterhin 'Normalbetrieb' anzeigt."
   }
 }
