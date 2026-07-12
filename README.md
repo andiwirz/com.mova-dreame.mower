@@ -139,6 +139,31 @@ Lets you browse completed mowing sessions fetched from the cloud activity log:
 
 ## Troubleshooting
 
+### "Mower error occurred" trigger shows "Normal operation" as description
+
+The *Mower error occurred* flow trigger includes an **Error Description** token. If this always shows *Normal operation* regardless of the actual fault, the app was unable to read the numeric error code from the cloud API — the code defaulted to `0`, which maps to "Normal operation".
+
+**To help diagnose:**
+
+1. Wait for the mower to hit an error.
+2. Open the **Homey** app → Devices → long-press the mower → **Settings** → scroll to **Debug Console** → tap **Refresh**.
+3. Search the output for a line starting with `[error]` — it will list the exact field names returned by the API for your device.
+4. Open an issue on GitHub and paste that line so the correct field can be added.
+
+---
+
+### Mower status never updates (always shows docked / idle)
+
+If the mower status capability never changes — e.g. the mower shows as docked even while actively mowing — but battery level does update correctly, the numeric status codes your device model reports may differ from the ones currently mapped.
+
+**To diagnose:**
+
+1. Start a mowing session.
+2. Open **Settings** → **Debug Console** → tap **Refresh**.
+3. In the `deviceStatus` block, note the value of `latestStatus` and share it in a GitHub issue together with your device model.
+
+---
+
 ### Password changed — device shows "Unavailable"
 
 The app uses an OAuth token to communicate with the MOVA / Dreame cloud. If you change your password in the manufacturer app, the server invalidates the token and the mower device in Homey will show as *Unavailable*.
@@ -220,10 +245,11 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 - Return to Dock button pressed
 - Go to Maintenance Point button pressed
 
-> **How "Mowing completed" fires:** The trigger fires as soon as the mowing session ends — not when the mower physically arrives at the dock. Two paths are supported:
+> **How "Mowing completed" fires:** The trigger fires as soon as the mowing session ends — not when the mower physically arrives at the dock. Three paths are supported:
 >
 > - **Natural end / Return to Dock button:** fires when the mower transitions from `mowing` to `returning`. The mower is on its way home, but the session is already over.
 > - **"End" button in the Dreame/MOVA app:** fires immediately when the mower transitions from `mowing` to `idle`. The mower stays where it is.
+> - **Pause then End:** fires when the mower transitions from `paused` to `idle` after having been mowing. The session flag is preserved through the paused state.
 >
 > **Charge-break suppression:** If *Battery → Resume mowing after charging* is enabled and the mower's battery at the `returning` transition is at or below *Battery → Return threshold + 2 %*, the trigger is suppressed — this indicates a mid-session charge break (the mower paused to recharge and will resume automatically). The trigger will fire once the full session genuinely ends.
 
