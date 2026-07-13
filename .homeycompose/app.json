@@ -1,6 +1,6 @@
 {
   "id": "com.mova-dreame.mower",
-  "version": "1.1.14",
+  "version": "1.1.15",
   "compatibility": ">=12.3.0",
   "sdk": 3,
   "name": {
@@ -300,6 +300,18 @@
     "1.1.10": {
       "en": "Fixed 'Mowing completed' trigger not firing when a session is ended via the 'End' button in the Dreame app — the mower transitions directly to idle in this case (no returning phase). The trigger now covers both paths: mowing→returning (natural end or Return to Dock) and mowing→idle (manual End).",
       "de": "Flow-Auslöser 'Mähen abgeschlossen' feuerte nicht wenn eine Session über den 'Beenden'-Knopf in der Dreame App beendet wurde — der Mäher wechselt in diesem Fall direkt in den Bereit-Status (ohne Zurückfahren-Phase). Der Auslöser deckt nun beide Pfade ab: Mähen→Zurückfahren (normales Ende oder Zurück zur Station) und Mähen→Bereit (manuelles Beenden)."
+    },
+    "1.1.11": {
+      "en": "Fixed 'Mowing completed' trigger not firing when a session is paused and then ended (mowing→paused→idle). A new session flag now persists through the paused state so the trigger correctly fires when the mower stops from a paused state.",
+      "de": "Flow-Auslöser 'Mähen abgeschlossen' feuerte nicht wenn eine Session pausiert und dann beendet wurde (Mähen→Pausiert→Bereit). Ein neues Session-Flag bleibt nun während des Pausierten-Status erhalten, sodass der Auslöser korrekt feuert wenn der Mäher aus dem pausierten Zustand heraus gestoppt wird."
+    },
+    "1.1.12": {
+      "en": "Improved error code detection for the 'Mower error occurred' trigger: the app now checks additional field names returned by the device list API so the correct fault code is found on more device models. A diagnostic log entry is written on every error detection to help identify the API field name if the error description still shows 'Normal operation'.",
+      "de": "Verbesserte Fehlercode-Erkennung für den Auslöser 'Mäher-Fehler aufgetreten': Die App prüft nun weitere Feldnamen der Geräteliste-API, sodass der korrekte Fehlercode auf mehr Gerätemodellen gefunden wird. Bei jeder Fehlererkennung wird ein Diagnose-Logeintrag geschrieben, um den API-Feldnamen zu identifizieren falls die Fehlerbeschreibung weiterhin 'Normalbetrieb' anzeigt."
+    },
+    "1.1.15": {
+      "en": "Fixed 'Mower error occurred' trigger always showing 'Normal operation': the MOVA/Dreame API embeds fault codes inside a 'property' field encoded as an unescaped JSON string, which the app was discarding. The sanitiser now inlines that JSON object so fault codes are readable. Fixed bumper collision and similar errors not showing as 'Error' in Homey: these are reported as paused + non-zero fault code; the app now promotes that to an error state so the alarm and trigger fire correctly. Fixed 'Poll failed: Invalid Capability: mow_spot/mow_zone/mow_map': on startup the app now detects and self-heals corrupted picker capabilities by removing and re-adding them. The debug poll snapshot also continues past any remaining invalid capability instead of aborting.",
+      "de": "Auslöser 'Mäher-Fehler aufgetreten' zeigte immer 'Normalbetrieb': Die MOVA/Dreame-API bettet Fehlercodes in ein 'property'-Feld als unkodierter JSON-String ein, den die App bisher verwarf. Der Sanitizer bettet dieses JSON-Objekt nun direkt ein, sodass Fehlercodes lesbar sind. Pufferaufprall und ähnliche Fehler wurden in Homey als 'Pausiert' angezeigt, weil das Gerät diese als pausiert + Fehlercode meldet — die App erkennt diese Kombination jetzt als Fehler, sodass Alarm und Auslöser korrekt feuern. 'Poll failed: Invalid Capability: mow_spot/mow_zone/mow_map' behoben: Die App erkennt beim Start fehlerhafte Picker-Capabilities und stellt sie automatisch wieder her. Der Debug-Poll bricht bei ungültigen Capabilities nicht mehr ab."
     }
   }
 }

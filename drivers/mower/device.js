@@ -535,6 +535,21 @@ class MowerDevice extends Homey.Device {
 
     await this._migrate();
 
+    // Self-heal: if getCapabilityValue throws "Invalid Capability" for a picker,
+    // the capability is registered in Homey's device DB but its internal state is
+    // corrupted. Remove and re-add it so the next poll re-populates it cleanly.
+    for (const cap of ['mow_zone', 'mow_spot', 'mow_map']) {
+      if (this.hasCapability(cap)) {
+        try {
+          this.getCapabilityValue(cap);
+        } catch (e) {
+          this.log(`[heal] ${cap} is corrupted (${e.message}) — removing and re-adding`);
+          await this.removeCapability(cap).catch(() => {});
+          await this.addCapability(cap).catch((err) => this.error(`[heal] addCapability ${cap}:`, err.message));
+        }
+      }
+    }
+
     // Flow trigger cards
     this._trgStatusChanged    = this.homey.flow.getDeviceTriggerCard('mower_status_changed');
     this._trgChargingChanged  = this.homey.flow.getDeviceTriggerCard('charging_status_changed');
@@ -2866,12 +2881,14 @@ class MowerDevice extends Homey.Device {
     const deviceSettings = this.getSettings();
 
     // Picker options currently shown in the UI
-    const zoneOptions = this.hasCapability('mow_zone')
-      ? (this.getCapabilityOptions('mow_zone')?.values ?? []).map((v) => v.id)
-      : [];
-    const spotOptions = this.hasCapability('mow_spot')
-      ? (this.getCapabilityOptions('mow_spot')?.values ?? []).map((v) => v.id)
-      : [];
+    let zoneOptions = [];
+    if (this.hasCapability('mow_zone')) {
+      try { zoneOptions = (this.getCapabilityOptions('mow_zone')?.values ?? []).map((v) => v.id); } catch {}
+    }
+    let spotOptions = [];
+    if (this.hasCapability('mow_spot')) {
+      try { spotOptions = (this.getCapabilityOptions('mow_spot')?.values ?? []).map((v) => v.id); } catch {}
+    }
 
     const cfgData = cfgResult.status === 'fulfilled' ? cfgResult.value : { error: cfgResult.reason?.message };
 
