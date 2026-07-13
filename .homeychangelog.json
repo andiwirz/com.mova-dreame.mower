@@ -1,4 +1,8 @@
 {
+  "1.1.14": {
+    "en": "Fixed 'Mower error occurred' trigger always showing 'Normal operation': the MOVA/Dreame API embeds fault codes inside a 'property' field encoded as an unescaped JSON string, which the app was discarding. The sanitiser now inlines that JSON object so fault codes are readable. Fixed bumper collision and similar errors not showing as 'Error' in Homey: these are reported as paused + non-zero fault code; the app now promotes that to an error state so the alarm and trigger fire correctly. Fixed debug poll crashing with 'Poll failed: Invalid Capability' when any capability is in an unexpected state — the snapshot now logs the offending capability and continues.",
+    "de": "Auslöser 'Mäher-Fehler aufgetreten' zeigte immer 'Normalbetrieb': Die MOVA/Dreame-API bettet Fehlercodes in ein 'property'-Feld als unkodierter JSON-String ein, den die App bisher verwarf. Der Sanitizer bettet dieses JSON-Objekt nun direkt ein, sodass Fehlercodes lesbar sind. Pufferaufprall und ähnliche Fehler wurden in Homey als 'Pausiert' angezeigt, weil das Gerät diese als pausiert + Fehlercode meldet — die App erkennt diese Kombination jetzt als Fehler, sodass Alarm und Auslöser korrekt feuern. 'Poll failed: Invalid Capability' beim Debug-Poll behoben: einzelne fehlerhafte Capabilities unterbrechen den Snapshot nicht mehr."
+  },
   "0.0.1": {
     "en": "Initial version.",
     "de": "Erste Version."

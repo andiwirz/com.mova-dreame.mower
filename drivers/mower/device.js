@@ -1116,12 +1116,26 @@ class MowerDevice extends Homey.Device {
 
     if (info.battery      != null) await this._applyBattery(info.battery);
     if (info.latestStatus != null) {
-      const mowerStatus = STATUS_MAP[info.latestStatus] ?? 'idle';
-      // Dreame/MOVA device list may expose the fault code under different field names.
+      const rawStatus = STATUS_MAP[info.latestStatus] ?? 'idle';
+      // Dreame/MOVA device list may expose the fault code under different field names,
+      // including inside the nested 'property' sub-object (which the API sends as an
+      // unescaped JSON string; MovaApi now parses and promotes those fields to top level).
+      const prop = (info.property && typeof info.property === 'object') ? info.property : {};
       const faultCode = info.latestFaultCode ?? info.faultCode ?? info.errorCode
-                     ?? info.deviceCode ?? info.device_code ?? info.latestCode ?? info.errCode ?? 0;
-      if (mowerStatus === 'error') {
-        this.log(`[error] faultCode=${faultCode} — info keys: ${Object.keys(info).join(', ')}`);
+                     ?? info.deviceCode ?? info.device_code ?? info.latestCode ?? info.errCode
+                     ?? prop.latestFaultCode ?? prop.faultCode ?? prop.errorCode
+                     ?? prop.deviceCode ?? prop.device_code ?? prop.latestCode ?? prop.errCode ?? 0;
+      // Some error conditions (e.g. bumper collision) are reported as paused + non-zero faultCode
+      // rather than switching to the error status (code 4). Promote those to 'error' so Homey
+      // reflects what the Dreame/MOVA app shows and the error trigger fires correctly.
+      const mowerStatus = (rawStatus === 'paused' && faultCode !== 0) ? 'error' : rawStatus;
+      // Diagnostic log: fires on error states and on any paused state so fault-code field
+      // names can be identified even when faultCode detection has not yet found the right key.
+      if (mowerStatus === 'error' || rawStatus === 'paused') {
+        const propKeys = prop && Object.keys(prop).length > 0
+          ? `property sub-keys: ${Object.keys(prop).join(', ')}`
+          : 'property: empty/null';
+        this.log(`[diag] latestStatus=${info.latestStatus} rawStatus=${rawStatus} effective=${mowerStatus} faultCode=${faultCode} — info keys: ${Object.keys(info).join(', ')} — ${propKeys}`);
       }
       await this._applyStatus(mowerStatus, faultCode);
 
@@ -2292,7 +2306,7 @@ class MowerDevice extends Homey.Device {
 
     this._wasMowing = isMowing;
     if (isMowing) this._wasMowingSession = true;
-    else if (status !== 'paused') this._wasMowingSession = false;
+    else if (status !== 'paused' && status !== 'error') this._wasMowingSession = false;
   }
 
   // ─── Shared mowing state helper ───────────────────────────────────────────
@@ -2834,7 +2848,11 @@ class MowerDevice extends Homey.Device {
     // Capability snapshot
     const capabilityValues = {};
     for (const cap of this.getCapabilities()) {
-      capabilityValues[cap] = this.getCapabilityValue(cap);
+      try {
+        capabilityValues[cap] = this.getCapabilityValue(cap);
+      } catch (e) {
+        capabilityValues[cap] = `[error: ${e.message}]`;
+      }
     }
 
     // Store snapshot (non-sensitive keys only)

@@ -1,6 +1,6 @@
 {
   "id": "com.mova-dreame.mower",
-  "version": "1.1.12",
+  "version": "1.1.14",
   "compatibility": ">=12.3.0",
   "sdk": 3,
   "name": {
