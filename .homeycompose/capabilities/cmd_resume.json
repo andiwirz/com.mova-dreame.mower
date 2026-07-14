@@ -1,0 +1,8 @@
+{
+  "type": "boolean",
+  "title": { "en": "Resume Mowing", "de": "Mähen fortsetzen" },
+  "getable": true,
+  "setable": true,
+  "uiComponent": "button",
+  "icon": "/assets/capabilities/cmd_resume.svg"
+}

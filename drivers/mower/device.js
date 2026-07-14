@@ -12,14 +12,16 @@ const STATUS_MAP = {
   1:  'mowing',         // MOWING
   2:  'idle',           // IDLE
   3:  'paused',         // PAUSED
-  4:  'error',          // ERROR
-  5:  'returning',      // RETURNING
+  4:  'error',          // PAUSED_DUE_TO_ERRORS
+  5:  'returning',      // RETURNING_TO_CHARGE
   6:  'charging',       // CHARGING
   11: 'mapping',        // BUILDING (map building)
-  13: 'docked',         // CHARGING_COMPLETED
+  13: 'docked',         // CHARGING_COMPLETE
   14: 'updating',       // UPGRADING
-  15: 'mowing',         // CLEAN_SUMMON (auto-summon mowing)
-  16: 'standby',        // STATION_RESET
+  // 15/16: charging paused due to temperature — NOT mowing/standby as older vacuum constants suggested.
+  // Source: antondaubert/dreame-mower issues #40 (low temp) and #167 (high temp)
+  15: 'docked',         // CHARGING_PAUSED_HIGH_TEMPERATURE
+  16: 'docked',         // CHARGING_PAUSED_LOW_TEMPERATURE
   23: 'remote_control', // REMOTE_CONTROL
   24: 'charging',       // SMART_CHARGING
   25: 'mowing',         // SECOND_CLEANING
@@ -27,6 +29,7 @@ const STATUS_MAP = {
   27: 'mowing',         // SPOT_CLEANING
   29: 'idle',           // WAITING_FOR_TASK
   30: 'mowing',         // STATION_CLEANING
+  75: 'paused',         // MAINTENANCE_PAUSED (paused at maintenance point)
   97: 'mowing',         // SHORTCUT
   98: 'mapping',        // MONITORING
   99: 'paused',         // MONITORING_PAUSED
@@ -34,14 +37,25 @@ const STATUS_MAP = {
 
 // charging_status code → enum
 // Source: EvotecIT/homeassistant-dreamelawnmower types.py DreameMowerChargingStatus enum
-// Source: antondaubert/dreame-mower property/service5.py (code 16)
+// Source: antondaubert/dreame-mower property/service5.py (code 16) and issues #40/#167
 const CHARGING_MAP = {
   1:  'charging',
   2:  'not_charging',
   3:  'charging_completed',
   5:  'returning',
+  15: 'paused_hot',         // CHARGING_PAUSED_HIGH_TEMPERATURE
   16: 'paused_cold',        // CHARGING_PAUSED_LOW_TEMPERATURE
 };
+
+// Device codes that are true errors (DeviceCodeType.ERROR) — trigger alarm and error promotion.
+// Source: antondaubert/dreame-mower property/device_code.py BASE_DEVICE_CODES
+const ERROR_DEVICE_CODES = new Set([
+  1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,
+  21,22,23,24,25,26,27,28,29,30,37,73,
+]);
+// Warning codes — shown in mower_error capability, but do NOT trigger alarm or error promotion.
+const WARNING_DEVICE_CODES = new Set([31,32,33,34,35,36,38,39,40,41,42,43,44,45]);
+// Codes 46–72 are INFO (task started/finished, rain/frost/DND events) — no alarm, no mower_error.
 
 // Statuses that count as "home" for mowing-completed detection.
 // 'updating' intentionally excluded — a firmware update is not a mowing completion.
@@ -461,6 +475,75 @@ const MIGRATIONS = [
       'consumable_robot',
     ],
   },
+  {
+    // Add mower_error string sensor after alarm_generic to show error description.
+    key: 'capabilities_migrated_v32',
+    reorder: [
+      'cmd_start_mowing',
+      'cmd_start_spot_mowing',
+      'cmd_pause',
+      'cmd_stop',
+      'cmd_dock',
+      'cmd_maintenance_point',
+      'cmd_refresh',
+      'mower_status',
+      'mow_map',
+      'mow_zone',
+      'cutting_height',
+      'mower_volume',
+      'mow_spot',
+      'charging_status',
+      'measure_battery',
+      'alarm_generic',
+      'mower_error',
+      'mow_efficiency',
+      'collision_avoidance',
+      'firmware_update',
+      'measure_duration',
+      'meter_area_total',
+      'meter_time_total',
+      'meter_count_total',
+      'child_lock',
+      'consumable_blade',
+      'consumable_brush',
+      'consumable_robot',
+    ],
+  },
+  {
+    // Add cmd_resume button (resume mowing after error/pause without zone-start logic).
+    key: 'capabilities_migrated_v33',
+    reorder: [
+      'cmd_start_mowing',
+      'cmd_start_spot_mowing',
+      'cmd_pause',
+      'cmd_resume',
+      'cmd_stop',
+      'cmd_dock',
+      'cmd_maintenance_point',
+      'cmd_refresh',
+      'mower_status',
+      'mow_map',
+      'mow_zone',
+      'cutting_height',
+      'mower_volume',
+      'mow_spot',
+      'charging_status',
+      'measure_battery',
+      'alarm_generic',
+      'mower_error',
+      'mow_efficiency',
+      'collision_avoidance',
+      'firmware_update',
+      'measure_duration',
+      'meter_area_total',
+      'meter_time_total',
+      'meter_count_total',
+      'child_lock',
+      'consumable_blade',
+      'consumable_brush',
+      'consumable_robot',
+    ],
+  },
 ];
 
 // Capabilities removed — stripped from existing installs on next init
@@ -525,6 +608,7 @@ class MowerDevice extends Homey.Device {
     this._lastMapPickerKey     = null;  // cache key for _updateMapPicker change-guard
     this._lastZonePickerKey    = null;  // cache key for _updateZonePicker change-guard
     this._lastSpotPickerKey    = null;  // cache key for _updateSpotPicker change-guard
+    this._mqttErrorCode        = null;  // null = not yet received; 0 = received, meaning ROBOT_LIFTED on MOVA
     this._offlineCount         = 0;     // consecutive polls where info.online === false
     this._cfgPollCounter       = 0;     // reads CFG (WRP etc.) on poll 0, 10, 20, …
     this._mihisPollCounter     = 5;     // reads MIHIS (lifetime stats) on poll 5, 15, 25, … (staggered vs CFG)
@@ -689,6 +773,19 @@ class MowerDevice extends Homey.Device {
         this.error('[cmd_pause] listener error:', err.message);
       } finally {
         await this.setCapabilityValue('cmd_pause', false).catch(() => {});
+      }
+    });
+
+    this.registerCapabilityListener('cmd_resume', async (value) => {
+      if (!value) return;
+      try {
+        this.log('[cmd] btn: resume → sendAction(5,1)');
+        await this._safeWrite('cmd_resume', () => this._api.startMowing(did));
+        this._fireBtnTrigger('btn_start_mowing');
+      } catch (err) {
+        this.error('[cmd_resume] listener error:', err.message);
+      } finally {
+        await this.setCapabilityValue('cmd_resume', false).catch(() => {});
       }
     });
 
@@ -1163,20 +1260,28 @@ class MowerDevice extends Homey.Device {
       const faultCode = info.latestFaultCode ?? info.faultCode ?? info.errorCode
                      ?? info.deviceCode ?? info.device_code ?? info.latestCode ?? info.errCode
                      ?? prop.latestFaultCode ?? prop.faultCode ?? prop.errorCode
-                     ?? prop.deviceCode ?? prop.device_code ?? prop.latestCode ?? prop.errCode ?? 0;
+                     ?? prop.deviceCode ?? prop.device_code ?? prop.latestCode ?? prop.errCode
+                     ?? this._mqttErrorCode ?? 0;
       // Some error conditions (e.g. bumper collision) are reported as paused + non-zero faultCode
       // rather than switching to the error status (code 4). Promote those to 'error' so Homey
       // reflects what the Dreame/MOVA app shows and the error trigger fires correctly.
-      const mowerStatus = (rawStatus === 'paused' && faultCode !== 0) ? 'error' : rawStatus;
+      // Also promote paused + MQTT error code when the cloud API returns faultCode=0 (no cloud code).
+      const effectiveFaultCode = faultCode !== 0 ? faultCode : (this._mqttErrorCode ?? 0);
+      // Only promote to 'error' for true ERROR-type codes (not warnings or info codes).
+      // On MOVA devices, device code 0 means ROBOT_LIFTED (error), not normal operation.
+      const isMova = (this.getSetting('device_model') || '').startsWith('mova.');
+      const isEffectiveError = ERROR_DEVICE_CODES.has(effectiveFaultCode)
+                            || (isMova && this._mqttErrorCode === 0);
+      const mowerStatus = (rawStatus === 'paused' && isEffectiveError) ? 'error' : rawStatus;
       // Diagnostic log: fires on error states and on any paused state so fault-code field
       // names can be identified even when faultCode detection has not yet found the right key.
       if (mowerStatus === 'error' || rawStatus === 'paused') {
         const propKeys = prop && Object.keys(prop).length > 0
           ? `property sub-keys: ${Object.keys(prop).join(', ')}`
           : 'property: empty/null';
-        this.log(`[diag] latestStatus=${info.latestStatus} rawStatus=${rawStatus} effective=${mowerStatus} faultCode=${faultCode} — info keys: ${Object.keys(info).join(', ')} — ${propKeys}`);
+        this.log(`[diag] latestStatus=${info.latestStatus} rawStatus=${rawStatus} effective=${mowerStatus} faultCode=${faultCode} mqttErrorCode=${this._mqttErrorCode ?? 'none'} isError=${isEffectiveError} isMova=${isMova} — info keys: ${Object.keys(info).join(', ')} — ${propKeys}`);
       }
-      await this._applyStatus(mowerStatus, faultCode);
+      await this._applyStatus(mowerStatus, effectiveFaultCode);
 
       // Derive charging_status from mower status.
       const chargingCode =
@@ -2273,17 +2378,23 @@ class MowerDevice extends Homey.Device {
       this.setStoreValue('session_start_time', null).catch(() => {});
     }
 
-    // Error alarm
-    const isError = status === 'error';
+    // Error alarm — only true ERROR codes trigger alarm_generic and the error trigger.
+    // Warning codes (31–45) are surfaced in mower_error capability but do not alarm.
+    // Info codes (46–72) are silent (task events, rain/frost notifications etc.).
+    const isError   = status === 'error';
+    const isWarning = !isError && WARNING_DEVICE_CODES.has(faultCode);
     await this._setCap('alarm_generic', isError);
-    if (isError) {
-      this._trgError
-        .trigger(this, {
-          error_code:        faultCode,
-          error_description: this.homey.__(`error_codes.${faultCode}`)
-                          || this.homey.__('error_codes.unknown').replace('__code__', faultCode),
-        }, {})
-        .catch((e) => this.error('mower_error trigger:', e.message));
+    if (isError || isWarning) {
+      const errorDescription = this.homey.__(`error_codes.${faultCode}`)
+                            || this.homey.__('error_codes.unknown').replace('__code__', faultCode);
+      if (this.hasCapability('mower_error')) await this._setCap('mower_error', errorDescription);
+      if (isError) {
+        this._trgError
+          .trigger(this, { error_code: faultCode, error_description: errorDescription }, {})
+          .catch((e) => this.error('mower_error trigger:', e.message));
+      }
+    } else {
+      if (this.hasCapability('mower_error')) await this._setCap('mower_error', null);
     }
 
     // Reset action buttons when the mower reaches a resting state
@@ -2292,12 +2403,16 @@ class MowerDevice extends Homey.Device {
       if (this.hasCapability('cmd_stop'))                await this.setCapabilityValue('cmd_stop',                false).catch(() => {});
       if (this.hasCapability('cmd_start_mowing'))        await this.setCapabilityValue('cmd_start_mowing',        false).catch(() => {});
       if (this.hasCapability('cmd_start_spot_mowing'))   await this.setCapabilityValue('cmd_start_spot_mowing',   false).catch(() => {});
+      if (this.hasCapability('cmd_resume'))              await this.setCapabilityValue('cmd_resume',              false).catch(() => {});
       if (this.hasCapability('cmd_maintenance_point'))   await this.setCapabilityValue('cmd_maintenance_point',   false).catch(() => {});
     }
 
-    // Reset pause button once the mower confirms it is paused
+    // Reset pause and resume buttons once the mower confirms it is paused or mowing
     if (status === 'paused' && this.hasCapability('cmd_pause')) {
       await this.setCapabilityValue('cmd_pause', false).catch(() => {});
+    }
+    if (status === 'mowing' && this.hasCapability('cmd_resume')) {
+      await this.setCapabilityValue('cmd_resume', false).catch(() => {});
     }
     // Pickers (mow_zone / mow_spot) intentionally keep their selection so the user
     // can re-run the same zone or spot by pressing cmd_start_mowing again.
@@ -2588,9 +2703,9 @@ class MowerDevice extends Homey.Device {
         });
       });
 
-      this._mqttClient.on('message', (topic, message) => {
+      this._mqttClient.on('message', async (topic, message) => {
         try {
-          this._handleMqttMessage(topic, message);
+          await this._handleMqttMessage(topic, message);
         } catch (e) {
           this.error('[mqtt] message error:', e.message);
         }
@@ -2616,7 +2731,7 @@ class MowerDevice extends Homey.Device {
     }
   }
 
-  _handleMqttMessage(topic, message) {
+  async _handleMqttMessage(topic, message) {
     let parsed;
     try {
       parsed = JSON.parse(message.toString());
@@ -2643,10 +2758,35 @@ class MowerDevice extends Homey.Device {
           }
         } else if (prop.siid === 2 && prop.piid === 1) {
           this.log(`[mqtt] status: ${prop.value}`);
+        } else if (prop.siid === 2 && prop.piid === 2) {
+          this.log(`[mqtt] error_code: ${prop.value}`);
+          this._mqttErrorCode = prop.value;
+        } else if (prop.siid === 2 && prop.piid === 57) {
+          this.log(`[mqtt] power_state: ${prop.value}`);
+          // value 1 = mower powered off by user
+          if (prop.value === 1) {
+            await this._applyStatus('standby', 0);
+          }
         }
       }
+    } else if (parsed.data?.method === 'event_occured' && Array.isArray(parsed.data.params)) {
+      for (const event of parsed.data.params) {
+        if (event.siid === 4 && event.eiid === 1) {
+          const stopReason = event.arguments?.find(a => a.piid === 1)?.value ?? event.value ?? '?';
+          this.log(`[mqtt] mission_completion: stop_reason=${stopReason}`);
+        } else {
+          this.log(`[mqtt] event siid:${event.siid} eiid:${event.eiid}`);
+        }
+      }
+    } else if (parsed.data?.method === 'props' && parsed.data.params != null && typeof parsed.data.params === 'object') {
+      const p = parsed.data.params;
+      if ('ota_state' in p || 'ota_progress' in p) {
+        this.log(`[mqtt] ota: state=${p.ota_state ?? '-'} progress=${p.ota_progress ?? '-'}%`);
+      } else {
+        this.log(`[mqtt] props: ${JSON.stringify(p).substring(0, 200)}`);
+      }
     } else {
-      this.log(`[mqtt] msg method=${parsed.data?.method} keys=${Object.keys(parsed.data || {}).join(',')}`);
+      this.log(`[mqtt] unhandled method=${parsed.data?.method}`);
     }
   }
 

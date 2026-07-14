@@ -2,7 +2,7 @@ MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct
 
 ## Features
 
-- **Action buttons** on the device card: Start Mowing, Start Spot Mowing, Pause, Stop, Return to Dock, Go to Maintenance Point
+- **Action buttons** on the device card: Start Mowing, Start Spot Mowing, Pause, Resume Mowing, Stop, Return to Dock, Go to Maintenance Point
 - **Zone picker** — select a zone, the full area, or edge mowing from a dynamic list built from your map; press Start Mowing to begin
 - **Spot picker** — select a configured spot from your map; press Start Spot Mowing to begin
 - **Live status**: battery level, charging status, mower status (mowing / paused / docked / error / …)
@@ -38,13 +38,15 @@ MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct
 | <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_start_mowing.svg" width="28" height="28"> | **Start Mowing** | Button — starts mowing using the selection in the Zone picker |
 | <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_start_spot_mowing.svg" width="28" height="28"> | **Start Spot Mowing** | Button — starts mowing at the location selected in the Spot picker |
 | <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_pause.svg" width="28" height="28"> | **Pause** | Button — pauses the mower; it waits in place until resumed |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_resume.svg" width="28" height="28"> | **Resume Mowing** | Button — resumes the current mowing session after a pause or error without requiring a zone selection; equivalent to "Continue" in the Dreame app |
 | <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_stop.svg" width="28" height="28"> | **Stop** | Button — stops mowing and keeps the mower where it is |
 | <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_dock.svg" width="28" height="28"> | **Return to Dock** | Button — sends the mower back to the charging station |
 | <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_maintenance_point.svg" width="28" height="28"> | **Go to Maintenance Point** | Button — drives the mower to its configured maintenance point |
 | | **Battery** | Battery level (0–100 %) |
 | | **Error Alarm** | Active when the mower reports an error condition |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/mower_error.svg" width="28" height="28"> | **Error Description** | Current error or warning description (e.g. "Robot trapped / stuck", "Docking failed"); cleared automatically when the mower leaves the error state; available as a tag in Flows |
 | <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/mower_status.svg" width="28" height="28"> | **Mower Status** | Current state: `mowing` · `paused` · `returning` · `docked` · `charging` · `idle` · `standby` · `mapping` · `updating` · `remote_control` · `error` |
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/charging_status.svg" width="28" height="28"> | **Charging Status** | `charging` · `not_charging` · `charging_completed` · `returning` · `paused_cold` |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/charging_status.svg" width="28" height="28"> | **Charging Status** | `charging` · `not_charging` · `charging_completed` · `returning` · `paused_cold` · `paused_hot` |
 | | **Zone Picker** | Select what to mow: Full Area, individual zones, or edge mowing — populated automatically from the map |
 | | **Spot Picker** | Select a named spot to mow — populated automatically from the map |
 | <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cutting_height.svg" width="28" height="28"> | **Cutting Height** | Slider — blade height in mm; read and set directly from the device card |
@@ -192,6 +194,7 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 | Start Mowing | Starts mowing using the selection in the Zone picker |
 | Start Spot Mowing | Starts mowing at the location selected in the Spot picker |
 | Pause | Pauses the mower; it waits in place until resumed |
+| Resume Mowing | Resumes the current session after a pause or error — equivalent to "Continue" in the Dreame app; no zone selection needed |
 | Stop | Stops mowing and keeps the mower where it is |
 | Return to Dock | Sends the mower back to the charging station |
 | Go to Maintenance Point | Drives the mower to its configured maintenance point |
@@ -241,6 +244,7 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 - Start Mowing button pressed
 - Start Spot Mowing button pressed
 - Pause button pressed
+- Resume Mowing button pressed
 - Stop button pressed
 - Return to Dock button pressed
 - Go to Maintenance Point button pressed
