@@ -30,6 +30,12 @@ module.exports = {
     const { deviceId } = query;
     if (!deviceId) throw new Error('Missing deviceId parameter');
 
+    // ── Logs mode ────────────────────────────────────────────────────────────
+    if (deviceId === '__logs__') {
+      const since = parseInt(query.since ?? '0', 10) || 0;
+      return homey.app.getLogs(since);
+    }
+
     // ── Discovery mode ───────────────────────────────────────────────────────
     if (deviceId === '__discover__') {
       const { brand, region, username, password } = query;

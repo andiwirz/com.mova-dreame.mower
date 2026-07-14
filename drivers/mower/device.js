@@ -492,6 +492,16 @@ const REMOVE_CAPABILITIES = [
 
 class MowerDevice extends Homey.Device {
 
+  log(...args) {
+    super.log(...args);
+    try { this.homey.app._pushLog('log', args.join(' ')); } catch {}
+  }
+
+  error(...args) {
+    super.error(...args);
+    try { this.homey.app._pushLog('error', args.join(' ')); } catch {}
+  }
+
   // ─── Lifecycle ─────────────────────────────────────────────────────────────
 
   async onInit() {
@@ -515,6 +525,7 @@ class MowerDevice extends Homey.Device {
     this._lastMapPickerKey     = null;  // cache key for _updateMapPicker change-guard
     this._lastZonePickerKey    = null;  // cache key for _updateZonePicker change-guard
     this._lastSpotPickerKey    = null;  // cache key for _updateSpotPicker change-guard
+    this._offlineCount         = 0;     // consecutive polls where info.online === false
     this._cfgPollCounter       = 0;     // reads CFG (WRP etc.) on poll 0, 10, 20, …
     this._mihisPollCounter     = 5;     // reads MIHIS (lifetime stats) on poll 5, 15, 25, … (staggered vs CFG)
     this._dockPollCounter      = 3;     // reads DOCK position on poll 3, 13, 23, … (staggered vs CFG/MIHIS)
@@ -1129,6 +1140,19 @@ class MowerDevice extends Homey.Device {
       await this._applyBoolCap('child_lock', !!info.childLock);
     }
 
+    // ── Online check (before capability updates) ────────────────────────────
+    // Only mark unavailable after 2 consecutive offline polls to avoid brief
+    // cloud-API glitches causing spurious "device offline" in Homey.
+    if (info.online === false) {
+      this._offlineCount++;
+      if (this._offlineCount >= 2) {
+        await this.setUnavailable(this.homey.__('error.device_offline'));
+        return;
+      }
+    } else {
+      this._offlineCount = 0;
+    }
+
     if (info.battery      != null) await this._applyBattery(info.battery);
     if (info.latestStatus != null) {
       const rawStatus = STATUS_MAP[info.latestStatus] ?? 'idle';
@@ -1161,11 +1185,6 @@ class MowerDevice extends Homey.Device {
         : mowerStatus === 'returning' ? 5
         : 2; // NOT_CHARGING for all other states
       await this._applyChargingStatus(chargingCode);
-    }
-
-    if (info.online === false) {
-      await this.setUnavailable(this.homey.__('error.device_offline'));
-      return;
     }
 
     // ── Session duration counter ─────────────────────────────────────────────

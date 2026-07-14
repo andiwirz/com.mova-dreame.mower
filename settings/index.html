@@ -24,15 +24,16 @@
       gap: 4px;
     }
     .top-nav button {
-      padding: 10px 18px;
+      padding: 8px 12px;
       background: transparent;
       border: none;
       border-radius: 6px;
       color: #888;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 500;
       cursor: pointer;
       margin: 6px 0;
+      white-space: nowrap;
       transition: background .15s, color .15s;
     }
     .top-nav button:hover { background: #f0f0f0; color: #1a1a1a; }
@@ -360,24 +361,29 @@
 
 <!-- ── Top navigation ──────────────────────────────────────────────────── -->
 <nav class="top-nav">
-  <button class="active" data-section="poll"     onclick="showSection('poll',    this)">Debug installed Device</button>
-  <button               data-section="discover"  onclick="showSection('discover', this)">Debug Device Discovery</button>
+  <button class="active" data-section="poll"     onclick="showSection('poll',    this)">Installed Device</button>
+  <button               data-section="discover"  onclick="showSection('discover', this)">Device Discovery</button>
+  <button               data-section="logs"      onclick="showSection('logs',     this)">App Logs</button>
 </nav>
 
 <!-- ── Help banner ─────────────────────────────────────────────────────── -->
 <div class="help-banner">
   <div class="help-item" id="help-poll">
-    <strong>🔍 Debug installed Device</strong>
+    <strong>🔍 Installed Device</strong>
     <p>Use this tab if your device was added successfully but some functions are not working correctly. Select the device, poll its current state and send the JSON to the developer via the Homey Community forum or a private message.</p>
   </div>
   <div class="help-item" id="help-discover" style="display:none">
-    <strong>📡 Debug Device Discovery</strong>
+    <strong>📡 Device Discovery</strong>
     <p>Use this tab if you cannot add your device at all. Run the discovery, copy the JSON result and send it to the developer via the Homey Community forum or a private message so the device can be added to the app.</p>
+  </div>
+  <div class="help-item" id="help-logs" style="display:none">
+    <strong>📋 App Logs</strong>
+    <p>Live log output from the app and all paired devices. Use this to diagnose errors in real time. Enable auto-refresh to stream new entries continuously. Copy all logs and share with the developer if asked.</p>
   </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
-<!-- SECTION: Debug installed Device                                                    -->
+<!-- SECTION: Installed Device                                                    -->
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
 <div id="section-poll">
 
@@ -485,7 +491,7 @@
 </div><!-- /section-poll -->
 
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
-<!-- SECTION: Debug Device Discovery                                               -->
+<!-- SECTION: Device Discovery                                               -->
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
 <div id="section-discover" style="display:none">
   <div class="discover-wrap">
@@ -551,6 +557,57 @@
   </div>
 </div><!-- /section-discover -->
 
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION: App Logs                                                       -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div id="section-logs" style="display:none">
+
+  <div class="toolbar">
+    <button class="blue" id="logsRefreshBtn" onclick="fetchLogs(true)">Refresh</button>
+    <button class="secondary" id="logsClearBtn" onclick="clearLogs()">Clear display</button>
+    <button class="secondary" id="logsCopyBtn" onclick="copyLogs()" disabled>Copy all</button>
+    <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#555">
+      <input type="checkbox" id="logsErrorOnly" onchange="applyLogsFilter()"> Errors only
+    </label>
+    <input type="text" id="logsFilter" placeholder="Filter…" oninput="applyLogsFilter()"
+      style="height:36px;border:1px solid #ccc;border-radius:6px;padding:0 10px;font-size:13px;min-width:160px;background:#fff;color:#1a1a1a">
+    <label class="auto-refresh" style="margin-left:auto">
+      <input type="checkbox" id="logsAutoRefresh" onchange="toggleLogsAutoRefresh()">
+      Auto-refresh every
+      <select id="logsInterval" style="min-width:0;width:80px">
+        <option value="5">5 s</option>
+        <option value="10" selected>10 s</option>
+        <option value="30">30 s</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="timestamp" id="logsStatus">Open this tab, then press Refresh.</div>
+
+  <div style="padding:16px">
+    <div class="json-wrap">
+      <div class="json-toolbar">
+        <span id="logsCount">0 entries</span>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#aaa;cursor:pointer">
+          <input type="checkbox" id="logsAutoScroll" checked style="cursor:pointer"> Auto-scroll
+        </label>
+      </div>
+      <div id="logsOutput" style="
+        padding:10px 14px;
+        font-family:'SF Mono','Fira Code',monospace;
+        font-size:12px;
+        line-height:1.7;
+        color:#e0e0e0;
+        max-height:600px;
+        overflow-y:auto;
+        white-space:pre-wrap;
+        word-break:break-all;
+      "><span style="color:#666">No log entries yet. Press Refresh.</span></div>
+    </div>
+  </div>
+
+</div><!-- /section-logs -->
+
 <script>
   // ── State ───────────────────────────────────────────────────────────────────
   let _Homey       = null;
@@ -558,6 +615,11 @@
   let lastDiscover = null;
   let autoTimer    = null;
   let activeTab    = 'cloud';
+
+  // Logs state
+  let logAllEntries  = [];   // all received entries (raw, unfiltered)
+  let logLastSeq     = 0;    // highest seq we've fetched so far
+  let logsAutoTimer  = null;
 
   // ── Init ────────────────────────────────────────────────────────────────────
   function onHomeyReady(Homey) {
@@ -582,12 +644,13 @@
 
   // ── Top-level navigation ────────────────────────────────────────────────────
   function showSection(name, el) {
-    document.getElementById('section-poll').style.display     = name === 'poll'     ? 'block' : 'none';
-    document.getElementById('section-discover').style.display = name === 'discover' ? 'block' : 'none';
-    document.getElementById('help-poll').style.display        = name === 'poll'     ? ''      : 'none';
-    document.getElementById('help-discover').style.display    = name === 'discover' ? ''      : 'none';
+    ['poll', 'discover', 'logs'].forEach((s) => {
+      document.getElementById('section-' + s).style.display = name === s ? 'block' : 'none';
+      document.getElementById('help-' + s).style.display    = name === s ? ''      : 'none';
+    });
     document.querySelectorAll('.top-nav button').forEach((b) => b.classList.remove('active'));
     el.classList.add('active');
+    if (name === 'logs' && logAllEntries.length === 0) fetchLogs(true);
   }
 
   // ── Device selection (poll) ─────────────────────────────────────────────────
@@ -741,7 +804,7 @@ document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
     }, secs * 1000);
   }
 
-  // ── Debug Device Discovery ─────────────────────────────────────────────────────────
+  // ── Device Discovery ─────────────────────────────────────────────────────────
   function doDiscover() {
     const brand    = document.getElementById('dis-brand').value;
     const region   = document.getElementById('dis-region').value;
@@ -886,6 +949,118 @@ document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
   function copyDiscoverJson() {
     if (!lastDiscover) return;
     copyText(JSON.stringify(lastDiscover, null, 2), document.getElementById('dis-copy'));
+  }
+
+  // ── App Logs ─────────────────────────────────────────────────────────────────
+  function fetchLogs(reset = false) {
+    if (reset) { logAllEntries = []; logLastSeq = 0; }
+    const btn = document.getElementById('logsRefreshBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner white"></span>Loading…';
+
+    _Homey.api('GET', '/pollDevice?deviceId=__logs__&since=' + logLastSeq, null, (err, entries) => {
+      btn.disabled = false;
+      btn.textContent = 'Refresh';
+      if (err) {
+        const raw = err?.message || err || 'unknown error';
+        const msg = String(raw).includes('<') ? 'API endpoint not found — please restart the Homey app and try again.' : String(raw);
+        document.getElementById('logsStatus').textContent = 'Error: ' + msg;
+        document.getElementById('logsStatus').className = 'timestamp error';
+        return;
+      }
+      if (entries && entries.length > 0) {
+        logAllEntries = logAllEntries.concat(entries);
+        logLastSeq = entries[entries.length - 1].seq;
+        // keep at most 1000 in the display buffer
+        if (logAllEntries.length > 1000) logAllEntries = logAllEntries.slice(-1000);
+      }
+      document.getElementById('logsCopyBtn').disabled = logAllEntries.length === 0;
+      const now = new Date().toLocaleTimeString();
+      document.getElementById('logsStatus').textContent =
+        `Last refresh: ${now} — ${logAllEntries.length} entries buffered (${entries?.length ?? 0} new)`;
+      document.getElementById('logsStatus').className = 'timestamp';
+      applyLogsFilter();
+    });
+  }
+
+  function applyLogsFilter() {
+    const errOnly = document.getElementById('logsErrorOnly').checked;
+    const keyword = document.getElementById('logsFilter').value.trim().toLowerCase();
+
+    const filtered = logAllEntries.filter((e) => {
+      if (errOnly && e.level !== 'error') return false;
+      if (keyword && !e.msg.toLowerCase().includes(keyword)) return false;
+      return true;
+    });
+
+    const out = document.getElementById('logsOutput');
+    document.getElementById('logsCount').textContent =
+      filtered.length + ' entr' + (filtered.length === 1 ? 'y' : 'ies') +
+      (filtered.length < logAllEntries.length ? ' (filtered from ' + logAllEntries.length + ')' : '');
+
+    if (filtered.length === 0) {
+      out.innerHTML = '<span style="color:#666">' +
+        (logAllEntries.length === 0 ? 'No log entries yet. Press Refresh.' : 'No entries match the current filter.') +
+        '</span>';
+      return;
+    }
+
+    const html = filtered.map((e) => {
+      const t   = new Date(e.ts);
+      const hms = t.toLocaleTimeString('en-GB', { hour12: false });
+      const ms  = String(t.getMilliseconds()).padStart(3, '0');
+      const ts  = `<span style="color:#666">${hms}.${ms}</span>`;
+      const lvl = e.level === 'error'
+        ? `<span style="color:#e74c3c;font-weight:700"> ERR </span>`
+        : `<span style="color:#27ae60"> LOG </span>`;
+      const msg = escHtml(e.msg);
+      return `${ts}${lvl}${msg}`;
+    }).join('\n');
+
+    out.innerHTML = html;
+
+    if (document.getElementById('logsAutoScroll').checked) {
+      out.scrollTop = out.scrollHeight;
+    }
+  }
+
+  function clearLogs() {
+    logAllEntries = [];
+    logLastSeq    = 0;
+    document.getElementById('logsCopyBtn').disabled = true;
+    document.getElementById('logsStatus').textContent = 'Display cleared. Press Refresh to load new entries.';
+    document.getElementById('logsStatus').className = 'timestamp';
+    applyLogsFilter();
+  }
+
+  function copyLogs() {
+    const errOnly = document.getElementById('logsErrorOnly').checked;
+    const keyword = document.getElementById('logsFilter').value.trim().toLowerCase();
+    const filtered = logAllEntries.filter((e) => {
+      if (errOnly && e.level !== 'error') return false;
+      if (keyword && !e.msg.toLowerCase().includes(keyword)) return false;
+      return true;
+    });
+    const text = filtered.map((e) => {
+      const hms = new Date(e.ts).toISOString();
+      return `[${hms}] [${e.level.toUpperCase()}] ${e.msg}`;
+    }).join('\n');
+    copyText(text, document.getElementById('logsCopyBtn'));
+  }
+
+  function toggleLogsAutoRefresh() {
+    clearTimeout(logsAutoTimer);
+    logsAutoTimer = null;
+    if (document.getElementById('logsAutoRefresh').checked) scheduleLogsAuto();
+  }
+
+  function scheduleLogsAuto() {
+    clearTimeout(logsAutoTimer);
+    const secs = parseInt(document.getElementById('logsInterval').value, 10);
+    logsAutoTimer = setTimeout(() => {
+      fetchLogs(false);
+      if (document.getElementById('logsAutoRefresh').checked) scheduleLogsAuto();
+    }, secs * 1000);
   }
 
   // ── Shared helpers ───────────────────────────────────────────────────────────
