@@ -35,6 +35,9 @@ class MowerDriver extends Homey.Driver {
     flow.getActionCard('pause_mowing')
       .registerRunListener(({ device }) => device.cmdPause());
 
+    flow.getActionCard('resume_mowing')
+      .registerRunListener(({ device }) => device.cmdResume());
+
     flow.getActionCard('stop_mowing')
       .registerRunListener(({ device }) => device.cmdStop());
 

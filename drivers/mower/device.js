@@ -781,7 +781,7 @@ class MowerDevice extends Homey.Device {
       try {
         this.log('[cmd] btn: resume → sendAction(5,1)');
         await this._safeWrite('cmd_resume', () => this._api.startMowing(did));
-        this._fireBtnTrigger('btn_start_mowing');
+        this._fireBtnTrigger('btn_resume');
       } catch (err) {
         this.error('[cmd_resume] listener error:', err.message);
       } finally {
@@ -2547,6 +2547,11 @@ class MowerDevice extends Homey.Device {
     this.log('[cmd] pause');
     await this._api.pause(this.getData().id);
     await this._applyStatus('paused');
+  }
+
+  async cmdResume() {
+    this.log('[cmd] resume → sendAction(5,1)');
+    await this._api.startMowing(this.getData().id);
   }
 
   async cmdStop() {

@@ -214,6 +214,7 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 | Start border patrol for zone | Mower traces the zone boundary without cutting — used to verify or demonstrate the boundary |
 | Start spot mowing | Mows at specific spot locations (comma-separated spot IDs) |
 | Pause mowing | Pauses the mower in place |
+| Resume mowing | Resumes the current session after a pause or error — no zone selection needed |
 | Stop mowing | Stops the current mowing session |
 | Return to dock | Returns the mower to the charging station |
 | Find mower with audible alert | Plays an audible alert to help locate the mower |
@@ -275,6 +276,7 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 - Start border patrol for zone *(zone number)* — traces boundary without cutting
 - Start spot mowing *(comma-separated spot IDs)*
 - Pause mowing
+- Resume mowing
 - Stop mowing
 - Return to dock
 - Go to maintenance point

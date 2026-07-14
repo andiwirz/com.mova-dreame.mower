@@ -1,0 +1,4 @@
+{
+  "title": { "en": "Resume mowing", "de": "Mähen fortsetzen" },
+  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
+}

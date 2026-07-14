@@ -1,4 +1,8 @@
 {
+  "1.1.22": {
+    "en": "Added 'Resume mowing' Flow action and 'Resume Mowing button pressed' Flow trigger.",
+    "de": "Flow-Aktion 'Mähen fortsetzen' und Flow-Trigger 'Knopf Mähen fortsetzen gedrückt' hinzugefügt."
+  },
   "1.1.21": {
     "en": "Added 'Resume Mowing' button: resumes the current mowing session after a bumper or other error without requiring a zone selection — equivalent to the 'Continue' button in the Dreame app. Fixed MQTT message handler incorrectly declared as synchronous while using await (startup crash risk). MQTT mission-completion events (event_occured, siid:4 eiid:1) are now parsed and logged with their stop reason. Firmware OTA progress updates (props method) are now parsed and logged.",
     "de": "Neuer 'Mähen fortsetzen'-Button: Setzt die aktuelle Mähsession nach einem Prallteller- oder anderem Fehler fort, ohne eine Zone auswählen zu müssen – entspricht der 'Weiter'-Schaltfläche in der Dreame-App. MQTT-Message-Handler war fälschlicherweise als synchron deklariert, obwohl er await verwendete (Absturzrisiko beim Start). MQTT-Auftragsabschluss-Events (event_occured, siid:4 eiid:1) werden jetzt mit ihrem Stoppgrund geparst und geloggt. Firmware-OTA-Fortschrittsupdates (props-Methode) werden jetzt geparst und geloggt."
