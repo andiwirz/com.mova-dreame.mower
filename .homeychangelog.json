@@ -1,4 +1,8 @@
 {
+  "1.1.23": {
+    "en": "Updated App Store description. Replaced widget preview images with simplified, guideline-compliant versions (no text, transparent background, distinct designs for Map and History widgets).",
+    "de": "App-Store-Beschreibung aktualisiert. Widget-Vorschaubilder durch vereinfachte, richtlinienkonforme Versionen ersetzt (kein Text, transparenter Hintergrund, unterschiedliche Designs für Karten- und Verlauf-Widget)."
+  },
   "1.1.22": {
     "en": "Added 'Resume mowing' Flow action and 'Resume Mowing button pressed' Flow trigger.",
     "de": "Flow-Aktion 'Mähen fortsetzen' und Flow-Trigger 'Knopf Mähen fortsetzen gedrückt' hinzugefügt."
