@@ -1,0 +1,27 @@
+{
+  "title": {
+    "en": "Set garage sensor battery",
+    "de": "Garagensensor-Batterie setzen"
+  },
+  "titleFormatted": {
+    "en": "Set garage sensor battery to [[battery]] %",
+    "de": "Garagensensor-Batterie auf [[battery]] % setzen"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=mower"
+    },
+    {
+      "type": "number",
+      "name": "battery",
+      "title": {
+        "en": "Battery %",
+        "de": "Batterie %"
+      },
+      "min": 0,
+      "max": 100
+    }
+  ]
+}

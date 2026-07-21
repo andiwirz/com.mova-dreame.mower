@@ -1,0 +1,12 @@
+{
+  "type": "boolean",
+  "title": {
+    "en": "Garage test exit",
+    "de": "Garage-Testausfahrt"
+  },
+  "getable": false,
+  "setable": true,
+  "uiComponent": "button",
+  "icon": "/assets/capabilities/cmd_dock.svg",
+  "insights": false
+}

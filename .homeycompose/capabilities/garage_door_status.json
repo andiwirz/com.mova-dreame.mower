@@ -1,0 +1,49 @@
+{
+  "type": "enum",
+  "title": {
+    "en": "Garage door",
+    "de": "Garagentor"
+  },
+  "getable": true,
+  "setable": false,
+  "values": [
+    {
+      "id": "unknown",
+      "title": {
+        "en": "Unknown",
+        "de": "Unbekannt"
+      }
+    },
+    {
+      "id": "open",
+      "title": {
+        "en": "Open",
+        "de": "Offen"
+      }
+    },
+    {
+      "id": "closed",
+      "title": {
+        "en": "Closed",
+        "de": "Geschlossen"
+      }
+    },
+    {
+      "id": "opening",
+      "title": {
+        "en": "Opening",
+        "de": "Öffnet"
+      }
+    },
+    {
+      "id": "closing",
+      "title": {
+        "en": "Closing",
+        "de": "Schließt"
+      }
+    }
+  ],
+  "icon": "/assets/capabilities/garage_door.svg",
+  "insights": false,
+  "uiComponent": "sensor"
+}

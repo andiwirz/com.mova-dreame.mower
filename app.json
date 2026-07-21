@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.mova-dreame.mower",
-  "version": "1.1.23",
+  "version": "1.2.0",
   "compatibility": ">=12.3.0",
   "sdk": 3,
   "name": {
@@ -16,33 +16,6 @@
   "category": [
     "appliances"
   ],
-  "tags": {
-    "en": [
-      "mower",
-      "robot mower",
-      "lawn mower",
-      "robotic lawn mower",
-      "MOVA",
-      "Dreame",
-      "garden",
-      "lawn",
-      "robot",
-      "smart garden",
-      "automation"
-    ],
-    "de": [
-      "Mähroboter",
-      "Rasenmäher",
-      "Roboter",
-      "MOVA",
-      "Dreame",
-      "Garten",
-      "Rasen",
-      "Smart Garden",
-      "Automatisierung",
-      "Rasenmäh-Roboter"
-    ]
-  },
   "permissions": [],
   "images": {
     "small": "/assets/images/small.png",
@@ -70,6 +43,46 @@
     }
   },
   "changelog": {
+    "1.2.0": {
+      "en": "Added optional Garage Mode with safe automatic gate control, configurable A-B safety line, danger and caution areas, maintenance waypoint routing, editable live-map overlays, robust pause/resume handling, safe external returns and recovery after interrupted starts. Garage Mode is disabled by default and does not change standard mower behaviour unless configured.",
+      "de": "Optionalen Garagenmodus mit sicherer automatischer Torsteuerung, konfigurierbarer A-B-Sicherheitslinie, Gefahren- und Vorsichtsbereich, Wartungspunkt-Routing, bearbeitbaren Live-Karten-Overlays, stabiler Pause-/Fortsetzen-Logik, sicherer externer Rückkehr und Wiederherstellung nach unterbrochenen Starts hinzugefügt. Der Garagenmodus ist standardmäßig deaktiviert und verändert das normale Mäherverhalten nur, wenn er konfiguriert wurde."
+    },
+    "1.1.23": {
+      "en": "Updated App Store description. Replaced widget preview images with simplified, guideline-compliant versions (no text, transparent background, distinct designs for Map and History widgets).",
+      "de": "App-Store-Beschreibung aktualisiert. Widget-Vorschaubilder durch vereinfachte, richtlinienkonforme Versionen ersetzt (kein Text, transparenter Hintergrund, unterschiedliche Designs für Karten- und Verlauf-Widget)."
+    },
+    "1.1.22": {
+      "en": "Added 'Resume mowing' Flow action and 'Resume Mowing button pressed' Flow trigger.",
+      "de": "Flow-Aktion 'Mähen fortsetzen' und Flow-Trigger 'Knopf Mähen fortsetzen gedrückt' hinzugefügt."
+    },
+    "1.1.21": {
+      "en": "Added 'Resume Mowing' button: resumes the current mowing session after a bumper or other error without requiring a zone selection — equivalent to the 'Continue' button in the Dreame app. Fixed MQTT message handler incorrectly declared as synchronous while using await (startup crash risk). MQTT mission-completion events (event_occured, siid:4 eiid:1) are now parsed and logged with their stop reason. Firmware OTA progress updates (props method) are now parsed and logged.",
+      "de": "Neuer 'Mähen fortsetzen'-Button: Setzt die aktuelle Mähsession nach einem Prallteller- oder anderem Fehler fort, ohne eine Zone auswählen zu müssen – entspricht der 'Weiter'-Schaltfläche in der Dreame-App. MQTT-Message-Handler war fälschlicherweise als synchron deklariert, obwohl er await verwendete (Absturzrisiko beim Start). MQTT-Auftragsabschluss-Events (event_occured, siid:4 eiid:1) werden jetzt mit ihrem Stoppgrund geparst und geloggt. Firmware-OTA-Fortschrittsupdates (props-Methode) werden jetzt geparst und geloggt."
+    },
+    "1.1.20": {
+      "en": "Fixed error alarm incorrectly firing for informational device codes (e.g. task completed, low battery returning, rain pause) and warning codes (e.g. docking failed, camera dirty): only true error codes now trigger the alarm. Warning codes are shown in the new Error capability without alarming. Fixed mower status 15/16 shown as 'mowing'/'standby' instead of 'docked' when charging is paused due to battery temperature. Added status 75 (paused at maintenance point). Added charging status 'Charging Paused (Hot)' for battery overheat. MOVA devices now correctly detect device code 0 as Robot Lifted. Mower powered-off event (MQTT 2:57) now updates status to Standby.",
+      "de": "Fehleralarm wurde fälschlicherweise für informative Gerätecodes ausgelöst (z.B. Aufgabe abgeschlossen, Rückkehr wegen niedrigem Akku, Regenpause) und Warnungscodes (z.B. Andocken fehlgeschlagen, Kamera verschmutzt): Nur echte Fehlercodes lösen jetzt den Alarm aus. Warnungscodes werden in der neuen Fehler-Capability ohne Alarm angezeigt. Mäherstatus 15/16 wurde als 'Mähen'/'Standby' statt 'Angedockt' angezeigt, wenn das Laden wegen Akkutemperatur pausiert ist. Status 75 (Pause am Wartungspunkt) hinzugefügt. Ladestatus 'Laden pausiert (Hitze)' für Akku-Überhitzung hinzugefügt. MOVA-Geräte erkennen Code 0 jetzt korrekt als 'Roboter angehoben'. Ausgeschaltetes-Gerät-Event (MQTT 2:57) aktualisiert jetzt den Status auf Standby."
+    },
+    "1.1.19": {
+      "en": "Added 'Error' capability: the current error description (e.g. 'Robot trapped / stuck', 'Bumper / Crash Plate') is now displayed directly on the device card and is available as a tag in Homey Flows. The capability is cleared automatically when the mower leaves the error state.",
+      "de": "Neue 'Fehler'-Capability hinzugefügt: Die aktuelle Fehlerbeschreibung (z. B. 'Roboter feststeckend', 'Prallteller – Fehler') wird direkt auf der Gerätekarte angezeigt und steht als Tag in Homey-Flows zur Verfügung. Die Capability wird automatisch geleert, sobald der Mäher den Fehlerzustand verlässt."
+    },
+    "1.1.18": {
+      "en": "Fixed bumper and other errors not triggering the Homey error state when the cloud API returns no fault code: the MQTT error code is now used as a fallback so paused-due-to-error states are correctly promoted to an error in Homey.",
+      "de": "Prallteller- und andere Fehler haben den Homey-Fehlerstatus nicht ausgelöst, wenn die Cloud-API keinen Fehlercode zurückgab: Der MQTT-Fehlercode wird jetzt als Fallback verwendet, sodass Pausiert-wegen-Fehler-Zustände korrekt als Fehler in Homey angezeigt werden."
+    },
+    "1.1.17": {
+      "en": "Fixed error code always showing as 'Error 0' when the mower gets stuck or encounters a fault: the MQTT device-code property (siid:2, piid:2) is now captured and used as the fault code, so Homey correctly displays the specific error (e.g. 'Robot trapped / stuck', 'Bumper error'). Fixed mower incorrectly showing as unavailable after brief cloud API glitches: the offline state now requires two consecutive offline polls before marking the device unavailable.",
+      "de": "Fehlercode wurde immer als 'Fehler 0' angezeigt, wenn der Mäher feststeckt oder ein Fehler auftritt: Die MQTT-Gerätecode-Eigenschaft (siid:2, piid:2) wird jetzt erfasst und als Fehlercode verwendet, sodass Homey den konkreten Fehler anzeigt (z. B. 'Roboter feststeckend', 'Prallteller – Fehler'). Mäher wurde nach kurzen Cloud-API-Störungen fälschlicherweise als nicht verfügbar angezeigt: Der Offline-Status erfordert jetzt zwei aufeinanderfolgende Offline-Polls, bevor das Gerät als nicht verfügbar markiert wird."
+    },
+    "1.1.16": {
+      "en": "Added App Logs tab to the settings page: live log output from the app and all paired devices, searchable, filterable by error level, and with auto-refresh. Copy the log and share it with the developer to help diagnose issues.",
+      "de": "App-Logs-Tab in den Einstellungen hinzugefügt: Echtzeit-Logausgabe der App und aller gekoppelten Geräte, durchsuchbar, nach Fehler-Level filterbar und mit Auto-Aktualisierung. Das kopierte Log kann dem Entwickler zur Fehlerdiagnose weitergegeben werden."
+    },
+    "1.1.15": {
+      "en": "Fixed 'Mower error occurred' trigger always showing 'Normal operation': the MOVA/Dreame API embeds fault codes inside a 'property' field encoded as an unescaped JSON string, which the app was discarding. The sanitiser now inlines that JSON object so fault codes are readable. Fixed bumper collision and similar errors not showing as 'Error' in Homey: these are reported as paused + non-zero fault code; the app now promotes that to an error state so the alarm and trigger fire correctly. Fixed 'Poll failed: Invalid Capability: mow_spot/mow_zone/mow_map': on startup the app now detects and self-heals corrupted picker capabilities by removing and re-adding them. The debug poll snapshot also continues past any remaining invalid capability instead of aborting.",
+      "de": "Auslöser 'Mäher-Fehler aufgetreten' zeigte immer 'Normalbetrieb': Die MOVA/Dreame-API bettet Fehlercodes in ein 'property'-Feld als unkodierter JSON-String ein, den die App bisher verwarf. Der Sanitizer bettet dieses JSON-Objekt nun direkt ein, sodass Fehlercodes lesbar sind. Pufferaufprall und ähnliche Fehler wurden in Homey als 'Pausiert' angezeigt, weil das Gerät diese als pausiert + Fehlercode meldet — die App erkennt diese Kombination jetzt als Fehler, sodass Alarm und Auslöser korrekt feuern. 'Poll failed: Invalid Capability: mow_spot/mow_zone/mow_map' behoben: Die App erkennt beim Start fehlerhafte Picker-Capabilities und stellt sie automatisch wieder her. Der Debug-Poll bricht bei ungültigen Capabilities nicht mehr ab."
+    },
     "0.0.1": {
       "en": "Initial version.",
       "de": "Erste Version."
@@ -131,7 +144,8 @@
       "de": "App in MOVA & Dreame Mähroboter umbenannt. Interne Code-Bereinigung."
     },
     "0.0.16": {
-      "en": "Updated readme files."
+      "en": "Updated readme files.",
+      "de": "Readme-Dateien aktualisiert."
     },
     "0.0.17": {
       "en": "Fixed battery and status not updating for MOVA ViAX 300 and other newer devices. The MOVA cloud API returns malformed JSON for some device fields — the app now sanitizes the response before parsing so polling succeeds.",
@@ -253,13 +267,25 @@
       "en": "Initial public release.",
       "de": "Erste öffentliche Version."
     },
+    "1.0.3": {
+      "en": "Firmware status now shows 4 states: Up to Date, Update Available, Installing, and Download Failed. Added charging status 'Paused (Cold)'. Fixed: 'Mowing completed' trigger no longer fires during a firmware update. Fixed: 'Battery low' trigger now fires exactly once per threshold crossing. Added hints to the 'Start mowing' and 'Clear error' flow actions. Internal improvements: device list cached, CFG and history polls staggered.",
+      "de": "Firmware-Status zeigt jetzt 4 Zustände: Aktuell, Update verfügbar, Wird installiert und Download fehlgeschlagen. Ladestatus 'Pausiert (Kälte)' hinzugefügt. Behoben: Flow-Auslöser 'Mähen abgeschlossen' wird nicht mehr bei Firmware-Updates ausgelöst. Behoben: Flow-Auslöser 'Akku niedrig' feuert jetzt genau einmal pro Schwellenunterschreitung. Hinweise zu den Flow-Aktionen 'Mähen starten' und 'Fehler quittieren' ergänzt. Interne Verbesserungen: Geräteliste gecacht, CFG- und Mähhistorie-Abfragen zeitversetzt."
+    },
     "1.0.4": {
       "en": "Added map widget: live SVG map showing mowing zones, forbidden areas, spot areas and the mower's current position. The map updates every 60 seconds. Widget height adjusts automatically to the map aspect ratio.",
       "de": "Karten-Widget hinzugefügt: Live-SVG-Karte mit Mähzonen, Verbotsbereichen, Spotbereichen und der aktuellen Position des Mähroboters. Die Karte aktualisiert sich alle 60 Sekunden. Die Widget-Höhe passt sich automatisch dem Seitenverhältnis der Karte an."
     },
+    "1.0.2": {
+      "en": "Added repair flow: if your MOVA or Dreame password changes, tap 'Repair' on the device in Homey to re-authenticate without losing any settings or flows.",
+      "de": "Reparatur-Flow hinzugefügt: Bei einer Passwortänderung in der MOVA- oder Dreame-App kann die Verbindung über 'Reparieren' am Gerät in Homey wiederhergestellt werden — alle Einstellungen und Flows bleiben erhalten."
+    },
+    "1.0.1": {
+      "en": "Added 'Border Patrol' flow action (drives the mower along the boundary of a selected zone, op-code 108). Fixed session duration always showing 0 after an app restart. Added lifetime mowing statistics (total area, total time, total sessions). Removed 'Obstacle detected' flow trigger.",
+      "de": "Flow-Aktion 'Randpatrouille' hinzugefügt (fährt den Mähroboter entlang der Grenze einer gewählten Zone, Op-Code 108). Sitzungsdauer nach App-Neustart nicht mehr dauerhaft 0. Gesamte Mähstatistiken hinzugefügt (Gesamtfläche, Gesamtlaufzeit, Gesamtanzahl Mähvorgänge). Flow-Auslöser 'Hindernis erkannt' entfernt."
+    },
     "1.0.5": {
-      "en": "Fixed map widget layer visibility: toggling zones, forbidden areas, spots, contours, path or robot position in widget settings now takes effect immediately. Fixed mower position when docked: the blue dot is now placed using the dock coordinates reported directly by the device (t:DOCK) instead of an approximate forbidden-area centroid.",
-      "de": "Sichtbarkeit der Karten-Widget-Ebenen korrigiert: Das Ein-/Ausblenden von Zonen, Verbotsbereichen, Spots, Konturlinien, Mähspur oder Mäherposition in den Widget-Einstellungen wird jetzt sofort übernommen. Mäherposition bei angedocktem Gerät korrigiert: Der blaue Punkt wird jetzt anhand der vom Gerät gemeldeten Ladestation-Koordinaten (t:DOCK) positioniert statt über einen angenäherten Verbotsbereicsh-Mittelpunkt."
+      "en": "Fixed map widget layer visibility: toggling zones, forbidden areas, spots, contours, path or robot position in widget settings now takes effect immediately. Fixed mower position when docked: the blue dot is now placed using the dock coordinates reported directly by the device instead of an approximate centroid.",
+      "de": "Sichtbarkeit der Karten-Widget-Ebenen korrigiert: Das Ein-/Ausblenden von Zonen, Verbotsbereichen, Spots, Konturlinien, Mähspur oder Mäherposition wird jetzt sofort übernommen. Mäherposition bei angedocktem Gerät korrigiert: Der blaue Punkt wird jetzt anhand der vom Gerät gemeldeten Ladestation-Koordinaten positioniert."
     },
     "1.0.6": {
       "en": "Added Mowing History widget: browse completed mowing sessions with a mini-map, time-gradient trajectory (green = area mowing, amber = edge mowing), tappable obstacle markers, and a full-width photo carousel with previous/next navigation. Fixed obstacle photos not loading: the file-bridge API now receives the required Authorization header and correctly decompresses Brotli-encoded JPEG responses.",
@@ -332,15 +358,34 @@
     "1.1.12": {
       "en": "Improved error code detection for the 'Mower error occurred' trigger: the app now checks additional field names returned by the device list API so the correct fault code is found on more device models. A diagnostic log entry is written on every error detection to help identify the API field name if the error description still shows 'Normal operation'.",
       "de": "Verbesserte Fehlercode-Erkennung für den Auslöser 'Mäher-Fehler aufgetreten': Die App prüft nun weitere Feldnamen der Geräteliste-API, sodass der korrekte Fehlercode auf mehr Gerätemodellen gefunden wird. Bei jeder Fehlererkennung wird ein Diagnose-Logeintrag geschrieben, um den API-Feldnamen zu identifizieren falls die Fehlerbeschreibung weiterhin 'Normalbetrieb' anzeigt."
-    },
-    "1.1.15": {
-      "en": "Fixed 'Mower error occurred' trigger always showing 'Normal operation': the MOVA/Dreame API embeds fault codes inside a 'property' field encoded as an unescaped JSON string, which the app was discarding. The sanitiser now inlines that JSON object so fault codes are readable. Fixed bumper collision and similar errors not showing as 'Error' in Homey: these are reported as paused + non-zero fault code; the app now promotes that to an error state so the alarm and trigger fire correctly. Fixed 'Poll failed: Invalid Capability: mow_spot/mow_zone/mow_map': on startup the app now detects and self-heals corrupted picker capabilities by removing and re-adding them. The debug poll snapshot also continues past any remaining invalid capability instead of aborting.",
-      "de": "Auslöser 'Mäher-Fehler aufgetreten' zeigte immer 'Normalbetrieb': Die MOVA/Dreame-API bettet Fehlercodes in ein 'property'-Feld als unkodierter JSON-String ein, den die App bisher verwarf. Der Sanitizer bettet dieses JSON-Objekt nun direkt ein, sodass Fehlercodes lesbar sind. Pufferaufprall und ähnliche Fehler wurden in Homey als 'Pausiert' angezeigt, weil das Gerät diese als pausiert + Fehlercode meldet — die App erkennt diese Kombination jetzt als Fehler, sodass Alarm und Auslöser korrekt feuern. 'Poll failed: Invalid Capability: mow_spot/mow_zone/mow_map' behoben: Die App erkennt beim Start fehlerhafte Picker-Capabilities und stellt sie automatisch wieder her. Der Debug-Poll bricht bei ungültigen Capabilities nicht mehr ab."
-    },
-    "1.1.16": {
-      "en": "Added App Logs tab to the settings page: live log output from the app and all paired devices, searchable, filterable by error level, and with auto-refresh. Copy the log and share it with the developer to help diagnose issues.",
-      "de": "App-Logs-Tab in den Einstellungen hinzugefügt: Echtzeit-Logausgabe der App und aller gekoppelten Geräte, durchsuchbar, nach Fehler-Level filterbar und mit Auto-Aktualisierung. Das kopierte Log kann dem Entwickler zur Fehlerdiagnose weitergegeben werden."
     }
+  },
+  "tags": {
+    "en": [
+      "mower",
+      "robot mower",
+      "lawn mower",
+      "robotic lawn mower",
+      "MOVA",
+      "Dreame",
+      "garden",
+      "lawn",
+      "robot",
+      "smart garden",
+      "automation"
+    ],
+    "de": [
+      "Mähroboter",
+      "Rasenmäher",
+      "Roboter",
+      "MOVA",
+      "Dreame",
+      "Garten",
+      "Rasen",
+      "Smart Garden",
+      "Automatisierung",
+      "Rasenmäh-Roboter"
+    ]
   },
   "flow": {
     "triggers": [
@@ -610,6 +655,422 @@
       },
       {
         "title": {
+          "en": "Garage door close requested",
+          "de": "Garagentor schließen angefordert"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "titleFormatted": {
+          "en": "Garage door close requested",
+          "de": "Garagentor schließen angefordert"
+        },
+        "hint": {
+          "en": "Triggered by the mower when the garage safety logic requests the gate action.",
+          "de": "Wird vom Mäher ausgelöst, wenn die Garagenlogik diese Torbewegung anfordert."
+        },
+        "id": "garage_close_requested"
+      },
+      {
+        "title": {
+          "en": "Garage danger area entered",
+          "de": "Gefahrenbereich betreten"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_danger_area_entered"
+      },
+      {
+        "title": {
+          "en": "Garage danger area left",
+          "de": "Gefahrenbereich verlassen"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_danger_area_left"
+      },
+      {
+        "title": {
+          "en": "Garage door stable open",
+          "de": "Garagentor stabil offen"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_door_stable_open"
+      },
+      {
+        "title": {
+          "en": "Garage emergency",
+          "de": "Garage Notfall"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          },
+          {
+            "name": "action",
+            "type": "string",
+            "title": {
+              "en": "Action",
+              "de": "Aktion"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_emergency"
+      },
+      {
+        "title": {
+          "en": "External start blocked by garage safety",
+          "de": "Externer Start durch Garage blockiert"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_external_start_blocked"
+      },
+      {
+        "title": {
+          "en": "Mower is home",
+          "de": "Mäher ist zuhause"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_home_confirmed"
+      },
+      {
+        "title": {
+          "en": "Garage maintenance point reached",
+          "de": "Garage Wartungspunkt erreicht"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_maintenance_point_reached"
+      },
+      {
+        "title": {
+          "en": "Garage door open requested",
+          "de": "Garagentor öffnen angefordert"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "titleFormatted": {
+          "en": "Garage door open requested",
+          "de": "Garagentor öffnen angefordert"
+        },
+        "hint": {
+          "en": "Triggered by the mower when the garage safety logic requests the gate action.",
+          "de": "Wird vom Mäher ausgelöst, wenn die Garagenlogik diese Torbewegung anfordert."
+        },
+        "id": "garage_open_requested"
+      },
+      {
+        "title": {
+          "en": "Garage position uncertain",
+          "de": "Garage Position unsicher"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_position_uncertain"
+      },
+      {
+        "title": {
+          "en": "Garage safe return completed",
+          "de": "Garage sichere Rückkehr abgeschlossen"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_safe_return_completed"
+      },
+      {
+        "title": {
+          "en": "Garage safe return started",
+          "de": "Garage sichere Rückkehr gestartet"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_safe_return_started"
+      },
+      {
+        "title": {
+          "en": "Garage safety block",
+          "de": "Garage Safety Block"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          },
+          {
+            "name": "severity",
+            "type": "string",
+            "title": {
+              "en": "Severity",
+              "de": "Schweregrad"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_safety_block"
+      },
+      {
+        "title": {
+          "en": "Garage safety line crossed to lawn",
+          "de": "Sicherheitslinie Richtung Rasen überfahren"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_safety_line_lawn"
+      },
+      {
+        "title": {
+          "en": "Garage sensor battery low",
+          "de": "Garagensensor Batterie schwach"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_sensor_battery_low"
+      },
+      {
+        "title": {
+          "en": "Garage sensor unavailable",
+          "de": "Garagensensor nicht verfügbar"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_sensor_unavailable"
+      },
+      {
+        "title": {
           "en": "Mower docked at station",
           "de": "Mähroboter an Ladestation"
         },
@@ -787,6 +1248,48 @@
       },
       {
         "title": {
+          "en": "Mower is at maintenance point",
+          "de": "Mäher ist am Wartungspunkt"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_at_maintenance_point"
+      },
+      {
+        "title": {
+          "en": "Garage door is open",
+          "de": "Garagentor ist offen"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_door_is_open"
+      },
+      {
+        "title": {
+          "en": "Garage mode is enabled",
+          "de": "Garagenmodus ist aktiv"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_mode_is_enabled"
+      },
+      {
+        "title": {
           "en": "Mower !{{is|is not}} charging",
           "de": "Mähroboter !{{lädt|lädt nicht}}"
         },
@@ -933,6 +1436,150 @@
           }
         ],
         "id": "find_bot"
+      },
+      {
+        "title": {
+          "en": "Garage safe return",
+          "de": "Garage sichere Rückkehr"
+        },
+        "titleFormatted": {
+          "en": "Start garage safe return",
+          "de": "Garage sichere Rückkehr starten"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_safe_return"
+      },
+      {
+        "title": {
+          "en": "Set garage door state",
+          "de": "Garagentorstatus setzen"
+        },
+        "titleFormatted": {
+          "en": "Set garage door state to [[state]]",
+          "de": "Garagentorstatus auf [[state]] setzen"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "type": "dropdown",
+            "name": "state",
+            "title": {
+              "en": "State",
+              "de": "Status"
+            },
+            "values": [
+              {
+                "id": "open",
+                "title": {
+                  "en": "Open",
+                  "de": "Offen"
+                }
+              },
+              {
+                "id": "closed",
+                "title": {
+                  "en": "Closed",
+                  "de": "Geschlossen"
+                }
+              },
+              {
+                "id": "unknown",
+                "title": {
+                  "en": "Unknown",
+                  "de": "Unbekannt"
+                }
+              }
+            ]
+          }
+        ],
+        "id": "garage_set_door_state"
+      },
+      {
+        "title": {
+          "en": "Set garage sensor availability",
+          "de": "Garagensensor-Verfügbarkeit setzen"
+        },
+        "titleFormatted": {
+          "en": "Set garage sensor availability to [[available]]",
+          "de": "Garagensensor-Verfügbarkeit auf [[available]] setzen"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "type": "dropdown",
+            "name": "available",
+            "title": {
+              "en": "Availability",
+              "de": "Verfügbarkeit"
+            },
+            "values": [
+              {
+                "id": "online",
+                "title": {
+                  "en": "Online",
+                  "de": "Online"
+                }
+              },
+              {
+                "id": "offline",
+                "title": {
+                  "en": "Offline",
+                  "de": "Offline"
+                }
+              },
+              {
+                "id": "unknown",
+                "title": {
+                  "en": "Unknown",
+                  "de": "Unbekannt"
+                }
+              }
+            ]
+          }
+        ],
+        "id": "garage_set_sensor_available"
+      },
+      {
+        "title": {
+          "en": "Set garage sensor battery",
+          "de": "Garagensensor-Batterie setzen"
+        },
+        "titleFormatted": {
+          "en": "Set garage sensor battery to [[battery]] %",
+          "de": "Garagensensor-Batterie auf [[battery]] % setzen"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "type": "number",
+            "name": "battery",
+            "title": {
+              "en": "Battery %",
+              "de": "Batterie %"
+            },
+            "min": 0,
+            "max": 100
+          }
+        ],
+        "id": "garage_set_sensor_battery"
       },
       {
         "title": {
@@ -1492,7 +2139,16 @@
         "child_lock",
         "consumable_blade",
         "consumable_brush",
-        "consumable_robot"
+        "consumable_robot",
+        "cmd_garage_pause_mode",
+        "cmd_garage_test_exit",
+        "cmd_garage_save_danger_center",
+        "cmd_garage_save_safety_line_a",
+        "cmd_garage_save_safety_line_b",
+        "garage_door_status",
+        "garage_safety_status",
+        "garage_sensor_available_status",
+        "garage_sensor_battery"
       ],
       "capabilitiesOptions": {
         "alarm_generic": {
@@ -1534,6 +2190,22 @@
         "firmware_update": {
           "preventInsights": true,
           "preventTag": true
+        },
+        "garage_door_status": {
+          "preventInsights": true,
+          "preventTag": false
+        },
+        "garage_sensor_available_status": {
+          "preventInsights": true,
+          "preventTag": false
+        },
+        "garage_sensor_battery": {
+          "preventInsights": true,
+          "preventTag": false
+        },
+        "garage_safety_status": {
+          "preventInsights": true,
+          "preventTag": false
         }
       },
       "energy": {
@@ -2512,6 +3184,383 @@
               }
             }
           ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Garage Safety",
+            "de": "Garagensicherheit"
+          },
+          "children": [
+            {
+              "id": "garage_mode_enabled",
+              "type": "checkbox",
+              "label": {
+                "en": "Enable garage mode",
+                "de": "Garagenmodus aktivieren"
+              },
+              "value": false
+            },
+            {
+              "id": "garage_sensor_enabled",
+              "type": "checkbox",
+              "label": {
+                "en": "Use garage door sensor",
+                "de": "Torsensor verwenden"
+              },
+              "value": false
+            },
+            {
+              "id": "garage_sensor_min_battery",
+              "type": "number",
+              "label": {
+                "en": "Minimum sensor battery (%)",
+                "de": "Mindestladung Torsensor (%)"
+              },
+              "value": 15,
+              "min": 0,
+              "max": 100,
+              "step": 1
+            },
+            {
+              "id": "garage_sensor_watchdog_minutes",
+              "type": "number",
+              "label": {
+                "en": "Sensor offline timeout (min)",
+                "de": "Sensor-Offline-Zeit (min)"
+              },
+              "value": 30,
+              "min": 1,
+              "max": 240,
+              "step": 1
+            },
+            {
+              "id": "garage_open_stabilize_seconds",
+              "type": "number",
+              "label": {
+                "en": "Open stabilisation time (s)",
+                "de": "Tor-offen-Stabilisierungszeit (s)"
+              },
+              "value": 10,
+              "min": 0,
+              "max": 60,
+              "step": 1
+            },
+            {
+              "id": "garage_open_duration_seconds",
+              "type": "number",
+              "label": {
+                "en": "Door opening time without sensor (s)",
+                "de": "Tor-Öffnungsdauer ohne Sensor (s)"
+              },
+              "value": 10,
+              "min": 0,
+              "max": 120,
+              "step": 1,
+              "hint": {
+                "en": "Used only when the door sensor is disabled or unavailable.",
+                "de": "Wird nur genutzt, wenn der Torsensor deaktiviert oder nicht verfügbar ist."
+              }
+            },
+            {
+              "id": "garage_close_duration_seconds",
+              "type": "number",
+              "label": {
+                "en": "Door closing time without sensor (s)",
+                "de": "Tor-Schließdauer ohne Sensor (s)"
+              },
+              "value": 10,
+              "min": 0,
+              "max": 120,
+              "step": 1,
+              "hint": {
+                "en": "Used only when the door sensor is disabled or unavailable.",
+                "de": "Wird nur genutzt, wenn der Torsensor deaktiviert oder nicht verfügbar ist."
+              }
+            },
+            {
+              "id": "garage_speed_source",
+              "type": "dropdown",
+              "label": {
+                "en": "Speed source for garage ETA",
+                "de": "Geschwindigkeitsquelle für Garagen-ETA"
+              },
+              "value": "auto",
+              "values": [
+                {
+                  "id": "auto",
+                  "label": {
+                    "en": "Automatic: live → measured → model → user",
+                    "de": "Automatisch: Live → gemessen → Modell → Benutzer"
+                  }
+                },
+                {
+                  "id": "live",
+                  "label": {
+                    "en": "Prefer live mower speed",
+                    "de": "Live-Geschwindigkeit bevorzugen"
+                  }
+                },
+                {
+                  "id": "measured",
+                  "label": {
+                    "en": "Prefer measured position average",
+                    "de": "Gemessenen Positionsdurchschnitt bevorzugen"
+                  }
+                },
+                {
+                  "id": "model",
+                  "label": {
+                    "en": "Prefer model default",
+                    "de": "Modellstandard bevorzugen"
+                  }
+                },
+                {
+                  "id": "user",
+                  "label": {
+                    "en": "Use user setting only",
+                    "de": "Nur Benutzereinstellung verwenden"
+                  }
+                }
+              ],
+              "hint": {
+                "en": "Used only for garage return ETA and half-map decision logging. Live speed is used automatically if the mower exposes it.",
+                "de": "Nur für Rückkehr-ETA und Halb-Karten-Entscheidungen. Live-Geschwindigkeit wird automatisch genutzt, falls der Mäher sie liefert."
+              }
+            },
+            {
+              "id": "garage_mower_speed_value",
+              "type": "number",
+              "label": {
+                "en": "Fallback/custom mower speed",
+                "de": "Fallback-/benutzerdefinierte Mähergeschwindigkeit"
+              },
+              "value": 1.8,
+              "min": 0,
+              "max": 10000,
+              "step": 0.1,
+              "hint": {
+                "en": "Used only when no higher-priority speed source is available or when speed source is set to user only. Internally converted to m/s.",
+                "de": "Wird nur genutzt, wenn keine höher priorisierte Quelle verfügbar ist oder die Quelle auf Nur Benutzer steht. Intern wird in m/s umgerechnet."
+              }
+            },
+            {
+              "id": "garage_speed_unit",
+              "type": "dropdown",
+              "label": {
+                "en": "Speed unit",
+                "de": "Geschwindigkeitseinheit"
+              },
+              "value": "kmh",
+              "values": [
+                {
+                  "id": "kmh",
+                  "label": {
+                    "en": "km/h",
+                    "de": "km/h"
+                  }
+                },
+                {
+                  "id": "mph",
+                  "label": {
+                    "en": "mph",
+                    "de": "mph"
+                  }
+                },
+                {
+                  "id": "mmps",
+                  "label": {
+                    "en": "mm/s",
+                    "de": "mm/s"
+                  }
+                },
+                {
+                  "id": "mps",
+                  "label": {
+                    "en": "m/s",
+                    "de": "m/s"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "garage_danger_radius_mm",
+              "type": "number",
+              "label": {
+                "en": "Danger area radius (mm)",
+                "de": "Gefahrenbereich-Radius (mm)"
+              },
+              "value": 1200,
+              "min": 100,
+              "max": 10000,
+              "step": 100
+            },
+            {
+              "id": "garage_danger_hysteresis_mm",
+              "type": "number",
+              "label": {
+                "en": "Danger area hysteresis (mm)",
+                "de": "Gefahrenbereich-Hysterese (mm)"
+              },
+              "value": 250,
+              "min": 0,
+              "max": 2000,
+              "step": 50,
+              "hint": {
+                "en": "Prevents inside/outside flicker at the edge of the danger circle.",
+                "de": "Verhindert Flackern am Rand des Gefahrenbereich-Kreises."
+              }
+            },
+            {
+              "id": "garage_line_hysteresis_mm",
+              "type": "number",
+              "label": {
+                "en": "Safety line hysteresis (mm)",
+                "de": "Sicherheitslinien-Hysterese (mm)"
+              },
+              "value": 250,
+              "min": 0,
+              "max": 2000,
+              "step": 50,
+              "hint": {
+                "en": "Line side only changes after the mower is clearly on the other side.",
+                "de": "Die Linienseite wechselt erst, wenn der Mäher klar auf der anderen Seite ist."
+              }
+            },
+            {
+              "id": "garage_line_segment_margin_mm",
+              "type": "number",
+              "label": {
+                "en": "Safety line segment margin (mm)",
+                "de": "Sicherheitslinien-Karenz A/B (mm)"
+              },
+              "value": 500,
+              "min": 0,
+              "max": 3000,
+              "step": 50,
+              "hint": {
+                "en": "Only crossings on the A-B line segment plus this margin are accepted.",
+                "de": "Nur Querungen auf dem Abschnitt A–B plus dieser Karenz werden ausgewertet."
+              }
+            },
+            {
+              "id": "garage_marker_diagnosis",
+              "type": "label",
+              "label": {
+                "en": "Marker diagnosis",
+                "de": "Marker-Diagnose"
+              },
+              "value": "Noch nicht geprüft",
+              "hint": {
+                "en": "Shows which garage markers are set and whether the safety line is plausible.",
+                "de": "Zeigt, welche Garagenmarker gesetzt sind und ob die Sicherheitslinie plausibel ist."
+              }
+            },
+            {
+              "id": "garage_logging_enabled",
+              "type": "checkbox",
+              "label": {
+                "en": "Enable garage logging",
+                "de": "Garagen-Logging aktivieren"
+              },
+              "value": false,
+              "hint": {
+                "en": "Shows normal, user-relevant garage events in the Homey timeline.",
+                "de": "Zeigt normale, benutzerrelevante Garagenereignisse in der Homey-Zeitleiste."
+              }
+            },
+            {
+              "id": "garage_debug_verbose",
+              "type": "checkbox",
+              "label": {
+                "en": "Enable debug logging",
+                "de": "Debug-Logging aktivieren"
+              },
+              "value": false,
+              "hint": {
+                "en": "Adds detailed internal garage states and diagnostic decisions to the timeline. Requires garage logging to be enabled.",
+                "de": "Ergänzt detaillierte interne Garagenzustände und Diagnoseentscheidungen in der Zeitleiste. Garagen-Logging muss dafür aktiviert sein."
+              }
+            },
+            {
+              "id": "map_show_robot_position",
+              "type": "checkbox",
+              "label": {
+                "en": "Show mower position on map",
+                "de": "Mäherposition auf Karte anzeigen"
+              },
+              "value": true
+            },
+            {
+              "id": "map_show_direction",
+              "type": "checkbox",
+              "label": {
+                "en": "Show mower direction on map",
+                "de": "Fahrtrichtung auf Karte anzeigen"
+              },
+              "value": true
+            },
+            {
+              "id": "map_show_route",
+              "type": "checkbox",
+              "label": {
+                "en": "Show driven route on map",
+                "de": "Gefahrene Route auf Karte anzeigen"
+              },
+              "value": true
+            },
+            {
+              "id": "map_show_maintenance_point",
+              "type": "checkbox",
+              "label": {
+                "en": "Show maintenance point on map",
+                "de": "Wartungspunkt auf Karte anzeigen"
+              },
+              "value": true
+            },
+            {
+              "id": "garage_map_overlay_enabled",
+              "type": "checkbox",
+              "label": {
+                "en": "Show garage overlay on map",
+                "de": "Garagen-Overlay auf Karte anzeigen"
+              },
+              "value": false,
+              "hint": {
+                "en": "Draws safety line, danger area, maintenance point and caution zone on the map widget. Original map remains unchanged when disabled.",
+                "de": "Zeichnet Sicherheitslinie, Gefahrenbereich, Wartungspunkt und Vorsichtszone im Karten-Widget. Bei deaktivierter Option bleibt die Karte unverändert."
+              }
+            },
+            {
+              "id": "garage_caution_radius_mm",
+              "type": "number",
+              "label": {
+                "en": "Caution zone radius (mm)",
+                "de": "Vorsichtsbereich-Radius (mm)"
+              },
+              "value": 1800,
+              "min": 0,
+              "max": 10000,
+              "step": 100,
+              "hint": {
+                "en": "Additional visual/diagnostic slow-care area around the garage. 0 disables it.",
+                "de": "Zusätzlicher visueller/diagnostischer Vorsichtsbereich um die Garage. 0 deaktiviert ihn."
+              }
+            },
+            {
+              "id": "garage_reset_markers",
+              "type": "checkbox",
+              "label": {
+                "en": "Reset garage markers",
+                "de": "Garagenmarker zurücksetzen"
+              },
+              "value": false,
+              "hint": {
+                "en": "After saving this setting, the marker buttons become visible again and this toggle resets itself.",
+                "de": "Nach dem Speichern werden die Marker-Buttons wieder sichtbar und dieser Schalter springt zurück."
+              }
+            }
+          ]
         }
       ],
       "id": "mower"
@@ -2600,6 +3649,46 @@
             "de": "Hindernisse anzeigen"
           },
           "value": true
+        },
+        {
+          "id": "show_path",
+          "type": "checkbox",
+          "label": {
+            "en": "Show driven route",
+            "de": "Gefahrene Route anzeigen"
+          },
+          "value": true
+        },
+        {
+          "id": "show_direction",
+          "type": "checkbox",
+          "label": {
+            "en": "Show mower direction",
+            "de": "Fahrtrichtung anzeigen"
+          },
+          "value": true
+        },
+        {
+          "id": "show_maintenance_point",
+          "type": "checkbox",
+          "label": {
+            "en": "Show maintenance point",
+            "de": "Wartungspunkt anzeigen"
+          },
+          "value": true
+        },
+        {
+          "id": "show_garage_overlay",
+          "type": "checkbox",
+          "label": {
+            "en": "Show garage overlay",
+            "de": "Garagen-Overlay anzeigen"
+          },
+          "value": true,
+          "hint": {
+            "en": "Shows all garage-specific elements together. Only effective when garage mode is enabled.",
+            "de": "Zeigt alle garagenspezifischen Elemente gemeinsam. Nur bei aktiviertem Garagenmodus wirksam."
+          }
         }
       ],
       "api": {
@@ -2784,6 +3873,66 @@
       "getable": true,
       "setable": true,
       "uiComponent": "button"
+    },
+    "cmd_garage_pause_mode": {
+      "type": "boolean",
+      "title": {
+        "en": "Pause/resume garage mode",
+        "de": "Garagenmodus pausieren/fortsetzen"
+      },
+      "getable": false,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_dock.svg",
+      "insights": false
+    },
+    "cmd_garage_save_danger_center": {
+      "type": "boolean",
+      "title": {
+        "en": "Save danger area centre",
+        "de": "Gefahrenbereich-Mitte speichern"
+      },
+      "getable": false,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_dock.svg",
+      "insights": false
+    },
+    "cmd_garage_save_safety_line_a": {
+      "type": "boolean",
+      "title": {
+        "en": "Save safety line point A",
+        "de": "Sicherheitslinie Punkt A speichern"
+      },
+      "getable": false,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_dock.svg",
+      "insights": false
+    },
+    "cmd_garage_save_safety_line_b": {
+      "type": "boolean",
+      "title": {
+        "en": "Save safety line point B",
+        "de": "Sicherheitslinie Punkt B speichern"
+      },
+      "getable": false,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_dock.svg",
+      "insights": false
+    },
+    "cmd_garage_test_exit": {
+      "type": "boolean",
+      "title": {
+        "en": "Garage test exit",
+        "de": "Garage-Testausfahrt"
+      },
+      "getable": false,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_dock.svg",
+      "insights": false
     },
     "cmd_maintenance_point": {
       "type": "boolean",
@@ -3061,6 +4210,259 @@
       "uiComponent": "sensor",
       "icon": "/assets/capabilities/firmware_update.svg"
     },
+    "garage_door_status": {
+      "type": "enum",
+      "title": {
+        "en": "Garage door",
+        "de": "Garagentor"
+      },
+      "getable": true,
+      "setable": false,
+      "values": [
+        {
+          "id": "unknown",
+          "title": {
+            "en": "Unknown",
+            "de": "Unbekannt"
+          }
+        },
+        {
+          "id": "open",
+          "title": {
+            "en": "Open",
+            "de": "Offen"
+          }
+        },
+        {
+          "id": "closed",
+          "title": {
+            "en": "Closed",
+            "de": "Geschlossen"
+          }
+        },
+        {
+          "id": "opening",
+          "title": {
+            "en": "Opening",
+            "de": "Öffnet"
+          }
+        },
+        {
+          "id": "closing",
+          "title": {
+            "en": "Closing",
+            "de": "Schließt"
+          }
+        }
+      ],
+      "icon": "/assets/capabilities/garage_door.svg",
+      "insights": false,
+      "uiComponent": "sensor"
+    },
+    "garage_home_status": {
+      "type": "enum",
+      "title": {
+        "en": "Home",
+        "de": "Zuhause"
+      },
+      "getable": true,
+      "setable": false,
+      "values": [
+        {
+          "id": "unknown",
+          "title": {
+            "en": "Unknown",
+            "de": "Unbekannt"
+          }
+        },
+        {
+          "id": "away",
+          "title": {
+            "en": "Away",
+            "de": "Unterwegs"
+          }
+        },
+        {
+          "id": "adjusting",
+          "title": {
+            "en": "Adjusting",
+            "de": "Justieren"
+          }
+        },
+        {
+          "id": "home",
+          "title": {
+            "en": "Home",
+            "de": "Zuhause"
+          }
+        }
+      ],
+      "icon": "/assets/capabilities/mower_status.svg",
+      "insights": false,
+      "uiComponent": "sensor"
+    },
+    "garage_safety_status": {
+      "type": "enum",
+      "title": {
+        "en": "Garage safety",
+        "de": "Garagensicherheit"
+      },
+      "getable": true,
+      "setable": false,
+      "values": [
+        {
+          "id": "ok",
+          "title": {
+            "en": "OK",
+            "de": "OK"
+          }
+        },
+        {
+          "id": "warning",
+          "title": {
+            "en": "Warning",
+            "de": "Warnung"
+          }
+        },
+        {
+          "id": "blocked",
+          "title": {
+            "en": "Blocked",
+            "de": "Blockiert"
+          }
+        },
+        {
+          "id": "emergency",
+          "title": {
+            "en": "Emergency",
+            "de": "Notfall"
+          }
+        }
+      ],
+      "icon": "/assets/capabilities/sensor_status.svg",
+      "insights": false,
+      "uiComponent": "sensor"
+    },
+    "garage_sensor_available_status": {
+      "type": "enum",
+      "title": {
+        "en": "Garage sensor",
+        "de": "Garagensensor"
+      },
+      "getable": true,
+      "setable": false,
+      "values": [
+        {
+          "id": "unknown",
+          "title": {
+            "en": "Unknown",
+            "de": "Unbekannt"
+          }
+        },
+        {
+          "id": "online",
+          "title": {
+            "en": "Online",
+            "de": "Online"
+          }
+        },
+        {
+          "id": "timeout",
+          "title": {
+            "en": "Timeout",
+            "de": "Timeout"
+          }
+        },
+        {
+          "id": "offline",
+          "title": {
+            "en": "Offline",
+            "de": "Offline"
+          }
+        }
+      ],
+      "icon": "/assets/capabilities/sensor_status.svg",
+      "insights": false,
+      "uiComponent": "sensor"
+    },
+    "garage_sensor_battery": {
+      "type": "number",
+      "title": {
+        "en": "Garage sensor battery",
+        "de": "Garagensensor Batterie"
+      },
+      "getable": true,
+      "setable": false,
+      "units": "%",
+      "min": 0,
+      "max": 100,
+      "decimals": 0,
+      "icon": "/assets/capabilities/measure_battery.svg",
+      "insights": false
+    },
+    "garage_sensor_contact_status": {
+      "type": "enum",
+      "title": {
+        "en": "Garage sensor contact",
+        "de": "Garagensensor-Kontakt"
+      },
+      "getable": true,
+      "setable": false,
+      "values": [
+        {
+          "id": "unknown",
+          "title": {
+            "en": "Unknown",
+            "de": "Unbekannt"
+          }
+        },
+        {
+          "id": "open",
+          "title": {
+            "en": "Open",
+            "de": "Offen"
+          }
+        },
+        {
+          "id": "closed",
+          "title": {
+            "en": "Closed",
+            "de": "Geschlossen"
+          }
+        }
+      ],
+      "icon": "/assets/capabilities/garage_door.svg",
+      "insights": false,
+      "uiComponent": "sensor"
+    },
+    "garage_sensor_mode_status": {
+      "type": "enum",
+      "title": {
+        "en": "Garage sensor mode",
+        "de": "Torsensor-Modus"
+      },
+      "getable": true,
+      "setable": false,
+      "values": [
+        {
+          "id": "disabled",
+          "title": {
+            "en": "Disabled",
+            "de": "Deaktiviert"
+          }
+        },
+        {
+          "id": "enabled",
+          "title": {
+            "en": "Enabled",
+            "de": "Aktiviert"
+          }
+        }
+      ],
+      "icon": "/assets/capabilities/sensor_status.svg",
+      "insights": false,
+      "uiComponent": "sensor"
+    },
     "measure_duration": {
       "type": "number",
       "title": {
@@ -3298,7 +4700,7 @@
           "id": "docked",
           "title": {
             "en": "Docked",
-            "de": "Gedockt"
+            "de": "Angedockt"
           }
         },
         {
@@ -3313,6 +4715,62 @@
           "title": {
             "en": "Remote Control",
             "de": "Fernsteuerung"
+          }
+        },
+        {
+          "id": "garage_home",
+          "title": {
+            "en": "Home",
+            "de": "Zuhause"
+          }
+        },
+        {
+          "id": "garage_exiting",
+          "title": {
+            "en": "Exiting garage",
+            "de": "Ausfahrt"
+          }
+        },
+        {
+          "id": "garage_adjusting",
+          "title": {
+            "en": "Adjusting",
+            "de": "Justieren"
+          }
+        },
+        {
+          "id": "garage_opening",
+          "title": {
+            "en": "Garage opening",
+            "de": "Garage öffnet"
+          }
+        },
+        {
+          "id": "garage_closing",
+          "title": {
+            "en": "Garage closing",
+            "de": "Garage schließt"
+          }
+        },
+        {
+          "id": "garage_free_drive",
+          "title": {
+            "en": "Positioning",
+            "de": "Positionieren"
+          }
+        },
+        {
+          "id": "garage_positioning",
+          "title": {
+            "en": "Positioning",
+            "de": "Positionieren"
+          }
+        },
+        {
+          "id": "garage_app_control",
+          "title": {
+            "en": "App control",
+            "de": "App-Steuerung"
           }
         }
       ],

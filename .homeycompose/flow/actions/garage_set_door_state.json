@@ -1,0 +1,48 @@
+{
+  "title": {
+    "en": "Set garage door state",
+    "de": "Garagentorstatus setzen"
+  },
+  "titleFormatted": {
+    "en": "Set garage door state to [[state]]",
+    "de": "Garagentorstatus auf [[state]] setzen"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=mower"
+    },
+    {
+      "type": "dropdown",
+      "name": "state",
+      "title": {
+        "en": "State",
+        "de": "Status"
+      },
+      "values": [
+        {
+          "id": "open",
+          "title": {
+            "en": "Open",
+            "de": "Offen"
+          }
+        },
+        {
+          "id": "closed",
+          "title": {
+            "en": "Closed",
+            "de": "Geschlossen"
+          }
+        },
+        {
+          "id": "unknown",
+          "title": {
+            "en": "Unknown",
+            "de": "Unbekannt"
+          }
+        }
+      ]
+    }
+  ]
+}

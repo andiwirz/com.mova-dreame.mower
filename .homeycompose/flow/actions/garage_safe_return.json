@@ -1,0 +1,17 @@
+{
+  "title": {
+    "en": "Garage safe return",
+    "de": "Garage sichere Rückkehr"
+  },
+  "titleFormatted": {
+    "en": "Start garage safe return",
+    "de": "Garage sichere Rückkehr starten"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=mower"
+    }
+  ]
+}

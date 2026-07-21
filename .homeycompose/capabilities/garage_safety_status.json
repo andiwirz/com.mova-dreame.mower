@@ -1,0 +1,42 @@
+{
+  "type": "enum",
+  "title": {
+    "en": "Garage safety",
+    "de": "Garagensicherheit"
+  },
+  "getable": true,
+  "setable": false,
+  "values": [
+    {
+      "id": "ok",
+      "title": {
+        "en": "OK",
+        "de": "OK"
+      }
+    },
+    {
+      "id": "warning",
+      "title": {
+        "en": "Warning",
+        "de": "Warnung"
+      }
+    },
+    {
+      "id": "blocked",
+      "title": {
+        "en": "Blocked",
+        "de": "Blockiert"
+      }
+    },
+    {
+      "id": "emergency",
+      "title": {
+        "en": "Emergency",
+        "de": "Notfall"
+      }
+    }
+  ],
+  "icon": "/assets/capabilities/sensor_status.svg",
+  "insights": false,
+  "uiComponent": "sensor"
+}

@@ -75,6 +75,19 @@ class MowerDriver extends Homey.Driver {
     flow.getActionCard('refresh_data')
       .registerRunListener(({ device }) => device.cmdRefreshData());
 
+    flow.getActionCard('garage_set_door_state')
+      .registerRunListener(({ device, state }) => device.cmdGarageSetDoorState(state));
+
+    flow.getActionCard('garage_set_sensor_available')
+      .registerRunListener(({ device, available }) => device.cmdGarageSetSensorAvailable(available));
+
+    flow.getActionCard('garage_set_sensor_battery')
+      .registerRunListener(({ device, battery }) => device.cmdGarageSetSensorBattery(battery));
+
+    flow.getActionCard('garage_safe_return')
+      .registerRunListener(({ device }) => device.cmdGarageSafeReturn());
+
+
     // ─── Conditions ───────────────────────────────────────────────────────────
 
     flow.getConditionCard('is_mowing')
@@ -112,6 +125,17 @@ class MowerDriver extends Homey.Driver {
       .registerRunListener(({ device, percentage }) =>
         device.getCapabilityValue('measure_battery') >= percentage,
       );
+
+
+
+    flow.getConditionCard('garage_mode_is_enabled')
+      .registerRunListener(({ device }) => !!device.getSetting('garage_mode_enabled'));
+
+    flow.getConditionCard('garage_door_is_open')
+      .registerRunListener(({ device }) => device.getCapabilityValue('garage_door_status') === 'open');
+
+    flow.getConditionCard('garage_at_maintenance_point')
+      .registerRunListener(({ device }) => device._garageSafety ? device._garageSafety.isAtMaintenancePointHeuristic() : false);
 
     const activeMapCard = flow.getConditionCard('active_map_is');
     activeMapCard.registerRunListener(({ device, map_name }) =>

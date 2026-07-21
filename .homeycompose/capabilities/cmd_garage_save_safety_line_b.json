@@ -1,0 +1,12 @@
+{
+  "type": "boolean",
+  "title": {
+    "en": "Save safety line point B",
+    "de": "Sicherheitslinie Punkt B speichern"
+  },
+  "getable": false,
+  "setable": true,
+  "uiComponent": "button",
+  "icon": "/assets/capabilities/cmd_dock.svg",
+  "insights": false
+}

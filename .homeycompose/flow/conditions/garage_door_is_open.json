@@ -1,0 +1,13 @@
+{
+  "title": {
+    "en": "Garage door is open",
+    "de": "Garagentor ist offen"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=mower"
+    }
+  ]
+}

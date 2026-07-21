@@ -14,13 +14,15 @@
     }
     #map-wrap {
       flex: 1;
+      width: 100%;
+      min-width: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
       min-height: 0;
     }
-    #map-wrap svg { width: 100%; height: 100%; display: block; }
+    #map-wrap svg { width: 100%; min-width: 100%; height: 100%; display: block; }
     #footer {
       font-size: 10px;
       color: var(--homey-text-color, rgba(255,255,255,0.45));
@@ -49,6 +51,17 @@
       transition: opacity 0.15s;
     }
     #refresh-btn:hover { opacity: 1; }
+    #footer-actions { display:flex; align-items:center; gap:4px; flex-shrink:0; }
+    .map-action { border:0; border-radius:7px; padding:3px 7px; font-size:10px; cursor:pointer; background:rgba(255,255,255,0.12); color:var(--homey-text-color,#fff); }
+    .map-action.primary { background:rgba(76,175,80,0.82); color:#fff; }
+    .map-action.danger { background:rgba(255,255,255,0.10); }
+    .map-action:disabled { opacity:0.45; cursor:default; }
+    #edit-actions { display:none; gap:4px; }
+    #edit-actions.active { display:flex; }
+    #edit-btn.hidden { display:none; }
+    .edit-hint { opacity:.72; }
+    svg.editing [data-edit-marker] { cursor:grab; touch-action:none; }
+    svg.editing [data-edit-marker].dragging { cursor:grabbing; }
     #refresh-btn.loading { animation: spin 0.7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .msg {
@@ -65,41 +78,104 @@
   <div id="map-wrap"><div class="msg">Loading map…</div></div>
   <div id="footer">
     <span id="footer-text"></span>
-    <button id="refresh-btn" title="Karte aktualisieren">↻</button>
+    <span id="footer-actions">
+      <button id="edit-btn" class="map-action" title="Marker bearbeiten">Bearbeiten</button>
+      <span id="edit-actions">
+        <button id="cancel-edit-btn" class="map-action danger">Abbrechen</button>
+        <button id="save-edit-btn" class="map-action primary">Speichern</button>
+      </span>
+      <button id="refresh-btn" title="Karte aktualisieren">↻</button>
+    </span>
   </div>
 
   <script>
     'use strict';
 
     var _homey = null;
-    var _settings = { show_zones: true, show_forbidden: true, show_spots: true, show_robot: true, show_obstacles: true };
+    var _settings = { show_zones: true, show_forbidden: true, show_spots: true, show_robot: true, show_obstacles: true, show_garage_overlay: true, show_path: true, show_direction: true, show_maintenance_point: true };
     var _lastData = null;
+    var _lastFullMapData = null;
     var _lastVbW = 0, _lastVbH = 0;
+    var _stableWidgetWidth = 0;
+    var _stableWidgetHeight = 0;
+    var _editMode = false;
+    var _editDraft = null;
+    var _dragMarker = null;
+    var _deviceId = null;
+    var _initialGeometryWaits = 0;
 
     function showMsg(text, isErr) {
       document.getElementById('map-wrap').innerHTML =
         '<div class="msg' + (isErr ? ' err' : '') + '">' + text + '</div>';
     }
 
+    function hasFullGardenGeometry(data) {
+      return !!(data && data.boundary && Array.isArray(data.mowingAreas) && data.mowingAreas.length > 0);
+    }
+
+    function mergeLiveMapData(base, incoming) {
+      if (!base) return incoming;
+      if (!incoming) return base;
+      var merged = Object.assign({}, base, incoming);
+      // Never replace a known complete garden with a temporary telemetry/fallback
+      // response. Such responses caused the mobile widget to jump to a tiny crop.
+      merged.boundary = base.boundary;
+      merged.mowingAreas = base.mowingAreas;
+      merged.forbiddenAreas = Array.isArray(base.forbiddenAreas) ? base.forbiddenAreas : [];
+      merged.spotAreas = Array.isArray(base.spotAreas) ? base.spotAreas : [];
+      merged.contours = Array.isArray(base.contours) ? base.contours : [];
+      merged.mapObstacles = Array.isArray(base.mapObstacles) ? base.mapObstacles : [];
+      merged.livePath = Array.isArray(incoming.livePath) && incoming.livePath.length ? incoming.livePath : base.livePath;
+      return merged;
+    }
+
     function onMapData(data) {
+      // Never establish the initial viewport from telemetry/fallback or a partial
+      // one-zone payload. That transient payload caused the sporadic garage close-up.
+      if (!_lastFullMapData && data && (data.mapFallbackReason || !hasFullGardenGeometry(data))) {
+        _initialGeometryWaits++;
+        if (_initialGeometryWaits <= 4) {
+          showMsg((navigator.language || '').toLowerCase().startsWith('de') ? 'Karte wird vollständig geladen …' : 'Loading complete map …');
+          return;
+        }
+      }
       if (!data || !data.boundary) {
-        showMsg('No map data yet — run a mowing session first');
+        if (_lastFullMapData) { _lastData = _lastFullMapData; renderMap(); return; }
+        showMsg((navigator.language || '').toLowerCase().startsWith('de') ? 'Noch keine Kartendaten verfügbar – bitte Karte aktualisieren.' : 'No map data available yet — refresh the map.');
         return;
       }
-      _lastData = data;
-      renderMap();
+      if (hasFullGardenGeometry(data)) {
+        _initialGeometryWaits = 0;
+        _lastFullMapData = data;
+        _lastData = data;
+      } else if (_lastFullMapData) {
+        _lastData = mergeLiveMapData(_lastFullMapData, data);
+        _lastFullMapData = _lastData;
+      } else {
+        _lastData = data;
+      }
+      if (!_dragMarker) renderMap();
     }
 
     function renderMap() {
       if (!_lastData) return;
       try {
         document.getElementById('map-wrap').innerHTML = buildSvg(_lastData, _settings);
+        bindEditMarkers();
         const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         document.getElementById('footer-text').textContent = _lastData.name + ' · ' + ts;
         if (_lastVbW > 0 && _lastVbH > 0 && _homey && _homey.setHeight) {
-          const containerW = window.innerWidth || 300;
-          const footerH = document.getElementById('footer').offsetHeight || 16;
-          _homey.setHeight(Math.round(containerW * _lastVbH / _lastVbW) + footerH);
+          var measuredW = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0, 300);
+          // Homey/iOS briefly reports a much smaller iframe width while the page is
+          // scrolled or re-laid out. Never shrink the widget from that transient value.
+          if (!_stableWidgetWidth || measuredW > _stableWidgetWidth * 1.08) _stableWidgetWidth = measuredW;
+          if (!_stableWidgetHeight) {
+            var footerH = document.getElementById('footer').offsetHeight || 16;
+            var ratio = _lastVbH / Math.max(_lastVbW, 1);
+            ratio = Math.max(0.72, Math.min(1.08, ratio));
+            _stableWidgetHeight = Math.round(_stableWidgetWidth * ratio) + footerH;
+            _homey.setHeight(_stableWidgetHeight);
+          }
         }
       } catch (e) {
         showMsg('Render error: ' + e.message, true);
@@ -114,12 +190,64 @@
       var showForbidden  = s.show_forbidden  !== false;
       var showSpots      = s.show_spots      !== false;
       var showContours   = false;
-      var showPath       = false;
-      var showRobot      = s.show_robot      !== false;
-      var showObstacles  = s.show_obstacles  !== false;
+      var showPath       = s.show_path !== false && (!data.overlayVisibility || data.overlayVisibility.showRoute !== false);
+      var showRobot      = s.show_robot !== false && (!data.overlayVisibility || data.overlayVisibility.showRobot !== false);
+      var showDirection = s.show_direction !== false && (!data.overlayVisibility || data.overlayVisibility.showDirection !== false);
+      var showMaintenancePoint = s.show_maintenance_point !== false && (!data.overlayVisibility || data.overlayVisibility.showMaintenancePoint !== false);
+      var showObstacles  = s.show_obstacles !== false;
+      // RC52: normalise every known persisted marker representation before
+      // deciding visibility. Some Homey/store combinations return JSON strings;
+      // older widget caches may expose the points as top-level aliases.
+      function normPoint(v) {
+        if (!v) return null;
+        if (typeof v === 'string') {
+          try { v = JSON.parse(v); } catch (e) {
+            var m = v.match(/^\s*(-?\d+(?:\.\d+)?)\s*[,;| ]\s*(-?\d+(?:\.\d+)?)\s*$/);
+            return m ? { x: Number(m[1]), y: Number(m[2]) } : null;
+          }
+        }
+        if (Array.isArray(v) && isFinite(Number(v[0])) && isFinite(Number(v[1]))) return { x: Number(v[0]), y: Number(v[1]) };
+        if (typeof v === 'object' && isFinite(Number(v.x)) && isFinite(Number(v.y))) return { x: Number(v.x), y: Number(v.y) };
+        return null;
+      }
+      if (!data.garageOverlay || typeof data.garageOverlay !== 'object') data.garageOverlay = {};
+      var normalizedOverlay = Object.assign({}, data.garageOverlay);
+      if (_editMode && _editDraft) {
+        if (_editDraft.lineA) normalizedOverlay.lineA = { x: _editDraft.lineA.x, y: _editDraft.lineA.y };
+        if (_editDraft.lineB) normalizedOverlay.lineB = { x: _editDraft.lineB.x, y: _editDraft.lineB.y };
+        if (_editDraft.dangerCenter) normalizedOverlay.dangerCenter = { x: _editDraft.dangerCenter.x, y: _editDraft.dangerCenter.y };
+      }
+      normalizedOverlay.lineA = normPoint(normalizedOverlay.lineA) || normPoint(data.safetyLineA);
+      normalizedOverlay.lineB = normPoint(normalizedOverlay.lineB) || normPoint(data.safetyLineB);
+      normalizedOverlay.dangerCenter = normPoint(normalizedOverlay.dangerCenter) || normPoint(data.dangerCenter);
+      normalizedOverlay.maintenancePoint = normPoint(normalizedOverlay.maintenancePoint) || normPoint(data.maintenancePoint);
+      // RC91: no visual fallback for persisted garage markers. Danger centre,
+      // maintenance point and A/B remain independent coordinates. Missing data is
+      // omitted instead of being snapped to the dock or another marker.
+      var normalizedDangerRadius = Number(normalizedOverlay.dangerRadius ?? data.dangerRadius);
+      if (!Number.isFinite(normalizedDangerRadius) || normalizedDangerRadius <= 0) normalizedDangerRadius = 1200;
+      normalizedOverlay.dangerRadius = normalizedDangerRadius;
+      var normalizedCautionRadius = Number(normalizedOverlay.cautionRadius ?? data.cautionRadius);
+      if (!Number.isFinite(normalizedCautionRadius) || normalizedCautionRadius <= normalizedDangerRadius) {
+        normalizedCautionRadius = Math.max(1800, normalizedDangerRadius * 1.5);
+      }
+      normalizedOverlay.cautionRadius = normalizedCautionRadius;
+
+      // RC86: every overlay point is already stored in the mower's native map
+      // coordinate frame. Render A/B, danger centre, maintenance point, route and
+      // robot through the exact same tx()/ty() transformation. Never rotate,
+      // mirror, offset or snap persisted safety markers for display only: a
+      // display-only transform makes the map disagree with the safety engine.
+
+      var garageMode = !!(data.overlayVisibility && data.overlayVisibility.garageMode);
+      var showGarageOverlay = garageMode && s.show_garage_overlay !== false && (!data.overlayVisibility || data.overlayVisibility.showGarageOverlay !== false);
 
       const { boundary, mowingAreas, forbiddenAreas, spotAreas, contours, livePath } = data;
       const bx1 = boundary.x1, by1 = boundary.y1, bx2 = boundary.x2, by2 = boundary.y2;
+
+      // RC91: do not reject persisted overlay points with a separate map-edge
+      // heuristic. The official map boundary is not a reliable validity test for
+      // service and safety markers near the garage entrance.
 
       const tx = function(x) { return x - bx1; };
       const ty = function(y) { return by2 - y; };
@@ -155,6 +283,25 @@
         var rpsx = tx(data.robotPos[0]), rpsy = ty(data.robotPos[1]);
         if (rpsx < featureMinX) featureMinX = rpsx; if (rpsx > featureMaxX) featureMaxX = rpsx;
         if (rpsy < featureMinY) featureMinY = rpsy; if (rpsy > featureMaxY) featureMaxY = rpsy;
+      }
+      if ((showGarageOverlay || showMaintenancePoint) && data.garageOverlay) {
+        var go = normalizedOverlay;
+        function expandPointObj(p, r) {
+          if (!p || p.x == null || p.y == null) return;
+          r = r || 0;
+          var sx1 = tx(p.x - r), sx2 = tx(p.x + r), sy1 = ty(p.y - r), sy2 = ty(p.y + r);
+          if (Math.min(sx1, sx2) < featureMinX) featureMinX = Math.min(sx1, sx2);
+          if (Math.max(sx1, sx2) > featureMaxX) featureMaxX = Math.max(sx1, sx2);
+          if (Math.min(sy1, sy2) < featureMinY) featureMinY = Math.min(sy1, sy2);
+          if (Math.max(sy1, sy2) > featureMaxY) featureMaxY = Math.max(sy1, sy2);
+        }
+        if (showGarageOverlay) {
+          expandPointObj(go.dangerCenter, Math.max(go.dangerRadius || 0, go.cautionRadius || 0));
+          expandPointObj(go.lineA, 0);
+          expandPointObj(go.lineB, 0);
+          if (data.chargerPos && data.chargerPos.x != null) expandPointObj(data.chargerPos, 350);
+        }
+        if (showMaintenancePoint) expandPointObj(go.maintenancePoint, 400);
       }
       var vbX, vbY, vbW, vbH;
       if (featureMinX === Infinity) {
@@ -310,15 +457,182 @@
         }
       }
 
-      // Dock / base station marker — house icon
-      if (data.chargerPos && data.chargerPos.x != null) {
-        const dx = tx(data.chargerPos.x).toFixed(1);
-        const dy = ty(data.chargerPos.y).toFixed(1);
-        const ds = (refSize * 0.035).toFixed(1);
+      // Optional mower heading arrow. It is purely visual and never affects control logic.
+      if (showRobot && showDirection && data.robotPos && data.robotPos.length >= 2 && data.robotAngle != null) {
+        var rdx = tx(data.robotPos[0]).toFixed(1), rdy = ty(data.robotPos[1]).toFixed(1);
+        var alen = refSize * 0.07;
+        var rad = (Number(data.robotAngle) - 90) * Math.PI / 180;
+        var ax = (Number(rdx) + Math.cos(rad) * alen).toFixed(1);
+        var ay = (Number(rdy) + Math.sin(rad) * alen).toFixed(1);
+        g += '<line x1="' + rdx + '" y1="' + rdy + '" x2="' + ax + '" y2="' + ay + '" stroke="rgba(76,175,80,0.95)" stroke-width="' + (sw * 2) + '" stroke-linecap="round"/>';
+      }
+
+      // Garage overlay: render in a deterministic layer order so the safety
+      // line and maintenance point stay visible and are not hidden by the garage.
+      // Order: danger area -> safety line -> maintenance point -> garage -> robot.
+      if (showGarageOverlay && data.garageOverlay) {
+        var go = normalizedOverlay;
+
+        // Danger / caution area
+        if (go.dangerCenter && go.dangerCenter.x != null && go.dangerCenter.y != null) {
+          var dcx = Number(tx(go.dangerCenter.x));
+          var dcy = Number(ty(go.dangerCenter.y));
+          if (go.cautionRadius) {
+            g += '<circle cx="' + dcx.toFixed(1) + '" cy="' + dcy.toFixed(1) + '" r="' + Number(go.cautionRadius).toFixed(1) + '" fill="rgba(255,193,7,0.05)" stroke="rgba(255,193,7,0.78)" stroke-width="' + (sw * 1.15) + '" stroke-dasharray="' + (sw * 4.2) + ',' + (sw * 2.4) + '"/>';
+          }
+          if (go.dangerRadius) {
+            g += '<circle cx="' + dcx.toFixed(1) + '" cy="' + dcy.toFixed(1) + '" r="' + Number(go.dangerRadius).toFixed(1) + '" fill="rgba(244,67,54,0.10)" stroke="rgba(244,67,54,0.88)" stroke-width="' + (sw * 1.35) + '"/>';
+          }
+          if (_editMode) {
+            var dangerHandleR = refSize * 0.027;
+            g += '<circle data-edit-marker="dangerCenter" cx="' + dcx.toFixed(1) + '" cy="' + dcy.toFixed(1) + '" r="' + dangerHandleR.toFixed(1) + '" fill="rgba(244,67,54,0.88)" stroke="#fff" stroke-width="' + (sw * 1.3) + '"/>';
+            g += '<text x="' + dcx.toFixed(1) + '" y="' + dcy.toFixed(1) + '" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="' + (refSize * 0.018).toFixed(0) + '" font-family="system-ui,sans-serif" font-weight="800">G</text>';
+          }
+        }
+
+        var safetySideLabels = null;
+
+        // Safety line A-B. Real coordinates are always used when they differ.
+        // If old persisted data contains A=B, create only a visual line segment
+        // perpendicular to the garage approach. Control/safety coordinates remain untouched.
+        var hasA = go.lineA && Number.isFinite(Number(go.lineA.x)) && Number.isFinite(Number(go.lineA.y));
+        var hasB = go.lineB && Number.isFinite(Number(go.lineB.x)) && Number.isFinite(Number(go.lineB.y));
+        var laX, laY, lbX, lbY;
+        if (hasA) { laX = Number(tx(go.lineA.x)); laY = Number(ty(go.lineA.y)); }
+        if (hasB) { lbX = Number(tx(go.lineB.x)); lbY = Number(ty(go.lineB.y)); }
+        if (hasA && hasB) {
+          // RC77: draw the persisted native-map endpoints exactly as received.
+          // No visual point-mode fallback, rotation, offset or re-scaling.
+          var nativeLineLength = Math.hypot(Number(go.lineA.x) - Number(go.lineB.x), Number(go.lineA.y) - Number(go.lineB.y));
+          if (!Number.isFinite(nativeLineLength) || nativeLineLength < 25) {
+            hasA = false;
+            hasB = false;
+          }
+
+          if (hasA && hasB) {
+          // High-contrast double stroke, but kept slimmer than RC52.2.
+          g += '<line x1="' + laX.toFixed(1) + '" y1="' + laY.toFixed(1) + '" x2="' + lbX.toFixed(1) + '" y2="' + lbY.toFixed(1) + '" stroke="rgba(255,255,255,0.96)" stroke-width="' + (sw * 4.0) + '" stroke-linecap="round"/>';
+          g += '<line x1="' + laX.toFixed(1) + '" y1="' + laY.toFixed(1) + '" x2="' + lbX.toFixed(1) + '" y2="' + lbY.toFixed(1) + '" stroke="rgba(255,87,34,0.98)" stroke-width="' + (sw * 2.15) + '" stroke-linecap="round"/>';
+
+          // RC96 UI cleanup: the blue direction arrow and the large combined
+          // label were redundant and crowded the crossing line. Keep only two
+          // small, subtle side labels. Their geometry is prepared here and
+          // rendered after the dock marker so "Garage" can be placed clearly
+          // beside (not inside) the home-station symbol.
+          var midX = (laX + lbX) / 2;
+          var midY = (laY + lbY) / 2;
+          if (data.chargerPos && Number.isFinite(Number(data.chargerPos.x)) && Number.isFinite(Number(data.chargerPos.y))) {
+            var labelDockX = Number(tx(data.chargerPos.x));
+            var labelDockY = Number(ty(data.chargerPos.y));
+            var lawnDx = midX - labelDockX;
+            var lawnDy = midY - labelDockY;
+            var labelLen = Math.hypot(lawnDx, lawnDy);
+            if (labelLen > 0.0001) {
+              lawnDx /= labelLen;
+              lawnDy /= labelLen;
+              var labelPx = -lawnDy;
+              var labelPy = lawnDx;
+              // Garage: slightly farther into the garage side and offset above
+              // the dock icon. Lawn: just beyond the A/B line on the opposite side.
+              safetySideLabels = {
+                garageX: labelDockX - lawnDx * refSize * 0.052 + labelPx * refSize * 0.018,
+                garageY: labelDockY - lawnDy * refSize * 0.052 + labelPy * refSize * 0.018,
+                lawnX: midX + lawnDx * refSize * 0.050 - labelPx * refSize * 0.010,
+                lawnY: midY + lawnDy * refSize * 0.050 - labelPy * refSize * 0.010
+              };
+            }
+          }
+          }
+        }
+
+        var badgeR = refSize * 0.016;
+        var badgeFont = (refSize * 0.018).toFixed(0);
+        function endpointBadge(x, y, label) {
+          g += '<circle data-edit-marker="line' + label + '" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + badgeR.toFixed(1) + '" fill="rgba(255,87,34,0.98)" stroke="#fff" stroke-width="' + (sw * 0.9) + '"/>';
+          g += '<text x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="' + badgeFont + '" font-family="system-ui,sans-serif" font-weight="800">' + label + '</text>';
+        }
+        if (hasA && Number.isFinite(laX) && Number.isFinite(laY)) endpointBadge(laX, laY, 'A');
+        if (hasB && Number.isFinite(lbX) && Number.isFinite(lbY)) endpointBadge(lbX, lbY, 'B');
+      }
+
+      // Maintenance point is independent of garage mode. It is intentionally a
+      // small vector marker (no image/emoji and no large text label).
+      if (showMaintenancePoint && data.garageOverlay) {
+        var mp = normalizedOverlay.maintenancePoint;
+        var mpx, mpy;
+        if (mp && Number.isFinite(Number(mp.x)) && Number.isFinite(Number(mp.y))) {
+          mpx = Number(tx(mp.x));
+          mpy = Number(ty(mp.y));
+        }
+        if (Number.isFinite(mpx) && Number.isFinite(mpy)) {
+          var mr = refSize * 0.018;
+          var lw = sw * 1.05;
+          // Subtle pin/target ring.
+          g += '<circle cx="' + mpx.toFixed(1) + '" cy="' + mpy.toFixed(1) + '" r="' + mr.toFixed(1) + '" fill="rgba(123,31,162,0.78)" stroke="rgba(255,255,255,0.92)" stroke-width="' + lw + '"/>';
+          // Compact vector wrench: handle + open jaw.
+          var x1 = mpx - mr * 0.40, y1 = mpy + mr * 0.40;
+          var x2 = mpx + mr * 0.22, y2 = mpy - mr * 0.22;
+          g += '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '" stroke="#fff" stroke-width="' + (lw * 1.6) + '" stroke-linecap="round"/>';
+          g += '<path d="M ' + (mpx + mr * 0.05).toFixed(1) + ' ' + (mpy - mr * 0.42).toFixed(1)
+            + ' L ' + (mpx + mr * 0.38).toFixed(1) + ' ' + (mpy - mr * 0.35).toFixed(1)
+            + ' L ' + (mpx + mr * 0.43).toFixed(1) + ' ' + (mpy - mr * 0.02).toFixed(1)
+            + '" fill="none" stroke="#fff" stroke-width="' + (lw * 1.45) + '" stroke-linecap="round" stroke-linejoin="round"/>';
+        }
+      }
+
+      // Garage / dock marker is drawn after the line and maintenance point, but
+      // smaller than before so neighbouring markers remain readable.
+      var visualGaragePoint = normPoint(data.chargerPos) || normPoint(normalizedOverlay.garagePoint) || normPoint(normalizedOverlay.dangerCenter);
+      if (showGarageOverlay && visualGaragePoint) {
+        const dx = tx(visualGaragePoint.x).toFixed(1);
+        const dy = ty(visualGaragePoint.y).toFixed(1);
+        const ds = (refSize * 0.034).toFixed(1);
         g += '<g transform="translate(' + dx + ',' + dy + ')">'
-          + '<rect x="' + (-ds * 0.5) + '" y="' + (-ds * 0.3) + '" width="' + ds + '" height="' + (ds * 0.7) + '" rx="' + (ds * 0.08) + '" fill="rgba(255,255,255,0.85)" stroke="#555" stroke-width="' + sw + '"/>'
-          + '<polygon points="' + (-ds * 0.6) + ','+  (-ds * 0.3) + ' 0,' + (-ds * 0.75) + ' ' + (ds * 0.6) + ',' + (-ds * 0.3) + '" fill="rgba(255,255,255,0.85)" stroke="#555" stroke-width="' + sw + '"/>'
-          + '<rect x="' + (-ds * 0.12) + '" y="' + (ds * 0.05) + '" width="' + (ds * 0.24) + '" height="' + (ds * 0.35) + '" fill="#555"/>'
+          + '<circle cx="0" cy="0" r="' + (ds * 0.78) + '" fill="rgba(33,150,243,0.18)" stroke="rgba(255,255,255,0.92)" stroke-width="' + (sw * 0.95) + '"/>'
+          + '<rect x="' + (-ds * 0.48) + '" y="' + (-ds * 0.28) + '" width="' + (ds * 0.96) + '" height="' + (ds * 0.66) + '" rx="' + (ds * 0.07) + '" fill="rgba(255,255,255,0.95)" stroke="#1565c0" stroke-width="' + (sw * 1.0) + '"/>'
+          + '<polygon points="' + (-ds * 0.56) + ',' + (-ds * 0.28) + ' 0,' + (-ds * 0.70) + ' ' + (ds * 0.56) + ',' + (-ds * 0.28) + '" fill="rgba(255,255,255,0.95)" stroke="#1565c0" stroke-width="' + (sw * 1.0) + '"/>'
+          + '<rect x="' + (-ds * 0.11) + '" y="' + (ds * 0.04) + '" width="' + (ds * 0.22) + '" height="' + (ds * 0.34) + '" fill="#1565c0"/>'
+          + '</g>';
+      }
+
+      // RC98: localized, uncluttered area labels. Garage stays small beside
+      // the dock. Lawn/Rasen is a larger, low-opacity map label below Zone 1.
+      if (showGarageOverlay && safetySideLabels) {
+        var isDeSideLabel = String((navigator && navigator.language) || '').toLowerCase().indexOf('de') === 0;
+        var garageLabelSize = Math.max(9, refSize * 0.0135);
+        g += '<text x="' + safetySideLabels.garageX.toFixed(1) + '" y="' + safetySideLabels.garageY.toFixed(1)
+          + '" text-anchor="middle" dominant-baseline="middle" fill="rgba(255,255,255,0.72)" font-size="'
+          + garageLabelSize.toFixed(0) + '" font-family="system-ui,sans-serif" font-weight="600" paint-order="stroke" stroke="rgba(8,28,18,0.74)" stroke-width="'
+          + (sw * 0.75).toFixed(1) + '">' + (isDeSideLabel ? 'Garage' : 'Garage') + '</text>';
+
+        var lawnLabelSize = Math.max(24, refSize * 0.0405);
+        var lawnLabelX = vbX + vbW * 0.455;
+        var lawnLabelY = vbY + vbH * 0.615;
+        g += '<text x="' + lawnLabelX.toFixed(1) + '" y="' + lawnLabelY.toFixed(1)
+          + '" text-anchor="middle" dominant-baseline="middle" fill="rgba(220,245,220,0.30)" font-size="'
+          + lawnLabelSize.toFixed(0) + '" font-family="system-ui,sans-serif" font-weight="650" letter-spacing="0.02em" pointer-events="none">'
+          + (isDeSideLabel ? 'Rasen' : 'Lawn') + '</text>';
+      }
+
+
+      // RC98: compact legend with additional clearance from the map edges.
+      if (showGarageOverlay) {
+        var legendX = vbX + refSize * 0.028;
+        var legendY = vbY + vbH - refSize * 0.104;
+        var legendR = refSize * 0.0115;
+        var legendFs = Math.max(9, refSize * 0.0125);
+        var legendGap = legendR * 3.15;
+        var legendPadX = legendR * 1.25;
+        var legendPadY = legendR * 1.05;
+        var legendBoxW = Math.max(refSize * 0.205, legendR * 13.6);
+        var legendBoxH = legendGap + legendR * 2 + legendPadY * 2;
+        var isDeLegend = String((navigator && navigator.language) || '').toLowerCase().indexOf('de') === 0;
+        g += '<g opacity="0.94" pointer-events="none">'
+          + '<rect x="' + (legendX - legendR - legendPadX).toFixed(1) + '" y="' + (legendY - legendR - legendPadY).toFixed(1) + '" width="' + legendBoxW.toFixed(1) + '" height="' + legendBoxH.toFixed(1) + '" rx="' + (legendR * 1.15).toFixed(1) + '" fill="rgba(5,18,10,0.58)" stroke="rgba(255,255,255,0.10)" stroke-width="' + (sw * 0.35).toFixed(1) + '"/>'
+          + '<circle cx="' + legendX.toFixed(1) + '" cy="' + legendY.toFixed(1) + '" r="' + legendR.toFixed(1) + '" fill="rgba(244,67,54,0.20)" stroke="rgba(244,67,54,0.98)" stroke-width="' + (sw * 0.95) + '"/>'
+          + '<text x="' + (legendX + legendR * 2.05).toFixed(1) + '" y="' + legendY.toFixed(1) + '" dominant-baseline="middle" fill="rgba(255,255,255,0.92)" font-size="' + legendFs.toFixed(0) + '" font-family="system-ui,sans-serif">' + (isDeLegend ? 'Gefahrenbereich' : 'Danger area') + '</text>'
+          + '<circle cx="' + legendX.toFixed(1) + '" cy="' + (legendY + legendGap).toFixed(1) + '" r="' + legendR.toFixed(1) + '" fill="rgba(255,193,7,0.08)" stroke="rgba(255,193,7,0.98)" stroke-width="' + (sw * 0.95) + '"/>'
+          + '<text x="' + (legendX + legendR * 2.05).toFixed(1) + '" y="' + (legendY + legendGap).toFixed(1) + '" dominant-baseline="middle" fill="rgba(255,255,255,0.92)" font-size="' + legendFs.toFixed(0) + '" font-family="system-ui,sans-serif">' + (isDeLegend ? 'Sicherheitsbereich' : 'Safety area') + '</text>'
           + '</g>';
       }
 
@@ -330,10 +644,86 @@
         g += '<circle cx="' + rx + '" cy="' + ry + '" r="' + markerRi + '" fill="#fff"/>';
       }
 
-      return '<svg viewBox="' + vbX.toFixed(0) + ' ' + vbY.toFixed(0) + ' ' + vbW.toFixed(0) + ' ' + vbH.toFixed(0) + '" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">'
+      return '<svg' + (_editMode ? ' class="editing"' : '') + ' viewBox="' + vbX.toFixed(0) + ' ' + vbY.toFixed(0) + ' ' + vbW.toFixed(0) + ' ' + vbH.toFixed(0) + '" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">'
         + '<rect x="' + vbX.toFixed(0) + '" y="' + vbY.toFixed(0) + '" width="' + vbW.toFixed(0) + '" height="' + vbH.toFixed(0) + '" fill="#0d1f0d" rx="' + (Math.min(vbW, vbH) * 0.02).toFixed(0) + '"/>'
         + g
         + '</svg>';
+    }
+
+    function clonePoint(p) {
+      return p && Number.isFinite(Number(p.x)) && Number.isFinite(Number(p.y))
+        ? { x: Number(p.x), y: Number(p.y) } : null;
+    }
+
+    function setEditUi(active) {
+      _editMode = !!active;
+      document.getElementById('edit-btn').classList.toggle('hidden', _editMode);
+      document.getElementById('edit-actions').classList.toggle('active', _editMode);
+      document.getElementById('refresh-btn').disabled = _editMode;
+      document.getElementById('footer-text').classList.toggle('edit-hint', _editMode);
+      if (_editMode) document.getElementById('footer-text').textContent = 'A, B oder G verschieben';
+    }
+
+    function startMarkerEdit() {
+      if (!_lastData || !_lastData.garageOverlay) return;
+      var go = _lastData.garageOverlay;
+      _editDraft = {
+        lineA: clonePoint(go.lineA || _lastData.safetyLineA),
+        lineB: clonePoint(go.lineB || _lastData.safetyLineB),
+        dangerCenter: clonePoint(go.dangerCenter || _lastData.dangerCenter)
+      };
+      if (!_editDraft.lineA || !_editDraft.lineB || !_editDraft.dangerCenter) {
+        showMsg('A, B oder Gefahrenpunkt fehlen – Marker zuerst normal setzen.', true);
+        return;
+      }
+      setEditUi(true);
+      renderMap();
+    }
+
+    function cancelMarkerEdit() {
+      _editDraft = null;
+      _dragMarker = null;
+      setEditUi(false);
+      renderMap();
+    }
+
+    function clientToNative(svg, clientX, clientY) {
+      var pt = svg.createSVGPoint();
+      pt.x = clientX; pt.y = clientY;
+      var local = pt.matrixTransform(svg.getScreenCTM().inverse());
+      var b = _lastData.boundary;
+      return { x: local.x + Number(b.x1), y: Number(b.y2) - local.y };
+    }
+
+    function bindEditMarkers() {
+      if (!_editMode) return;
+      var svg = document.querySelector('#map-wrap svg');
+      if (!svg) return;
+      var markers = svg.querySelectorAll('[data-edit-marker]');
+      markers.forEach(function(el) {
+        el.addEventListener('pointerdown', function(ev) {
+          ev.preventDefault();
+          _dragMarker = el.getAttribute('data-edit-marker');
+          el.classList.add('dragging');
+          try { el.setPointerCapture(ev.pointerId); } catch (e) {}
+        });
+      });
+    }
+
+    function saveMarkerEdit() {
+      if (!_editDraft || !_homey || !_deviceId) return;
+      var btn = document.getElementById('save-edit-btn');
+      btn.disabled = true;
+      btn.textContent = '…';
+      _homey.api('PUT', '/garage-markers?deviceId=' + encodeURIComponent(_deviceId), _editDraft)
+        .then(function(result) {
+          _editDraft = null;
+          setEditUi(false);
+          return _homey.api('GET', '/?deviceId=' + encodeURIComponent(_deviceId) + '&_=' + Date.now(), {});
+        })
+        .then(onMapData)
+        .catch(function(err) { alert(err.message || 'Marker konnten nicht gespeichert werden.'); })
+        .finally(function() { btn.disabled = false; btn.textContent = 'Speichern'; });
     }
 
     // ── Entry point ──────────────────────────────────────────────────────────
@@ -342,6 +732,7 @@
       _homey = Homey;
       const ids = Homey.getDeviceIds();
       const deviceId = ids && ids[0];
+      _deviceId = deviceId;
 
       if (!deviceId) {
         Homey.ready();
@@ -350,10 +741,27 @@
       }
 
       function loadMap() {
-        return Homey.api('GET', '/?deviceId=' + encodeURIComponent(deviceId), {})
+        return Homey.api('GET', '/?deviceId=' + encodeURIComponent(deviceId) + '&_=' + Date.now(), {})
           .then(onMapData)
           .catch(function(err) { showMsg(err.message || 'Error loading map', true); });
       }
+
+      document.getElementById('edit-btn').addEventListener('click', startMarkerEdit);
+      document.getElementById('cancel-edit-btn').addEventListener('click', cancelMarkerEdit);
+      document.getElementById('save-edit-btn').addEventListener('click', saveMarkerEdit);
+      window.addEventListener('pointermove', function(ev) {
+        if (!_dragMarker || !_editDraft) return;
+        var svg = document.querySelector('#map-wrap svg');
+        if (!svg) return;
+        ev.preventDefault();
+        var p = clientToNative(svg, ev.clientX, ev.clientY);
+        if (_editDraft[_dragMarker]) {
+          _editDraft[_dragMarker] = p;
+          renderMap();
+        }
+      }, { passive: false });
+      window.addEventListener('pointerup', function() { _dragMarker = null; });
+      window.addEventListener('pointercancel', function() { _dragMarker = null; });
 
       var refreshBtn = document.getElementById('refresh-btn');
       refreshBtn.addEventListener('click', function() {
@@ -375,7 +783,7 @@
       function applySettings(s) {
         if (!s || typeof s !== 'object') return;
         var changed = false;
-        var keys = ['show_zones', 'show_forbidden', 'show_spots', 'show_contours', 'show_path', 'show_robot', 'show_obstacles'];
+        var keys = ['show_zones', 'show_forbidden', 'show_spots', 'show_contours', 'show_path', 'show_robot', 'show_obstacles', 'show_garage_overlay', 'show_direction', 'show_maintenance_point'];
         for (var ki = 0; ki < keys.length; ki++) {
           var k = keys[ki];
           if (s[k] !== undefined && s[k] !== _settings[k]) { _settings[k] = s[k]; changed = true; }

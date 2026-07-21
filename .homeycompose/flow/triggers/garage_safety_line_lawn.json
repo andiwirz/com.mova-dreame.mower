@@ -1,0 +1,23 @@
+{
+  "title": {
+    "en": "Garage safety line crossed to lawn",
+    "de": "Sicherheitslinie Richtung Rasen überfahren"
+  },
+  "tokens": [
+    {
+      "name": "reason",
+      "type": "string",
+      "title": {
+        "en": "Reason",
+        "de": "Grund"
+      }
+    }
+  ],
+  "args": [
+    {
+      "name": "device",
+      "type": "device",
+      "filter": "driver_id=mower"
+    }
+  ]
+}

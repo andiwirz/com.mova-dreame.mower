@@ -1,0 +1,23 @@
+{
+  "title": {
+    "en": "Garage sensor battery low",
+    "de": "Garagensensor Batterie schwach"
+  },
+  "tokens": [
+    {
+      "name": "reason",
+      "type": "string",
+      "title": {
+        "en": "Reason",
+        "de": "Grund"
+      }
+    }
+  ],
+  "args": [
+    {
+      "name": "device",
+      "type": "device",
+      "filter": "driver_id=mower"
+    }
+  ]
+}

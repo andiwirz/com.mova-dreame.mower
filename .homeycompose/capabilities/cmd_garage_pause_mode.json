@@ -1,0 +1,12 @@
+{
+  "type": "boolean",
+  "title": {
+    "en": "Pause/resume garage mode",
+    "de": "Garagenmodus pausieren/fortsetzen"
+  },
+  "getable": false,
+  "setable": true,
+  "uiComponent": "button",
+  "icon": "/assets/capabilities/cmd_dock.svg",
+  "insights": false
+}

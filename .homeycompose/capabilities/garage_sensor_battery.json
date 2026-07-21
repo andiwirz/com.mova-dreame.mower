@@ -1,0 +1,15 @@
+{
+  "type": "number",
+  "title": {
+    "en": "Garage sensor battery",
+    "de": "Garagensensor Batterie"
+  },
+  "getable": true,
+  "setable": false,
+  "units": "%",
+  "min": 0,
+  "max": 100,
+  "decimals": 0,
+  "icon": "/assets/capabilities/measure_battery.svg",
+  "insights": false
+}

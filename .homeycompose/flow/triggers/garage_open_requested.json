@@ -1,0 +1,31 @@
+{
+  "title": {
+    "en": "Garage door open requested",
+    "de": "Garagentor öffnen angefordert"
+  },
+  "tokens": [
+    {
+      "name": "reason",
+      "type": "string",
+      "title": {
+        "en": "Reason",
+        "de": "Grund"
+      }
+    }
+  ],
+  "args": [
+    {
+      "name": "device",
+      "type": "device",
+      "filter": "driver_id=mower"
+    }
+  ],
+  "titleFormatted": {
+    "en": "Garage door open requested",
+    "de": "Garagentor öffnen angefordert"
+  },
+  "hint": {
+    "en": "Triggered by the mower when the garage safety logic requests the gate action.",
+    "de": "Wird vom Mäher ausgelöst, wenn die Garagenlogik diese Torbewegung anfordert."
+  }
+}

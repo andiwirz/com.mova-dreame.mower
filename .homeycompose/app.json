@@ -1,6 +1,6 @@
 {
   "id": "com.mova-dreame.mower",
-  "version": "1.1.24",
+  "version": "1.2.0",
   "compatibility": ">=12.3.0",
   "sdk": 3,
   "name": {
@@ -15,10 +15,6 @@
   "category": [
     "appliances"
   ],
-  "tags": {
-    "en": ["mower", "robot mower", "lawn mower", "robotic lawn mower", "MOVA", "Dreame", "garden", "lawn", "robot", "smart garden", "automation"],
-    "de": ["Mähroboter", "Rasenmäher", "Roboter", "MOVA", "Dreame", "Garten", "Rasen", "Smart Garden", "Automatisierung", "Rasenmäh-Roboter"]
-  },
   "permissions": [],
   "images": {
     "small": "/assets/images/small.png",
@@ -46,6 +42,46 @@
     }
   },
   "changelog": {
+    "1.2.0": {
+      "en": "Added optional Garage Mode with safe automatic gate control, configurable A-B safety line, danger and caution areas, maintenance waypoint routing, editable live-map overlays, robust pause/resume handling, safe external returns and recovery after interrupted starts. Garage Mode is disabled by default and does not change standard mower behaviour unless configured.",
+      "de": "Optionalen Garagenmodus mit sicherer automatischer Torsteuerung, konfigurierbarer A-B-Sicherheitslinie, Gefahren- und Vorsichtsbereich, Wartungspunkt-Routing, bearbeitbaren Live-Karten-Overlays, stabiler Pause-/Fortsetzen-Logik, sicherer externer Rückkehr und Wiederherstellung nach unterbrochenen Starts hinzugefügt. Der Garagenmodus ist standardmäßig deaktiviert und verändert das normale Mäherverhalten nur, wenn er konfiguriert wurde."
+    },
+    "1.1.23": {
+      "en": "Updated App Store description. Replaced widget preview images with simplified, guideline-compliant versions (no text, transparent background, distinct designs for Map and History widgets).",
+      "de": "App-Store-Beschreibung aktualisiert. Widget-Vorschaubilder durch vereinfachte, richtlinienkonforme Versionen ersetzt (kein Text, transparenter Hintergrund, unterschiedliche Designs für Karten- und Verlauf-Widget)."
+    },
+    "1.1.22": {
+      "en": "Added 'Resume mowing' Flow action and 'Resume Mowing button pressed' Flow trigger.",
+      "de": "Flow-Aktion 'Mähen fortsetzen' und Flow-Trigger 'Knopf Mähen fortsetzen gedrückt' hinzugefügt."
+    },
+    "1.1.21": {
+      "en": "Added 'Resume Mowing' button: resumes the current mowing session after a bumper or other error without requiring a zone selection — equivalent to the 'Continue' button in the Dreame app. Fixed MQTT message handler incorrectly declared as synchronous while using await (startup crash risk). MQTT mission-completion events (event_occured, siid:4 eiid:1) are now parsed and logged with their stop reason. Firmware OTA progress updates (props method) are now parsed and logged.",
+      "de": "Neuer 'Mähen fortsetzen'-Button: Setzt die aktuelle Mähsession nach einem Prallteller- oder anderem Fehler fort, ohne eine Zone auswählen zu müssen – entspricht der 'Weiter'-Schaltfläche in der Dreame-App. MQTT-Message-Handler war fälschlicherweise als synchron deklariert, obwohl er await verwendete (Absturzrisiko beim Start). MQTT-Auftragsabschluss-Events (event_occured, siid:4 eiid:1) werden jetzt mit ihrem Stoppgrund geparst und geloggt. Firmware-OTA-Fortschrittsupdates (props-Methode) werden jetzt geparst und geloggt."
+    },
+    "1.1.20": {
+      "en": "Fixed error alarm incorrectly firing for informational device codes (e.g. task completed, low battery returning, rain pause) and warning codes (e.g. docking failed, camera dirty): only true error codes now trigger the alarm. Warning codes are shown in the new Error capability without alarming. Fixed mower status 15/16 shown as 'mowing'/'standby' instead of 'docked' when charging is paused due to battery temperature. Added status 75 (paused at maintenance point). Added charging status 'Charging Paused (Hot)' for battery overheat. MOVA devices now correctly detect device code 0 as Robot Lifted. Mower powered-off event (MQTT 2:57) now updates status to Standby.",
+      "de": "Fehleralarm wurde fälschlicherweise für informative Gerätecodes ausgelöst (z.B. Aufgabe abgeschlossen, Rückkehr wegen niedrigem Akku, Regenpause) und Warnungscodes (z.B. Andocken fehlgeschlagen, Kamera verschmutzt): Nur echte Fehlercodes lösen jetzt den Alarm aus. Warnungscodes werden in der neuen Fehler-Capability ohne Alarm angezeigt. Mäherstatus 15/16 wurde als 'Mähen'/'Standby' statt 'Angedockt' angezeigt, wenn das Laden wegen Akkutemperatur pausiert ist. Status 75 (Pause am Wartungspunkt) hinzugefügt. Ladestatus 'Laden pausiert (Hitze)' für Akku-Überhitzung hinzugefügt. MOVA-Geräte erkennen Code 0 jetzt korrekt als 'Roboter angehoben'. Ausgeschaltetes-Gerät-Event (MQTT 2:57) aktualisiert jetzt den Status auf Standby."
+    },
+    "1.1.19": {
+      "en": "Added 'Error' capability: the current error description (e.g. 'Robot trapped / stuck', 'Bumper / Crash Plate') is now displayed directly on the device card and is available as a tag in Homey Flows. The capability is cleared automatically when the mower leaves the error state.",
+      "de": "Neue 'Fehler'-Capability hinzugefügt: Die aktuelle Fehlerbeschreibung (z. B. 'Roboter feststeckend', 'Prallteller – Fehler') wird direkt auf der Gerätekarte angezeigt und steht als Tag in Homey-Flows zur Verfügung. Die Capability wird automatisch geleert, sobald der Mäher den Fehlerzustand verlässt."
+    },
+    "1.1.18": {
+      "en": "Fixed bumper and other errors not triggering the Homey error state when the cloud API returns no fault code: the MQTT error code is now used as a fallback so paused-due-to-error states are correctly promoted to an error in Homey.",
+      "de": "Prallteller- und andere Fehler haben den Homey-Fehlerstatus nicht ausgelöst, wenn die Cloud-API keinen Fehlercode zurückgab: Der MQTT-Fehlercode wird jetzt als Fallback verwendet, sodass Pausiert-wegen-Fehler-Zustände korrekt als Fehler in Homey angezeigt werden."
+    },
+    "1.1.17": {
+      "en": "Fixed error code always showing as 'Error 0' when the mower gets stuck or encounters a fault: the MQTT device-code property (siid:2, piid:2) is now captured and used as the fault code, so Homey correctly displays the specific error (e.g. 'Robot trapped / stuck', 'Bumper error'). Fixed mower incorrectly showing as unavailable after brief cloud API glitches: the offline state now requires two consecutive offline polls before marking the device unavailable.",
+      "de": "Fehlercode wurde immer als 'Fehler 0' angezeigt, wenn der Mäher feststeckt oder ein Fehler auftritt: Die MQTT-Gerätecode-Eigenschaft (siid:2, piid:2) wird jetzt erfasst und als Fehlercode verwendet, sodass Homey den konkreten Fehler anzeigt (z. B. 'Roboter feststeckend', 'Prallteller – Fehler'). Mäher wurde nach kurzen Cloud-API-Störungen fälschlicherweise als nicht verfügbar angezeigt: Der Offline-Status erfordert jetzt zwei aufeinanderfolgende Offline-Polls, bevor das Gerät als nicht verfügbar markiert wird."
+    },
+    "1.1.16": {
+      "en": "Added App Logs tab to the settings page: live log output from the app and all paired devices, searchable, filterable by error level, and with auto-refresh. Copy the log and share it with the developer to help diagnose issues.",
+      "de": "App-Logs-Tab in den Einstellungen hinzugefügt: Echtzeit-Logausgabe der App und aller gekoppelten Geräte, durchsuchbar, nach Fehler-Level filterbar und mit Auto-Aktualisierung. Das kopierte Log kann dem Entwickler zur Fehlerdiagnose weitergegeben werden."
+    },
+    "1.1.15": {
+      "en": "Fixed 'Mower error occurred' trigger always showing 'Normal operation': the MOVA/Dreame API embeds fault codes inside a 'property' field encoded as an unescaped JSON string, which the app was discarding. The sanitiser now inlines that JSON object so fault codes are readable. Fixed bumper collision and similar errors not showing as 'Error' in Homey: these are reported as paused + non-zero fault code; the app now promotes that to an error state so the alarm and trigger fire correctly. Fixed 'Poll failed: Invalid Capability: mow_spot/mow_zone/mow_map': on startup the app now detects and self-heals corrupted picker capabilities by removing and re-adding them. The debug poll snapshot also continues past any remaining invalid capability instead of aborting.",
+      "de": "Auslöser 'Mäher-Fehler aufgetreten' zeigte immer 'Normalbetrieb': Die MOVA/Dreame-API bettet Fehlercodes in ein 'property'-Feld als unkodierter JSON-String ein, den die App bisher verwarf. Der Sanitizer bettet dieses JSON-Objekt nun direkt ein, sodass Fehlercodes lesbar sind. Pufferaufprall und ähnliche Fehler wurden in Homey als 'Pausiert' angezeigt, weil das Gerät diese als pausiert + Fehlercode meldet — die App erkennt diese Kombination jetzt als Fehler, sodass Alarm und Auslöser korrekt feuern. 'Poll failed: Invalid Capability: mow_spot/mow_zone/mow_map' behoben: Die App erkennt beim Start fehlerhafte Picker-Capabilities und stellt sie automatisch wieder her. Der Debug-Poll bricht bei ungültigen Capabilities nicht mehr ab."
+    },
     "0.0.1": {
       "en": "Initial version.",
       "de": "Erste Version."
@@ -107,7 +143,8 @@
       "de": "App in MOVA & Dreame Mähroboter umbenannt. Interne Code-Bereinigung."
     },
     "0.0.16": {
-      "en": "Updated readme files."
+      "en": "Updated readme files.",
+      "de": "Readme-Dateien aktualisiert."
     },
     "0.0.17": {
       "en": "Fixed battery and status not updating for MOVA ViAX 300 and other newer devices. The MOVA cloud API returns malformed JSON for some device fields — the app now sanitizes the response before parsing so polling succeeds.",
@@ -229,13 +266,25 @@
       "en": "Initial public release.",
       "de": "Erste öffentliche Version."
     },
+    "1.0.3": {
+      "en": "Firmware status now shows 4 states: Up to Date, Update Available, Installing, and Download Failed. Added charging status 'Paused (Cold)'. Fixed: 'Mowing completed' trigger no longer fires during a firmware update. Fixed: 'Battery low' trigger now fires exactly once per threshold crossing. Added hints to the 'Start mowing' and 'Clear error' flow actions. Internal improvements: device list cached, CFG and history polls staggered.",
+      "de": "Firmware-Status zeigt jetzt 4 Zustände: Aktuell, Update verfügbar, Wird installiert und Download fehlgeschlagen. Ladestatus 'Pausiert (Kälte)' hinzugefügt. Behoben: Flow-Auslöser 'Mähen abgeschlossen' wird nicht mehr bei Firmware-Updates ausgelöst. Behoben: Flow-Auslöser 'Akku niedrig' feuert jetzt genau einmal pro Schwellenunterschreitung. Hinweise zu den Flow-Aktionen 'Mähen starten' und 'Fehler quittieren' ergänzt. Interne Verbesserungen: Geräteliste gecacht, CFG- und Mähhistorie-Abfragen zeitversetzt."
+    },
     "1.0.4": {
       "en": "Added map widget: live SVG map showing mowing zones, forbidden areas, spot areas and the mower's current position. The map updates every 60 seconds. Widget height adjusts automatically to the map aspect ratio.",
       "de": "Karten-Widget hinzugefügt: Live-SVG-Karte mit Mähzonen, Verbotsbereichen, Spotbereichen und der aktuellen Position des Mähroboters. Die Karte aktualisiert sich alle 60 Sekunden. Die Widget-Höhe passt sich automatisch dem Seitenverhältnis der Karte an."
     },
+    "1.0.2": {
+      "en": "Added repair flow: if your MOVA or Dreame password changes, tap 'Repair' on the device in Homey to re-authenticate without losing any settings or flows.",
+      "de": "Reparatur-Flow hinzugefügt: Bei einer Passwortänderung in der MOVA- oder Dreame-App kann die Verbindung über 'Reparieren' am Gerät in Homey wiederhergestellt werden — alle Einstellungen und Flows bleiben erhalten."
+    },
+    "1.0.1": {
+      "en": "Added 'Border Patrol' flow action (drives the mower along the boundary of a selected zone, op-code 108). Fixed session duration always showing 0 after an app restart. Added lifetime mowing statistics (total area, total time, total sessions). Removed 'Obstacle detected' flow trigger.",
+      "de": "Flow-Aktion 'Randpatrouille' hinzugefügt (fährt den Mähroboter entlang der Grenze einer gewählten Zone, Op-Code 108). Sitzungsdauer nach App-Neustart nicht mehr dauerhaft 0. Gesamte Mähstatistiken hinzugefügt (Gesamtfläche, Gesamtlaufzeit, Gesamtanzahl Mähvorgänge). Flow-Auslöser 'Hindernis erkannt' entfernt."
+    },
     "1.0.5": {
-      "en": "Fixed map widget layer visibility: toggling zones, forbidden areas, spots, contours, path or robot position in widget settings now takes effect immediately. Fixed mower position when docked: the blue dot is now placed using the dock coordinates reported directly by the device (t:DOCK) instead of an approximate forbidden-area centroid.",
-      "de": "Sichtbarkeit der Karten-Widget-Ebenen korrigiert: Das Ein-/Ausblenden von Zonen, Verbotsbereichen, Spots, Konturlinien, Mähspur oder Mäherposition in den Widget-Einstellungen wird jetzt sofort übernommen. Mäherposition bei angedocktem Gerät korrigiert: Der blaue Punkt wird jetzt anhand der vom Gerät gemeldeten Ladestation-Koordinaten (t:DOCK) positioniert statt über einen angenäherten Verbotsbereicsh-Mittelpunkt."
+      "en": "Fixed map widget layer visibility: toggling zones, forbidden areas, spots, contours, path or robot position in widget settings now takes effect immediately. Fixed mower position when docked: the blue dot is now placed using the dock coordinates reported directly by the device instead of an approximate centroid.",
+      "de": "Sichtbarkeit der Karten-Widget-Ebenen korrigiert: Das Ein-/Ausblenden von Zonen, Verbotsbereichen, Spots, Konturlinien, Mähspur oder Mäherposition wird jetzt sofort übernommen. Mäherposition bei angedocktem Gerät korrigiert: Der blaue Punkt wird jetzt anhand der vom Gerät gemeldeten Ladestation-Koordinaten positioniert."
     },
     "1.0.6": {
       "en": "Added Mowing History widget: browse completed mowing sessions with a mini-map, time-gradient trajectory (green = area mowing, amber = edge mowing), tappable obstacle markers, and a full-width photo carousel with previous/next navigation. Fixed obstacle photos not loading: the file-bridge API now receives the required Authorization header and correctly decompresses Brotli-encoded JPEG responses.",
@@ -321,5 +370,32 @@
       "en": "Fixed 'Mowing completed' Flow trigger firing twice on mowers with automatic edge-mowing: the trigger no longer fires when the mower briefly returns between the main area and edge phase — it now waits until the mower reaches a true resting state (docked / charging / idle).",
       "de": "Flow-Auslöser 'Mähen abgeschlossen' feuerte zweimal bei Mähern mit automatischer Kantenmahd: Der Auslöser feuert nicht mehr wenn der Mäher zwischen Haupt- und Kantenphase kurz zurückfährt — er wartet nun bis der Mäher tatsächlich eine Ruheposition erreicht (angedockt / lädt / bereit)."
     }
+  },
+  "tags": {
+    "en": [
+      "mower",
+      "robot mower",
+      "lawn mower",
+      "robotic lawn mower",
+      "MOVA",
+      "Dreame",
+      "garden",
+      "lawn",
+      "robot",
+      "smart garden",
+      "automation"
+    ],
+    "de": [
+      "Mähroboter",
+      "Rasenmäher",
+      "Roboter",
+      "MOVA",
+      "Dreame",
+      "Garten",
+      "Rasen",
+      "Smart Garden",
+      "Automatisierung",
+      "Rasenmäh-Roboter"
+    ]
   }
 }

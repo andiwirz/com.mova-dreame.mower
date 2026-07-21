@@ -1,0 +1,35 @@
+{
+  "type": "enum",
+  "title": {
+    "en": "Garage sensor contact",
+    "de": "Garagensensor-Kontakt"
+  },
+  "getable": true,
+  "setable": false,
+  "values": [
+    {
+      "id": "unknown",
+      "title": {
+        "en": "Unknown",
+        "de": "Unbekannt"
+      }
+    },
+    {
+      "id": "open",
+      "title": {
+        "en": "Open",
+        "de": "Offen"
+      }
+    },
+    {
+      "id": "closed",
+      "title": {
+        "en": "Closed",
+        "de": "Geschlossen"
+      }
+    }
+  ],
+  "icon": "/assets/capabilities/garage_door.svg",
+  "insights": false,
+  "uiComponent": "sensor"
+}
