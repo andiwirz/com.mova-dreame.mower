@@ -216,6 +216,7 @@
         if (_editDraft.lineA) normalizedOverlay.lineA = { x: _editDraft.lineA.x, y: _editDraft.lineA.y };
         if (_editDraft.lineB) normalizedOverlay.lineB = { x: _editDraft.lineB.x, y: _editDraft.lineB.y };
         if (_editDraft.dangerCenter) normalizedOverlay.dangerCenter = { x: _editDraft.dangerCenter.x, y: _editDraft.dangerCenter.y };
+        if (_editDraft.maintenancePoint) normalizedOverlay.maintenancePoint = { x: _editDraft.maintenancePoint.x, y: _editDraft.maintenancePoint.y };
       }
       normalizedOverlay.lineA = normPoint(normalizedOverlay.lineA) || normPoint(data.safetyLineA);
       normalizedOverlay.lineB = normPoint(normalizedOverlay.lineB) || normPoint(data.safetyLineB);
@@ -565,15 +566,20 @@
           mpy = Number(ty(mp.y));
         }
         if (Number.isFinite(mpx) && Number.isFinite(mpy)) {
-          var mr = refSize * 0.018;
+          var mr = refSize * 0.022;
           var lw = sw * 1.05;
-          // Subtle pin/target ring.
-          g += '<circle cx="' + mpx.toFixed(1) + '" cy="' + mpy.toFixed(1) + '" r="' + mr.toFixed(1) + '" fill="rgba(123,31,162,0.78)" stroke="rgba(255,255,255,0.92)" stroke-width="' + lw + '"/>';
+          // Clearly visible maintenance target. The outer ring remains visible
+          // even while the live mower marker is exactly on top of the point.
+          g += '<circle cx="' + mpx.toFixed(1) + '" cy="' + mpy.toFixed(1) + '" r="' + (mr * 1.45).toFixed(1) + '" fill="none" stroke="rgba(186,104,200,0.95)" stroke-width="' + (lw * 1.15) + '" stroke-dasharray="' + (mr * 0.48).toFixed(1) + ' ' + (mr * 0.28).toFixed(1) + '"/>';
+          g += '<circle cx="' + mpx.toFixed(1) + '" cy="' + mpy.toFixed(1) + '" r="' + mr.toFixed(1) + '" fill="rgba(123,31,162,0.88)" stroke="rgba(255,255,255,0.96)" stroke-width="' + lw + '"/>';
+          if (_editMode) {
+            g += '<circle data-edit-marker="maintenancePoint" cx="' + mpx.toFixed(1) + '" cy="' + mpy.toFixed(1) + '" r="' + (mr * 2.35).toFixed(1) + '" fill="rgba(123,31,162,0.22)" stroke="#fff" stroke-width="' + (lw * 0.8) + '"/>';
+          }
           // Compact vector wrench: handle + open jaw.
           var x1 = mpx - mr * 0.40, y1 = mpy + mr * 0.40;
           var x2 = mpx + mr * 0.22, y2 = mpy - mr * 0.22;
-          g += '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '" stroke="#fff" stroke-width="' + (lw * 1.6) + '" stroke-linecap="round"/>';
-          g += '<path d="M ' + (mpx + mr * 0.05).toFixed(1) + ' ' + (mpy - mr * 0.42).toFixed(1)
+          g += '<line pointer-events="none" x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '" stroke="#fff" stroke-width="' + (lw * 1.6) + '" stroke-linecap="round"/>';
+          g += '<path pointer-events="none" d="M ' + (mpx + mr * 0.05).toFixed(1) + ' ' + (mpy - mr * 0.42).toFixed(1)
             + ' L ' + (mpx + mr * 0.38).toFixed(1) + ' ' + (mpy - mr * 0.35).toFixed(1)
             + ' L ' + (mpx + mr * 0.43).toFixed(1) + ' ' + (mpy - mr * 0.02).toFixed(1)
             + '" fill="none" stroke="#fff" stroke-width="' + (lw * 1.45) + '" stroke-linecap="round" stroke-linejoin="round"/>';
@@ -661,7 +667,7 @@
       document.getElementById('edit-actions').classList.toggle('active', _editMode);
       document.getElementById('refresh-btn').disabled = _editMode;
       document.getElementById('footer-text').classList.toggle('edit-hint', _editMode);
-      if (_editMode) document.getElementById('footer-text').textContent = 'A, B oder G verschieben';
+      if (_editMode) document.getElementById('footer-text').textContent = 'A, B, G oder Wartungspunkt verschieben';
     }
 
     function startMarkerEdit() {
@@ -670,10 +676,11 @@
       _editDraft = {
         lineA: clonePoint(go.lineA || _lastData.safetyLineA),
         lineB: clonePoint(go.lineB || _lastData.safetyLineB),
-        dangerCenter: clonePoint(go.dangerCenter || _lastData.dangerCenter)
+        dangerCenter: clonePoint(go.dangerCenter || _lastData.dangerCenter),
+        maintenancePoint: clonePoint(go.maintenancePoint || _lastData.maintenancePoint)
       };
-      if (!_editDraft.lineA || !_editDraft.lineB || !_editDraft.dangerCenter) {
-        showMsg('A, B oder Gefahrenpunkt fehlen – Marker zuerst normal setzen.', true);
+      if (!_editDraft.lineA || !_editDraft.lineB || !_editDraft.dangerCenter || !_editDraft.maintenancePoint) {
+        showMsg('A, B, Gefahrenpunkt oder Wartungspunkt fehlen – Marker zuerst normal setzen.', true);
         return;
       }
       setEditUi(true);

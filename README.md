@@ -511,3 +511,9 @@ Fixes the case where **Start Mowing** physically resumed a paused mower but Home
 - The start waits through the complete sensor and configured stabilisation window and accepts a slightly delayed open event instead of permanently suppressing the outbound mower command.
 - Open-contact and timer-backed release proof now use the same central verification path.
 - Existing start, pause/resume, maintenance-point, return and door-close logic remains unchanged.
+
+### 1.2.1 maintenance marker regression fix
+- Keeps the confirmed A2 native maintenance-point index 2.
+- Restores the maintenance marker from the original MOVA map as the primary source.
+- Removes the safety-line-derived marker fallback that could display a wrong point.
+- Never replaces the marker with live mower telemetry.

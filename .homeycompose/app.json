@@ -1,6 +1,6 @@
 {
   "id": "com.mova-dreame.mower",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "compatibility": ">=12.3.0",
   "sdk": 3,
   "name": {
@@ -358,17 +358,13 @@
       "en": "Improved error code detection for the 'Mower error occurred' trigger: the app now checks additional field names returned by the device list API so the correct fault code is found on more device models. A diagnostic log entry is written on every error detection to help identify the API field name if the error description still shows 'Normal operation'.",
       "de": "Verbesserte Fehlercode-Erkennung für den Auslöser 'Mäher-Fehler aufgetreten': Die App prüft nun weitere Feldnamen der Geräteliste-API, sodass der korrekte Fehlercode auf mehr Gerätemodellen gefunden wird. Bei jeder Fehlererkennung wird ein Diagnose-Logeintrag geschrieben, um den API-Feldnamen zu identifizieren falls die Fehlerbeschreibung weiterhin 'Normalbetrieb' anzeigt."
     },
-    "1.1.15": {
-      "en": "Fixed 'Mower error occurred' trigger always showing 'Normal operation': the MOVA/Dreame API embeds fault codes inside a 'property' field encoded as an unescaped JSON string, which the app was discarding. The sanitiser now inlines that JSON object so fault codes are readable. Fixed bumper collision and similar errors not showing as 'Error' in Homey: these are reported as paused + non-zero fault code; the app now promotes that to an error state so the alarm and trigger fire correctly. Fixed 'Poll failed: Invalid Capability: mow_spot/mow_zone/mow_map': on startup the app now detects and self-heals corrupted picker capabilities by removing and re-adding them. The debug poll snapshot also continues past any remaining invalid capability instead of aborting.",
-      "de": "Auslöser 'Mäher-Fehler aufgetreten' zeigte immer 'Normalbetrieb': Die MOVA/Dreame-API bettet Fehlercodes in ein 'property'-Feld als unkodierter JSON-String ein, den die App bisher verwarf. Der Sanitizer bettet dieses JSON-Objekt nun direkt ein, sodass Fehlercodes lesbar sind. Pufferaufprall und ähnliche Fehler wurden in Homey als 'Pausiert' angezeigt, weil das Gerät diese als pausiert + Fehlercode meldet — die App erkennt diese Kombination jetzt als Fehler, sodass Alarm und Auslöser korrekt feuern. 'Poll failed: Invalid Capability: mow_spot/mow_zone/mow_map' behoben: Die App erkennt beim Start fehlerhafte Picker-Capabilities und stellt sie automatisch wieder her. Der Debug-Poll bricht bei ungültigen Capabilities nicht mehr ab."
-    },
-    "1.1.16": {
-      "en": "Added App Logs tab to the settings page: live log output from the app and all paired devices, searchable, filterable by error level, and with auto-refresh. Copy the log and share it with the developer to help diagnose issues.",
-      "de": "App-Logs-Tab in den Einstellungen hinzugefügt: Echtzeit-Logausgabe der App und aller gekoppelten Geräte, durchsuchbar, nach Fehler-Level filterbar und mit Auto-Aktualisierung. Das kopierte Log kann dem Entwickler zur Fehlerdiagnose weitergegeben werden."
-    },
     "1.1.24": {
       "en": "Fixed 'Mowing completed' Flow trigger firing twice on mowers with automatic edge-mowing: the trigger no longer fires when the mower briefly returns between the main area and edge phase — it now waits until the mower reaches a true resting state (docked / charging / idle).",
       "de": "Flow-Auslöser 'Mähen abgeschlossen' feuerte zweimal bei Mähern mit automatischer Kantenmahd: Der Auslöser feuert nicht mehr wenn der Mäher zwischen Haupt- und Kantenphase kurz zurückfährt — er wartet nun bis der Mäher tatsächlich eine Ruheposition erreicht (angedockt / lädt / bereit)."
+    },
+    "1.2.1": {
+      "en": "Fixed premature garage-door closing after departure. Priority 1 still closes when calculated distance/ETA is safe, Priority 2 closes after a stable safety-line crossing only when the mower is no longer at the maintenance point, and Priority 3 pauses, closes and resumes after repeated short crossings. Adjusting/positioning phases now keep the door open.",
+      "de": "Vorzeitiges Schließen des Garagentors nach der Ausfahrt behoben. Priorität 1 schließt weiterhin bei sicher berechnetem Abstand/ETA, Priorität 2 nach stabiler Sicherheitslinien-Überfahrt nur, wenn der Mäher nicht mehr am Wartungspunkt steht, und Priorität 3 pausiert, schließt und setzt nach wiederholt zu kurzen Überfahrten fort. Während Justieren/Positionieren bleibt das Tor offen."
     }
   },
   "tags": {

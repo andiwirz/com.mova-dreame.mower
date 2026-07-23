@@ -598,6 +598,11 @@ class MowerDevice extends Homey.Device {
     // Conflicting source jumps are quarantined until independently confirmed.
     this._positionCandidate    = null;
     this._positionRejectLogAt  = 0;
+    // v1.2.1: native maintenance coordinates are accepted adaptively, but only
+    // after stable repetition. This prevents a transient map payload from moving
+    // the marker while still allowing a genuine map change to be learned.
+    this._maintenancePointCandidate = null;
+    this._maintenancePointLogAt = 0;
     this._positionSourcePriority = { mqtt: 50, 'siid:1:4': 45, 'garage-marker-direct': 45, locn: 30, mitrc: 20, unknown: 0 };
     this._cachedPRE              = await this.getStoreValue('cached_pre') ?? null;  // last known PRE array; used for cutting_height read-modify-write
     this._cuttingHeightWriteTs   = 0;    // timestamp of last successful cutting_height write; guards poll snap-back
@@ -614,6 +619,7 @@ class MowerDevice extends Homey.Device {
     this._resumeSemanticUntil    = 0; // RC112: treat stale cloud 'paused' as mowing after an explicit resume
 
     await this._migrate();
+    await this._migrateMaintenancePointSchema();
 
     // Upstream 1.1.21 self-heal: repair corrupted picker capabilities without
     // removing any garage extension capabilities.
@@ -1872,8 +1878,13 @@ class MowerDevice extends Homey.Device {
       const reallyHome = !outsideEvidence && (['docked', 'charging', 'charging_completed'].includes(status)
         || ['charging', 'charging_completed', 'docked'].includes(charging)
         || garageHome);
-      if (reallyHome && garageActive && !this._garageSafety.paused) return `transit_not_available_home`;
-      if (reallyHome && capabilityId === 'cmd_maintenance_point' && garageActive && !this._garageSafety.paused) return `transit_not_available_home`;
+      // Docking while already home is meaningless, but the maintenance-point
+      // button is a valid garage departure: GarageSafetyEngine opens the door
+      // first and releases native maintenance point index 2 only after the door
+      // is safely open.
+      if (reallyHome && capabilityId === 'cmd_dock' && garageActive && !this._garageSafety.paused) {
+        return `transit_not_available_home`;
+      }
     }
 
     if ((capabilityId === 'cmd_stop' || capabilityId === 'cmd_dock' || capabilityId === 'cmd_maintenance_point')
@@ -2954,7 +2965,7 @@ class MowerDevice extends Homey.Device {
       'idle', 'mowing', 'standby', 'paused', 'error', 'returning', 'charging',
       'mapping', 'docked', 'updating', 'remote_control', 'garage_home',
       'garage_exiting', 'garage_adjusting', 'garage_opening', 'garage_closing',
-      'garage_free_drive', 'garage_positioning', 'garage_app_control',
+      'garage_maintenance_transit', 'garage_maintenance_reached', 'garage_free_drive', 'garage_positioning', 'garage_app_control',
     ]);
     const currentDisplayStatus = this.getCapabilityValue('mower_status');
     const displayStatus = validDisplayStatuses.has(requestedDisplayStatus)
@@ -3398,6 +3409,28 @@ class MowerDevice extends Homey.Device {
     this._trgMapChanged.trigger(this, { map_name: name, map_index: mapIndex }).catch(() => {});
   }
 
+  _appendLiveRoutePoint(pos, source = '') {
+    if (!pos || !Number.isFinite(Number(pos.x)) || !Number.isFinite(Number(pos.y))) return;
+    if (String(source || '').startsWith('garage-marker')) return;
+    const status = String(this._nativeMowerStatus || this.getCapabilityValue('mower_status') || '').toLowerCase();
+    const active = new Set(['mowing', 'edge_mowing', 'leaving', 'returning', 'paused', 'remote_control', 'adjusting', 'positioning']);
+    if (!active.has(status)) return;
+
+    if (!Array.isArray(this._liveRouteTrail)) this._liveRouteTrail = [];
+    const point = [Math.round(Number(pos.x)), Math.round(Number(pos.y))];
+    let last = null;
+    for (let i = this._liveRouteTrail.length - 1; i >= 0; i--) {
+      if (this._liveRouteTrail[i][0] !== 32767) { last = this._liveRouteTrail[i]; break; }
+    }
+    if (last) {
+      const distance = Math.hypot(point[0] - last[0], point[1] - last[1]);
+      if (distance < 80) return;
+      if (distance > 3000) this._liveRouteTrail.push([32767, -32768]);
+    }
+    this._liveRouteTrail.push(point);
+    if (this._liveRouteTrail.length > 800) this._liveRouteTrail = this._liveRouteTrail.slice(-800);
+  }
+
   _setLivePosition(pos, source = '') {
     if (!pos || !Number.isFinite(Number(pos.x)) || !Number.isFinite(Number(pos.y))) return false;
     const now = Date.now();
@@ -3411,6 +3444,7 @@ class MowerDevice extends Homey.Device {
       this._lastLivePos = next;
       this._lastLivePosAt = next.ts;
       this._positionCandidate = null;
+      this._appendLiveRoutePoint(next, src);
       return true;
     }
 
@@ -3427,6 +3461,7 @@ class MowerDevice extends Homey.Device {
       this._lastLivePos = next;
       this._lastLivePosAt = next.ts;
       this._positionCandidate = null;
+      this._appendLiveRoutePoint(next, src);
       return true;
     }
 
@@ -3454,6 +3489,7 @@ class MowerDevice extends Homey.Device {
       this._lastLivePosAt = accepted.ts;
       this._positionCandidate = null;
       this.log(`[pos] confirmed source transition ${current.source || '-'} -> ${src}; jump=${Math.round(distance)}mm`);
+      this._appendLiveRoutePoint(accepted, src);
       return true;
     }
 
@@ -3756,7 +3792,18 @@ class MowerDevice extends Homey.Device {
       if (typeof v === 'object' && Number.isFinite(Number(v.x)) && Number.isFinite(Number(v.y))) return { x: Number(v.x), y: Number(v.y) };
       return null;
     };
-    const maintenancePoint = pointFromMap(mapObj.maintenancePoint || mapObj.maintenance || mapObj.servicePoint || mapObj.repairPoint || mapObj.cleaningPoint);
+    // RC108-compatible marker source: the original MOVA map exposes the visual
+    // maintenance coordinate in the singular maintenance/service-point field.
+    // This map coordinate is independent from opcode 109's command parameter.
+    // The mower command therefore remains on confirmed native index 2, while the
+    // marker is read exactly as it was in the last known-good map implementation.
+    const maintenancePoint = pointFromMap(
+      mapObj.maintenancePoint
+      || mapObj.maintenance
+      || mapObj.servicePoint
+      || mapObj.repairPoint
+      || mapObj.cleaningPoint,
+    );
     const boundary = this._normalizeBoundary(mapObj.boundary, [mowingAreas, forbiddenAreas, spotAreas, contours, obstacles, chargerPos, maintenancePoint, this._livePos, this._cachedMapData?.livePath]);
     if (!boundary) return null;
     return {
@@ -3769,89 +3816,178 @@ class MowerDevice extends Homey.Device {
       contours,
       mapObstacles:   obstacles,
       chargerPos,
-      maintenancePoint,
+      maintenancePoint: maintenancePoint ? { ...maintenancePoint, source: 'native_map_original' } : null,
       mapRawKeys:     Object.keys(mapObj),
       mapTrSample:    mapObj.tr ? String(mapObj.tr).slice(0, 300) : null,
       livePath:       this._cachedMapData?.livePath || [],
     };
   }
 
+  async _migrateMaintenancePointSchema() {
+    const schemaVersion = 2;
+    const markerKey = 'garage_maintenance_point_schema_version';
+    const currentVersion = Number(await safeGetStoreValue(this, markerKey)) || 0;
+    if (currentVersion >= schemaVersion) return;
+
+    // Versions prior to schema v2 persisted untyped maintenance coordinates.
+    // Those values were not reliably bound to a map and could therefore survive
+    // app downgrades, map replacements and parser changes. Clear only these known
+    // legacy cache keys once; normal user settings, flows and garage geometry are
+    // deliberately untouched.
+    const legacyKeys = [
+      'garage_maintenance_point_verified_index2',
+      'garage_maintenance_point_last_valid',
+      'garage_maintenance_point',
+      'maintenance_point',
+      'garage_maintenance_point_candidate',
+      'garage_maintenance_point_lock',
+      'garage_maintenance_point_source_migrated_v1',
+      'maintenance_point_source_migrated_v1',
+    ];
+    for (const key of legacyKeys) {
+      try {
+        if (typeof this.unsetStoreValue === 'function') await this.unsetStoreValue(key);
+        else await this.setStoreValue(key, null);
+      } catch (err) {
+        this.error(`[maintenance] unable to clear legacy store key ${key}:`, err.message);
+      }
+    }
+    this._maintenancePointCandidate = null;
+    await this.setStoreValue(markerKey, schemaVersion);
+    this.log(`[maintenance] schema migration v${schemaVersion} completed; legacy unbound point cache cleared`);
+  }
+
+  _maintenanceMapKey() {
+    const map = this._cachedMapData || {};
+    const identity = map.md5sum || map.mapId || map.id || map.uuid || map.name;
+    return `${Number(this._activeMapIndex) || 0}:${String(identity || 'unknown')}`;
+  }
+
   async _resolveStableMaintenancePoint() {
-    const asPoint = (v) => {
+    const asPoint = (v, fallbackSource = 'stored') => {
       if (!v) return null;
       if (typeof v === 'string') {
-        try { v = JSON.parse(v); } catch (_) {
-          const m = v.match(/^\s*(-?\d+(?:\.\d+)?)\s*[,;| ]\s*(-?\d+(?:\.\d+)?)\s*$/);
-          if (!m) return null;
-          return { x: Number(m[1]), y: Number(m[2]), source: 'legacy_string' };
-        }
+        try { v = JSON.parse(v); } catch (_) { return null; }
       }
       if (Array.isArray(v) && Number.isFinite(Number(v[0])) && Number.isFinite(Number(v[1]))) {
-        return { x: Number(v[0]), y: Number(v[1]), source: v.source || 'array' };
+        return { x: Number(v[0]), y: Number(v[1]), source: fallbackSource };
       }
       if (typeof v === 'object' && Number.isFinite(Number(v.x)) && Number.isFinite(Number(v.y))) {
-        return { x: Number(v.x), y: Number(v.y), source: v.source || 'stored', savedAt: Number(v.savedAt) || undefined };
+        return {
+          x: Number(v.x), y: Number(v.y),
+          source: String(v.source || fallbackSource),
+          savedAt: Number(v.savedAt) || undefined,
+          mapKey: v.mapKey ? String(v.mapKey) : undefined,
+          schemaVersion: Number(v.schemaVersion) || undefined,
+          verifiedBy: v.verifiedBy || undefined,
+        };
       }
       return null;
     };
     const distance = (a, b) => (a && b)
       ? Math.hypot(Number(a.x) - Number(b.x), Number(a.y) - Number(b.y)) : Infinity;
+    const mapKey = this._maintenanceMapKey();
+    const schemaVersion = 2;
+    const isCurrent = (p) => !!(p && p.schemaVersion === schemaVersion && p.mapKey === mapKey);
+    const logOnce = (message, detail = '') => {
+      const now = Date.now();
+      if (now - Number(this._maintenancePointLogAt || 0) < 15000) return;
+      this._maintenancePointLogAt = now;
+      this.log(`[maintenance] ${message}${detail ? `: ${detail}` : ''}`);
+    };
 
-    const dock = asPoint(this._cachedMapData?.chargerPos) || asPoint(this._dockPos)
-      || asPoint(await safeGetStoreValue(this, 'garage_danger_center'));
-    const lineB = asPoint(await safeGetStoreValue(this, 'garage_line_b'))
-      || asPoint(await safeGetStoreValue(this, 'garage_safety_line_b'));
-    const candidates = [
-      asPoint(await safeGetStoreValue(this, 'garage_maintenance_point_last_valid')),
-      asPoint(await safeGetStoreValue(this, 'maintenance_point')),
-      asPoint(await safeGetStoreValue(this, 'garage_maintenance_point')),
-      asPoint(this._cachedMapData?.maintenancePoint),
-    ].filter(Boolean);
+    // Native map data is always the primary source. A verified robot position is
+    // only a fallback for firmware/map formats where no definite native marker is
+    // exposed. This keeps the implementation generic and avoids user-specific
+    // coordinates while still supporting devices with incomplete map metadata.
+    const nativeMapPoint = asPoint(this._cachedMapData?.maintenancePoint, 'native-map');
+    const storedNative = asPoint(await safeGetStoreValue(this, 'garage_maintenance_point_native_v2'), 'native-map');
+    const verified = asPoint(await safeGetStoreValue(this, 'garage_maintenance_point_verified_v2'), 'verified');
 
-    // A real maintenance staging point belongs to the garage approach. Positions
-    // many metres away on the lawn are almost always a previously persisted live
-    // mower position from a false "maintenance reached" event.
-    const maxFromDock = Math.max(3000, Math.min(5000,
-      Number(this.getSetting('garage_return_half_map_mm') || 5000)));
-    const plausible = candidates
-      .filter((p) => (!dock || (distance(p, dock) >= 350 && distance(p, dock) <= maxFromDock))
-        && (!lineB || distance(p, lineB) <= 4500))
-      .sort((a, b) => {
-        const trust = (p) => p.source === 'verified_static' ? 0
-          : p.source === 'last_valid' ? 1
-            : p.source === 'manual' ? 2
-              : p.source === 'verified' ? 3 : 4;
-        return trust(a) - trust(b) || distance(a, dock) - distance(b, dock);
-      });
-
-    let chosen = plausible[0] || null;
-    if (!chosen && dock && lineB) {
-      const dx = Number(lineB.x) - Number(dock.x);
-      const dy = Number(lineB.y) - Number(dock.y);
-      const len = Math.hypot(dx, dy);
-      if (Number.isFinite(len) && len > 50) {
-        // Put the visual staging marker on the lawn side of B, along the actual
-        // garage approach axis. This is only a stable visual/recovery marker;
-        // the mower still uses its native maintenance-point command (opcode 109).
-        const extension = 1200;
-        chosen = {
-          x: Number(lineB.x) + (dx / len) * extension,
-          y: Number(lineB.y) + (dy / len) * extension,
-          source: 'derived_line_b_staging',
-        };
-      }
+    // A position physically reached through the mower's native maintenance command
+    // is the strongest available evidence. It therefore overrides stale or
+    // ambiguous map metadata for the same map. This is generic: no coordinates or
+    // device IDs are hard-coded, and the point is captured only after a deliberate
+    // maintenance trip from confirmed home with stable live telemetry.
+    if (isCurrent(verified) && String(verified.verifiedBy || '').startsWith('manual_home_index2')) {
+      logOnce('using physically verified native maintenance point', `map=${mapKey}`);
+      return verified;
     }
 
-    if (chosen) {
-      const stable = { x: Number(chosen.x), y: Number(chosen.y), source: chosen.source || 'stable', savedAt: Date.now() };
-      await this.setStoreValue('garage_maintenance_point_last_valid', { ...stable, source: 'last_valid' }).catch(() => {});
-      const current = asPoint(await safeGetStoreValue(this, 'garage_maintenance_point'));
-      if (!current || distance(current, stable) > 100) {
-        await this.setStoreValue('garage_maintenance_point', stable).catch(() => {});
+    if (nativeMapPoint) {
+      const candidate = {
+        x: nativeMapPoint.x,
+        y: nativeMapPoint.y,
+        source: 'native-map',
+        mapKey,
+        schemaVersion,
+      };
+      const currentStoredNative = isCurrent(storedNative) ? storedNative : null;
+
+      if (!currentStoredNative) {
+        const stable = { ...candidate, savedAt: Date.now() };
+        await this.setStoreValue('garage_maintenance_point_native_v2', stable).catch(() => {});
+        this._maintenancePointCandidate = null;
+        logOnce('native maintenance point acquired', `${Math.round(stable.x)},${Math.round(stable.y)} map=${mapKey}`);
+        return stable;
       }
-      return stable;
+
+      if (distance(currentStoredNative, candidate) <= 100) {
+        this._maintenancePointCandidate = null;
+        return currentStoredNative;
+      }
+
+      const previous = this._maintenancePointCandidate;
+      if (previous && previous.mapKey === mapKey && distance(previous, candidate) <= 80) {
+        previous.hits = Number(previous.hits || 1) + 1;
+        previous.lastSeenAt = Date.now();
+      } else {
+        this._maintenancePointCandidate = { ...candidate, hits: 1, firstSeenAt: Date.now(), lastSeenAt: Date.now() };
+      }
+
+      const motionLocked = !!this._garageSafety?._manualMaintenanceTransit
+        || !!this._garageSafety?._safeReturnInProgress
+        || !!this._garageSafety?._returnGuardActive;
+      if (!motionLocked && Number(this._maintenancePointCandidate?.hits || 0) >= 4) {
+        const stable = { ...candidate, savedAt: Date.now() };
+        await this.setStoreValue('garage_maintenance_point_native_v2', stable).catch(() => {});
+        this._maintenancePointCandidate = null;
+        logOnce('native maintenance point adaptively updated', `${Math.round(stable.x)},${Math.round(stable.y)} map=${mapKey}`);
+        return stable;
+      }
+
+      logOnce('native maintenance point change pending', `hits=${Number(this._maintenancePointCandidate?.hits || 0)} map=${mapKey}`);
+      return currentStoredNative;
     }
+
+    this._maintenancePointCandidate = null;
+    if (isCurrent(storedNative)) return storedNative;
+    if (isCurrent(verified)) {
+      logOnce('using verified maintenance point fallback', `map=${mapKey}`);
+      return verified;
+    }
+
+    // Legacy/unbound values are intentionally ignored. They may still exist after
+    // a downgrade, but schema v2 never renders or uses them.
     return null;
+  }
+
+  async _storeVerifiedIndex2MaintenancePoint(position, source = 'native_index2_arrival') {
+    if (!position || !Number.isFinite(Number(position.x)) || !Number.isFinite(Number(position.y))) return null;
+    const mapKey = this._maintenanceMapKey();
+    const stable = {
+      x: Number(position.x),
+      y: Number(position.y),
+      source: 'verified',
+      verifiedBy: source,
+      mapKey,
+      schemaVersion: 2,
+      savedAt: Date.now(),
+    };
+    this._maintenancePointCandidate = null;
+    await this.setStoreValue('garage_maintenance_point_verified_v2', stable).catch(() => {});
+    this.log(`[maintenance] verified maintenance point stored for map ${mapKey}`);
+    return stable;
   }
 
   async _fallbackMapFromTelemetry() {
@@ -4095,6 +4231,9 @@ class MowerDevice extends Homey.Device {
     const lineA = asEditablePoint(payload.lineA, 'A');
     const lineB = asEditablePoint(payload.lineB, 'B');
     const dangerCenter = asEditablePoint(payload.dangerCenter, 'danger');
+    const maintenancePoint = payload.maintenancePoint
+      ? asEditablePoint(payload.maintenancePoint, 'maintenance')
+      : null;
     const lineLength = Math.hypot(lineA.x - lineB.x, lineA.y - lineB.y);
     if (!Number.isFinite(lineLength) || lineLength < 250) {
       throw new Error('Safety line points A and B must be at least 250 mm apart');
@@ -4105,14 +4244,21 @@ class MowerDevice extends Homey.Device {
     await this.setStoreValue('garage_line_a', lineA);
     await this.setStoreValue('garage_line_b', lineB);
     await this.setStoreValue('garage_danger_center', dangerCenter);
+    if (maintenancePoint) {
+      if (typeof this._storeVerifiedIndex2MaintenancePoint === 'function') {
+        await this._storeVerifiedIndex2MaintenancePoint(maintenancePoint, 'map_editor');
+      } else {
+        await this.setStoreValue('garage_maintenance_point', maintenancePoint);
+      }
+    }
 
     if (this._garageSafety?.markers?.resetRuntime) this._garageSafety.markers.resetRuntime();
     if (typeof this._garageSafety?.refreshOverlay === 'function') await this._garageSafety.refreshOverlay().catch(() => {});
     if (typeof this._garageSafety?.updateMarkerDiagnosis === 'function') await this._garageSafety.updateMarkerDiagnosis().catch(() => {});
     if (typeof this._garageSafety?.updatePositionGuards === 'function') await this._garageSafety.updatePositionGuards().catch(() => {});
 
-    this.log('[map-editor] garage markers saved', { lineA, lineB, dangerCenter });
-    return { ok: true, lineA, lineB, dangerCenter };
+    this.log('[map-editor] garage markers saved', { lineA, lineB, dangerCenter, maintenancePoint });
+    return { ok: true, lineA, lineB, dangerCenter, maintenancePoint };
   }
 
   async getMapData() {
@@ -4334,8 +4480,26 @@ class MowerDevice extends Homey.Device {
       }
       return null;
     }
+    const cachedLivePath = Array.isArray(this._cachedMapData.livePath) ? this._cachedMapData.livePath : [];
+    const telemetryTrail = Array.isArray(this._liveRouteTrail) ? this._liveRouteTrail : [];
+    let effectiveLivePath = cachedLivePath;
+    if (telemetryTrail.length) {
+      const merged = cachedLivePath.slice();
+      let lastCached = null;
+      for (let i = merged.length - 1; i >= 0; i--) {
+        if (merged[i][0] !== 32767) { lastCached = merged[i]; break; }
+      }
+      const firstTelemetry = telemetryTrail.find((pt) => pt[0] !== 32767);
+      if (lastCached && firstTelemetry
+        && Math.hypot(firstTelemetry[0] - lastCached[0], firstTelemetry[1] - lastCached[1]) > 3000) {
+        merged.push([32767, -32768]);
+      }
+      merged.push(...telemetryTrail);
+      effectiveLivePath = merged.slice(-1000);
+    }
     const base = {
       ...this._cachedMapData,
+      livePath: effectiveLivePath,
       mapRotation: this._dockYaw ?? 0,
       robotAngle: this._cachedArMapPos?.robot?.angle ?? null,
       obstacles: this._cachedObstacles,

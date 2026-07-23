@@ -316,5 +316,17 @@
   "1.1.12": {
     "en": "Improved error code detection for the 'Mower error occurred' trigger: the app now checks additional field names returned by the device list API so the correct fault code is found on more device models. A diagnostic log entry is written on every error detection to help identify the API field name if the error description still shows 'Normal operation'.",
     "de": "Verbesserte Fehlercode-Erkennung für den Auslöser 'Mäher-Fehler aufgetreten': Die App prüft nun weitere Feldnamen der Geräteliste-API, sodass der korrekte Fehlercode auf mehr Gerätemodellen gefunden wird. Bei jeder Fehlererkennung wird ein Diagnose-Logeintrag geschrieben, um den API-Feldnamen zu identifizieren falls die Fehlerbeschreibung weiterhin 'Normalbetrieb' anzeigt."
+  },
+  "1.2.1": {
+    "en": "Fixed premature garage-door closing after departure. Priority 1 still closes when calculated distance/ETA is safe, Priority 2 closes after a stable safety-line crossing only when the mower is no longer at the maintenance point, and Priority 3 pauses, closes and resumes after repeated short crossings. Adjusting/positioning phases now keep the door open.",
+    "de": "Vorzeitiges Schließen des Garagentors nach der Ausfahrt behoben. Priorität 1 schließt weiterhin bei sicher berechnetem Abstand/ETA, Priorität 2 nach stabiler Sicherheitslinien-Überfahrt nur, wenn der Mäher nicht mehr am Wartungspunkt steht, und Priorität 3 pausiert, schließt und setzt nach wiederholt zu kurzen Überfahrten fort. Während Justieren/Positionieren bleibt das Tor offen."
+  },
+  "1.2.5": {
+    "en": "Harden return routing: ETA-based lawn-side return, hard safety-line interlock, garage-side maintenance routing and immutable maintenance-point confirmation.",
+    "de": "Rückkehrlogik gehärtet: ETA-basierte Rückkehr auf der Rasenseite, feste Sicherheitslinien-Sperre, Wartungspunkt auf der Garagenseite und unveränderliche Wartungspunkt-Bestätigung."
+  },
+  "1.2.6": {
+    "en": "PR-ready garage return hardening: route selection is fixed at return detection, lawn-side ETA chooses direct return or immutable maintenance routing, garage-side/danger/front-gate recovery always uses maintenance, the safety line is a hard stop until the door is proven open, and Emergency Mode reverses gate motion before automatic maintenance-point evacuation and safe docking.",
+    "de": "PR-fähige Härtung der Garagenrückkehr: Die Route wird bei Rückkehrerkennung festgelegt, ETA auf der Rasenseite entscheidet zwischen direkter Rückkehr und unveränderlichem Wartungspunkt, Garagenseite/Gefahrenbereich/Torfront führen immer über den Wartungspunkt, die Sicherheitslinie stoppt hart bis zur sicheren Torfreigabe und der Emergency Mode kehrt die Torbewegung um, evakuiert automatisch zum Wartungspunkt und führt anschließend sicher zur Station zurück."
   }
 }

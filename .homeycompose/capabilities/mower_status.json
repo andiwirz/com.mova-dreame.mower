@@ -118,6 +118,20 @@
       }
     },
     {
+      "id": "garage_maintenance_transit",
+      "title": {
+        "en": "Going to maintenance point",
+        "de": "Fährt zum Wartungspunkt"
+      }
+    },
+    {
+      "id": "garage_maintenance_reached",
+      "title": {
+        "en": "Maintenance point reached",
+        "de": "Wartungspunkt erreicht"
+      }
+    },
+    {
       "id": "garage_free_drive",
       "title": {
         "en": "Positioning",

@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.mova-dreame.mower",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "compatibility": ">=12.3.0",
   "sdk": 3,
   "name": {
@@ -358,6 +358,10 @@
     "1.1.12": {
       "en": "Improved error code detection for the 'Mower error occurred' trigger: the app now checks additional field names returned by the device list API so the correct fault code is found on more device models. A diagnostic log entry is written on every error detection to help identify the API field name if the error description still shows 'Normal operation'.",
       "de": "Verbesserte Fehlercode-Erkennung für den Auslöser 'Mäher-Fehler aufgetreten': Die App prüft nun weitere Feldnamen der Geräteliste-API, sodass der korrekte Fehlercode auf mehr Gerätemodellen gefunden wird. Bei jeder Fehlererkennung wird ein Diagnose-Logeintrag geschrieben, um den API-Feldnamen zu identifizieren falls die Fehlerbeschreibung weiterhin 'Normalbetrieb' anzeigt."
+    },
+    "1.2.1": {
+      "en": "Fixed premature garage-door closing after departure. Priority 1 still closes when calculated distance/ETA is safe, Priority 2 closes after a stable safety-line crossing only when the mower is no longer at the maintenance point, and Priority 3 pauses, closes and resumes after repeated short crossings. Adjusting/positioning phases now keep the door open.",
+      "de": "Vorzeitiges Schließen des Garagentors nach der Ausfahrt behoben. Priorität 1 schließt weiterhin bei sicher berechnetem Abstand/ETA, Priorität 2 nach stabiler Sicherheitslinien-Überfahrt nur, wenn der Mäher nicht mehr am Wartungspunkt steht, und Priorität 3 pausiert, schließt und setzt nach wiederholt zu kurzen Überfahrten fort. Während Justieren/Positionieren bleibt das Tor offen."
     }
   },
   "tags": {
@@ -4750,6 +4754,20 @@
           "title": {
             "en": "Garage closing",
             "de": "Garage schließt"
+          }
+        },
+        {
+          "id": "garage_maintenance_transit",
+          "title": {
+            "en": "Going to maintenance point",
+            "de": "Fährt zum Wartungspunkt"
+          }
+        },
+        {
+          "id": "garage_maintenance_reached",
+          "title": {
+            "en": "Maintenance point reached",
+            "de": "Wartungspunkt erreicht"
           }
         },
         {
