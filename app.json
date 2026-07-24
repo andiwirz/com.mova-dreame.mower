@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.mova-dreame.mower",
-  "version": "1.1.24",
+  "version": "1.1.26",
   "compatibility": ">=12.3.0",
   "sdk": 3,
   "name": {
@@ -43,6 +43,14 @@
     }
   },
   "changelog": {
+    "1.1.26": {
+      "en": "Garage safe-start improvements: a second recovery attempt is made when the gate is open but the mower still appears home after the first retry (fixes A2 firmware confirmation delay); STOP is no longer sent on start-confirmation timeout so the mower stays controllable instead of being stranded in front of the garage. Maintenance state (flags, watch interval) is fully cleared when the mower docks after passing through the maintenance point. Command buttons are reset to inactive on app init to prevent stale presses from a previous session. Pause and Resume commands are suppressed for 3 minutes after a Return to Dock command to prevent conflicting commands.",
+      "de": "Verbesserter Garagenstart: zweiter Neustart-Versuch wenn das Tor offen ist der Mäher aber nach dem ersten Versuch noch als zu Hause gilt (behebt A2-Firmware-Verzögerung bei der Startbestätigung); STOP wird bei Startbestätigungs-Timeout nicht mehr gesendet — der Mäher bleibt steuerbar statt vor der Garage stehen zu bleiben. Wartungsstatus (Flags, Überwachungsintervall) wird beim Andocken vollständig zurückgesetzt wenn der Mäher über den Wartungspunkt zurückgekehrt ist. Befehlsknöpfe werden beim App-Start auf inaktiv zurückgesetzt. Pause und Fortsetzen werden 3 Minuten nach dem Zurück-zur-Station-Befehl unterdrückt."
+    },
+    "1.1.25": {
+      "en": "Garage Mode capabilities (buttons, door status, safety status, sensor status) are now hidden on the device card when Garage Mode is disabled in settings — they appear automatically when Garage Mode is enabled.",
+      "de": "Garagenmodus-Capabilities (Schaltflächen, Torstatus, Sicherheitsstatus, Sensorstatus) werden auf der Gerätekarte ausgeblendet wenn der Garagenmodus in den Einstellungen deaktiviert ist — sie erscheinen automatisch wenn der Garagenmodus aktiviert wird."
+    },
     "1.1.24": {
       "en": "Fixed 'Mowing completed' Flow trigger firing twice on mowers with automatic edge-mowing: the trigger no longer fires when the mower briefly returns between the main area and edge phase — it now waits until the mower reaches a true resting state (docked / charging / idle).",
       "de": "Flow-Auslöser 'Mähen abgeschlossen' feuerte zweimal bei Mähern mit automatischer Kantenmahd: Der Auslöser feuert nicht mehr wenn der Mäher zwischen Haupt- und Kantenphase kurz zurückfährt — er wartet nun bis der Mäher tatsächlich eine Ruheposition erreicht (angedockt / lädt / bereit)."
@@ -358,10 +366,6 @@
     "1.1.12": {
       "en": "Improved error code detection for the 'Mower error occurred' trigger: the app now checks additional field names returned by the device list API so the correct fault code is found on more device models. A diagnostic log entry is written on every error detection to help identify the API field name if the error description still shows 'Normal operation'.",
       "de": "Verbesserte Fehlercode-Erkennung für den Auslöser 'Mäher-Fehler aufgetreten': Die App prüft nun weitere Feldnamen der Geräteliste-API, sodass der korrekte Fehlercode auf mehr Gerätemodellen gefunden wird. Bei jeder Fehlererkennung wird ein Diagnose-Logeintrag geschrieben, um den API-Feldnamen zu identifizieren falls die Fehlerbeschreibung weiterhin 'Normalbetrieb' anzeigt."
-    },
-    "1.2.1": {
-      "en": "Fixed premature garage-door closing after departure. Priority 1 still closes when calculated distance/ETA is safe, Priority 2 closes after a stable safety-line crossing only when the mower is no longer at the maintenance point, and Priority 3 pauses, closes and resumes after repeated short crossings. Adjusting/positioning phases now keep the door open.",
-      "de": "Vorzeitiges Schließen des Garagentors nach der Ausfahrt behoben. Priorität 1 schließt weiterhin bei sicher berechnetem Abstand/ETA, Priorität 2 nach stabiler Sicherheitslinien-Überfahrt nur, wenn der Mäher nicht mehr am Wartungspunkt steht, und Priorität 3 pausiert, schließt und setzt nach wiederholt zu kurzen Überfahrten fort. Während Justieren/Positionieren bleibt das Tor offen."
     }
   },
   "tags": {

@@ -630,6 +630,8 @@ class MowerDevice extends Homey.Device {
     this._commandGeneration      = 0;
     this._resumeGuardUntil       = 0; // suppress garage external-start detection after Pause→Resume
     this._resumeSemanticUntil    = 0; // RC112: treat stale cloud 'paused' as mowing after an explicit resume
+    this._dockCommandIntentUntil = 0; // suppress pause/resume for 3 min after dock command
+    this._pauseButtonHoldUntil   = 0;
 
     await this._migrate();
     await this._applyGarageCapabilityVisibility();
