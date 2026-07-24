@@ -650,6 +650,17 @@ class MowerDevice extends Homey.Device {
 
     await this._garageSafety.init();
 
+    // Homey persists momentary command capabilities. Clear stale button values
+    // before listeners are registered, especially cmd_maintenance_point after a
+    // hot/test-channel reinstall.
+    for (const cap of [
+      'cmd_start_mowing', 'cmd_start_spot_mowing', 'cmd_pause', 'cmd_stop',
+      'cmd_dock', 'cmd_maintenance_point', 'cmd_resume', 'cmd_refresh',
+      'cmd_garage_pause_mode', 'cmd_garage_test_exit',
+    ]) {
+      if (this.hasCapability(cap)) await this.setCapabilityValue(cap, false).catch(() => {});
+    }
+
     // Flow trigger cards
     this._trgStatusChanged    = this.homey.flow.getDeviceTriggerCard('mower_status_changed');
     this._trgChargingChanged  = this.homey.flow.getDeviceTriggerCard('charging_status_changed');
@@ -874,6 +885,13 @@ class MowerDevice extends Homey.Device {
 
     this.registerCapabilityListener('cmd_pause', async (value) => {
       if (!value) return;
+      const returnIntentActive = (this._dockCommandIntentUntil && Date.now() < this._dockCommandIntentUntil)
+        || !!this._garageSafety?.isReturnCycleActive?.();
+      if (returnIntentActive) {
+        this.log('[cmd_pause] ignored: return command active');
+        await this.setCapabilityValue('cmd_pause', false).catch(() => {});
+        return;
+      }
       if (!(await this._momentButtonPressed('cmd_pause', 'pause', 30000))) return;
       const resumeRequested = this._isPausedLike();
       if (resumeRequested) {
@@ -891,12 +909,24 @@ class MowerDevice extends Homey.Device {
         await this._updateCommandButtonUi('paused').catch(() => {});
       }
       this._runBackgroundCommand('cmd_pause', async () => {
+        // Re-check inside the asynchronous task: Return may have been pressed
+        // after this Pause/Resume listener started but before its cloud write ran.
+        if ((this._dockCommandIntentUntil && Date.now() < this._dockCommandIntentUntil)
+            || this._garageSafety?.isReturnCycleActive?.()) {
+          this.log('[cmd_pause] queued command cancelled: return command active');
+          return;
+        }
         if (resumeRequested) {
           this.log('[cmd] btn: resume → sendAction(5,4)');
           await this._resumeMowingRobust('cmd_resume');
           await this._applyStatus('mowing').catch(() => {});
           this.homey.setTimeout(async () => {
             await this._poll().catch(() => {});
+            if ((this._dockCommandIntentUntil && Date.now() < this._dockCommandIntentUntil)
+                || this._garageSafety?.isReturnCycleActive?.()) {
+              this.log('[cmd] resume retry cancelled: return command active');
+              return;
+            }
             if (this._isPausedLike()) {
               this.log('[cmd] resume still paused after delay → retry once');
               await this._resumeMowingRobust('cmd_resume_retry');
@@ -936,6 +966,13 @@ class MowerDevice extends Homey.Device {
     this.registerCapabilityListener('cmd_dock', async (value) => {
       if (!value) return;
       if (!(await this._momentButtonPressed('cmd_dock', 'dock', 120000))) return;
+      // Latch the user's return intent immediately. A delayed Pause/Resume task
+      // from a rapid previous tap must never run after Return and switch the mower
+      // back to mowing. The garage return state takes over from this point.
+      this._dockCommandIntentUntil = Date.now() + 180000;
+      this._resumeSemanticUntil = 0;
+      this._resumeGuardUntil = 0;
+      this._pauseButtonHoldUntil = 0;
       try {
         this.log('[cmd] btn: dock → dock()');
         this._runBackgroundCommand('cmd_dock', async () => {
@@ -3227,6 +3264,11 @@ class MowerDevice extends Homey.Device {
 
   async _resumeMowingRobust(label = 'resume') {
     const did = this.getData().id;
+    if ((this._dockCommandIntentUntil && Date.now() < this._dockCommandIntentUntil)
+        || this._garageSafety?.isReturnCycleActive?.()) {
+      this.log(`[${label}] resume suppressed: return command active`);
+      return false;
+    }
     this._pauseButtonHoldMode = 'pause';
     this._pauseButtonHoldUntil = Date.now() + 120000;
     // Keep command semantics, tile state and the next Pause/Fortsetzen action in
@@ -3250,6 +3292,11 @@ class MowerDevice extends Homey.Device {
     let ok = await this._safeWrite(label, () => this._api.resume(did));
     await sleep(1800);
     await this._poll().catch(() => {});
+    if ((this._dockCommandIntentUntil && Date.now() < this._dockCommandIntentUntil)
+        || this._garageSafety?.isReturnCycleActive?.()) {
+      this.log(`[${label}] fallback suppressed: return command became active`);
+      return false;
+    }
     if (this._isPausedLike() || this._nativeMowerStatus !== 'mowing') {
       ok = await this._safeWrite(`${label}_fallback_start`, () => this._api.startMowing(did));
       await sleep(1500);
@@ -3258,7 +3305,14 @@ class MowerDevice extends Homey.Device {
       // Even when the cloud already says mowing, send one idempotent resume/start
       // stabilizer shortly after the button press. Field tests showed this is the
       // difference between a visual resume and actual blade/drive movement.
-      this.homey.setTimeout(() => this._safeWrite(`${label}_stabilize_start`, () => this._api.startMowing(did)).catch(() => {}), 1200);
+      this.homey.setTimeout(() => {
+        if ((this._dockCommandIntentUntil && Date.now() < this._dockCommandIntentUntil)
+            || this._garageSafety?.isReturnCycleActive?.()) {
+          this.log(`[${label}] stabilize start cancelled: return command active`);
+          return;
+        }
+        this._safeWrite(`${label}_stabilize_start`, () => this._api.startMowing(did)).catch(() => {});
+      }, 1200);
     }
     await this._applyStatus('mowing').catch(() => {});
     await this._updateCommandButtonUi('mowing').catch(() => {});
