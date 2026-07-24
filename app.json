@@ -3699,6 +3699,10 @@
         "getMapData": {
           "method": "GET",
           "path": "/"
+        },
+        "updateGarageMarkers": {
+          "method": "PUT",
+          "path": "/garage-markers"
         }
       },
       "id": "map"
@@ -4773,15 +4777,15 @@
         {
           "id": "garage_free_drive",
           "title": {
-            "en": "Positioning",
-            "de": "Positionieren"
+            "en": "Garage transit",
+            "de": "Garagenfahrt"
           }
         },
         {
           "id": "garage_positioning",
           "title": {
             "en": "Positioning",
-            "de": "Positionieren"
+            "de": "Positionierung"
           }
         },
         {
