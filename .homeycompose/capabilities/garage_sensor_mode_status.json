@@ -1,0 +1,28 @@
+{
+  "type": "enum",
+  "title": {
+    "en": "Garage sensor mode",
+    "de": "Torsensor-Modus"
+  },
+  "getable": true,
+  "setable": false,
+  "values": [
+    {
+      "id": "disabled",
+      "title": {
+        "en": "Disabled",
+        "de": "Deaktiviert"
+      }
+    },
+    {
+      "id": "enabled",
+      "title": {
+        "en": "Enabled",
+        "de": "Aktiviert"
+      }
+    }
+  ],
+  "icon": "/assets/capabilities/sensor_status.svg",
+  "insights": false,
+  "uiComponent": "sensor"
+}

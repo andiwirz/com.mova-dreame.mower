@@ -1,0 +1,42 @@
+{
+  "type": "enum",
+  "title": {
+    "en": "Garage sensor",
+    "de": "Garagensensor"
+  },
+  "getable": true,
+  "setable": false,
+  "values": [
+    {
+      "id": "unknown",
+      "title": {
+        "en": "Unknown",
+        "de": "Unbekannt"
+      }
+    },
+    {
+      "id": "online",
+      "title": {
+        "en": "Online",
+        "de": "Online"
+      }
+    },
+    {
+      "id": "timeout",
+      "title": {
+        "en": "Timeout",
+        "de": "Timeout"
+      }
+    },
+    {
+      "id": "offline",
+      "title": {
+        "en": "Offline",
+        "de": "Offline"
+      }
+    }
+  ],
+  "icon": "/assets/capabilities/sensor_status.svg",
+  "insights": false,
+  "uiComponent": "sensor"
+}

@@ -1,0 +1,48 @@
+{
+  "title": {
+    "en": "Set garage sensor availability",
+    "de": "Garagensensor-Verfügbarkeit setzen"
+  },
+  "titleFormatted": {
+    "en": "Set garage sensor availability to [[available]]",
+    "de": "Garagensensor-Verfügbarkeit auf [[available]] setzen"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=mower"
+    },
+    {
+      "type": "dropdown",
+      "name": "available",
+      "title": {
+        "en": "Availability",
+        "de": "Verfügbarkeit"
+      },
+      "values": [
+        {
+          "id": "online",
+          "title": {
+            "en": "Online",
+            "de": "Online"
+          }
+        },
+        {
+          "id": "offline",
+          "title": {
+            "en": "Offline",
+            "de": "Offline"
+          }
+        },
+        {
+          "id": "unknown",
+          "title": {
+            "en": "Unknown",
+            "de": "Unbekannt"
+          }
+        }
+      ]
+    }
+  ]
+}

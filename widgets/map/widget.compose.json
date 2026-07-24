@@ -12,38 +12,97 @@
     {
       "id": "show_zones",
       "type": "checkbox",
-      "label": { "en": "Show mowing zones", "de": "Mähzonen anzeigen" },
+      "label": {
+        "en": "Show mowing zones",
+        "de": "Mähzonen anzeigen"
+      },
       "value": true
     },
     {
       "id": "show_forbidden",
       "type": "checkbox",
-      "label": { "en": "Show forbidden areas", "de": "Verbotsbereiche anzeigen" },
+      "label": {
+        "en": "Show forbidden areas",
+        "de": "Verbotsbereiche anzeigen"
+      },
       "value": true
     },
     {
       "id": "show_spots",
       "type": "checkbox",
-      "label": { "en": "Show spot areas", "de": "Spotbereiche anzeigen" },
+      "label": {
+        "en": "Show spot areas",
+        "de": "Spotbereiche anzeigen"
+      },
       "value": true
     },
     {
       "id": "show_robot",
       "type": "checkbox",
-      "label": { "en": "Show robot position", "de": "Mäherposition anzeigen" },
+      "label": {
+        "en": "Show robot position",
+        "de": "Mäherposition anzeigen"
+      },
       "value": true
     },
     {
       "id": "show_obstacles",
       "type": "checkbox",
-      "label": { "en": "Show obstacles", "de": "Hindernisse anzeigen" },
+      "label": {
+        "en": "Show obstacles",
+        "de": "Hindernisse anzeigen"
+      },
       "value": true
+    },
+    {
+      "id": "show_path",
+      "type": "checkbox",
+      "label": {
+        "en": "Show driven route",
+        "de": "Gefahrene Route anzeigen"
+      },
+      "value": true
+    },
+    {
+      "id": "show_direction",
+      "type": "checkbox",
+      "label": {
+        "en": "Show mower direction",
+        "de": "Fahrtrichtung anzeigen"
+      },
+      "value": true
+    },
+    {
+      "id": "show_maintenance_point",
+      "type": "checkbox",
+      "label": {
+        "en": "Show maintenance point",
+        "de": "Wartungspunkt anzeigen"
+      },
+      "value": true
+    },
+    {
+      "id": "show_garage_overlay",
+      "type": "checkbox",
+      "label": {
+        "en": "Show garage overlay",
+        "de": "Garagen-Overlay anzeigen"
+      },
+      "value": true,
+      "hint": {
+        "en": "Shows all garage-specific elements together. Only effective when garage mode is enabled.",
+        "de": "Zeigt alle garagenspezifischen Elemente gemeinsam. Nur bei aktiviertem Garagenmodus wirksam."
+      }
     }
   ],
   "api": {
     "getMapData": {
       "method": "GET",
       "path": "/"
+    },
+    "updateGarageMarkers": {
+      "method": "PUT",
+      "path": "/garage-markers"
     }
   }
 }

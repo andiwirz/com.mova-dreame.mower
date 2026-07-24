@@ -5,17 +5,153 @@
     "de": "Mähroboter Status"
   },
   "values": [
-    { "id": "idle",      "title": { "en": "Idle",               "de": "Bereit"          } },
-    { "id": "mowing",    "title": { "en": "Mowing",             "de": "Mähen"           } },
-    { "id": "standby",   "title": { "en": "Standby",            "de": "Standby"         } },
-    { "id": "paused",    "title": { "en": "Paused",             "de": "Pausiert"        } },
-    { "id": "error",     "title": { "en": "Error",              "de": "Fehler"          } },
-    { "id": "returning", "title": { "en": "Returning to Dock",  "de": "Kehrt zurück"    } },
-    { "id": "charging",  "title": { "en": "Charging",           "de": "Lädt"            } },
-    { "id": "mapping",   "title": { "en": "Mapping",            "de": "Kartierung"      } },
-    { "id": "docked",    "title": { "en": "Docked",             "de": "Gedockt"         } },
-    { "id": "updating",        "title": { "en": "Updating",        "de": "Aktualisierung"   } },
-    { "id": "remote_control",  "title": { "en": "Remote Control",  "de": "Fernsteuerung"    } }
+    {
+      "id": "idle",
+      "title": {
+        "en": "Idle",
+        "de": "Bereit"
+      }
+    },
+    {
+      "id": "mowing",
+      "title": {
+        "en": "Mowing",
+        "de": "Mähen"
+      }
+    },
+    {
+      "id": "standby",
+      "title": {
+        "en": "Standby",
+        "de": "Standby"
+      }
+    },
+    {
+      "id": "paused",
+      "title": {
+        "en": "Paused",
+        "de": "Pausiert"
+      }
+    },
+    {
+      "id": "error",
+      "title": {
+        "en": "Error",
+        "de": "Fehler"
+      }
+    },
+    {
+      "id": "returning",
+      "title": {
+        "en": "Returning to Dock",
+        "de": "Kehrt zurück"
+      }
+    },
+    {
+      "id": "charging",
+      "title": {
+        "en": "Charging",
+        "de": "Lädt"
+      }
+    },
+    {
+      "id": "mapping",
+      "title": {
+        "en": "Mapping",
+        "de": "Kartierung"
+      }
+    },
+    {
+      "id": "docked",
+      "title": {
+        "en": "Docked",
+        "de": "Angedockt"
+      }
+    },
+    {
+      "id": "updating",
+      "title": {
+        "en": "Updating",
+        "de": "Aktualisierung"
+      }
+    },
+    {
+      "id": "remote_control",
+      "title": {
+        "en": "Remote Control",
+        "de": "Fernsteuerung"
+      }
+    },
+    {
+      "id": "garage_home",
+      "title": {
+        "en": "Home",
+        "de": "Zuhause"
+      }
+    },
+    {
+      "id": "garage_exiting",
+      "title": {
+        "en": "Exiting garage",
+        "de": "Ausfahrt"
+      }
+    },
+    {
+      "id": "garage_adjusting",
+      "title": {
+        "en": "Adjusting",
+        "de": "Justieren"
+      }
+    },
+    {
+      "id": "garage_opening",
+      "title": {
+        "en": "Garage opening",
+        "de": "Garage öffnet"
+      }
+    },
+    {
+      "id": "garage_closing",
+      "title": {
+        "en": "Garage closing",
+        "de": "Garage schließt"
+      }
+    },
+    {
+      "id": "garage_maintenance_transit",
+      "title": {
+        "en": "Going to maintenance point",
+        "de": "Fährt zum Wartungspunkt"
+      }
+    },
+    {
+      "id": "garage_maintenance_reached",
+      "title": {
+        "en": "Maintenance point reached",
+        "de": "Wartungspunkt erreicht"
+      }
+    },
+    {
+      "id": "garage_free_drive",
+      "title": {
+        "en": "Garage transit",
+        "de": "Garagenfahrt"
+      }
+    },
+    {
+      "id": "garage_positioning",
+      "title": {
+        "en": "Positioning",
+        "de": "Positionierung"
+      }
+    },
+    {
+      "id": "garage_app_control",
+      "title": {
+        "en": "App control",
+        "de": "App-Steuerung"
+      }
+    }
   ],
   "getable": true,
   "setable": false,

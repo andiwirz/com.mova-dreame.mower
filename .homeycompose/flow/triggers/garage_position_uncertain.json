@@ -1,0 +1,23 @@
+{
+  "title": {
+    "en": "Garage position uncertain",
+    "de": "Garage Position unsicher"
+  },
+  "tokens": [
+    {
+      "name": "reason",
+      "type": "string",
+      "title": {
+        "en": "Reason",
+        "de": "Grund"
+      }
+    }
+  ],
+  "args": [
+    {
+      "name": "device",
+      "type": "device",
+      "filter": "driver_id=mower"
+    }
+  ]
+}

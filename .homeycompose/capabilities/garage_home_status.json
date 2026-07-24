@@ -1,0 +1,42 @@
+{
+  "type": "enum",
+  "title": {
+    "en": "Home",
+    "de": "Zuhause"
+  },
+  "getable": true,
+  "setable": false,
+  "values": [
+    {
+      "id": "unknown",
+      "title": {
+        "en": "Unknown",
+        "de": "Unbekannt"
+      }
+    },
+    {
+      "id": "away",
+      "title": {
+        "en": "Away",
+        "de": "Unterwegs"
+      }
+    },
+    {
+      "id": "adjusting",
+      "title": {
+        "en": "Adjusting",
+        "de": "Justieren"
+      }
+    },
+    {
+      "id": "home",
+      "title": {
+        "en": "Home",
+        "de": "Zuhause"
+      }
+    }
+  ],
+  "icon": "/assets/capabilities/mower_status.svg",
+  "insights": false,
+  "uiComponent": "sensor"
+}

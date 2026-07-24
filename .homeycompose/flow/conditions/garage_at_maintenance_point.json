@@ -1,0 +1,13 @@
+{
+  "title": {
+    "en": "Mower is at maintenance point",
+    "de": "Mäher ist am Wartungspunkt"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=mower"
+    }
+  ]
+}

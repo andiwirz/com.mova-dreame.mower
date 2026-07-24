@@ -1,0 +1,23 @@
+{
+  "title": {
+    "en": "External start blocked by garage safety",
+    "de": "Externer Start durch Garage blockiert"
+  },
+  "tokens": [
+    {
+      "name": "reason",
+      "type": "string",
+      "title": {
+        "en": "Reason",
+        "de": "Grund"
+      }
+    }
+  ],
+  "args": [
+    {
+      "name": "device",
+      "type": "device",
+      "filter": "driver_id=mower"
+    }
+  ]
+}

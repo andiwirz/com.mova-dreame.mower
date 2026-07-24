@@ -1,6 +1,6 @@
 {
   "name": "com.mova-dreame.mower",
-  "version": "1.0.0",
+  "version": "1.2.1",
   "description": "Control MOVA and Dreame robotic lawn mowers from Homey",
   "main": "app.js",
   "scripts": {

@@ -33,14 +33,29 @@
     "child_lock",
     "consumable_blade",
     "consumable_brush",
-    "consumable_robot"
+    "consumable_robot",
+    "cmd_garage_pause_mode",
+    "cmd_garage_test_exit",
+    "cmd_garage_save_danger_center",
+    "cmd_garage_save_safety_line_a",
+    "cmd_garage_save_safety_line_b",
+    "garage_door_status",
+    "garage_safety_status",
+    "garage_sensor_available_status",
+    "garage_sensor_battery"
   ],
   "capabilitiesOptions": {
     "alarm_generic": {
-      "title": { "en": "Error", "de": "Fehler" }
+      "title": {
+        "en": "Error",
+        "de": "Fehler"
+      }
     },
     "measure_battery": {
-      "title": { "en": "Battery", "de": "Akku" }
+      "title": {
+        "en": "Battery",
+        "de": "Akku"
+      }
     },
     "cutting_height": {
       "preventInsights": true,
@@ -69,10 +84,28 @@
     "firmware_update": {
       "preventInsights": true,
       "preventTag": true
+    },
+    "garage_door_status": {
+      "preventInsights": true,
+      "preventTag": false
+    },
+    "garage_sensor_available_status": {
+      "preventInsights": true,
+      "preventTag": false
+    },
+    "garage_sensor_battery": {
+      "preventInsights": true,
+      "preventTag": false
+    },
+    "garage_safety_status": {
+      "preventInsights": true,
+      "preventTag": false
     }
   },
   "energy": {
-    "batteries": ["INTERNAL"]
+    "batteries": [
+      "INTERNAL"
+    ]
   },
   "images": {
     "small": "/drivers/mower/assets/images/small.png",
@@ -80,26 +113,39 @@
     "xlarge": "/drivers/mower/assets/images/xlarge.png"
   },
   "pair": [
-    { "id": "pair" }
+    {
+      "id": "pair"
+    }
   ],
   "repair": [
-    { "id": "repair" }
+    {
+      "id": "repair"
+    }
   ],
   "settings": [
     {
       "type": "group",
-      "label": { "en": "Device Info", "de": "Geräteinformationen" },
+      "label": {
+        "en": "Device Info",
+        "de": "Geräteinformationen"
+      },
       "children": [
         {
           "id": "device_model",
           "type": "label",
-          "label": { "en": "Model", "de": "Modell" },
+          "label": {
+            "en": "Model",
+            "de": "Modell"
+          },
           "value": ""
         },
         {
           "id": "device_model_id",
           "type": "label",
-          "label": { "en": "Device Model ID", "de": "Gerätemodell-ID" },
+          "label": {
+            "en": "Device Model ID",
+            "de": "Gerätemodell-ID"
+          },
           "value": "",
           "hint": {
             "en": "Technical model identifier (e.g. mova.mower.g2529d)",
@@ -109,49 +155,73 @@
         {
           "id": "firmware_version",
           "type": "label",
-          "label": { "en": "Firmware Version", "de": "Firmware-Version" },
+          "label": {
+            "en": "Firmware Version",
+            "de": "Firmware-Version"
+          },
           "value": ""
         },
         {
           "id": "serial_number",
           "type": "label",
-          "label": { "en": "Serial Number", "de": "Seriennummer" },
+          "label": {
+            "en": "Serial Number",
+            "de": "Seriennummer"
+          },
           "value": ""
         },
         {
           "id": "mac_address",
           "type": "label",
-          "label": { "en": "MAC Address", "de": "MAC-Adresse" },
+          "label": {
+            "en": "MAC Address",
+            "de": "MAC-Adresse"
+          },
           "value": ""
         },
         {
           "id": "username",
           "type": "label",
-          "label": { "en": "Email", "de": "E-Mail" },
+          "label": {
+            "en": "Email",
+            "de": "E-Mail"
+          },
           "value": ""
         },
         {
           "id": "brand",
           "type": "label",
-          "label": { "en": "Brand", "de": "Marke" },
+          "label": {
+            "en": "Brand",
+            "de": "Marke"
+          },
           "value": ""
         },
         {
           "id": "region",
           "type": "label",
-          "label": { "en": "Region", "de": "Region" },
+          "label": {
+            "en": "Region",
+            "de": "Region"
+          },
           "value": ""
         }
       ]
     },
     {
       "type": "group",
-      "label": { "en": "Zones", "de": "Zonen" },
+      "label": {
+        "en": "Zones",
+        "de": "Zonen"
+      },
       "children": [
         {
           "id": "num_zones",
           "type": "label",
-          "label": { "en": "Number of zones", "de": "Anzahl Zonen" },
+          "label": {
+            "en": "Number of zones",
+            "de": "Anzahl Zonen"
+          },
           "value": "",
           "hint": {
             "en": "Auto-detected from map data. Zone and spot options appear in the Zone and Spot pickers on the device card.",
@@ -162,12 +232,18 @@
     },
     {
       "type": "group",
-      "label": { "en": "Cutting Height", "de": "Schnitthöhe" },
+      "label": {
+        "en": "Cutting Height",
+        "de": "Schnitthöhe"
+      },
       "children": [
         {
           "id": "cutting_height_min",
           "type": "number",
-          "label": { "en": "Minimum (mm)", "de": "Minimum (mm)" },
+          "label": {
+            "en": "Minimum (mm)",
+            "de": "Minimum (mm)"
+          },
           "value": 20,
           "min": 20,
           "max": 50,
@@ -180,7 +256,10 @@
         {
           "id": "cutting_height_max",
           "type": "number",
-          "label": { "en": "Maximum (mm)", "de": "Maximum (mm)" },
+          "label": {
+            "en": "Maximum (mm)",
+            "de": "Maximum (mm)"
+          },
           "value": 70,
           "min": 50,
           "max": 100,
@@ -194,12 +273,18 @@
     },
     {
       "type": "group",
-      "label": { "en": "Edge Mowing", "de": "Randmähen" },
+      "label": {
+        "en": "Edge Mowing",
+        "de": "Randmähen"
+      },
       "children": [
         {
           "id": "edge_mowing_auto",
           "type": "checkbox",
-          "label": { "en": "Automatic Edge Mowing", "de": "Automatisches Randmähen" },
+          "label": {
+            "en": "Automatic Edge Mowing",
+            "de": "Automatisches Randmähen"
+          },
           "value": true,
           "hint": {
             "en": "The robot automatically mows edges after finishing the main area.",
@@ -209,7 +294,10 @@
         {
           "id": "edge_mowing_safe",
           "type": "checkbox",
-          "label": { "en": "Safe Edge Mowing", "de": "Sicheres Randmähen" },
+          "label": {
+            "en": "Safe Edge Mowing",
+            "de": "Sicheres Randmähen"
+          },
           "value": true,
           "hint": {
             "en": "Keeps a small distance from the lawn boundary to avoid damage.",
@@ -219,7 +307,10 @@
         {
           "id": "edge_mowing_ultratrim",
           "type": "checkbox",
-          "label": { "en": "UltraTrim™ 1.0", "de": "UltraTrim™ 1.0" },
+          "label": {
+            "en": "UltraTrim™ 1.0",
+            "de": "UltraTrim™ 1.0"
+          },
           "value": true,
           "hint": {
             "en": "Shifts the cutter disc outward on the last edge pass, leaving a 3 cm grass strip.",
@@ -229,7 +320,10 @@
         {
           "id": "edge_mowing_obstacle",
           "type": "checkbox",
-          "label": { "en": "Obstacle Avoidance at Edges", "de": "Hindernisvermeidung an Kanten" },
+          "label": {
+            "en": "Obstacle Avoidance at Edges",
+            "de": "Hindernisvermeidung an Kanten"
+          },
           "value": true,
           "hint": {
             "en": "Actively navigates around obstacles at edges (may leave some uncut grass).",
@@ -240,12 +334,18 @@
     },
     {
       "type": "group",
-      "label": { "en": "Obstacle Avoidance", "de": "Hindernisvermeidung" },
+      "label": {
+        "en": "Obstacle Avoidance",
+        "de": "Hindernisvermeidung"
+      },
       "children": [
         {
           "id": "obstacle_lidar",
           "type": "checkbox",
-          "label": { "en": "LiDAR Obstacle Detection", "de": "LiDAR-Hinderniserkennung" },
+          "label": {
+            "en": "LiDAR Obstacle Detection",
+            "de": "LiDAR-Hinderniserkennung"
+          },
           "value": true,
           "hint": {
             "en": "Detects and avoids obstacles automatically without contact.",
@@ -255,64 +355,169 @@
         {
           "id": "obstacle_height",
           "type": "dropdown",
-          "label": { "en": "Obstacle Avoidance Height", "de": "Höhe zur Vermeidung von Hindernissen" },
+          "label": {
+            "en": "Obstacle Avoidance Height",
+            "de": "Höhe zur Vermeidung von Hindernissen"
+          },
           "value": "15",
           "hint": {
             "en": "Avoids obstacles taller than this threshold.",
             "de": "Weicht Hindernissen aus, die höher als dieser Wert sind."
           },
           "values": [
-            { "id": "5",  "label": { "en": "5 cm",  "de": "5 cm"  } },
-            { "id": "10", "label": { "en": "10 cm", "de": "10 cm" } },
-            { "id": "15", "label": { "en": "15 cm", "de": "15 cm" } },
-            { "id": "20", "label": { "en": "20 cm", "de": "20 cm" } }
+            {
+              "id": "5",
+              "label": {
+                "en": "5 cm",
+                "de": "5 cm"
+              }
+            },
+            {
+              "id": "10",
+              "label": {
+                "en": "10 cm",
+                "de": "10 cm"
+              }
+            },
+            {
+              "id": "15",
+              "label": {
+                "en": "15 cm",
+                "de": "15 cm"
+              }
+            },
+            {
+              "id": "20",
+              "label": {
+                "en": "20 cm",
+                "de": "20 cm"
+              }
+            }
           ]
         },
         {
           "id": "obstacle_distance",
           "type": "dropdown",
-          "label": { "en": "Obstacle Avoidance Distance", "de": "Abstand bei Hindernisvermeidung" },
+          "label": {
+            "en": "Obstacle Avoidance Distance",
+            "de": "Abstand bei Hindernisvermeidung"
+          },
           "value": "15",
           "hint": {
             "en": "Distance at which the robot starts avoiding an obstacle.",
             "de": "Entfernung, ab der der Roboter Hindernissen ausweicht."
           },
           "values": [
-            { "id": "10", "label": { "en": "10 cm", "de": "10 cm" } },
-            { "id": "15", "label": { "en": "15 cm", "de": "15 cm" } },
-            { "id": "20", "label": { "en": "20 cm", "de": "20 cm" } }
+            {
+              "id": "10",
+              "label": {
+                "en": "10 cm",
+                "de": "10 cm"
+              }
+            },
+            {
+              "id": "15",
+              "label": {
+                "en": "15 cm",
+                "de": "15 cm"
+              }
+            },
+            {
+              "id": "20",
+              "label": {
+                "en": "20 cm",
+                "de": "20 cm"
+              }
+            }
           ]
         },
         {
           "id": "obstacle_ai",
           "type": "dropdown",
-          "label": { "en": "AI Obstacle Detection", "de": "AI-Hinderniserkennung" },
+          "label": {
+            "en": "AI Obstacle Detection",
+            "de": "AI-Hinderniserkennung"
+          },
           "value": "7",
           "hint": {
             "en": "Object types the robot detects and avoids using AI.",
             "de": "Hindernistypen, die der Roboter per KI erkennt und umfährt."
           },
           "values": [
-            { "id": "0", "label": { "en": "Off",                      "de": "Aus"                          } },
-            { "id": "1", "label": { "en": "People",                   "de": "Personen"                     } },
-            { "id": "2", "label": { "en": "Animals",                  "de": "Tiere"                        } },
-            { "id": "3", "label": { "en": "People + Animals",         "de": "Personen + Tiere"             } },
-            { "id": "4", "label": { "en": "Objects",                  "de": "Objekte"                      } },
-            { "id": "5", "label": { "en": "People + Objects",         "de": "Personen + Objekte"           } },
-            { "id": "6", "label": { "en": "Animals + Objects",        "de": "Tiere + Objekte"              } },
-            { "id": "7", "label": { "en": "All (People + Animals + Objects)", "de": "Alle (Personen + Tiere + Objekte)" } }
+            {
+              "id": "0",
+              "label": {
+                "en": "Off",
+                "de": "Aus"
+              }
+            },
+            {
+              "id": "1",
+              "label": {
+                "en": "People",
+                "de": "Personen"
+              }
+            },
+            {
+              "id": "2",
+              "label": {
+                "en": "Animals",
+                "de": "Tiere"
+              }
+            },
+            {
+              "id": "3",
+              "label": {
+                "en": "People + Animals",
+                "de": "Personen + Tiere"
+              }
+            },
+            {
+              "id": "4",
+              "label": {
+                "en": "Objects",
+                "de": "Objekte"
+              }
+            },
+            {
+              "id": "5",
+              "label": {
+                "en": "People + Objects",
+                "de": "Personen + Objekte"
+              }
+            },
+            {
+              "id": "6",
+              "label": {
+                "en": "Animals + Objects",
+                "de": "Tiere + Objekte"
+              }
+            },
+            {
+              "id": "7",
+              "label": {
+                "en": "All (People + Animals + Objects)",
+                "de": "Alle (Personen + Tiere + Objekte)"
+              }
+            }
           ]
         }
       ]
     },
     {
       "type": "group",
-      "label": { "en": "Child Lock", "de": "Kindersicherung" },
+      "label": {
+        "en": "Child Lock",
+        "de": "Kindersicherung"
+      },
       "children": [
         {
           "id": "cls_enabled",
           "type": "checkbox",
-          "label": { "en": "Enabled", "de": "Aktiviert" },
+          "label": {
+            "en": "Enabled",
+            "de": "Aktiviert"
+          },
           "value": false,
           "hint": {
             "en": "Locks physical buttons on the mower so it cannot be started manually.",
@@ -323,12 +528,18 @@
     },
     {
       "type": "group",
-      "label": { "en": "Frost Protection", "de": "Frostschutz" },
+      "label": {
+        "en": "Frost Protection",
+        "de": "Frostschutz"
+      },
       "children": [
         {
           "id": "fdp_enabled",
           "type": "checkbox",
-          "label": { "en": "Enabled", "de": "Aktiviert" },
+          "label": {
+            "en": "Enabled",
+            "de": "Aktiviert"
+          },
           "value": false,
           "hint": {
             "en": "The mower will not mow when frost is detected.",
@@ -339,18 +550,27 @@
     },
     {
       "type": "group",
-      "label": { "en": "Rain Protection", "de": "Regenschutz" },
+      "label": {
+        "en": "Rain Protection",
+        "de": "Regenschutz"
+      },
       "children": [
         {
           "id": "wrp_enabled",
           "type": "checkbox",
-          "label": { "en": "Enabled", "de": "Aktiviert" },
+          "label": {
+            "en": "Enabled",
+            "de": "Aktiviert"
+          },
           "value": false
         },
         {
           "id": "wrp_sensitivity",
           "type": "number",
-          "label": { "en": "Sensitivity", "de": "Empfindlichkeit" },
+          "label": {
+            "en": "Sensitivity",
+            "de": "Empfindlichkeit"
+          },
           "value": 1,
           "min": 1,
           "max": 3,
@@ -363,7 +583,10 @@
         {
           "id": "wrp_wait_time",
           "type": "number",
-          "label": { "en": "Wait time (h)", "de": "Wartezeit (Std.)" },
+          "label": {
+            "en": "Wait time (h)",
+            "de": "Wartezeit (Std.)"
+          },
           "value": 7,
           "min": 1,
           "max": 24,
@@ -377,12 +600,18 @@
     },
     {
       "type": "group",
-      "label": { "en": "Lighting", "de": "Beleuchtung" },
+      "label": {
+        "en": "Lighting",
+        "de": "Beleuchtung"
+      },
       "children": [
         {
           "id": "lit_enabled",
           "type": "checkbox",
-          "label": { "en": "Custom LED activation time window", "de": "Benutzerdefinierter LED-Aktivierungszeitraum" },
+          "label": {
+            "en": "Custom LED activation time window",
+            "de": "Benutzerdefinierter LED-Aktivierungszeitraum"
+          },
           "value": false,
           "hint": {
             "en": "When enabled, the mower only turns on the light during the specified time window.",
@@ -392,7 +621,10 @@
         {
           "id": "lit_time_start",
           "type": "number",
-          "label": { "en": "Start (h)", "de": "Start (Uhr)" },
+          "label": {
+            "en": "Start (h)",
+            "de": "Start (Uhr)"
+          },
           "value": 8,
           "min": 0,
           "max": 23,
@@ -405,7 +637,10 @@
         {
           "id": "lit_time_end",
           "type": "number",
-          "label": { "en": "End (h)", "de": "Ende (Uhr)" },
+          "label": {
+            "en": "End (h)",
+            "de": "Ende (Uhr)"
+          },
           "value": 20,
           "min": 1,
           "max": 24,
@@ -418,7 +653,10 @@
         {
           "id": "lit_standby",
           "type": "checkbox",
-          "label": { "en": "Light in standby", "de": "Licht im Standby" },
+          "label": {
+            "en": "Light in standby",
+            "de": "Licht im Standby"
+          },
           "value": false,
           "hint": {
             "en": "Turn on the LED when the mower is in standby.",
@@ -428,7 +666,10 @@
         {
           "id": "lit_working",
           "type": "checkbox",
-          "label": { "en": "Light while mowing", "de": "Licht während des Mähens" },
+          "label": {
+            "en": "Light while mowing",
+            "de": "Licht während des Mähens"
+          },
           "value": false,
           "hint": {
             "en": "Turn on the LED while the mower is working.",
@@ -438,7 +679,10 @@
         {
           "id": "lit_charging",
           "type": "checkbox",
-          "label": { "en": "Light while charging", "de": "Licht beim Laden" },
+          "label": {
+            "en": "Light while charging",
+            "de": "Licht beim Laden"
+          },
           "value": false,
           "hint": {
             "en": "Turn on the LED while the mower is charging.",
@@ -448,7 +692,10 @@
         {
           "id": "lit_error",
           "type": "checkbox",
-          "label": { "en": "Light on error", "de": "Licht bei Fehler" },
+          "label": {
+            "en": "Light on error",
+            "de": "Licht bei Fehler"
+          },
           "value": false,
           "hint": {
             "en": "Turn on the LED when the mower reports an error.",
@@ -459,12 +706,18 @@
     },
     {
       "type": "group",
-      "label": { "en": "Battery", "de": "Akku" },
+      "label": {
+        "en": "Battery",
+        "de": "Akku"
+      },
       "children": [
         {
           "id": "bat_return_pct",
           "type": "number",
-          "label": { "en": "Return charging threshold (%)", "de": "Ladestand für automatisches Aufladen (%)" },
+          "label": {
+            "en": "Return charging threshold (%)",
+            "de": "Ladestand für automatisches Aufladen (%)"
+          },
           "value": 15,
           "min": 5,
           "max": 90,
@@ -477,7 +730,10 @@
         {
           "id": "bat_resume_pct",
           "type": "number",
-          "label": { "en": "Resume task threshold (%)", "de": "Ladestand für Wiederaufnahme der Aufgaben (%)" },
+          "label": {
+            "en": "Resume task threshold (%)",
+            "de": "Ladestand für Wiederaufnahme der Aufgaben (%)"
+          },
           "value": 100,
           "min": 10,
           "max": 100,
@@ -490,7 +746,10 @@
         {
           "id": "bat_auto_resume",
           "type": "checkbox",
-          "label": { "en": "Resume mowing after charging", "de": "Mähen nach dem Laden fortsetzen" },
+          "label": {
+            "en": "Resume mowing after charging",
+            "de": "Mähen nach dem Laden fortsetzen"
+          },
           "value": false,
           "hint": {
             "en": "When enabled, the mower automatically resumes its unfinished task after charging is complete.",
@@ -501,12 +760,18 @@
     },
     {
       "type": "group",
-      "label": { "en": "Low Speed at Night", "de": "Niedrige Geschwindigkeit in der Nacht" },
+      "label": {
+        "en": "Low Speed at Night",
+        "de": "Niedrige Geschwindigkeit in der Nacht"
+      },
       "children": [
         {
           "id": "low_enabled",
           "type": "checkbox",
-          "label": { "en": "Enabled", "de": "Aktiviert" },
+          "label": {
+            "en": "Enabled",
+            "de": "Aktiviert"
+          },
           "value": false,
           "hint": {
             "en": "When enabled, the mower automatically slows down during the set time window to protect animals active at night.",
@@ -516,7 +781,10 @@
         {
           "id": "low_start",
           "type": "number",
-          "label": { "en": "Start (h)", "de": "Start (Uhr)" },
+          "label": {
+            "en": "Start (h)",
+            "de": "Start (Uhr)"
+          },
           "value": 20,
           "min": 0,
           "max": 23,
@@ -529,7 +797,10 @@
         {
           "id": "low_end",
           "type": "number",
-          "label": { "en": "End (h)", "de": "Ende (Uhr)" },
+          "label": {
+            "en": "End (h)",
+            "de": "Ende (Uhr)"
+          },
           "value": 8,
           "min": 0,
           "max": 23,
@@ -543,12 +814,18 @@
     },
     {
       "type": "group",
-      "label": { "en": "Do Not Disturb", "de": "Bitte nicht stören" },
+      "label": {
+        "en": "Do Not Disturb",
+        "de": "Bitte nicht stören"
+      },
       "children": [
         {
           "id": "dnd_enabled",
           "type": "checkbox",
-          "label": { "en": "Enabled", "de": "Aktiviert" },
+          "label": {
+            "en": "Enabled",
+            "de": "Aktiviert"
+          },
           "value": false,
           "hint": {
             "en": "When enabled, the mower will not start automatically during the set time window. If it is already mowing it will stop and return to the dock.",
@@ -558,7 +835,10 @@
         {
           "id": "dnd_start",
           "type": "number",
-          "label": { "en": "Start (h)", "de": "Start (Uhr)" },
+          "label": {
+            "en": "Start (h)",
+            "de": "Start (Uhr)"
+          },
           "value": 22,
           "min": 0,
           "max": 23,
@@ -571,7 +851,10 @@
         {
           "id": "dnd_end",
           "type": "number",
-          "label": { "en": "End (h)", "de": "Ende (Uhr)" },
+          "label": {
+            "en": "End (h)",
+            "de": "Ende (Uhr)"
+          },
           "value": 8,
           "min": 0,
           "max": 23,
@@ -585,12 +868,18 @@
     },
     {
       "type": "group",
-      "label": { "en": "Voice Announcements", "de": "Sprachansagemodi" },
+      "label": {
+        "en": "Voice Announcements",
+        "de": "Sprachansagemodi"
+      },
       "children": [
         {
           "id": "voice_notification",
           "type": "checkbox",
-          "label": { "en": "Regular notification", "de": "Regelmäßige Benachrichtigungsansage" },
+          "label": {
+            "en": "Regular notification",
+            "de": "Regelmäßige Benachrichtigungsansage"
+          },
           "value": false,
           "hint": {
             "en": "The mower announces regular status notifications.",
@@ -600,7 +889,10 @@
         {
           "id": "voice_work_status",
           "type": "checkbox",
-          "label": { "en": "Work status", "de": "Arbeitsstatusansage" },
+          "label": {
+            "en": "Work status",
+            "de": "Arbeitsstatusansage"
+          },
           "value": false,
           "hint": {
             "en": "The mower announces work status changes (e.g. mowing started, returning to dock).",
@@ -610,7 +902,10 @@
         {
           "id": "voice_special_status",
           "type": "checkbox",
-          "label": { "en": "Special status", "de": "Spezialstatusansage" },
+          "label": {
+            "en": "Special status",
+            "de": "Spezialstatusansage"
+          },
           "value": false,
           "hint": {
             "en": "The mower announces special status events.",
@@ -620,7 +915,10 @@
         {
           "id": "voice_error_status",
           "type": "checkbox",
-          "label": { "en": "Error status", "de": "Fehlerstatusansage" },
+          "label": {
+            "en": "Error status",
+            "de": "Fehlerstatusansage"
+          },
           "value": false,
           "hint": {
             "en": "The mower announces error conditions.",
@@ -631,12 +929,18 @@
     },
     {
       "type": "group",
-      "label": { "en": "Anti-Theft Alarm", "de": "Anti-Diebstahl-Alarm" },
+      "label": {
+        "en": "Anti-Theft Alarm",
+        "de": "Anti-Diebstahl-Alarm"
+      },
       "children": [
         {
           "id": "ata_lift",
           "type": "checkbox",
-          "label": { "en": "Lift alarm", "de": "Hebealarm" },
+          "label": {
+            "en": "Lift alarm",
+            "de": "Hebealarm"
+          },
           "value": false,
           "hint": {
             "en": "When enabled, the mower locks itself and triggers an alarm immediately when lifted.",
@@ -646,7 +950,10 @@
         {
           "id": "ata_map_alarm",
           "type": "checkbox",
-          "label": { "en": "Alarm when leaving the map", "de": "Alarm bei Verlassen der Karte" },
+          "label": {
+            "en": "Alarm when leaving the map",
+            "de": "Alarm bei Verlassen der Karte"
+          },
           "value": false,
           "hint": {
             "en": "Triggers an alarm when the mower leaves the mapped area. Requires the Link module.",
@@ -656,7 +963,10 @@
         {
           "id": "ata_realtime",
           "type": "checkbox",
-          "label": { "en": "Real-time location", "de": "Standort in Echtzeit" },
+          "label": {
+            "en": "Real-time location",
+            "de": "Standort in Echtzeit"
+          },
           "value": false,
           "hint": {
             "en": "Enables real-time GPS location tracking. Requires the Link module.",
@@ -667,12 +977,18 @@
     },
     {
       "type": "group",
-      "label": { "en": "AI Obstacle Detection", "de": "KI-Hinderniserkennung" },
+      "label": {
+        "en": "AI Obstacle Detection",
+        "de": "KI-Hinderniserkennung"
+      },
       "children": [
         {
           "id": "aop_enabled",
           "type": "checkbox",
-          "label": { "en": "Capture photos of AI-detected obstacles", "de": "Fotos von KI-erkannten Hindernissen aufnehmen" },
+          "label": {
+            "en": "Capture photos of AI-detected obstacles",
+            "de": "Fotos von KI-erkannten Hindernissen aufnehmen"
+          },
           "value": false,
           "hint": {
             "en": "When enabled, the mower photographs obstacles detected by AI. You can then tap the obstacle icons on the map in the manufacturer app to view the actual photos.",
@@ -683,12 +999,18 @@
     },
     {
       "type": "group",
-      "label": { "en": "Consumable Max Life", "de": "Verbrauchsmaterial Maximalwerte" },
+      "label": {
+        "en": "Consumable Max Life",
+        "de": "Verbrauchsmaterial Maximalwerte"
+      },
       "children": [
         {
           "id": "cms_blade_max",
           "type": "number",
-          "label": { "en": "Blade max (hours)", "de": "Klinge max (Stunden)" },
+          "label": {
+            "en": "Blade max (hours)",
+            "de": "Klinge max (Stunden)"
+          },
           "value": 100,
           "min": 10,
           "max": 500,
@@ -701,7 +1023,10 @@
         {
           "id": "cms_brush_max",
           "type": "number",
-          "label": { "en": "Brush max (hours)", "de": "Bürste max (Stunden)" },
+          "label": {
+            "en": "Brush max (hours)",
+            "de": "Bürste max (Stunden)"
+          },
           "value": 500,
           "min": 50,
           "max": 2000,
@@ -714,7 +1039,10 @@
         {
           "id": "cms_robot_max",
           "type": "number",
-          "label": { "en": "Robot maintenance max (hours)", "de": "Roboterwartung max (Stunden)" },
+          "label": {
+            "en": "Robot maintenance max (hours)",
+            "de": "Roboterwartung max (Stunden)"
+          },
           "value": 60,
           "min": 10,
           "max": 200,
@@ -728,12 +1056,18 @@
     },
     {
       "type": "group",
-      "label": { "en": "Connection", "de": "Verbindung" },
+      "label": {
+        "en": "Connection",
+        "de": "Verbindung"
+      },
       "children": [
         {
           "id": "poll_interval",
           "type": "number",
-          "label": { "en": "Poll Interval (seconds)", "de": "Abfrageintervall (Sekunden)" },
+          "label": {
+            "en": "Poll Interval (seconds)",
+            "de": "Abfrageintervall (Sekunden)"
+          },
           "value": 30,
           "min": 10,
           "max": 300,
@@ -741,6 +1075,383 @@
           "hint": {
             "en": "How often the mower status is polled.",
             "de": "Wie oft der Status abgefragt wird."
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": {
+        "en": "Garage Safety",
+        "de": "Garagensicherheit"
+      },
+      "children": [
+        {
+          "id": "garage_mode_enabled",
+          "type": "checkbox",
+          "label": {
+            "en": "Enable garage mode",
+            "de": "Garagenmodus aktivieren"
+          },
+          "value": false
+        },
+        {
+          "id": "garage_sensor_enabled",
+          "type": "checkbox",
+          "label": {
+            "en": "Use garage door sensor",
+            "de": "Torsensor verwenden"
+          },
+          "value": false
+        },
+        {
+          "id": "garage_sensor_min_battery",
+          "type": "number",
+          "label": {
+            "en": "Minimum sensor battery (%)",
+            "de": "Mindestladung Torsensor (%)"
+          },
+          "value": 15,
+          "min": 0,
+          "max": 100,
+          "step": 1
+        },
+        {
+          "id": "garage_sensor_watchdog_minutes",
+          "type": "number",
+          "label": {
+            "en": "Sensor offline timeout (min)",
+            "de": "Sensor-Offline-Zeit (min)"
+          },
+          "value": 30,
+          "min": 1,
+          "max": 240,
+          "step": 1
+        },
+        {
+          "id": "garage_open_stabilize_seconds",
+          "type": "number",
+          "label": {
+            "en": "Open stabilisation time (s)",
+            "de": "Tor-offen-Stabilisierungszeit (s)"
+          },
+          "value": 10,
+          "min": 0,
+          "max": 60,
+          "step": 1
+        },
+        {
+          "id": "garage_open_duration_seconds",
+          "type": "number",
+          "label": {
+            "en": "Door opening time without sensor (s)",
+            "de": "Tor-Öffnungsdauer ohne Sensor (s)"
+          },
+          "value": 10,
+          "min": 0,
+          "max": 120,
+          "step": 1,
+          "hint": {
+            "en": "Used only when the door sensor is disabled or unavailable.",
+            "de": "Wird nur genutzt, wenn der Torsensor deaktiviert oder nicht verfügbar ist."
+          }
+        },
+        {
+          "id": "garage_close_duration_seconds",
+          "type": "number",
+          "label": {
+            "en": "Door closing time without sensor (s)",
+            "de": "Tor-Schließdauer ohne Sensor (s)"
+          },
+          "value": 10,
+          "min": 0,
+          "max": 120,
+          "step": 1,
+          "hint": {
+            "en": "Used only when the door sensor is disabled or unavailable.",
+            "de": "Wird nur genutzt, wenn der Torsensor deaktiviert oder nicht verfügbar ist."
+          }
+        },
+        {
+          "id": "garage_speed_source",
+          "type": "dropdown",
+          "label": {
+            "en": "Speed source for garage ETA",
+            "de": "Geschwindigkeitsquelle für Garagen-ETA"
+          },
+          "value": "auto",
+          "values": [
+            {
+              "id": "auto",
+              "label": {
+                "en": "Automatic: live → measured → model → user",
+                "de": "Automatisch: Live → gemessen → Modell → Benutzer"
+              }
+            },
+            {
+              "id": "live",
+              "label": {
+                "en": "Prefer live mower speed",
+                "de": "Live-Geschwindigkeit bevorzugen"
+              }
+            },
+            {
+              "id": "measured",
+              "label": {
+                "en": "Prefer measured position average",
+                "de": "Gemessenen Positionsdurchschnitt bevorzugen"
+              }
+            },
+            {
+              "id": "model",
+              "label": {
+                "en": "Prefer model default",
+                "de": "Modellstandard bevorzugen"
+              }
+            },
+            {
+              "id": "user",
+              "label": {
+                "en": "Use user setting only",
+                "de": "Nur Benutzereinstellung verwenden"
+              }
+            }
+          ],
+          "hint": {
+            "en": "Used only for garage return ETA and half-map decision logging. Live speed is used automatically if the mower exposes it.",
+            "de": "Nur für Rückkehr-ETA und Halb-Karten-Entscheidungen. Live-Geschwindigkeit wird automatisch genutzt, falls der Mäher sie liefert."
+          }
+        },
+        {
+          "id": "garage_mower_speed_value",
+          "type": "number",
+          "label": {
+            "en": "Fallback/custom mower speed",
+            "de": "Fallback-/benutzerdefinierte Mähergeschwindigkeit"
+          },
+          "value": 1.8,
+          "min": 0,
+          "max": 10000,
+          "step": 0.1,
+          "hint": {
+            "en": "Used only when no higher-priority speed source is available or when speed source is set to user only. Internally converted to m/s.",
+            "de": "Wird nur genutzt, wenn keine höher priorisierte Quelle verfügbar ist oder die Quelle auf Nur Benutzer steht. Intern wird in m/s umgerechnet."
+          }
+        },
+        {
+          "id": "garage_speed_unit",
+          "type": "dropdown",
+          "label": {
+            "en": "Speed unit",
+            "de": "Geschwindigkeitseinheit"
+          },
+          "value": "kmh",
+          "values": [
+            {
+              "id": "kmh",
+              "label": {
+                "en": "km/h",
+                "de": "km/h"
+              }
+            },
+            {
+              "id": "mph",
+              "label": {
+                "en": "mph",
+                "de": "mph"
+              }
+            },
+            {
+              "id": "mmps",
+              "label": {
+                "en": "mm/s",
+                "de": "mm/s"
+              }
+            },
+            {
+              "id": "mps",
+              "label": {
+                "en": "m/s",
+                "de": "m/s"
+              }
+            }
+          ]
+        },
+        {
+          "id": "garage_danger_radius_mm",
+          "type": "number",
+          "label": {
+            "en": "Danger area radius (mm)",
+            "de": "Gefahrenbereich-Radius (mm)"
+          },
+          "value": 1200,
+          "min": 100,
+          "max": 10000,
+          "step": 100
+        },
+        {
+          "id": "garage_danger_hysteresis_mm",
+          "type": "number",
+          "label": {
+            "en": "Danger area hysteresis (mm)",
+            "de": "Gefahrenbereich-Hysterese (mm)"
+          },
+          "value": 250,
+          "min": 0,
+          "max": 2000,
+          "step": 50,
+          "hint": {
+            "en": "Prevents inside/outside flicker at the edge of the danger circle.",
+            "de": "Verhindert Flackern am Rand des Gefahrenbereich-Kreises."
+          }
+        },
+        {
+          "id": "garage_line_hysteresis_mm",
+          "type": "number",
+          "label": {
+            "en": "Safety line hysteresis (mm)",
+            "de": "Sicherheitslinien-Hysterese (mm)"
+          },
+          "value": 250,
+          "min": 0,
+          "max": 2000,
+          "step": 50,
+          "hint": {
+            "en": "Line side only changes after the mower is clearly on the other side.",
+            "de": "Die Linienseite wechselt erst, wenn der Mäher klar auf der anderen Seite ist."
+          }
+        },
+        {
+          "id": "garage_line_segment_margin_mm",
+          "type": "number",
+          "label": {
+            "en": "Safety line segment margin (mm)",
+            "de": "Sicherheitslinien-Karenz A/B (mm)"
+          },
+          "value": 500,
+          "min": 0,
+          "max": 3000,
+          "step": 50,
+          "hint": {
+            "en": "Only crossings on the A-B line segment plus this margin are accepted.",
+            "de": "Nur Querungen auf dem Abschnitt A–B plus dieser Karenz werden ausgewertet."
+          }
+        },
+        {
+          "id": "garage_marker_diagnosis",
+          "type": "label",
+          "label": {
+            "en": "Marker diagnosis",
+            "de": "Marker-Diagnose"
+          },
+          "value": "Noch nicht geprüft",
+          "hint": {
+            "en": "Shows which garage markers are set and whether the safety line is plausible.",
+            "de": "Zeigt, welche Garagenmarker gesetzt sind und ob die Sicherheitslinie plausibel ist."
+          }
+        },
+        {
+          "id": "garage_logging_enabled",
+          "type": "checkbox",
+          "label": {
+            "en": "Enable garage logging",
+            "de": "Garagen-Logging aktivieren"
+          },
+          "value": false,
+          "hint": {
+            "en": "Shows normal, user-relevant garage events in the Homey timeline.",
+            "de": "Zeigt normale, benutzerrelevante Garagenereignisse in der Homey-Zeitleiste."
+          }
+        },
+        {
+          "id": "garage_debug_verbose",
+          "type": "checkbox",
+          "label": {
+            "en": "Enable debug logging",
+            "de": "Debug-Logging aktivieren"
+          },
+          "value": false,
+          "hint": {
+            "en": "Adds detailed internal garage states and diagnostic decisions to the timeline. Requires garage logging to be enabled.",
+            "de": "Ergänzt detaillierte interne Garagenzustände und Diagnoseentscheidungen in der Zeitleiste. Garagen-Logging muss dafür aktiviert sein."
+          }
+        },
+        {
+          "id": "map_show_robot_position",
+          "type": "checkbox",
+          "label": {
+            "en": "Show mower position on map",
+            "de": "Mäherposition auf Karte anzeigen"
+          },
+          "value": true
+        },
+        {
+          "id": "map_show_direction",
+          "type": "checkbox",
+          "label": {
+            "en": "Show mower direction on map",
+            "de": "Fahrtrichtung auf Karte anzeigen"
+          },
+          "value": true
+        },
+        {
+          "id": "map_show_route",
+          "type": "checkbox",
+          "label": {
+            "en": "Show driven route on map",
+            "de": "Gefahrene Route auf Karte anzeigen"
+          },
+          "value": true
+        },
+        {
+          "id": "map_show_maintenance_point",
+          "type": "checkbox",
+          "label": {
+            "en": "Show maintenance point on map",
+            "de": "Wartungspunkt auf Karte anzeigen"
+          },
+          "value": true
+        },
+        {
+          "id": "garage_map_overlay_enabled",
+          "type": "checkbox",
+          "label": {
+            "en": "Show garage overlay on map",
+            "de": "Garagen-Overlay auf Karte anzeigen"
+          },
+          "value": false,
+          "hint": {
+            "en": "Draws safety line, danger area, maintenance point and caution zone on the map widget. Original map remains unchanged when disabled.",
+            "de": "Zeichnet Sicherheitslinie, Gefahrenbereich, Wartungspunkt und Vorsichtszone im Karten-Widget. Bei deaktivierter Option bleibt die Karte unverändert."
+          }
+        },
+        {
+          "id": "garage_caution_radius_mm",
+          "type": "number",
+          "label": {
+            "en": "Caution zone radius (mm)",
+            "de": "Vorsichtsbereich-Radius (mm)"
+          },
+          "value": 1800,
+          "min": 0,
+          "max": 10000,
+          "step": 100,
+          "hint": {
+            "en": "Additional visual/diagnostic slow-care area around the garage. 0 disables it.",
+            "de": "Zusätzlicher visueller/diagnostischer Vorsichtsbereich um die Garage. 0 deaktiviert ihn."
+          }
+        },
+        {
+          "id": "garage_reset_markers",
+          "type": "checkbox",
+          "label": {
+            "en": "Reset garage markers",
+            "de": "Garagenmarker zurücksetzen"
+          },
+          "value": false,
+          "hint": {
+            "en": "After saving this setting, the marker buttons become visible again and this toggle resets itself.",
+            "de": "Nach dem Speichern werden die Marker-Buttons wieder sichtbar und dieser Schalter springt zurück."
           }
         }
       ]

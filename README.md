@@ -2,7 +2,7 @@ MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct
 
 ## Features
 
-- **Action buttons** on the device card: Start Mowing, Start Spot Mowing, Pause, Resume Mowing, Stop, Return to Dock, Go to Maintenance Point
+- **Action buttons** on the device card: Start Mowing, Start Spot Mowing, Pause, Stop, Return to Dock, Go to Maintenance Point
 - **Zone picker** — select a zone, the full area, or edge mowing from a dynamic list built from your map; press Start Mowing to begin
 - **Spot picker** — select a configured spot from your map; press Start Spot Mowing to begin
 - **Live status**: battery level, charging status, mower status (mowing / paused / docked / error / …)
@@ -38,15 +38,13 @@ MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct
 | <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_start_mowing.svg" width="28" height="28"> | **Start Mowing** | Button — starts mowing using the selection in the Zone picker |
 | <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_start_spot_mowing.svg" width="28" height="28"> | **Start Spot Mowing** | Button — starts mowing at the location selected in the Spot picker |
 | <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_pause.svg" width="28" height="28"> | **Pause** | Button — pauses the mower; it waits in place until resumed |
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_resume.svg" width="28" height="28"> | **Resume Mowing** | Button — resumes the current mowing session after a pause or error without requiring a zone selection; equivalent to "Continue" in the Dreame app |
 | <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_stop.svg" width="28" height="28"> | **Stop** | Button — stops mowing and keeps the mower where it is |
 | <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_dock.svg" width="28" height="28"> | **Return to Dock** | Button — sends the mower back to the charging station |
 | <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cmd_maintenance_point.svg" width="28" height="28"> | **Go to Maintenance Point** | Button — drives the mower to its configured maintenance point |
 | | **Battery** | Battery level (0–100 %) |
 | | **Error Alarm** | Active when the mower reports an error condition |
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/mower_error.svg" width="28" height="28"> | **Error Description** | Current error or warning description (e.g. "Robot trapped / stuck", "Docking failed"); cleared automatically when the mower leaves the error state; available as a tag in Flows |
 | <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/mower_status.svg" width="28" height="28"> | **Mower Status** | Current state: `mowing` · `paused` · `returning` · `docked` · `charging` · `idle` · `standby` · `mapping` · `updating` · `remote_control` · `error` |
-| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/charging_status.svg" width="28" height="28"> | **Charging Status** | `charging` · `not_charging` · `charging_completed` · `returning` · `paused_cold` · `paused_hot` |
+| <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/charging_status.svg" width="28" height="28"> | **Charging Status** | `charging` · `not_charging` · `charging_completed` · `returning` · `paused_cold` |
 | | **Zone Picker** | Select what to mow: Full Area, individual zones, or edge mowing — populated automatically from the map |
 | | **Spot Picker** | Select a named spot to mow — populated automatically from the map |
 | <img src="https://raw.githubusercontent.com/andiwirz/com.mova-dreame.mower/main/assets/capabilities/cutting_height.svg" width="28" height="28"> | **Cutting Height** | Slider — blade height in mm; read and set directly from the device card |
@@ -141,31 +139,6 @@ Lets you browse completed mowing sessions fetched from the cloud activity log:
 
 ## Troubleshooting
 
-### "Mower error occurred" trigger shows "Normal operation" as description
-
-The *Mower error occurred* flow trigger includes an **Error Description** token. If this always shows *Normal operation* regardless of the actual fault, the app was unable to read the numeric error code from the cloud API — the code defaulted to `0`, which maps to "Normal operation".
-
-**To help diagnose:**
-
-1. Wait for the mower to hit an error.
-2. Open the **Homey** app → Devices → long-press the mower → **Settings** → scroll to **Debug Console** → tap **Refresh**.
-3. Search the output for a line starting with `[error]` — it will list the exact field names returned by the API for your device.
-4. Open an issue on GitHub and paste that line so the correct field can be added.
-
----
-
-### Mower status never updates (always shows docked / idle)
-
-If the mower status capability never changes — e.g. the mower shows as docked even while actively mowing — but battery level does update correctly, the numeric status codes your device model reports may differ from the ones currently mapped.
-
-**To diagnose:**
-
-1. Start a mowing session.
-2. Open **Settings** → **Debug Console** → tap **Refresh**.
-3. In the `deviceStatus` block, note the value of `latestStatus` and share it in a GitHub issue together with your device model.
-
----
-
 ### Password changed — device shows "Unavailable"
 
 The app uses an OAuth token to communicate with the MOVA / Dreame cloud. If you change your password in the manufacturer app, the server invalidates the token and the mower device in Homey will show as *Unavailable*.
@@ -194,7 +167,6 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 | Start Mowing | Starts mowing using the selection in the Zone picker |
 | Start Spot Mowing | Starts mowing at the location selected in the Spot picker |
 | Pause | Pauses the mower; it waits in place until resumed |
-| Resume Mowing | Resumes the current session after a pause or error — equivalent to "Continue" in the Dreame app; no zone selection needed |
 | Stop | Stops mowing and keeps the mower where it is |
 | Return to Dock | Sends the mower back to the charging station |
 | Go to Maintenance Point | Drives the mower to its configured maintenance point |
@@ -214,7 +186,6 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 | Start border patrol for zone | Mower traces the zone boundary without cutting — used to verify or demonstrate the boundary |
 | Start spot mowing | Mows at specific spot locations (comma-separated spot IDs) |
 | Pause mowing | Pauses the mower in place |
-| Resume mowing | Resumes the current session after a pause or error — no zone selection needed |
 | Stop mowing | Stops the current mowing session |
 | Return to dock | Returns the mower to the charging station |
 | Find mower with audible alert | Plays an audible alert to help locate the mower |
@@ -245,18 +216,9 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 - Start Mowing button pressed
 - Start Spot Mowing button pressed
 - Pause button pressed
-- Resume Mowing button pressed
 - Stop button pressed
 - Return to Dock button pressed
 - Go to Maintenance Point button pressed
-
-> **How "Mowing completed" fires:** The trigger fires as soon as the mowing session ends — not when the mower physically arrives at the dock. Three paths are supported:
->
-> - **Natural end / Return to Dock button:** fires when the mower transitions from `mowing` to `returning`. The mower is on its way home, but the session is already over.
-> - **"End" button in the Dreame/MOVA app:** fires immediately when the mower transitions from `mowing` to `idle`. The mower stays where it is.
-> - **Pause then End:** fires when the mower transitions from `paused` to `idle` after having been mowing. The session flag is preserved through the paused state.
->
-> **Charge-break suppression:** If *Battery → Resume mowing after charging* is enabled and the mower's battery at the `returning` transition is at or below *Battery → Return threshold + 2 %*, the trigger is suppressed — this indicates a mid-session charge break (the mower paused to recharge and will resume automatically). The trigger will fire once the full session genuinely ends.
 
 **And...**
 - Mower is / is not mowing
@@ -276,7 +238,6 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 - Start border patrol for zone *(zone number)* — traces boundary without cutting
 - Start spot mowing *(comma-separated spot IDs)*
 - Pause mowing
-- Resume mowing
 - Stop mowing
 - Return to dock
 - Go to maintenance point
@@ -471,3 +432,88 @@ Single JSON-string property. Read via property poll; write via `setDeviceData` w
 |-----|-------------|------------|-----------|
 | `LessColl` | Collision avoidance sensitivity (source: ioBroker.dreame — key unverified on live device) | `0`=off, `1`=on | ~ |
 | `SmartCharge` | Smart auto-charging (source: ioBroker.dreame — key unverified on live device) | `0`=off, `1`=on | ~ |
+
+## RC80
+See `GARAGE_RC80_SAFETY_LINE_DWELL_FALLBACK.md`.
+
+
+## RC81
+See `GARAGE_RC81_EXIT_CLOSE_PRIORITY_ARBITER.md`.
+
+
+## RC94
+- A/B-Sicherheitslinie wieder direkt aus den gespeicherten Markerpositionen gezeichnet.
+- Garage → Rasen-Pfeil und Beschriftung zusammen mit der Linie wieder sichtbar.
+- Dock, Wartungspunkt, Gefahrenbereich und Sicherheitsring unverändert.
+
+
+## RC96
+- Blauen Richtungspfeil entfernt.
+- Große kombinierte Richtungsbeschriftung entfernt.
+- „Garage“ klein und dezent neben der Dockingstation platziert.
+- „Rasen“ klein und dezent auf der gegenüberliegenden Seite der A/B-Sicherheitslinie platziert.
+- Keine Änderung an Markern, Sicherheitsgeometrie oder Garagenlogik.
+
+
+## RC98 – Map label and legend polish
+- Legende weiter vom linken und unteren Kartenrand entfernt, Symbole größer und Text heller.
+- „Rasen“ / „Lawn“ deutlich größer und halbtransparent mittig unterhalb von Zone 1.
+- „Garage“ klein und dezent neben der Dockingstation.
+- Keine Änderungen an Editor, Markern, Fahrweg, Fahrtrichtung oder Garagenlogik.
+
+
+## RC99 – Label and legend alignment
+
+- „Rasen“ / „Lawn“ etwas weiter links und höher positioniert.
+- Legende weiter vom Kartenrand abgesetzt und mit dezentem Hintergrund versehen.
+- Keine Änderungen an Editor, Markern, Fahrweg, Fahrtrichtung oder Garagenlogik.
+
+
+## RC103 – Context-aware Start Button
+
+- In garage mode, Start Mowing while paused outside is handled as Resume without opening the garage.
+- Start is ignored while mowing is already active or a safe return is in progress.
+- A full garage start is allowed only when docked/charging is securely confirmed.
+- Existing gate, outbound, safety-line, return and map logic remains unchanged.
+
+
+## RC106 garage resume guard
+The outside-resume guard now releases automatically after stable mowing outside the danger area. A stable native return request is still routed through the normal safe-return logic.
+
+
+## RC107 – Confirmed return context for inbound safety line
+
+- A normal mowing or paused path crossing the safety line toward the garage is now logged only.
+- The line can no longer create a return without a previously confirmed native or explicit return context.
+- Existing safe-return routing, ETA, maintenance-point decision and gate control remain unchanged.
+
+## RC108 – Closed-gate front-return and outbound status fix
+
+External-app returns that reach the narrow area directly in front of a closed garage can now be identified from several stable position samples even if the native `returning` status arrives late. The mower is routed through the existing maintenance-point return flow; the gate is never opened merely because of one position or line crossing. Outbound phases also keep display priority so “Mäht” no longer flashes during Ausfahrt/Justieren/Positionieren.
+
+## RC109 – Outside recovery after interrupted start
+
+RC109 prevents an already exited mower from being stopped or stranded when the native start confirmation arrives late. Start Mowing can recover an outside idle mower without reopening the gate, and Return to Dock remains available despite stale home state so the existing maintenance-point return path can take over.
+
+
+## RC110 – Resume, fixed maintenance marker and sensor-health reset
+
+Start Mowing on a paused mower outside now follows the same robust resume path as Pause/Resume even when the cloud still reports a stale home state. The maintenance marker is never replaced by live mower telemetry, and every real door-contact open/closed event immediately restores sensor health and cancels stale timeout fallbacks.
+
+## RC112 – Resume state synchronization
+
+Fixes the case where **Start Mowing** physically resumed a paused mower but Homey remained on `Paused`. A short semantic resume latch now keeps the internal state, tile and Pause/Resume command synchronized with the actual resumed mission, while a deliberate Pause still takes effect immediately. See `docs/RC112_RESUME_STATE_SYNC_FIX.md`.
+
+
+## RC113 – Gate-open handshake late-event fix
+
+- A real `open` contact now becomes authoritative start-release proof immediately, independent of a temporarily stale sensor-health capability.
+- The start waits through the complete sensor and configured stabilisation window and accepts a slightly delayed open event instead of permanently suppressing the outbound mower command.
+- Open-contact and timer-backed release proof now use the same central verification path.
+- Existing start, pause/resume, maintenance-point, return and door-close logic remains unchanged.
+
+### 1.2.1 maintenance marker regression fix
+- Keeps the confirmed A2 native maintenance-point index 2.
+- Restores the maintenance marker from the original MOVA map as the primary source.
+- Removes the safety-line-derived marker fallback that could display a wrong point.
+- Never replaces the marker with live mower telemetry.
