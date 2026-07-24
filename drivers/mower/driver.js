@@ -87,7 +87,6 @@ class MowerDriver extends Homey.Driver {
     flow.getActionCard('garage_safe_return')
       .registerRunListener(({ device }) => device.cmdGarageSafeReturn());
 
-
     // ─── Conditions ───────────────────────────────────────────────────────────
 
     flow.getConditionCard('is_mowing')
@@ -125,8 +124,6 @@ class MowerDriver extends Homey.Driver {
       .registerRunListener(({ device, percentage }) =>
         device.getCapabilityValue('measure_battery') >= percentage,
       );
-
-
 
     flow.getConditionCard('garage_mode_is_enabled')
       .registerRunListener(({ device }) => !!device.getSetting('garage_mode_enabled'));

@@ -68,6 +68,19 @@ const WARNING_DEVICE_CODES = new Set([31,32,33,34,35,36,38,39,40,41,42,43,44,45]
 const HOME_STATUSES = new Set(['idle', 'standby', 'docked', 'charging']);
 const ACTIVE_WORK_STATUSES = new Set(['mowing', 'mapping', 'returning', 'remote_control']);
 
+// Capabilities that are only visible when garage mode is enabled
+const GARAGE_DISPLAY_CAPS = [
+  'cmd_garage_pause_mode',
+  'cmd_garage_test_exit',
+  'cmd_garage_save_danger_center',
+  'cmd_garage_save_safety_line_a',
+  'cmd_garage_save_safety_line_b',
+  'garage_door_status',
+  'garage_safety_status',
+  'garage_sensor_available_status',
+  'garage_sensor_battery',
+];
+
 // ─── Versioned migrations ─────────────────────────────────────────────────────
 const MIGRATIONS = [
   {
@@ -619,6 +632,7 @@ class MowerDevice extends Homey.Device {
     this._resumeSemanticUntil    = 0; // RC112: treat stale cloud 'paused' as mowing after an explicit resume
 
     await this._migrate();
+    await this._applyGarageCapabilityVisibility();
     await this._migrateMaintenancePointSchema();
 
     // Upstream 1.1.21 self-heal: repair corrupted picker capabilities without
@@ -1157,6 +1171,10 @@ class MowerDevice extends Homey.Device {
       await this._garageSafety.onSettings(newSettings, changedKeys).catch((e) => this.error('[garage] settings hook:', e.message));
     }
 
+    if (changedKeys.includes('garage_mode_enabled')) {
+      await this._applyGarageCapabilityVisibility();
+    }
+
     if (changedKeys.includes('poll_interval')) {
       this.log(`[settings] poll_interval → ${newSettings.poll_interval}s`);
       this._stopPolling();
@@ -1301,6 +1319,17 @@ class MowerDevice extends Homey.Device {
   }
 
   // ─── Migration ─────────────────────────────────────────────────────────────
+
+  async _applyGarageCapabilityVisibility() {
+    const enabled = !!this.getSetting('garage_mode_enabled');
+    for (const cap of GARAGE_DISPLAY_CAPS) {
+      if (enabled && !this.hasCapability(cap)) {
+        await this.addCapability(cap).catch((e) => this.error(`[garage] addCapability ${cap}:`, e.message));
+      } else if (!enabled && this.hasCapability(cap)) {
+        await this.removeCapability(cap).catch((e) => this.error(`[garage] removeCapability ${cap}:`, e.message));
+      }
+    }
+  }
 
   async _migrate() {
     // Fast-path for freshly paired devices: capabilities are already installed

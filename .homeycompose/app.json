@@ -1,6 +1,6 @@
 {
   "id": "com.mova-dreame.mower",
-  "version": "1.2.1",
+  "version": "1.1.24",
   "compatibility": ">=12.3.0",
   "sdk": 3,
   "name": {
@@ -42,9 +42,9 @@
     }
   },
   "changelog": {
-    "1.2.0": {
-      "en": "Added optional Garage Mode with safe automatic gate control, configurable A-B safety line, danger and caution areas, maintenance waypoint routing, editable live-map overlays, robust pause/resume handling, safe external returns and recovery after interrupted starts. Garage Mode is disabled by default and does not change standard mower behaviour unless configured.",
-      "de": "Optionalen Garagenmodus mit sicherer automatischer Torsteuerung, konfigurierbarer A-B-Sicherheitslinie, Gefahren- und Vorsichtsbereich, Wartungspunkt-Routing, bearbeitbaren Live-Karten-Overlays, stabiler Pause-/Fortsetzen-Logik, sicherer externer Rückkehr und Wiederherstellung nach unterbrochenen Starts hinzugefügt. Der Garagenmodus ist standardmäßig deaktiviert und verändert das normale Mäherverhalten nur, wenn er konfiguriert wurde."
+    "1.1.24": {
+      "en": "Added optional Garage Mode with safe automatic gate control, configurable A-B safety line, danger and caution areas, maintenance waypoint routing, editable live-map overlays, robust pause/resume handling, safe external returns and recovery after interrupted starts. Garage Mode is disabled by default and does not affect standard mower behaviour unless configured. Fixed 'Mowing completed' Flow trigger firing twice on mowers with automatic edge-mowing.",
+      "de": "Optionalen Garagenmodus hinzugefügt mit sicherer Torsteuerung, A-B-Sicherheitslinie, Gefahrenbereich, Wartungspunkt-Routing, bearbeitbaren Karten-Overlays und stabiler Pause-/Fortsetzen-Logik. Standardmäßig deaktiviert. Flow-Auslöser 'Mähen abgeschlossen' feuerte zweimal bei Mähern mit automatischer Kantenmahd — behoben."
     },
     "1.1.23": {
       "en": "Updated App Store description. Replaced widget preview images with simplified, guideline-compliant versions (no text, transparent background, distinct designs for Map and History widgets).",
