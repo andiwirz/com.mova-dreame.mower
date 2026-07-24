@@ -1,6 +1,6 @@
 {
   "id": "com.mova-dreame.mower",
-  "version": "1.1.24",
+  "version": "1.1.25",
   "compatibility": ">=12.3.0",
   "sdk": 3,
   "name": {
@@ -42,6 +42,10 @@
     }
   },
   "changelog": {
+    "1.1.25": {
+      "en": "Garage Mode capabilities (buttons, door status, safety status, sensor status) are now hidden on the device card when Garage Mode is disabled in settings — they appear automatically when Garage Mode is enabled.",
+      "de": "Garagenmodus-Capabilities (Schaltflächen, Torstatus, Sicherheitsstatus, Sensorstatus) werden auf der Gerätekarte ausgeblendet wenn der Garagenmodus in den Einstellungen deaktiviert ist — sie erscheinen automatisch wenn der Garagenmodus aktiviert wird."
+    },
     "1.1.24": {
       "en": "Added optional Garage Mode with safe automatic gate control, configurable A-B safety line, danger and caution areas, maintenance waypoint routing, editable live-map overlays, robust pause/resume handling, safe external returns and recovery after interrupted starts. Garage Mode is disabled by default and does not affect standard mower behaviour unless configured. Fixed 'Mowing completed' Flow trigger firing twice on mowers with automatic edge-mowing.",
       "de": "Optionalen Garagenmodus hinzugefügt mit sicherer Torsteuerung, A-B-Sicherheitslinie, Gefahrenbereich, Wartungspunkt-Routing, bearbeitbaren Karten-Overlays und stabiler Pause-/Fortsetzen-Logik. Standardmäßig deaktiviert. Flow-Auslöser 'Mähen abgeschlossen' feuerte zweimal bei Mähern mit automatischer Kantenmahd — behoben."
