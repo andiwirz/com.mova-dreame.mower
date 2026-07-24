@@ -1,6 +1,6 @@
 {
   "id": "com.mova-dreame.mower",
-  "version": "1.1.23",
+  "version": "1.1.24",
   "compatibility": ">=12.3.0",
   "sdk": 3,
   "name": {
@@ -316,6 +316,10 @@
     "1.1.16": {
       "en": "Added App Logs tab to the settings page: live log output from the app and all paired devices, searchable, filterable by error level, and with auto-refresh. Copy the log and share it with the developer to help diagnose issues.",
       "de": "App-Logs-Tab in den Einstellungen hinzugefügt: Echtzeit-Logausgabe der App und aller gekoppelten Geräte, durchsuchbar, nach Fehler-Level filterbar und mit Auto-Aktualisierung. Das kopierte Log kann dem Entwickler zur Fehlerdiagnose weitergegeben werden."
+    },
+    "1.1.24": {
+      "en": "Fixed 'Mowing completed' Flow trigger firing twice on mowers with automatic edge-mowing: the trigger no longer fires when the mower briefly returns between the main area and edge phase — it now waits until the mower reaches a true resting state (docked / charging / idle).",
+      "de": "Flow-Auslöser 'Mähen abgeschlossen' feuerte zweimal bei Mähern mit automatischer Kantenmahd: Der Auslöser feuert nicht mehr wenn der Mäher zwischen Haupt- und Kantenphase kurz zurückfährt — er wartet nun bis der Mäher tatsächlich eine Ruheposition erreicht (angedockt / lädt / bereit)."
     }
   }
 }

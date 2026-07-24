@@ -1,4 +1,8 @@
 {
+  "1.1.24": {
+    "en": "Fixed 'Mowing completed' Flow trigger firing twice on mowers with automatic edge-mowing: the trigger no longer fires when the mower briefly returns between the main area and edge phase — it now waits until the mower reaches a true resting state (docked / charging / idle).",
+    "de": "Flow-Auslöser 'Mähen abgeschlossen' feuerte zweimal bei Mähern mit automatischer Kantenmahd: Der Auslöser feuert nicht mehr wenn der Mäher zwischen Haupt- und Kantenphase kurz zurückfährt — er wartet nun bis der Mäher tatsächlich eine Ruheposition erreicht (angedockt / lädt / bereit)."
+  },
   "1.1.23": {
     "en": "Updated App Store description. Replaced widget preview images with simplified, guideline-compliant versions (no text, transparent background, distinct designs for Map and History widgets).",
     "de": "App-Store-Beschreibung aktualisiert. Widget-Vorschaubilder durch vereinfachte, richtlinienkonforme Versionen ersetzt (kein Text, transparenter Hintergrund, unterschiedliche Designs für Karten- und Verlauf-Widget)."

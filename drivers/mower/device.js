@@ -596,7 +596,8 @@ class MowerDevice extends Homey.Device {
     // If the mower was already mowing before the restart, _wasMowing stays true and
     // _sessionStartTime is restored from the store (falls back to now if not stored yet).
     this._wasMowing        = this.getCapabilityValue('mower_status') === 'mowing';
-    this._wasMowingSession = ['mowing', 'paused'].includes(this.getCapabilityValue('mower_status'));
+    this._wasMowingSession = ['mowing', 'paused', 'returning'].includes(this.getCapabilityValue('mower_status'));
+    this._returnSnapshot   = null; // battery/settings captured at returning, for charge-break detection on dock
     this._sessionStartTime = (await this.getStoreValue('session_start_time'))
                              ?? (this._wasMowing ? Date.now() : null);
     this._persistedTokenExpiry = 0;
@@ -2429,18 +2430,36 @@ class MowerDevice extends Homey.Device {
         .catch((e) => this.error('mower_docked trigger:', e.message));
     }
 
-    // Mowing completed: three cases —
-    // 1. mowing → returning: normal completion or manual "Return to Dock".
-    //    Check for charge break: battery at this point reflects why the mower decided
-    //    to return. Suppress if auto-resume is on and battery ≤ returnPct + 2%.
-    // 2. mowing → idle/docked/charging: manual "End" in the app (no returning phase).
-    //    Always fire — a charge break always goes through returning, never directly to idle.
-    // 3. mowing → paused → idle: user paused then ended without resuming.
-    //    _wasMowingSession stays true through paused, so this path is caught by case 2.
-    if (this._wasMowingSession && isReturning) {
-      const battery    = this.getCapabilityValue('measure_battery') ?? 100;
-      const returnPct  = this.getSetting('bat_return_pct')  ?? 15;
-      const autoResume = this.getSetting('bat_auto_resume') ?? false;
+    // Mowing completed — fire once when the session definitively ends.
+    //
+    // The trigger must NOT fire on every mowing→returning transition because some mowers
+    // (e.g. with automatic edge-mowing enabled) cycle returning→mowing between phases.
+    // Strategy: snapshot battery/settings on the first returning transition; fire (or
+    // suppress for charge-break) only when the mower reaches a true resting state.
+    //
+    // Cases covered:
+    // A. mowing → returning → home: normal end or "Return to Dock"
+    //    Snapshot battery at returning (most accurate for charge-break check); fire at home.
+    // B. mowing → home (no returning): manual "End" in Dreame app.
+    //    No snapshot captured; check live battery.
+    // C. mowing → paused → home: paused then ended.
+    //    _wasMowingSession preserved through paused; caught by case B.
+    // D. mowing → returning → mowing (mid-session, e.g. edge phase after main area):
+    //    _wasMowingSession preserved through returning; snapshot cleared when mowing resumes.
+    if (this._wasMowingSession && isReturning && !this._returnSnapshot) {
+      // Capture charge-break data at the moment the mower decides to return.
+      this._returnSnapshot = {
+        battery:    this.getCapabilityValue('measure_battery') ?? 100,
+        returnPct:  this.getSetting('bat_return_pct')  ?? 15,
+        autoResume: this.getSetting('bat_auto_resume') ?? false,
+      };
+    }
+
+    if (this._wasMowingSession && HOME_STATUSES.has(status)) {
+      const snap        = this._returnSnapshot ?? {};
+      const battery     = snap.battery    ?? (this.getCapabilityValue('measure_battery') ?? 100);
+      const returnPct   = snap.returnPct  ?? (this.getSetting('bat_return_pct')  ?? 15);
+      const autoResume  = snap.autoResume ?? (this.getSetting('bat_auto_resume') ?? false);
       const isChargeBreak = autoResume && battery <= (returnPct + 2);
       if (!isChargeBreak) {
         this._trgMowingCompleted.trigger(this, {}, {})
@@ -2448,14 +2467,16 @@ class MowerDevice extends Homey.Device {
       } else {
         this.log(`[trigger] mowing_completed suppressed — charge break (battery=${battery}% ≤ returnPct=${returnPct}%+2)`);
       }
-    } else if (this._wasMowingSession && HOME_STATUSES.has(status)) {
-      this._trgMowingCompleted.trigger(this, {}, {})
-        .catch((e) => this.error('mowing_completed trigger:', e.message));
+      this._returnSnapshot = null;
     }
 
     this._wasMowing = isMowing;
-    if (isMowing) this._wasMowingSession = true;
-    else if (status !== 'paused' && status !== 'error') this._wasMowingSession = false;
+    if (isMowing) {
+      this._wasMowingSession = true;
+      this._returnSnapshot   = null; // mid-session return; clear snapshot so next return re-captures
+    } else if (!isReturning && status !== 'paused' && status !== 'error') {
+      this._wasMowingSession = false;
+    }
   }
 
   // ─── Shared mowing state helper ───────────────────────────────────────────
