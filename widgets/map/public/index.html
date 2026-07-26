@@ -642,6 +642,94 @@
           + '</g>';
       }
 
+
+      // Garage door state badge: visual-only indicator. It deliberately does not
+      // participate in any mower, gate or safety logic. Shown only when both
+      // Garage Mode and Sensor Mode are enabled.
+      var garageSensorMode = !!(data.overlayVisibility && data.overlayVisibility.garageSensorMode);
+      if (garageMode && garageSensorMode) {
+        var doorState = String((data.overlayVisibility && data.overlayVisibility.garageDoorState) || 'unknown');
+        if (doorState !== 'open' && doorState !== 'closed') doorState = 'unknown';
+        var isDeDoor = String((navigator && navigator.language) || '').toLowerCase().indexOf('de') === 0;
+        var doorLabel = doorState === 'open'
+          ? (isDeDoor ? 'Tor offen' : 'Door open')
+          : doorState === 'closed'
+            ? (isDeDoor ? 'Tor geschlossen' : 'Door closed')
+            : (isDeDoor ? 'Tor unbekannt' : 'Door unknown');
+        var accent = doorState === 'open' ? '#43d17a' : (doorState === 'closed' ? '#ff5b62' : '#a8b0bb');
+        var badgeW = Math.max(refSize * 0.175, 118);
+        var badgeH = Math.max(refSize * 0.058, 42);
+        var badgePad = Math.max(refSize * 0.020, 14);
+        var badgeX = vbX + vbW - badgeW - badgePad;
+        var badgeY = vbY + vbH - badgeH - badgePad;
+        var iconCx = badgeX + badgeH * 0.50;
+        var iconCy = badgeY + badgeH * 0.50;
+        var iconS = badgeH * 0.48;
+        var badgeFs = Math.max(9, refSize * 0.0124);
+        var badgeRadius = badgeH * 0.28;
+        var iconStroke = Math.max(sw * 0.72, 1.15);
+
+        g += '<g pointer-events="none" aria-label="' + doorLabel + '">'
+          + '<rect x="' + badgeX.toFixed(1) + '" y="' + badgeY.toFixed(1) + '" width="' + badgeW.toFixed(1) + '" height="' + badgeH.toFixed(1)
+          + '" rx="' + badgeRadius.toFixed(1) + '" fill="rgba(5,16,11,0.82)" stroke="rgba(255,255,255,0.18)" stroke-width="' + (sw * 0.45).toFixed(1) + '"/>'
+          + '<circle cx="' + iconCx.toFixed(1) + '" cy="' + iconCy.toFixed(1) + '" r="' + (iconS * 0.72).toFixed(1)
+          + '" fill="' + accent + '" fill-opacity="0.14" stroke="' + accent + '" stroke-width="' + (sw * 0.70).toFixed(1) + '"/>'
+          // Garage roof and frame.
+          + '<path d="M ' + (iconCx - iconS * 0.48).toFixed(1) + ' ' + (iconCy - iconS * 0.12).toFixed(1)
+          + ' L ' + iconCx.toFixed(1) + ' ' + (iconCy - iconS * 0.54).toFixed(1)
+          + ' L ' + (iconCx + iconS * 0.48).toFixed(1) + ' ' + (iconCy - iconS * 0.12).toFixed(1)
+          + ' M ' + (iconCx - iconS * 0.38).toFixed(1) + ' ' + (iconCy - iconS * 0.14).toFixed(1)
+          + ' V ' + (iconCy + iconS * 0.44).toFixed(1)
+          + ' H ' + (iconCx + iconS * 0.38).toFixed(1)
+          + ' V ' + (iconCy - iconS * 0.14).toFixed(1)
+          + '" fill="none" stroke="rgba(255,255,255,0.96)" stroke-width="' + iconStroke.toFixed(1) + '" stroke-linecap="round" stroke-linejoin="round"/>';
+
+        if (doorState === 'open') {
+          // Raised sectional door with visible open passage.
+          g += '<path d="M ' + (iconCx - iconS * 0.30).toFixed(1) + ' ' + (iconCy - iconS * 0.04).toFixed(1)
+            + ' H ' + (iconCx + iconS * 0.30).toFixed(1)
+            + ' M ' + (iconCx - iconS * 0.25).toFixed(1) + ' ' + (iconCy + iconS * 0.08).toFixed(1)
+            + ' H ' + (iconCx + iconS * 0.25).toFixed(1)
+            + '" fill="none" stroke="' + accent + '" stroke-width="' + (iconStroke * 1.18).toFixed(1) + '" stroke-linecap="round"/>'
+            + '<path d="M ' + iconCx.toFixed(1) + ' ' + (iconCy + iconS * 0.34).toFixed(1)
+            + ' V ' + (iconCy + iconS * 0.14).toFixed(1)
+            + ' M ' + (iconCx - iconS * 0.10).toFixed(1) + ' ' + (iconCy + iconS * 0.23).toFixed(1)
+            + ' L ' + iconCx.toFixed(1) + ' ' + (iconCy + iconS * 0.13).toFixed(1)
+            + ' L ' + (iconCx + iconS * 0.10).toFixed(1) + ' ' + (iconCy + iconS * 0.23).toFixed(1)
+            + '" fill="none" stroke="' + accent + '" stroke-width="' + iconStroke.toFixed(1) + '" stroke-linecap="round" stroke-linejoin="round"/>';
+        } else if (doorState === 'closed') {
+          // Closed sectional door with three clean slats.
+          g += '<rect x="' + (iconCx - iconS * 0.29).toFixed(1) + '" y="' + (iconCy - iconS * 0.02).toFixed(1)
+            + '" width="' + (iconS * 0.58).toFixed(1) + '" height="' + (iconS * 0.42).toFixed(1)
+            + '" rx="' + (iconS * 0.035).toFixed(1) + '" fill="' + accent + '" fill-opacity="0.20" stroke="' + accent + '" stroke-width="' + iconStroke.toFixed(1) + '"/>'
+            + '<path d="M ' + (iconCx - iconS * 0.27).toFixed(1) + ' ' + (iconCy + iconS * 0.11).toFixed(1)
+            + ' H ' + (iconCx + iconS * 0.27).toFixed(1)
+            + ' M ' + (iconCx - iconS * 0.27).toFixed(1) + ' ' + (iconCy + iconS * 0.24).toFixed(1)
+            + ' H ' + (iconCx + iconS * 0.27).toFixed(1)
+            + '" fill="none" stroke="' + accent + '" stroke-width="' + (iconStroke * 0.70).toFixed(1) + '" opacity="0.95"/>';
+        } else {
+          // Unknown state: neutral garage plus a compact question mark.
+          g += '<path d="M ' + (iconCx - iconS * 0.16).toFixed(1) + ' ' + (iconCy + iconS * 0.02).toFixed(1)
+            + ' C ' + (iconCx - iconS * 0.14).toFixed(1) + ' ' + (iconCy - iconS * 0.15).toFixed(1) + ', '
+            + (iconCx + iconS * 0.17).toFixed(1) + ' ' + (iconCy - iconS * 0.15).toFixed(1) + ', '
+            + (iconCx + iconS * 0.13).toFixed(1) + ' ' + (iconCy + iconS * 0.01).toFixed(1)
+            + ' C ' + (iconCx + iconS * 0.11).toFixed(1) + ' ' + (iconCy + iconS * 0.09).toFixed(1) + ', '
+            + iconCx.toFixed(1) + ' ' + (iconCy + iconS * 0.09).toFixed(1) + ', '
+            + iconCx.toFixed(1) + ' ' + (iconCy + iconS * 0.18).toFixed(1)
+            + ' M ' + iconCx.toFixed(1) + ' ' + (iconCy + iconS * 0.31).toFixed(1)
+            + ' L ' + iconCx.toFixed(1) + ' ' + (iconCy + iconS * 0.32).toFixed(1)
+            + '" fill="none" stroke="' + accent + '" stroke-width="' + (iconStroke * 1.25).toFixed(1) + '" stroke-linecap="round"/>';
+        }
+
+        g += '<text x="' + (badgeX + badgeH * 0.93).toFixed(1) + '" y="' + (badgeY + badgeH * 0.50).toFixed(1)
+          + '" dominant-baseline="middle" fill="rgba(255,255,255,0.94)" font-size="' + badgeFs.toFixed(0)
+          + '" font-family="system-ui,sans-serif" font-weight="650">' + doorLabel + '</text>'
+          + '<circle cx="' + (badgeX + badgeW - badgeH * 0.28).toFixed(1) + '" cy="' + (badgeY + badgeH * 0.50).toFixed(1)
+          + '" r="' + (badgeH * 0.075).toFixed(1) + '" fill="' + accent + '"/>'
+          + '</g>';
+      }
+
+
       // Robot position marker (blue dot)
       if (showRobot && Array.isArray(data.robotPos) && data.robotPos.length === 2) {
         const rx = tx(data.robotPos[0]).toFixed(1);
