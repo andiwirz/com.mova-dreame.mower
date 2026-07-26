@@ -4528,6 +4528,13 @@ class MowerDevice extends Homey.Device {
       }
       if (!Object.keys(garageOverlay).length) garageOverlay = null;
     }
+    const garageSensorMode = garageMode && !!this.getSetting('garage_sensor_enabled');
+    const rawGarageDoorState = garageSensorMode
+      ? (this.getCapabilityValue('garage_door_status') || 'unknown')
+      : 'unknown';
+    const garageDoorState = rawGarageDoorState === 'open' || rawGarageDoorState === 'closed'
+      ? rawGarageDoorState
+      : 'unknown';
     const overlayVisibility = {
       showRobot: this.getSetting('map_show_robot_position') !== false,
       showDirection: this.getSetting('map_show_direction') !== false,
@@ -4535,6 +4542,8 @@ class MowerDevice extends Homey.Device {
       showMaintenancePoint,
       showGarageOverlay,
       garageMode,
+      garageSensorMode,
+      garageDoorState,
     };
     if (!this._cachedMapData) {
       const fallback = await this._fallbackMapFromTelemetry();
