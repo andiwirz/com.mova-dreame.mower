@@ -61,7 +61,7 @@ const CHARGING_MAP = {
 // 'updating' intentionally excluded — a firmware update is not a mowing completion.
 const ERROR_DEVICE_CODES = new Set([
   1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,
-  21,22,23,24,25,26,27,28,29,30,37,73,
+  21,22,23,24,25,26,27,28,29,30,37,46,73,
 ]);
 const WARNING_DEVICE_CODES = new Set([31,32,33,34,35,36,38,39,40,41,42,43,44,45]);
 

@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.mova-dreame.mower",
-  "version": "1.1.27",
+  "version": "1.1.28",
   "compatibility": ">=12.3.0",
   "sdk": 3,
   "name": {
@@ -43,6 +43,10 @@
     }
   },
   "changelog": {
+    "1.1.28": {
+      "en": "Fixed error code 46 incorrectly described as 'Boundary building completed': it now correctly shows 'Right blade disc fails to rotate'. Code 46 is also now classified as an error so the Homey error alarm and 'Mower error occurred' trigger fire correctly.",
+      "de": "Fehlercode 46 war falsch als 'Grenzkartierung abgeschlossen' beschriftet: er zeigt jetzt korrekt 'Rechte Klingenscheibe dreht nicht'. Code 46 wird ausserdem jetzt als Fehler klassifiziert, sodass der Homey-Fehleralarm und der Flow-Auslöser 'Mäher-Fehler aufgetreten' korrekt ausgelöst werden."
+    },
     "1.1.27": {
       "en": "Added garage door status badge to the Live Map widget: when Garage Mode and Sensor Mode are both enabled, a badge in the lower-right corner of the map shows whether the garage door is open (green), closed (red), or unknown (grey). The badge is visual-only and does not participate in any gate or safety logic.",
       "de": "Garagentor-Status-Badge zum Live-Map-Widget hinzugefügt: Wenn Garagenmodus und Sensormodus aktiviert sind, zeigt ein Badge unten rechts auf der Karte an ob das Garagentor offen (grün), geschlossen (rot) oder unbekannt (grau) ist. Der Badge ist rein visuell und greift nicht in die Tor- oder Sicherheitslogik ein."
