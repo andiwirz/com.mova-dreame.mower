@@ -1,6 +1,6 @@
 {
   "id": "com.mova-dreame.mower",
-  "version": "1.1.28",
+  "version": "1.1.29",
   "compatibility": ">=12.3.0",
   "sdk": 3,
   "name": {
@@ -42,6 +42,10 @@
     }
   },
   "changelog": {
+    "1.1.29": {
+      "en": "Updated widget preview images for the Live Map and Mowing History widgets.",
+      "de": "Vorschaubilder der Widgets Live-Karte und Mähverlauf aktualisiert."
+    },
     "1.1.28": {
       "en": "Fixed error code 46 incorrectly described as 'Boundary building completed': it now correctly shows 'Right blade disc fails to rotate'. Code 46 is also now classified as an error so the Homey error alarm and 'Mower error occurred' trigger fire correctly.",
       "de": "Fehlercode 46 war falsch als 'Grenzkartierung abgeschlossen' beschriftet: er zeigt jetzt korrekt 'Rechte Klingenscheibe dreht nicht'. Code 46 wird ausserdem jetzt als Fehler klassifiziert, sodass der Homey-Fehleralarm und der Flow-Auslöser 'Mäher-Fehler aufgetreten' korrekt ausgelöst werden."
