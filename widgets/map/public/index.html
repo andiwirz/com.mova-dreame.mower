@@ -134,7 +134,13 @@
       // one-zone payload. That transient payload caused the sporadic garage close-up.
       if (!_lastFullMapData && data && (data.mapFallbackReason || !hasFullGardenGeometry(data))) {
         _initialGeometryWaits++;
-        if (_initialGeometryWaits <= 4) {
+        // Server-side telemetry fallbacks (mapFallbackReason set) mean the real map
+        // hasn't arrived from the cloud yet. Give the main poll (~30 s) enough time
+        // to deliver it — up to ~2 min (24 × 5 s) — before falling through to render
+        // the sparse fallback canvas. Partial geometry (wrong zone count) only waits
+        // 4 × 5 s as before.
+        var maxWaits = data.mapFallbackReason ? 24 : 4;
+        if (_initialGeometryWaits <= maxWaits) {
           showMsg((navigator.language || '').toLowerCase().startsWith('de') ? 'Karte wird vollständig geladen …' : 'Loading complete map …');
           return;
         }
@@ -305,12 +311,19 @@
         if (showMaintenancePoint) expandPointObj(go.maintenancePoint, 400);
       }
       var vbX, vbY, vbW, vbH;
-      if (featureMinX === Infinity) {
-        const W0 = bx2 - bx1, H0 = by2 - by1;
+      const W0 = bx2 - bx1, H0 = by2 - by1;
+      // Telemetry fallbacks (no real map zones) always use the full boundary as
+      // the viewBox so the mower dot appears in context rather than zoomed in.
+      if (featureMinX === Infinity || data.mapFallbackReason) {
         vbX = 0; vbY = 0; vbW = W0; vbH = H0;
       } else {
         var padX = (featureMaxX - featureMinX) * 0.06;
         var padY = (featureMaxY - featureMinY) * 0.06;
+        // Guarantee a minimum canvas size when only a single point expanded the bbox
+        // (padX/padY would both be 0, producing an invisible 0×0 SVG).
+        var minPad = Math.min(W0, H0) * 0.08;
+        if (padX < minPad) padX = minPad;
+        if (padY < minPad) padY = minPad;
         vbX = featureMinX - padX; vbY = featureMinY - padY;
         vbW = (featureMaxX - featureMinX) + 2 * padX;
         vbH = (featureMaxY - featureMinY) + 2 * padY;
@@ -837,8 +850,14 @@
 
       function loadMap() {
         return Homey.api('GET', '/?deviceId=' + encodeURIComponent(deviceId) + '&_=' + Date.now(), {})
-          .then(onMapData)
-          .catch(function(err) { showMsg(err.message || 'Error loading map', true); });
+          .then(function(data) { _consecutiveErrors = 0; onMapData(data); })
+          .catch(function(err) {
+            _consecutiveErrors++;
+            // After 6 consecutive failures (~30 s) the Homey session has likely
+            // expired. Reloading the page re-establishes it.
+            if (_consecutiveErrors >= 6) { window.location.reload(); return; }
+            showMsg(err.message || 'Error loading map', true);
+          });
       }
 
       document.getElementById('edit-btn').addEventListener('click', startMarkerEdit);
@@ -868,10 +887,25 @@
         });
       });
 
+      var _consecutiveErrors = 0;
+      var _hiddenAt = 0;
+
       function start() {
         loadMap();
-        setInterval(loadMap, 5000);
+        setInterval(function() {
+          loadMap().catch(function() {});
+        }, 5000);
       }
+
+      // Reload only after the widget has been hidden for > 5 minutes — enough
+      // to let a Homey session expire without reloading on every dashboard scroll.
+      document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'hidden') {
+          _hiddenAt = Date.now();
+        } else if (_hiddenAt && Date.now() - _hiddenAt > 300000) {
+          window.location.reload();
+        }
+      });
 
       start();
 

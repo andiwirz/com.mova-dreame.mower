@@ -2275,7 +2275,8 @@ class MowerDevice extends Homey.Device {
       ? (this._parseMapDataChunks(raw) || this._parseDirectMapData(this._cachedMAPI))
       : this._parseLivePathOnly(raw);
     if (parsed) {
-      if (parsed.md5sum !== this._cachedMapData?.md5sum) {
+      if (parsed.md5sum !== this._cachedMapData?.md5sum && parsed.mowingAreas) {
+        // Full parse (parseMapDataChunks / parseDirectMapData) — replace cache entirely.
         this._cachedMapData = parsed;
         this.log(`[map] cached: ${parsed.name}, ${parsed.mowingAreas.length} zones, ${parsed.livePath.length} path pts`);
       } else if (this._cachedMapData && parsed.livePath.length > 0) {
@@ -2283,6 +2284,9 @@ class MowerDevice extends Homey.Device {
       } else if (this._cachedMapData) {
         this._cachedMapData = { ...this._cachedMapData, chargerPos: parsed.chargerPos || this._cachedMapData.chargerPos };
       }
+      // If _parseLivePathOnly ran but _cachedMapData is not yet initialised (no full
+      // MAP parse received yet), skip the merge — a lightweight result must never
+      // replace a null cache entry because it lacks zones, contours and name.
     }
 
     if (detectedIds.length > 0) {
@@ -4001,9 +4005,10 @@ class MowerDevice extends Homey.Device {
   }
 
   _maintenanceMapKey() {
-    const map = this._cachedMapData || {};
-    const identity = map.md5sum || map.mapId || map.id || map.uuid || map.name;
-    return `${Number(this._activeMapIndex) || 0}:${String(identity || 'unknown')}`;
+    // The map checksum changes when the original app edits map metadata (including
+    // moving the maintenance point), which made a valid stored marker disappear.
+    // Device store is scoped per mower, so map index is the stable identity needed.
+    return `map:${Number(this._activeMapIndex) || 0}`;
   }
 
   async _resolveStableMaintenancePoint() {
@@ -4030,8 +4035,14 @@ class MowerDevice extends Homey.Device {
     const distance = (a, b) => (a && b)
       ? Math.hypot(Number(a.x) - Number(b.x), Number(a.y) - Number(b.y)) : Infinity;
     const mapKey = this._maintenanceMapKey();
+    const activeIndex = Number(this._activeMapIndex) || 0;
     const schemaVersion = 2;
-    const isCurrent = (p) => !!(p && p.schemaVersion === schemaVersion && p.mapKey === mapKey);
+    const isCurrent = (p) => {
+      if (!p || p.schemaVersion !== schemaVersion) return false;
+      if (!p.mapKey || p.mapKey === mapKey) return true;
+      // Legacy key format was "index:md5sum" — accept if the map index still matches.
+      return Number(String(p.mapKey).split(':')[0]) === activeIndex;
+    };
     const logOnce = (message, detail = '') => {
       const now = Date.now();
       if (now - Number(this._maintenancePointLogAt || 0) < 15000) return;
@@ -4444,41 +4455,48 @@ class MowerDevice extends Homey.Device {
     // the widget is opened before the next poll. This prevents Homey from showing
     // "No map data yet" while MAP.N/MAPI data exists in the cloud.
     if (!this._cachedMapData && this._cachedMAPI) this._cachedMapData = this._parseDirectMapData(this._cachedMAPI);
-    if (!this._cachedMapData && this._api) {
-      const did = this.getData().id;
-      const raw = await this._api.getRawProperties(did).catch((e) => { this.log('[map] widget raw refresh failed:', e.message); return null; });
-      const rawData = raw?.data;
-      if (rawData && typeof rawData === 'object' && !Array.isArray(rawData)) {
-        this._lastRawData = rawData;
-        const parsed = this._parseMapDataChunks(rawData);
-        if (parsed) {
-          this._cachedMapData = parsed;
-          this.log(`[map] widget refreshed from MAP chunks: ${parsed.name}, ${parsed.mowingAreas.length} zones`);
-        }
-      }
-      if (!this._cachedMapData) {
-        const tryIdx = [];
-        if (Number.isFinite(Number(this._activeMapIndex))) tryIdx.push(Number(this._activeMapIndex));
-        const mapl = await this._api.getMapList(did).catch((e) => { this.log('[map] widget MAPL refresh failed:', e.message); return null; });
-        const entries = Array.isArray(mapl?.d) ? mapl.d : (Array.isArray(mapl) ? mapl : []);
-        for (const e of entries) {
-          if (Array.isArray(e) && Number.isFinite(Number(e[0]))) tryIdx.push(Number(e[0]));
-          else if (e && typeof e === 'object' && Number.isFinite(Number(e.index ?? e.idx ?? e.mapIndex))) tryIdx.push(Number(e.index ?? e.idx ?? e.mapIndex));
-        }
-        for (let i = 0; i <= 5; i++) tryIdx.push(i);
-        const uniqueIdx = [...new Set(tryIdx.filter((v) => Number.isFinite(v)))];
-        for (const idx of uniqueIdx) {
-          const mapi = await this._api.getMAPI(did, idx).catch((e) => { this.log(`[map] widget MAPI idx=${idx} failed:`, e.message); return null; });
-          if (!mapi) continue;
-          const direct = this._parseDirectMapData(mapi);
-          if (direct) {
-            this._activeMapIndex = idx;
-            this._cachedMapData = direct;
-            this._cachedMAPI = null;
-            this.log(`[map] widget refreshed from MAPI idx=${idx}: ${direct.name}, ${direct.mowingAreas.length} zones`);
-            break;
+    // Mutex: if a background refresh is already in flight, skip — avoids flooding
+    // the cloud API with concurrent MAPI requests from the widget's 5 s poll loop.
+    if (!this._cachedMapData && this._api && !this._mapFetchInProgress) {
+      this._mapFetchInProgress = true;
+      try {
+        const did = this.getData().id;
+        const raw = await this._api.getRawProperties(did).catch((e) => { this.log('[map] widget raw refresh failed:', e.message); return null; });
+        const rawData = raw?.data;
+        if (rawData && typeof rawData === 'object' && !Array.isArray(rawData)) {
+          this._lastRawData = rawData;
+          const parsed = this._parseMapDataChunks(rawData);
+          if (parsed) {
+            this._cachedMapData = parsed;
+            this.log(`[map] widget refreshed from MAP chunks: ${parsed.name}, ${parsed.mowingAreas.length} zones`);
           }
         }
+        if (!this._cachedMapData) {
+          const tryIdx = [];
+          if (Number.isFinite(Number(this._activeMapIndex))) tryIdx.push(Number(this._activeMapIndex));
+          const mapl = await this._api.getMapList(did).catch((e) => { this.log('[map] widget MAPL refresh failed:', e.message); return null; });
+          const entries = Array.isArray(mapl?.d) ? mapl.d : (Array.isArray(mapl) ? mapl : []);
+          for (const e of entries) {
+            if (Array.isArray(e) && Number.isFinite(Number(e[0]))) tryIdx.push(Number(e[0]));
+            else if (e && typeof e === 'object' && Number.isFinite(Number(e.index ?? e.idx ?? e.mapIndex))) tryIdx.push(Number(e.index ?? e.idx ?? e.mapIndex));
+          }
+          for (let i = 0; i <= 5; i++) tryIdx.push(i);
+          const uniqueIdx = [...new Set(tryIdx.filter((v) => Number.isFinite(v)))];
+          for (const idx of uniqueIdx) {
+            const mapi = await this._api.getMAPI(did, idx).catch((e) => { this.log(`[map] widget MAPI idx=${idx} failed:`, e.message); return null; });
+            if (!mapi) continue;
+            const direct = this._parseDirectMapData(mapi);
+            if (direct) {
+              this._activeMapIndex = idx;
+              this._cachedMapData = direct;
+              this._cachedMAPI = null;
+              this.log(`[map] widget refreshed from MAPI idx=${idx}: ${direct.name}, ${direct.mowingAreas.length} zones`);
+              break;
+            }
+          }
+        }
+      } finally {
+        this._mapFetchInProgress = false;
       }
     }
     let garageOverlay = null;
