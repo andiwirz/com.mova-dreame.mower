@@ -498,17 +498,8 @@ const MIGRATIONS = [
   },
   {
     key: 'capabilities_migrated_garage_v120',
-    caps: ['cmd_garage_pause_mode','cmd_garage_test_exit','cmd_garage_save_danger_center','cmd_garage_save_safety_line_a','cmd_garage_save_safety_line_b','garage_door_status','garage_safety_status','garage_sensor_available_status','garage_sensor_battery'],
+    caps: ['cmd_garage_pause_mode','cmd_garage_test_exit','garage_door_status','garage_safety_status','garage_sensor_available_status','garage_sensor_battery'],
   },
-  {
-    // v1.2.22: keep marker buttons installed. Earlier builds removed them
-    // dynamically after saving; stale Homey mobile views could then call a
-    // missing capability and show "Invalid Capability".
-    key: 'capabilities_migrated_garage_v1222_marker_buttons',
-    caps: ['cmd_garage_save_danger_center','cmd_garage_save_safety_line_a','cmd_garage_save_safety_line_b'],
-  },
-
-
   {
     // v1.2.9: visible garage safety state for warnings, blocks and emergencies.
     key: 'capabilities_migrated_garage_v129',
@@ -548,6 +539,9 @@ const REMOVE_CAPABILITIES = [
   'night_mode', 'anti_theft', 'auto_charging',
   // v8: WRP CFG action returns 404 on MOVA devices — not supported
   'rain_protection',
+  // v1.1.31: marker buttons moved out of driver.compose.json; now managed by
+  // _applyGarageCapabilityVisibility (present only when garage mode is enabled).
+  'cmd_garage_save_danger_center', 'cmd_garage_save_safety_line_a', 'cmd_garage_save_safety_line_b',
 ];
 
 class MowerDevice extends Homey.Device {
@@ -599,6 +593,8 @@ class MowerDevice extends Homey.Device {
     this._mihisPollCounter     = 5;     // reads MIHIS (lifetime stats) on poll 5, 15, 25, … (staggered vs CFG)
     this._dockPollCounter      = 3;     // reads DOCK position on poll 3, 13, 23, … (staggered vs CFG/MIHIS)
     this._obsPollCounter       = 7;     // reads MAPI/AIOBS/OBS on poll 7, 17, 27, … (staggered vs others)
+    this._maplPollCounter      = 1;     // reads MAPL on poll 1, 11, 21, … (staggered vs others)
+    this._locnPollCounter      = 2;     // reads LOCN when docked on poll 2, 12, 22, … (staggered vs others)
     this._dockPos              = null;  // last known dock position { x, y } in map mm (raw × 10)
     this._dockYaw              = null;  // dock orientation in degrees (from DOCK API), used for map rotation
     this._dockGPS              = null;  // dock GPS reference { lon, lat } captured from LOCN while docked
@@ -623,6 +619,7 @@ class MowerDevice extends Homey.Device {
     this._cachedMapData          = null; // last parsed map data for the map widget
     this._cachedObstacles        = null; // last obstacle data { aiobs, obs } from AIOBS/OBS commands
     this._cachedMAPI             = null; // last MAPI response (raw, for format discovery)
+    this._lastMapStr             = '';   // last MAP.N concatenated string — change-guard for _extractMapInfo/_parseMapDataChunks
     this._lastMapNoDataLogAt     = 0;    // garage map diagnostic throttle
     this._cachedArMapPos         = null; // last parsed ARMap robot/charger position from binary blob
     this._mqttErrorCode          = null; // latest native MQTT device/error code
@@ -1212,6 +1209,12 @@ class MowerDevice extends Homey.Device {
 
     if (changedKeys.includes('garage_mode_enabled')) {
       await this._applyGarageCapabilityVisibility();
+      if (newSettings.garage_mode_enabled) {
+        this._startGarageFastPoll();
+      } else if (this._garageFastPollTimer) {
+        this.homey.clearInterval(this._garageFastPollTimer);
+        this._garageFastPollTimer = null;
+      }
     }
 
     if (changedKeys.includes('poll_interval')) {
@@ -1416,6 +1419,7 @@ class MowerDevice extends Homey.Device {
         await this.removeCapability(cap).catch((e) => this.error('removeCapability', cap, e.message));
       }
     }
+
   }
 
   // ─── API ──────────────────────────────────────────────────────────────────
@@ -1460,16 +1464,10 @@ class MowerDevice extends Homey.Device {
       ms,
     );
     // RC43: external Dreame/MOVA returns must be detected before the mower reaches a closed gate.
-    // Keep the original poll interval, but add a guarded 5 s safety poll only while garage mode is active and the mower is outside/working.
-    this._garageFastPollTimer = this.homey.setInterval(async () => {
-      if (this._garageFastPollBusy || !this.getSetting('garage_mode_enabled')) return;
-      const st = this.getCapabilityValue('mower_status');
-      const outside = !!(this._garageSafety && (this._garageSafety._missionOutside || this._garageSafety._outbound));
-      if (!outside && !['mowing','mapping','paused','returning','error','remote_control'].includes(st)) return;
-      this._garageFastPollBusy = true;
-      try { await this._poll(); } catch (e) { this.log('[garage-fast-poll]', e.message); }
-      finally { this._garageFastPollBusy = false; }
-    }, 5000);
+    // Only start the 5 s safety poll when garage mode is actually enabled — avoid 720 wakeups/hour for non-garage users.
+    if (this.getSetting('garage_mode_enabled')) {
+      this._startGarageFastPoll();
+    }
   }
 
   _stopPolling() {
@@ -1481,6 +1479,19 @@ class MowerDevice extends Homey.Device {
       this.homey.clearInterval(this._garageFastPollTimer);
       this._garageFastPollTimer = null;
     }
+  }
+
+  _startGarageFastPoll() {
+    if (this._garageFastPollTimer) return;
+    this._garageFastPollTimer = this.homey.setInterval(async () => {
+      if (this._garageFastPollBusy) return;
+      const st = this.getCapabilityValue('mower_status');
+      const outside = !!(this._garageSafety && (this._garageSafety._missionOutside || this._garageSafety._outbound));
+      if (!outside && !['mowing','mapping','paused','returning','error','remote_control'].includes(st)) return;
+      this._garageFastPollBusy = true;
+      try { await this._poll(); } catch (e) { this.log('[garage-fast-poll]', e.message); }
+      finally { this._garageFastPollBusy = false; }
+    }, 5000);
   }
 
   /**
@@ -1655,14 +1666,18 @@ class MowerDevice extends Homey.Device {
 
     // LOCN remains useful as a fallback and as dock GPS anchor, but may not
     // overwrite a fresh higher-priority native map coordinate.
+    // When docked, the GPS anchor changes at most after physically moving the dock → only fetch every 10th poll.
     const AT_DOCK_STATUSES = ['docked', 'charging', 'idle', 'standby'];
-    const locn = await this._api.getLOCN(did).catch(() => null);
+    const isAtDock = AT_DOCK_STATUSES.includes(posStatus);
+    const fetchLocn = !isAtDock || (this._locnPollCounter % 10 === 0);
+    const locn = fetchLocn ? await this._api.getLOCN(did).catch(() => null) : null;
     const locnPos = locn?.pos && Array.isArray(locn.pos) && locn.pos.length >= 2 ? locn.pos : null;
     if (locnPos) {
       const [lon, lat] = locnPos;
-      if (AT_DOCK_STATUSES.includes(posStatus)) {
+      if (isAtDock) {
+        const anchorChanged = !this._dockGPS || this._dockGPS.lon !== lon || this._dockGPS.lat !== lat;
         this._dockGPS = { lon, lat };
-        this.log(`[locn] docked — GPS anchor: lon=${lon} lat=${lat}`);
+        if (anchorChanged) this.log(`[locn] GPS anchor: lon=${lon} lat=${lat}`);
       } else if (!freshPositionThisPoll && ACTIVE_STATUSES.includes(posStatus) && this._dockGPS && this._dockPos) {
         const R = 111320000;
         const dx = (lon - this._dockGPS.lon) * R * Math.cos(lat * Math.PI / 180);
@@ -1673,6 +1688,7 @@ class MowerDevice extends Homey.Device {
         freshPositionThisPoll = this._setLivePosition({ x: mapX, y: mapY }, 'locn') || freshPositionThisPoll;
       }
     }
+    if (isAtDock) this._locnPollCounter++;
 
     if (!freshPositionThisPoll && ACTIVE_STATUSES.includes(posStatus)) {
       const mitrcTrack = await this._api.getMITRC(did, this._activeMapIndex, 65535).catch(() => null);
@@ -1707,8 +1723,8 @@ class MowerDevice extends Homey.Device {
     }
     this._dockPollCounter++;
 
-    // ── MAPL — active map detection, every poll ────────────────────────────────
-    if (Date.now() > this._mapSwitchCooldown) {
+    // ── MAPL — active map detection, every 10th poll ──────────────────────────
+    if (this._maplPollCounter % 10 === 0 && Date.now() > this._mapSwitchCooldown) {
       const mapl = await this._api.getMapList(did).catch(() => null);
       if (mapl?.d && Array.isArray(mapl.d)) {
         const active = mapl.d.find((e) => Array.isArray(e) && e[1] === 1);
@@ -1726,36 +1742,44 @@ class MowerDevice extends Homey.Device {
         }
       }
     }
+    this._maplPollCounter++;
 
     // ── MAPI / AIOBS / OBS — every 10th poll (staggered) ─────────────────────
     if (this._obsPollCounter % 10 === 0) {
-      const [mapiRes, aiobsRes, obsRes] = await Promise.allSettled([
-        this._api.getMAPI(did, this._activeMapIndex),
-        this._api.getAIOBS(did, { idx: this._activeMapIndex }),
-        this._api.getOBS(did, { idx: this._activeMapIndex }),
-      ]);
+      // Fetch MAPI first to get the hash, then only fetch AIOBS/OBS if the map changed.
+      const mapiRaw = await this._api.getMAPI(did, this._activeMapIndex).catch((e) => {
+        this.log('[mapi] failed:', e.message);
+        return null;
+      });
 
-      if (mapiRes.status === 'fulfilled') {
-        this._cachedMAPI = mapiRes.value;
-        this.log('[mapi] response:', JSON.stringify(this._cachedMAPI)?.slice(0, 400));
-        const directMap = this._parseDirectMapData(this._cachedMAPI);
+      if (mapiRaw) {
+        const incomingHash = mapiRaw?.d?.hash ?? null;
+        const cachedHash   = this._cachedMapData?.md5sum ?? null;
+        const mapChanged   = !incomingHash || incomingHash !== cachedHash;
+
+        const directMap = this._parseDirectMapData(mapiRaw);
         if (directMap && (!this._cachedMapData || directMap.md5sum !== this._cachedMapData.md5sum)) {
           this._cachedMapData = directMap;
           this.log(`[map] cached from MAPI: ${directMap.name}, ${directMap.mowingAreas.length} zones`);
         }
-      } else {
-        this.log('[mapi] failed:', mapiRes.reason?.message);
-      }
+        this._cachedMAPI = directMap ? null : mapiRaw;
 
-      const aiobs = aiobsRes.status === 'fulfilled' ? aiobsRes.value : null;
-      const obs   = obsRes.status   === 'fulfilled' ? obsRes.value   : null;
-      if (aiobs !== null || obs !== null) {
-        this._cachedObstacles = { aiobs, obs };
-        this.log('[aiobs] response:', JSON.stringify(aiobs)?.slice(0, 600));
-        this.log('[obs]   response:', JSON.stringify(obs)?.slice(0, 300));
-      } else {
-        this.log('[aiobs] failed:', aiobsRes.reason?.message);
-        this.log('[obs]   failed:', obsRes.reason?.message);
+        if (mapChanged) {
+          const [aiobsRes, obsRes] = await Promise.allSettled([
+            this._api.getAIOBS(did, { idx: this._activeMapIndex }),
+            this._api.getOBS(did, { idx: this._activeMapIndex }),
+          ]);
+          const aiobs = aiobsRes.status === 'fulfilled' ? aiobsRes.value : null;
+          const obs   = obsRes.status   === 'fulfilled' ? obsRes.value   : null;
+          if (aiobs !== null || obs !== null) {
+            this._cachedObstacles = { aiobs, obs };
+            this.log('[aiobs] response:', JSON.stringify(aiobs)?.slice(0, 600));
+            this.log('[obs]   response:', JSON.stringify(obs)?.slice(0, 300));
+          } else {
+            this.log('[aiobs] failed:', aiobsRes.reason?.message);
+            this.log('[obs]   failed:', obsRes.reason?.message);
+          }
+        }
       }
     }
     this._obsPollCounter++;
@@ -2212,10 +2236,27 @@ class MowerDevice extends Homey.Device {
   /**
    * Scan MAP.N chunks for zone and spot IDs, then update the num_zones setting
    * and both pickers. Exits early when nothing has changed.
-   * Called every poll cycle (cheap due to change-guard caches).
+   * Called every poll cycle; _extractMapInfo and _parseMapDataChunks are skipped
+   * when the raw MAP string is identical to the previous call.
    */
   async _detectAndSyncZones(raw) {
-    const { ids: detectedIds, spotIds, maps } = this._extractMapInfo(raw);
+    // Build MAP string to check for changes before doing any parsing work.
+    const mapParts = [];
+    for (let i = 0; raw[`MAP.${i}`] != null; i++) mapParts.push(raw[`MAP.${i}`]);
+    const mapStr = mapParts.join('');
+    const mapChanged = mapStr !== this._lastMapStr;
+    if (mapStr) this._lastMapStr = mapStr;
+
+    let detectedIds = [];
+    let spotIds = [];
+    let maps = [];
+
+    if (mapChanged) {
+      ({ ids: detectedIds, spotIds, maps } = this._extractMapInfo(raw));
+    } else {
+      detectedIds = this._activeZoneIds || [];
+      maps = this._discoveredMaps || [];
+    }
 
     this._activeZoneIds = detectedIds;
 
@@ -2229,7 +2270,10 @@ class MowerDevice extends Homey.Device {
     // livePath (M_PATH) updates every poll during mowing — refresh it independently.
     // When livePath is empty (mower docked, M_PATH.0="[]"), preserve last known
     // position so the robot marker stays visible on the map.
-    const parsed = this._parseMapDataChunks(raw) || this._parseDirectMapData(this._cachedMAPI);
+    // Full map parse (MAP chunks) is skipped when the MAP string is unchanged — only M_PATH is re-parsed.
+    const parsed = mapChanged
+      ? (this._parseMapDataChunks(raw) || this._parseDirectMapData(this._cachedMAPI))
+      : this._parseLivePathOnly(raw);
     if (parsed) {
       if (parsed.md5sum !== this._cachedMapData?.md5sum) {
         this._cachedMapData = parsed;
@@ -3513,7 +3557,7 @@ class MowerDevice extends Homey.Device {
       if (distance > 3000) this._liveRouteTrail.push([32767, -32768]);
     }
     this._liveRouteTrail.push(point);
-    if (this._liveRouteTrail.length > 800) this._liveRouteTrail = this._liveRouteTrail.slice(-800);
+    if (this._liveRouteTrail.length > 800) this._liveRouteTrail.splice(0, this._liveRouteTrail.length - 800);
   }
 
   _setLivePosition(pos, source = '') {
@@ -3697,16 +3741,18 @@ class MowerDevice extends Homey.Device {
     this.log(`[mqtt] connecting to ${url} uid=${uid} topic=${this._mqttTopic}`);
 
     try {
+      this._mqttFailCount = 0;
       this._mqttClient = mqtt.connect(url, {
         clientId,
         username: String(uid),
         password: tokens.accessToken,
         rejectUnauthorized: false,
-        reconnectPeriod: 30000,
+        reconnectPeriod: 0,   // manual backoff below
         connectTimeout: 10000,
       });
 
       this._mqttClient.on('connect', () => {
+        this._mqttFailCount = 0;
         this.log(`[mqtt] connected — subscribing to ${this._mqttTopic}`);
         this._mqttClient.subscribe(this._mqttTopic, (err) => {
           if (err) this.error('[mqtt] subscribe error:', err.message);
@@ -3727,7 +3773,18 @@ class MowerDevice extends Homey.Device {
       });
 
       this._mqttClient.on('close', () => {
-        this.log('[mqtt] connection closed');
+        if (!this._mqttClient) return; // intentional disconnect
+        this._mqttFailCount = (this._mqttFailCount || 0) + 1;
+        if (this._mqttFailCount > 10) {
+          this.log('[mqtt] too many failures — giving up');
+          return;
+        }
+        // exponential backoff: 30s → 60s → 120s → … capped at 10 min
+        const delay = Math.min(30000 * (2 ** (this._mqttFailCount - 1)), 600000);
+        this.log(`[mqtt] connection closed — retry in ${delay / 1000}s (attempt ${this._mqttFailCount})`);
+        this.homey.setTimeout(() => {
+          if (this._mqttClient) this._mqttClient.reconnect();
+        }, delay);
       });
     } catch (e) {
       this.error('[mqtt] connect failed:', e.message);
@@ -3764,7 +3821,8 @@ class MowerDevice extends Homey.Device {
             const moved = !this._livePos || Math.abs(newPos.x - this._livePos.x) > 50 || Math.abs(newPos.y - this._livePos.y) > 50;
             this._setLivePosition(newPos, 'mqtt');
             if (moved) {
-              this.log(`[mqtt] pos: (${newPos.x}, ${newPos.y}) angle=${angle}°`);
+              this._mqttPosLogCounter = ((this._mqttPosLogCounter || 0) + 1) % 20;
+              if (this._mqttPosLogCounter === 0) this.log(`[mqtt] pos: (${newPos.x}, ${newPos.y}) angle=${angle}°`);
               if (this._garageSafety && typeof this._garageSafety.updatePositionGuards === 'function') {
                 this._garageSafety.updatePositionGuards().catch((e) => this.error('[garage] mqtt position guard:', e.message));
               }
@@ -4186,19 +4244,9 @@ class MowerDevice extends Homey.Device {
     }
     if (!mapObj) return null;
 
-    // Log all top-level keys and flag any position/path candidates
-    this.log('[map] keys:', Object.keys(mapObj).join(', '));
-    const posKeys = Object.keys(mapObj).filter(k => /pos|robot|cur|loc|coord|point|r_p|rp|rob|^tr$|^path|^track|trajec/i.test(k));
-    if (posKeys.length) this.log('[map] position/path keys:', JSON.stringify(Object.fromEntries(posKeys.map(k => [k, typeof mapObj[k] === 'string' ? mapObj[k].slice(0, 120) : mapObj[k]]))));
-    if (mapObj.tr) this.log('[map] tr sample:', String(mapObj.tr).slice(0, 200));
-    if (mapObj.obstacles) this.log('[map] obstacles raw:', JSON.stringify(mapObj.obstacles).slice(0, 600));
-
     // ── ARMap binary → extract robot + charger position ───────────────────
     {
       const arRaw = mapObj.ARMap;
-      const arType = typeof arRaw;
-      const arLen  = arRaw ? String(arRaw).length : 0;
-      this.log(`[armap] field: type=${arType} len=${arLen} truthy=${!!arRaw}`);
       if (arRaw) {
         const ar = this._parseARMap(arRaw);
         if (ar) {
@@ -4305,6 +4353,51 @@ class MowerDevice extends Homey.Device {
     };
   }
 
+  // Lightweight variant of _parseMapDataChunks used when MAP chunks are unchanged.
+  // Re-parses only M_PATH (live mowing trail) and returns a minimal object compatible
+  // with the merge logic in _detectAndSyncZones.  Returns null when no M_PATH exists.
+  _parseLivePathOnly(raw) {
+    const pathParts = [];
+    for (let i = 0; raw[`M_PATH.${i}`] != null; i++) pathParts.push(raw[`M_PATH.${i}`]);
+    if (!pathParts.length) return null;
+
+    const pathStr = pathParts.join('');
+    const skip = parseInt(raw['M_PATH.info'] || '0', 10) || 0;
+    const searchStr = skip > 0 ? pathStr.slice(skip) : pathStr;
+    const re = /\[(-?\d+),(-?\d+)\]/g;
+    const rawPts = [];
+    let m;
+    while ((m = re.exec(searchStr)) !== null) {
+      const px = parseInt(m[1], 10), py = parseInt(m[2], 10);
+      rawPts.push(px === 32767 && py === -32768 ? [32767, -32768] : [px * 10, py * 10]);
+    }
+    const JUMP_SQ = 3000 * 3000;
+    const allPts = [];
+    let prevReal = null;
+    for (const pt of rawPts) {
+      if (pt[0] === 32767) { allPts.push(pt); prevReal = null; }
+      else {
+        if (prevReal !== null) {
+          const dx = pt[0] - prevReal[0], dy = pt[1] - prevReal[1];
+          if (dx * dx + dy * dy > JUMP_SQ) allPts.push([32767, -32768]);
+        }
+        allPts.push(pt); prevReal = pt;
+      }
+    }
+    const realCount = allPts.filter((p) => p[0] !== 32767).length;
+    const step = realCount > 800 ? Math.ceil(realCount / 800) : 1;
+    let ri = 0, lastRealIdx = -1;
+    for (let i = allPts.length - 1; i >= 0; i--) { if (allPts[i][0] !== 32767) { lastRealIdx = i; break; } }
+    const livePath = [];
+    for (let i = 0; i < allPts.length; i++) {
+      const pt = allPts[i];
+      if (pt[0] === 32767 && pt[1] === -32768) { livePath.push(pt); continue; }
+      if (ri++ % step === 0 || i === lastRealIdx) livePath.push(pt);
+    }
+
+    return { md5sum: this._cachedMapData?.md5sum ?? '', livePath, chargerPos: this._dockPos ?? null };
+  }
+
   async updateGarageOverlayMarkers(payload = {}) {
     const asEditablePoint = (value, name) => {
       if (!value || !Number.isFinite(Number(value.x)) || !Number.isFinite(Number(value.y))) {
@@ -4377,11 +4470,11 @@ class MowerDevice extends Homey.Device {
         for (const idx of uniqueIdx) {
           const mapi = await this._api.getMAPI(did, idx).catch((e) => { this.log(`[map] widget MAPI idx=${idx} failed:`, e.message); return null; });
           if (!mapi) continue;
-          this._cachedMAPI = mapi;
           const direct = this._parseDirectMapData(mapi);
           if (direct) {
             this._activeMapIndex = idx;
             this._cachedMapData = direct;
+            this._cachedMAPI = null;
             this.log(`[map] widget refreshed from MAPI idx=${idx}: ${direct.name}, ${direct.mowingAreas.length} zones`);
             break;
           }
@@ -4722,7 +4815,6 @@ class MowerDevice extends Homey.Device {
       mihisData:        mihisResult.status === 'fulfilled' ? mihisResult.value : { error: mihisResult.reason?.message },
       cachedMapData:    cachedMap,
       cachedObstacles:  this._cachedObstacles,
-      cachedMAPI:       this._cachedMAPI,
       capabilityValues,
       storeValues,
       deviceSettings,

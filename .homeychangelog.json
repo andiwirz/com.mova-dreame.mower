@@ -1,4 +1,16 @@
 {
+  "1.1.32": {
+    "en": "Code cleanup and robustness fixes in GarageSafetyEngine: removed duplicate constructor field assignments, initialised internal maps and timers eagerly, degraded-dock watchdog timer is now cancellable, duplicate state-reset blocks removed. Garage marker buttons (Save danger area, Save safety lines A/B) are now reliably stripped from existing installations when Garage Mode is disabled — they are removed on every app start via the standard capability cleanup and re-added only when Garage Mode is enabled.",
+    "de": "Code-Bereinigung und Robustheitsfixes in der GarageSafetyEngine: doppelte Konstruktor-Feldzuweisungen entfernt, interne Maps und Timer werden jetzt direkt initialisiert, der Degraded-Dock-Watchdog-Timer ist jetzt abbrechbar, doppelte Zustandsreset-Blöcke entfernt. Garage-Marker-Schaltflächen (Gefahrenbereich, Sicherheitslinie A/B speichern) werden bei bestehenden Installationen jetzt zuverlässig entfernt wenn der Garagenmodus deaktiviert ist — sie werden beim App-Start bereinigt und nur wieder hinzugefügt wenn der Garagenmodus aktiviert ist."
+  },
+  "1.1.31": {
+    "en": "Garage marker buttons (Save danger area centre, Save safety line A/B) are now hidden on the device card when Garage Mode is disabled — they appear automatically when Garage Mode is enabled.",
+    "de": "Garage-Marker-Schaltflächen (Gefahrenbereich-Mitte speichern, Sicherheitslinie A/B speichern) werden auf der Gerätekarte ausgeblendet wenn der Garagenmodus deaktiviert ist — sie erscheinen automatisch wenn der Garagenmodus aktiviert wird."
+  },
+  "1.1.30": {
+    "en": "Performance and memory optimisations: MQTT reconnect now uses exponential back-off instead of a fixed 30-second retry loop. Garage fast-poll (5 s) only starts when Garage Mode is enabled. Map-list (MAPL), dock position, settings (CFG), mowing history (MIHIS) and LOCN-while-docked are all staggered to every 10th poll (~5 min). Obstacle data (AIOBS/OBS) is only re-fetched when the map hash changes. Identical MAP data is no longer re-parsed on every poll. Live route trail overflow now mutates in place. Memory leak in the garage Timeline dedup map fixed.",
+    "de": "Performance- und Speicher-Optimierungen: MQTT-Verbindungswiederherstellung nutzt jetzt exponentielles Backoff statt festem 30-Sekunden-Retry. Garage-Schnellabfrage (5 s) startet nur wenn der Garagenmodus aktiviert ist. Kartenliste (MAPL), Stationsposition, Einstellungen (CFG), Mähverlauf (MIHIS) und GPS-Position im angedockten Zustand werden nur noch jede 10. Abfrage (~5 min) abgerufen. Hindernis-Daten (AIOBS/OBS) werden nur neu geladen wenn sich der Karten-Hash geändert hat. Unveränderte Kartendaten werden nicht mehr bei jeder Abfrage neu geparst. Speicherleck in der Garage-Timeline-Deduplizierung behoben."
+  },
   "1.1.29": {
     "en": "Updated widget preview images for the Live Map and Mowing History widgets.",
     "de": "Vorschaubilder der Widgets Live-Karte und Mähverlauf aktualisiert."
