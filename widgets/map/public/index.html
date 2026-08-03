@@ -80,6 +80,7 @@
     <span id="footer-text"></span>
     <span id="footer-actions">
       <button id="edit-btn" class="map-action" title="Marker bearbeiten">Bearbeiten</button>
+      <button id="set-maintenance-btn" class="map-action primary" title="Aktuelle Roboterposition als Wartungspunkt übernehmen" style="display:none">Wartungspunkt jetzt setzen</button>
       <span id="edit-actions">
         <button id="cancel-edit-btn" class="map-action danger">Abbrechen</button>
         <button id="save-edit-btn" class="map-action primary">Speichern</button>
@@ -164,6 +165,10 @@
         bindEditMarkers();
         const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         document.getElementById('footer-text').textContent = _lastData.name + ' · ' + ts;
+        var overlayForButton = _lastData.garageOverlay || {};
+        var maintenanceMissing = !(overlayForButton.maintenancePoint || _lastData.maintenancePoint);
+        var garageVisible = !_lastData.overlayVisibility || _lastData.overlayVisibility.garageMode !== false;
+        document.getElementById('set-maintenance-btn').style.display = (!_editMode && maintenanceMissing && garageVisible) ? '' : 'none';
         if (_lastVbW > 0 && _lastVbH > 0 && _homey && _homey.setHeight) {
           var measuredW = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0, 300);
           // Homey/iOS briefly reports a much smaller iframe width while the page is
@@ -745,6 +750,9 @@
     }
 
     function clonePoint(p) {
+      if (Array.isArray(p) && Number.isFinite(Number(p[0])) && Number.isFinite(Number(p[1]))) {
+        return { x: Number(p[0]), y: Number(p[1]) };
+      }
       return p && Number.isFinite(Number(p.x)) && Number.isFinite(Number(p.y))
         ? { x: Number(p.x), y: Number(p.y) } : null;
     }
@@ -767,9 +775,17 @@
         dangerCenter: clonePoint(go.dangerCenter || _lastData.dangerCenter),
         maintenancePoint: clonePoint(go.maintenancePoint || _lastData.maintenancePoint)
       };
-      if (!_editDraft.lineA || !_editDraft.lineB || !_editDraft.dangerCenter || !_editDraft.maintenancePoint) {
-        showMsg('A, B, Gefahrenpunkt oder Wartungspunkt fehlen – Marker zuerst normal setzen.', true);
+      if (!_editDraft.lineA || !_editDraft.lineB || !_editDraft.dangerCenter) {
+        showMsg('A, B oder Gefahrenpunkt fehlen – Marker zuerst normal setzen.', true);
         return;
+      }
+      if (!_editDraft.maintenancePoint) {
+        var robot = clonePoint(_lastData.robot || _lastData.robotPos || _lastData.livePosition);
+        if (!robot) {
+          showMsg('Wartungspunkt fehlt. Bitte den Mäher zum gewünschten Punkt fahren und „Wartungspunkt jetzt setzen“ verwenden.', true);
+          return;
+        }
+        _editDraft.maintenancePoint = robot;
       }
       setEditUi(true);
       renderMap();
@@ -821,6 +837,20 @@
         .finally(function() { btn.disabled = false; btn.textContent = 'Speichern'; });
     }
 
+    function setMaintenancePointHere() {
+      if (!_homey || !_deviceId) return;
+      var btn = document.getElementById('set-maintenance-btn');
+      btn.disabled = true;
+      btn.textContent = '…';
+      _homey.api('POST', '/maintenance-point-here?deviceId=' + encodeURIComponent(_deviceId), {})
+        .then(function() {
+          return _homey.api('GET', '/?deviceId=' + encodeURIComponent(_deviceId) + '&_=' + Date.now(), {});
+        })
+        .then(onMapData)
+        .catch(function(err) { alert(err.message || 'Wartungspunkt konnte nicht gesetzt werden.'); })
+        .finally(function() { btn.disabled = false; btn.textContent = 'Wartungspunkt jetzt setzen'; });
+    }
+
     // ── Entry point ──────────────────────────────────────────────────────────
 
     function onHomeyReady(Homey) {
@@ -842,6 +872,7 @@
       }
 
       document.getElementById('edit-btn').addEventListener('click', startMarkerEdit);
+      document.getElementById('set-maintenance-btn').addEventListener('click', setMaintenancePointHere);
       document.getElementById('cancel-edit-btn').addEventListener('click', cancelMarkerEdit);
       document.getElementById('save-edit-btn').addEventListener('click', saveMarkerEdit);
       window.addEventListener('pointermove', function(ev) {

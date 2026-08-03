@@ -2892,6 +2892,19 @@
           },
           "children": [
             {
+              "id": "slow_motion_enabled",
+              "type": "checkbox",
+              "label": {
+                "en": "Permanent slow motion (experimental)",
+                "de": "Dauerhafte Langsamfahrt (experimentell)"
+              },
+              "value": false,
+              "hint": {
+                "en": "Uses the mower’s native low-speed mode for the full day. This can reduce travel speed, but cannot control wheel torque or prevent the firmware’s stuck-recovery wheel spin.",
+                "de": "Verwendet den nativen Langsamfahrmodus des Mähers ganztägig. Das kann die Fahrgeschwindigkeit reduzieren, steuert aber weder das Raddrehmoment noch das Durchdrehen der herstellereigenen Festfahr-Erkennung."
+              }
+            },
+            {
               "id": "low_enabled",
               "type": "checkbox",
               "label": {
@@ -3719,6 +3732,10 @@
         "updateGarageMarkers": {
           "method": "PUT",
           "path": "/garage-markers"
+        },
+        "setMaintenancePointHere": {
+          "method": "POST",
+          "path": "/maintenance-point-here"
         }
       },
       "id": "map"

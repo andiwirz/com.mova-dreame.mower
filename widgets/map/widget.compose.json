@@ -103,6 +103,10 @@
     "updateGarageMarkers": {
       "method": "PUT",
       "path": "/garage-markers"
+    },
+    "setMaintenancePointHere": {
+      "method": "POST",
+      "path": "/maintenance-point-here"
     }
   }
 }

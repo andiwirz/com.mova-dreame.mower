@@ -513,7 +513,7 @@ Fixes the case where **Start Mowing** physically resumed a paused mower but Home
 - Existing start, pause/resume, maintenance-point, return and door-close logic remains unchanged.
 
 ### 1.2.1 maintenance marker regression fix
-- Keeps the confirmed A2 native maintenance-point index 2.
+- Uses the original developer command with native maintenance-point index 1 for all supported models.
 - Restores the maintenance marker from the original MOVA map as the primary source.
 - Removes the safety-line-derived marker fallback that could display a wrong point.
 - Never replaces the marker with live mower telemetry.

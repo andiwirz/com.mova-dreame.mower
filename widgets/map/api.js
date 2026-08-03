@@ -29,5 +29,13 @@ module.exports = {
       throw new Error('Mower device does not support garage marker editing');
     }
     return device.updateGarageOverlayMarkers(body || {});
+  },
+
+  async setMaintenancePointHere({ homey, query }) {
+    const device = findDevice(homey, query && query.deviceId);
+    if (!device || typeof device.setMaintenancePointFromCurrentPosition !== 'function') {
+      throw new Error('Mower device does not support setting the maintenance point');
+    }
+    return device.setMaintenancePointFromCurrentPosition();
   }
 };
