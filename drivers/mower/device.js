@@ -1045,13 +1045,13 @@ class MowerDevice extends Homey.Device {
         if (!(await this._momentButtonPressed('cmd_garage_pause_mode', 'garage_pause', 3000))) return;
         this._garageSafety.paused = !this._garageSafety.paused;
         this.log(`[garage] mode ${this._garageSafety.paused ? 'paused' : 'active'}`);
-        await this.setCapabilityOptions('cmd_garage_pause_mode', {
+        await this._setCapabilityOptionsIfChanged('cmd_garage_pause_mode', {
           title: {
             en: this._garageSafety.paused ? 'Resume garage mode' : 'Pause garage mode',
             de: this._garageSafety.paused ? 'Garagenmodus fortsetzen' : 'Garagenmodus pausieren',
           },
           icon: this._garageSafety.paused ? '/assets/capabilities/cmd_resume.svg' : '/assets/capabilities/cmd_pause.svg',
-        }).catch(() => {});
+        });
         await this._garageSafety.refreshTileStatus(this._garageSafety.paused ? 'garage paused' : 'garage resumed').catch(() => {});
         this._releaseMomentCommand('garage_pause', 'cmd_garage_pause_mode');
         await this.setCapabilityValue('cmd_garage_pause_mode', false).catch(() => {});
@@ -1801,11 +1801,23 @@ class MowerDevice extends Homey.Device {
     const min = Number(get('cutting_height_min', 20)) || 20;
     const max = Number(get('cutting_height_max', 70)) || 70;
     this.log(`[cutting_height] options → min=${min}mm max=${max}mm`);
-    this.setCapabilityOptions('cutting_height', { min, max }).catch((e) =>
+    this._setCapabilityOptionsIfChanged('cutting_height', { min, max }).catch((e) =>
       this.error('[cutting_height] setCapabilityOptions:', e.message),
     );
   }
 
+
+  // Homey reinitialises the device (and recreates all flow cards) on every
+  // setCapabilityOptions() call. Guard every call-site so we only write when
+  // the options actually differ from what was last written.
+  async _setCapabilityOptionsIfChanged(cap, opts) {
+    if (!this.hasCapability(cap)) return;
+    const key = JSON.stringify(opts);
+    if (!this._capabilityOptionsCache) this._capabilityOptionsCache = new Map();
+    if (this._capabilityOptionsCache.get(cap) === key) return;
+    await this.setCapabilityOptions(cap, opts).catch(() => {});
+    this._capabilityOptionsCache.set(cap, key);
+  }
 
   async _setCommandVisualState(cap, available, activeLabel = null) {
     if (!this.hasCapability(cap)) return;
@@ -1821,7 +1833,7 @@ class MowerDevice extends Homey.Device {
     const title = activeLabel || baseTitles[cap];
     const opts = { disabled: !available };
     if (title) opts.title = title;
-    await this.setCapabilityOptions(cap, opts).catch(() => {});
+    await this._setCapabilityOptionsIfChanged(cap, opts);
     await this.setCapabilityValue(cap, false).catch(() => {});
   }
 
@@ -1840,25 +1852,25 @@ class MowerDevice extends Homey.Device {
     // always reset the value to false.
     if (this.hasCapability('cmd_pause')) {
       const resume = paused;
-      await this.setCapabilityOptions('cmd_pause', {
+      await this._setCapabilityOptionsIfChanged('cmd_pause', {
         title: {
           en: resume ? 'Resume Mowing' : 'Pause Mowing',
           de: resume ? 'Mähen fortsetzen' : 'Mähen pausieren',
         },
         icon: resume ? '/assets/capabilities/cmd_resume.svg' : '/assets/capabilities/cmd_pause.svg',
-      }).catch(() => {});
+      });
       await this.setCapabilityValue('cmd_pause', false).catch(() => {});
     }
 
     if (this.hasCapability('cmd_garage_pause_mode') && this._garageSafety) {
       const garagePaused = !!this._garageSafety.paused;
-      await this.setCapabilityOptions('cmd_garage_pause_mode', {
+      await this._setCapabilityOptionsIfChanged('cmd_garage_pause_mode', {
         title: {
           en: garagePaused ? 'Resume garage mode' : 'Pause garage mode',
           de: garagePaused ? 'Garagenmodus fortsetzen' : 'Garagenmodus pausieren',
         },
         icon: garagePaused ? '/assets/capabilities/cmd_resume.svg' : '/assets/capabilities/cmd_pause.svg',
-      }).catch(() => {});
+      });
       await this.setCapabilityValue('cmd_garage_pause_mode', false).catch(() => {});
     }
 
@@ -2427,7 +2439,7 @@ class MowerDevice extends Homey.Device {
     }));
 
     this.log(`[picker] mow_map updated: ${values.map((v) => `${v.id} "${v.title.en}"`).join(', ')}`);
-    await this.setCapabilityOptions('mow_map', { values })
+    await this._setCapabilityOptionsIfChanged('mow_map', { values })
       .catch((e) => this.error('setCapabilityOptions mow_map:', e.message));
 
     const currentVal = this.getCapabilityValue('mow_map');
@@ -2460,7 +2472,7 @@ class MowerDevice extends Homey.Device {
     }
 
     this.log(`[picker] mow_zone updated: ${values.map((v) => v.id).join(', ')}`);
-    await this.setCapabilityOptions('mow_zone', { values })
+    await this._setCapabilityOptionsIfChanged('mow_zone', { values })
       .catch((e) => this.error('setCapabilityOptions mow_zone:', e.message));
   }
 
@@ -2481,7 +2493,7 @@ class MowerDevice extends Homey.Device {
     }
 
     this.log(`[picker] mow_spot updated: ${values.map((v) => v.id).join(', ')}`);
-    await this.setCapabilityOptions('mow_spot', { values })
+    await this._setCapabilityOptionsIfChanged('mow_spot', { values })
       .catch((e) => this.error('setCapabilityOptions mow_spot:', e.message));
   }
 
