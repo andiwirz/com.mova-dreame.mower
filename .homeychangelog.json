@@ -1,4 +1,8 @@
 {
+  "1.1.38": {
+    "en": "Fixed spurious Homey flow-card recreation (flowcardaction.create / flowcardtrigger.create) triggered on every mowing-start and mowing-stop: the command-button visual state updater was including a 'disabled' flag in setCapabilityOptions(), causing Homey to reinitialise all flow cards on every mower-status transition. The flag is cosmetic only (functional guards remain in _commandUnavailableReason); it is now omitted so setCapabilityOptions() is only called when the button label actually changes (e.g. Pause ↔ Resume).",
+    "de": "Unerwünschte Homey-Flow-Karten-Neuinitialisierung (flowcardaction.create / flowcardtrigger.create) bei jedem Mähstart und -stopp behoben: der Befehlsschaltflächen-Visualisierer enthielt ein 'disabled'-Flag in setCapabilityOptions(), was Homey dazu veranlasste, alle Flow-Karten bei jedem Statuswechsel neu zu erstellen. Das Flag ist rein kosmetisch (die funktionalen Sperren bleiben in _commandUnavailableReason erhalten); es wird jetzt weggelassen, sodass setCapabilityOptions() nur noch aufgerufen wird wenn sich die Schaltflächenbeschriftung tatsächlich ändert (z.B. Pause ↔ Fortsetzen)."
+  },
   "1.1.37": {
     "en": "Map widget: the Edit button (for repositioning Garage Mode safety markers) is now hidden when Garage Mode is not active.",
     "de": "Karten-Widget: der Edit-Button (zum Verschieben der Garagenmodus-Sicherheitsmarker) wird jetzt ausgeblendet wenn der Garagenmodus nicht aktiv ist."

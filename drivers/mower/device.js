@@ -1839,10 +1839,15 @@ class MowerDevice extends Homey.Device {
       cmd_refresh: { en: 'Refresh', de: 'Aktualisieren' },
       cmd_garage_test_exit: { en: 'Test Exit', de: 'Test-Ausfahrt' },
     };
+    // RC-x: Do NOT include `disabled` in setCapabilityOptions — Homey recreates
+    // all flow cards on every setCapabilityOptions() call, so a disabled-state
+    // change on every mowing-start/stop triggers an unnecessary reinitialisation.
+    // Functional button guards are enforced by _commandUnavailableReason(); the
+    // `disabled` visual flag is cosmetic only and not reliable across all clients.
     const title = activeLabel || baseTitles[cap];
-    const opts = { disabled: !available };
-    if (title) opts.title = title;
-    await this._setCapabilityOptionsIfChanged(cap, opts);
+    if (title) {
+      await this._setCapabilityOptionsIfChanged(cap, { title });
+    }
     await this.setCapabilityValue(cap, false).catch(() => {});
   }
 
