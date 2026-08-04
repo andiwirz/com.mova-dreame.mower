@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -162,7 +162,7 @@
 </head>
 <body>
   <div class="select-wrapper">
-    <select id="session-select"><option value="">Wird geladen…</option></select>
+    <select id="session-select"><option value="">Loading…</option></select>
   </div>
   <div id="meta" class="hidden"></div>
   <div id="minimap"></div>
@@ -184,16 +184,26 @@
   var _homey, _deviceId, _sessions = [], _photoCache = {};
   var _photos = [], _photoIdx = 0;
 
+  // Returns the German string when the user's browser language is German, English otherwise.
+  function t(en, de) {
+    return (navigator.language || '').toLowerCase().startsWith('de') ? de : en;
+  }
+
+  var _locale = (navigator.language || 'en').toLowerCase().startsWith('de') ? 'de-CH' : undefined;
+
   function fmtDate(ts) {
     if (!ts) return '—';
     var d = new Date(ts * 1000);
-    return d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
-      + ' ' + d.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString(_locale, { day: '2-digit', month: '2-digit', year: 'numeric' })
+      + ' ' + d.toLocaleTimeString(_locale, { hour: '2-digit', minute: '2-digit' });
   }
 
+  var OBS_LABELS_EN = { 0: 'Obstacle', 1: 'Person', 2: 'Animal', 3: 'Vehicle', 4: 'Toy' };
+  var OBS_LABELS_DE = { 0: 'Hindernis', 1: 'Mensch', 2: 'Tier', 3: 'Fahrzeug', 4: 'Spielzeug' };
+
   function obsTypeLabel(typeCode, idx) {
-    var labels = { 0: 'Hindernis', 1: 'Mensch', 2: 'Tier', 3: 'Fahrzeug', 4: 'Spielzeug' };
-    return (labels[typeCode] || 'Hindernis') + ' ' + (idx + 1);
+    var labels = t(OBS_LABELS_EN, OBS_LABELS_DE);
+    return (labels[typeCode] || labels[0]) + ' ' + (idx + 1);
   }
 
   function fmtDuration(min) {
@@ -213,8 +223,11 @@
   }
 
   // mode from activity JSON: 100=aborted/auto, 101=Rand, 102=Zone/Fläche (provisional)
-  var MODE_LABELS = { 0: 'Alles', 1: 'Zone', 2: 'Rand', 3: 'Spot', 6: 'Zone', 8: 'Rand',
-                      100: 'Alles', 101: 'Rand', 102: 'Zone' };
+  var MODE_LABELS_EN = { 0: 'All', 1: 'Zone', 2: 'Edge', 3: 'Spot', 6: 'Zone', 8: 'Edge',
+                         100: 'All', 101: 'Edge', 102: 'Zone' };
+  var MODE_LABELS_DE = { 0: 'Alles', 1: 'Zone', 2: 'Rand', 3: 'Spot', 6: 'Zone', 8: 'Rand',
+                         100: 'Alles', 101: 'Rand', 102: 'Zone' };
+  var MODE_LABELS = t(MODE_LABELS_EN, MODE_LABELS_DE);
 
   function renderMeta(session) {
     var meta = document.getElementById('meta');
@@ -262,7 +275,7 @@
     if (count > 0) {
       var s = document.createElement('span');
       s.className = 'act-extra';
-      s.textContent = '🚶 ' + count + '× erkannt';
+      s.textContent = '🚶 ' + count + t('× detected', '× erkannt');
       meta.appendChild(s);
     }
 
@@ -271,7 +284,7 @@
       var s = document.createElement('span');
       s.className = 'act-extra';
       s.style.color = 'rgba(255,120,80,0.9)';
-      s.textContent = '⚠️ ' + fc + ' Fehler';
+      s.textContent = '⚠️ ' + fc + t(' fault(s)', ' Fehler');
       meta.appendChild(s);
     }
   }
@@ -498,7 +511,7 @@
         + '&photoId=' + encodeURIComponent(filename))
       .then(function (res) {
         if (_photoIdx !== idx) return;
-        if (!res || !res.data) { setSlide(null, label + ' (nicht verfügbar)'); return; }
+        if (!res || !res.data) { setSlide(null, label + t(' (unavailable)', ' (nicht verfügbar)')); return; }
         var src = 'data:' + (res.mime || 'image/jpeg') + ';base64,' + res.data;
         _photoCache[filename] = src;
         if (_photoIdx === idx) {
@@ -530,7 +543,7 @@
 
     if (!_photos.length) {
       carousel.style.display = 'none';
-      showMsg('Keine Hindernisse in dieser Session erkannt');
+      showMsg(t('No obstacles detected in this session', 'Keine Hindernisse in dieser Session erkannt'));
       updateHeight();
       return;
     }
@@ -556,7 +569,9 @@
       if (modeLabel) parts.push(modeLabel);
       else if (session.mapName) parts.push(session.mapName);
       if (session.area != null && session.area > 0) parts.push(session.area + ' m²');
-      var photos = photoCount + (photoCount === 1 ? ' Foto' : ' Fotos');
+      var photos = photoCount + (photoCount === 1
+        ? t(' photo', ' Foto')
+        : t(' photos', ' Fotos'));
       sel.options[i].textContent = parts.join(' · ') + ' (' + photos + ')';
       break;
     }
@@ -594,7 +609,7 @@
       })
       .catch(function () {
         document.getElementById('carousel').style.display = 'none';
-        showMsg('Fehler beim Laden der Fotos');
+        showMsg(t('Failed to load photos', 'Fehler beim Laden der Fotos'));
         updateHeight();
       });
   }
@@ -613,7 +628,7 @@
     var sel = document.getElementById('session-select');
     sel.innerHTML = '';
     if (!sessions || sessions.length === 0) {
-      sel.innerHTML = '<option value="">Keine Sessions vorhanden</option>';
+      sel.innerHTML = '<option value="">' + t('No sessions found', 'Keine Sessions vorhanden') + '</option>';
       updateHeight();
       return;
     }
@@ -655,7 +670,7 @@
 
     if (!_deviceId) {
       document.getElementById('session-select').innerHTML =
-        '<option value="">Widget-Einstellungen: Gerät auswählen</option>';
+        '<option value="">' + t('Widget settings: select a device', 'Widget-Einstellungen: Gerät auswählen') + '</option>';
       Homey.ready();
       updateHeight();
       return;
@@ -668,8 +683,8 @@
       })
       .catch(function (err) {
         document.getElementById('session-select').innerHTML =
-          '<option value="">Fehler beim Laden</option>';
-        showMsg(err && err.message ? err.message : 'Verbindungsfehler');
+          '<option value="">' + t('Failed to load', 'Fehler beim Laden') + '</option>';
+        showMsg(err && err.message ? err.message : t('Connection error', 'Verbindungsfehler'));
         Homey.ready();
         updateHeight();
       });

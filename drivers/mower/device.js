@@ -1759,8 +1759,17 @@ class MowerDevice extends Homey.Device {
 
         const directMap = this._parseDirectMapData(mapiRaw);
         if (directMap && (!this._cachedMapData || directMap.md5sum !== this._cachedMapData.md5sum)) {
-          this._cachedMapData = directMap;
-          this.log(`[map] cached from MAPI: ${directMap.name}, ${directMap.mowingAreas.length} zones`);
+          // RC-x: never downgrade a zone-complete map to a zone-less one. A zone-less
+          // MAPI response (wrong _activeMapIndex, transient cloud state) would cause
+          // the widget to zoom in on the robot position instead of the full garden.
+          const incomingHasZones = directMap.mowingAreas && directMap.mowingAreas.length > 0;
+          const cacheHasZones    = this._cachedMapData?.mowingAreas?.length > 0;
+          if (incomingHasZones || !cacheHasZones) {
+            this._cachedMapData = directMap;
+            this.log(`[map] cached from MAPI: ${directMap.name}, ${directMap.mowingAreas.length} zones`);
+          } else {
+            this.log(`[map] skipped MAPI update: incoming has no zones, cache has ${this._cachedMapData.mowingAreas.length} zones`);
+          }
         }
         this._cachedMAPI = directMap ? null : mapiRaw;
 
@@ -2288,9 +2297,14 @@ class MowerDevice extends Homey.Device {
       : this._parseLivePathOnly(raw);
     if (parsed) {
       if (parsed.md5sum !== this._cachedMapData?.md5sum && parsed.mowingAreas) {
-        // Full parse (parseMapDataChunks / parseDirectMapData) — replace cache entirely.
-        this._cachedMapData = parsed;
-        this.log(`[map] cached: ${parsed.name}, ${parsed.mowingAreas.length} zones, ${parsed.livePath.length} path pts`);
+        // Full parse (parseMapDataChunks / parseDirectMapData) — replace cache entirely,
+        // but never downgrade a zone-complete map to a zone-less one (transient parse).
+        const parsedHasZones = parsed.mowingAreas.length > 0;
+        const cacheHasZones  = this._cachedMapData?.mowingAreas?.length > 0;
+        if (parsedHasZones || !cacheHasZones) {
+          this._cachedMapData = parsed;
+          this.log(`[map] cached: ${parsed.name}, ${parsed.mowingAreas.length} zones, ${parsed.livePath.length} path pts`);
+        }
       } else if (this._cachedMapData && parsed.livePath.length > 0) {
         this._cachedMapData = { ...this._cachedMapData, livePath: parsed.livePath, chargerPos: parsed.chargerPos };
       } else if (this._cachedMapData) {
@@ -4499,11 +4513,18 @@ class MowerDevice extends Homey.Device {
             if (!mapi) continue;
             const direct = this._parseDirectMapData(mapi);
             if (direct) {
-              this._activeMapIndex = idx;
-              this._cachedMapData = direct;
-              this._cachedMAPI = null;
-              this.log(`[map] widget refreshed from MAPI idx=${idx}: ${direct.name}, ${direct.mowingAreas.length} zones`);
-              break;
+              // Prefer a zone-complete map over a zone-less one when multiple
+              // MAPI indices respond. If the current candidate has no zones but
+              // we already found a zone-complete map, keep looking.
+              const directHasZones = direct.mowingAreas && direct.mowingAreas.length > 0;
+              const cacheHasZones  = this._cachedMapData?.mowingAreas?.length > 0;
+              if (directHasZones || !cacheHasZones) {
+                this._activeMapIndex = idx;
+                this._cachedMapData = direct;
+                this._cachedMAPI = null;
+                this.log(`[map] widget refreshed from MAPI idx=${idx}: ${direct.name}, ${direct.mowingAreas.length} zones`);
+                if (directHasZones) break; // stop as soon as we have a complete map
+              }
             }
           }
         }

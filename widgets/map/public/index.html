@@ -79,12 +79,12 @@
   <div id="footer">
     <span id="footer-text"></span>
     <span id="footer-actions">
-      <button id="edit-btn" class="map-action" title="Marker bearbeiten">Bearbeiten</button>
+      <button id="edit-btn" class="map-action" title="Edit markers / Marker bearbeiten">Edit</button>
       <span id="edit-actions">
-        <button id="cancel-edit-btn" class="map-action danger">Abbrechen</button>
-        <button id="save-edit-btn" class="map-action primary">Speichern</button>
+        <button id="cancel-edit-btn" class="map-action danger">Cancel</button>
+        <button id="save-edit-btn" class="map-action primary">Save</button>
       </span>
-      <button id="refresh-btn" title="Karte aktualisieren">↻</button>
+      <button id="refresh-btn" title="Refresh map / Karte aktualisieren">↻</button>
     </span>
   </div>
 
@@ -312,9 +312,14 @@
       }
       var vbX, vbY, vbW, vbH;
       const W0 = bx2 - bx1, H0 = by2 - by1;
-      // Telemetry fallbacks (no real map zones) always use the full boundary as
-      // the viewBox so the mower dot appears in context rather than zoomed in.
-      if (featureMinX === Infinity || data.mapFallbackReason) {
+      // Telemetry fallbacks and zone-less maps always use the full boundary so
+      // the mower dot appears in context rather than zoomed in on the robot.
+      // Zone-less maps occur when the periodic MAPI refresh returns a valid
+      // boundary but no zones (wrong index, transient cloud state); without this
+      // guard the robot position alone would expand featureBbox and produce a
+      // 16 % crop of the garden.
+      var hasZones = Array.isArray(data.mowingAreas) && data.mowingAreas.length > 0;
+      if (featureMinX === Infinity || data.mapFallbackReason || !hasZones) {
         vbX = 0; vbY = 0; vbW = W0; vbH = H0;
       } else {
         var padX = (featureMaxX - featureMinX) * 0.06;
@@ -830,8 +835,8 @@
           return _homey.api('GET', '/?deviceId=' + encodeURIComponent(_deviceId) + '&_=' + Date.now(), {});
         })
         .then(onMapData)
-        .catch(function(err) { alert(err.message || 'Marker konnten nicht gespeichert werden.'); })
-        .finally(function() { btn.disabled = false; btn.textContent = 'Speichern'; });
+        .catch(function(err) { alert(err.message || 'Failed to save markers.'); })
+        .finally(function() { btn.disabled = false; btn.textContent = 'Save'; });
     }
 
     // ── Entry point ──────────────────────────────────────────────────────────
