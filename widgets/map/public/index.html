@@ -160,6 +160,10 @@
       } else {
         _lastData = data;
       }
+      // Show the Edit button only when Garage Mode is active — it exclusively
+      // serves to reposition safety markers (A/B, danger centre, maintenance point).
+      var garageActive = !!(data.overlayVisibility && data.overlayVisibility.garageMode);
+      document.getElementById('edit-btn').classList.toggle('hidden', !garageActive);
       if (!_dragMarker) renderMap();
     }
 
