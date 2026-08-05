@@ -4070,9 +4070,13 @@ class MowerDevice extends Homey.Device {
       return { ...value, x: Number(value.x), y: Number(value.y), source: value.source || source };
     };
 
-    // Preserve only unversioned maintenance-point data. Earlier private RC
-    // versioned keys were never released and are intentionally unsupported.
+    // Released 1.1.3x versions (schema v2) stored the point in the *_v2 keys —
+    // those installs are in the field and must keep their verified point across
+    // this upgrade. The physically verified point outranks the map-observed one.
+    // The plain unversioned keys are pre-v2 legacy and checked last.
     const legacyAuthorityKeys = [
+      'garage_maintenance_point_verified_v2',
+      'garage_maintenance_point_native_v2',
       'garage_maintenance_point',
       'maintenance_point',
     ];
@@ -4103,11 +4107,15 @@ class MowerDevice extends Homey.Device {
       this.log(`[maintenance] schema v${schemaVersion}: preserved ${recoveredKey} at ${Math.round(authority.x)},${Math.round(authority.y)}`);
     }
 
-    // Remove obsolete transient keys after the one-time import.
+    // Remove obsolete transient keys after the one-time import. The *_v2 keys
+    // have been imported into garage_maintenance_authority above and are no
+    // longer read by any code path.
     const obsoleteKeys = [
       'garage_maintenance_point_last_valid',
       'garage_maintenance_point_candidate',
       'garage_maintenance_point_lock',
+      'garage_maintenance_point_verified_v2',
+      'garage_maintenance_point_native_v2',
     ];
     for (const key of obsoleteKeys) {
       try {

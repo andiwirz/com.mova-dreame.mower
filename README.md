@@ -436,7 +436,7 @@ Single JSON-string property. Read via property poll; write via `setDeviceData` w
 | `SmartCharge` | Smart auto-charging (source: ioBroker.dreame — key unverified on live device) | `0`=off, `1`=on | ~ |
 
 
-## 1.1.38 Garage reliability and maintenance-point fixes
+## 1.1.39 Garage reliability and maintenance-point fixes
 - Uses the native MOVA/Dreame maintenance-point command with point index 1.
 - Keeps one verified maintenance-point authority and synchronizes confirmed changes from the original app.
 - Learns the point from a confirmed native arrival and realigns small position differences without allowing large jumps.
