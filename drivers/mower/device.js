@@ -1824,6 +1824,22 @@ class MowerDevice extends Homey.Device {
     const key = JSON.stringify(opts);
     if (!this._capabilityOptionsCache) this._capabilityOptionsCache = new Map();
     if (this._capabilityOptionsCache.get(cap) === key) return;
+    // RC-x: the in-memory cache is empty after every app (re)start, so without
+    // this seed the very first call per capability always wrote — recreating all
+    // flow cards on app start even when nothing changed. Compare against the
+    // options Homey already has persisted and skip the write when identical.
+    if (!this._capabilityOptionsCache.has(cap)) {
+      try {
+        const current = this.getCapabilityOptions(cap) || {};
+        const same = Object.keys(opts).every(
+          (k) => JSON.stringify(current[k]) === JSON.stringify(opts[k]),
+        );
+        if (same) {
+          this._capabilityOptionsCache.set(cap, key);
+          return;
+        }
+      } catch (e) { /* no stored options yet — fall through and write */ }
+    }
     await this.setCapabilityOptions(cap, opts).catch(() => {});
     this._capabilityOptionsCache.set(cap, key);
   }
@@ -1839,12 +1855,17 @@ class MowerDevice extends Homey.Device {
       cmd_refresh: { en: 'Refresh', de: 'Aktualisieren' },
       cmd_garage_test_exit: { en: 'Test Exit', de: 'Test-Ausfahrt' },
     };
-    // RC-x: Do NOT include `disabled` in setCapabilityOptions — Homey recreates
-    // all flow cards on every setCapabilityOptions() call, so a disabled-state
-    // change on every mowing-start/stop triggers an unnecessary reinitialisation.
-    // Functional button guards are enforced by _commandUnavailableReason(); the
-    // `disabled` visual flag is cosmetic only and not reliable across all clients.
-    const title = activeLabel || baseTitles[cap];
+    // RC-x: Do NOT include `disabled` or dynamic activeLabel titles in
+    // setCapabilityOptions — Homey recreates all flow cards on every
+    // setCapabilityOptions() call, so any per-transition change (disabled flag,
+    // "Mowing started"/"Returning" labels) reinitialised all flow cards on every
+    // mowing start/stop. Titles stay static; the activeLabel argument is kept
+    // for call-site compatibility but intentionally ignored. Functional button
+    // guards are enforced by _commandUnavailableReason(); writing the static
+    // base title once also self-heals devices that still carry a stale dynamic
+    // title from an older version.
+    void activeLabel;
+    const title = baseTitles[cap];
     if (title) {
       await this._setCapabilityOptionsIfChanged(cap, { title });
     }
