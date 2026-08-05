@@ -612,6 +612,10 @@ class MowerDevice extends Homey.Device {
     // the marker while still allowing a genuine map change to be learned.
     this._maintenancePointCandidate = null;
     this._maintenancePointLogAt = 0;
+    this._nativeMaintenanceCommandAt = 0;
+    this._pendingNativeMaintenanceArrival = null;
+    this._nativeMaintenanceArrivalLatched = false;
+    this._nativeMaintenanceStableArrival = null;
     this._positionSourcePriority = { mqtt: 50, 'siid:1:4': 45, 'garage-marker-direct': 45, locn: 30, mitrc: 20, unknown: 0 };
     this._cachedPRE              = await this.getStoreValue('cached_pre') ?? null;  // last known PRE array; used for cutting_height read-modify-write
     this._cuttingHeightWriteTs   = 0;    // timestamp of last successful cutting_height write; guards poll snap-back
@@ -1336,14 +1340,19 @@ class MowerDevice extends Homey.Device {
       }));
     }
 
-    // Low Speed at Night — write enabled + start + end together whenever any changes
-    const LOW_KEYS = ['low_enabled', 'low_start', 'low_end'];
+    // Native low-speed mode. The optional permanent slow-motion switch uses the
+    // mower's confirmed LOW command over a full-day window; it does not emulate
+    // wheel control or alter the garage state machine. Disabling it restores the
+    // user's normal night schedule from the existing LOW settings.
+    const LOW_KEYS = ['low_enabled', 'low_start', 'low_end', 'slow_motion_enabled'];
     if (LOW_KEYS.some((k) => changedKeys.includes(k))) {
-      this.log(`[settings] LOW → enabled=${newSettings.low_enabled} start=${newSettings.low_start}h end=${newSettings.low_end}h`);
+      const permanentSlow = !!newSettings.slow_motion_enabled;
+      const lowEnabled = permanentSlow || !!newSettings.low_enabled;
+      const startMin = permanentSlow ? 0 : Number(newSettings.low_start) * 60;
+      const endMin = permanentSlow ? 1439 : Number(newSettings.low_end) * 60;
+      this.log(`[settings] LOW → permanent=${permanentSlow} enabled=${lowEnabled} startMin=${startMin} endMin=${endMin}`);
       await this._safeWrite('low', () => this._api.setLowSpeedNight(did, {
-        enabled:  newSettings.low_enabled,
-        startMin: newSettings.low_start * 60,
-        endMin:   newSettings.low_end   * 60,
+        enabled: lowEnabled, startMin, endMin,
       }));
     }
 
@@ -1559,6 +1568,7 @@ class MowerDevice extends Homey.Device {
 
     if (info && info.battery      != null) await this._applyBattery(info.battery);
     if (info && info.latestStatus != null) {
+      this._latestNativeStatusCode = Number(info.latestStatus);
       const rawStatus = STATUS_MAP[info.latestStatus] ?? 'idle';
       const prop = (info.property && typeof info.property === 'object') ? info.property : {};
       const faultCode = info.latestFaultCode ?? info.faultCode ?? info.errorCode
@@ -1575,6 +1585,7 @@ class MowerDevice extends Homey.Device {
         this.log(`[diag] latestStatus=${info.latestStatus} rawStatus=${rawStatus} effective=${mowerStatus} faultCode=${faultCode} mqttErrorCode=${this._mqttErrorCode ?? 'none'}`);
       }
       await this._applyStatus(mowerStatus, effectiveFaultCode);
+      await this._observeNativeMaintenanceArrival(this._latestNativeStatusCode, mowerStatus, effectiveFaultCode).catch((e) => this.error('[maintenance] native arrival observer:', e.message));
 
       // Derive charging_status from mower status.
       const chargingCode =
@@ -1998,7 +2009,7 @@ class MowerDevice extends Homey.Device {
         || garageHome);
       // Docking while already home is meaningless, but the maintenance-point
       // button is a valid garage departure: GarageSafetyEngine opens the door
-      // first and releases native maintenance point index 2 only after the door
+      // first and releases the native maintenance point command only after the door
       // is safely open.
       if (reallyHome && capabilityId === 'cmd_dock' && garageActive && !this._garageSafety.paused) {
         return `transit_not_available_home`;
@@ -3465,13 +3476,22 @@ class MowerDevice extends Homey.Device {
 
 
   _maintenancePointIndex() {
-    return resolveMaintenancePointIndex(this);
+    // The original MOVA/Dreame command and the successful A2 field test both use
+    // native maintenance point 1. Keep this fixed so every garage path sends the
+    // exact same upstream command.
+    const pointIndex = resolveMaintenancePointIndex(this);
+    this.log(`[maintenance] point-index fixed: model=${this._devModel || this.getSetting('device_model_id') || '?'} resolved=${pointIndex}`);
+    return pointIndex;
   }
 
   async _goToMaintenancePointGuarded(label = 'maintenance') {
     const did = this.getData().id;
     const mapIdx = this._activeMapIndex ?? 0;
     const pointIndex = this._maintenancePointIndex();
+    this._nativeMaintenanceCommandAt = Date.now();
+    this._pendingNativeMaintenanceArrival = null;
+    this._nativeMaintenanceArrivalLatched = false;
+    this._nativeMaintenanceStableArrival = null;
     this.log(`[maintenance] ${label}: opcode 109 map=${mapIdx} point=${pointIndex}`);
     return this._safeWrite(`${label}:maintenance:${pointIndex}`, () => this._api.goToMaintenancePoint(did, mapIdx, pointIndex));
   }
@@ -3609,6 +3629,7 @@ class MowerDevice extends Homey.Device {
       this._lastLivePosAt = next.ts;
       this._positionCandidate = null;
       this._appendLiveRoutePoint(next, src);
+      this._commitPendingNativeMaintenanceArrival().catch((e) => this.error('[maintenance] pending arrival commit:', e.message));
       return true;
     }
 
@@ -3626,6 +3647,7 @@ class MowerDevice extends Homey.Device {
       this._lastLivePosAt = next.ts;
       this._positionCandidate = null;
       this._appendLiveRoutePoint(next, src);
+      this._commitPendingNativeMaintenanceArrival().catch((e) => this.error('[maintenance] pending arrival commit:', e.message));
       return true;
     }
 
@@ -3654,6 +3676,7 @@ class MowerDevice extends Homey.Device {
       this._positionCandidate = null;
       this.log(`[pos] confirmed source transition ${current.source || '-'} -> ${src}; jump=${Math.round(distance)}mm`);
       this._appendLiveRoutePoint(accepted, src);
+      this._commitPendingNativeMaintenanceArrival().catch((e) => this.error('[maintenance] pending arrival commit:', e.message));
       return true;
     }
 
@@ -3973,7 +3996,7 @@ class MowerDevice extends Homey.Device {
     // RC108-compatible marker source: the original MOVA map exposes the visual
     // maintenance coordinate in the singular maintenance/service-point field.
     // This map coordinate is independent from opcode 109's command parameter.
-    // The mower command therefore remains on confirmed native index 2, while the
+    // The mower command remains on the confirmed native point index 1, while the
     // marker is read exactly as it was in the last known-good map implementation.
     const maintenancePoint = pointFromMap(
       mapObj.maintenancePoint
@@ -3994,7 +4017,12 @@ class MowerDevice extends Homey.Device {
       contours,
       mapObstacles:   obstacles,
       chargerPos,
+      // Keep the raw native marker separate from the stable display marker. A
+      // transient map response may omit it; the UI must continue to show the last
+      // verified point while this raw field remains available for change detection.
+      nativeMaintenancePointRaw: maintenancePoint ? { ...maintenancePoint, source: 'native_map_original' } : null,
       maintenancePoint: maintenancePoint ? { ...maintenancePoint, source: 'native_map_original' } : null,
+      maintenanceObservationId: `${Date.now()}:${this._maintenanceMapObservationSeq = (this._maintenanceMapObservationSeq || 0) + 1}`,
       mapRawKeys:     Object.keys(mapObj),
       mapTrSample:    mapObj.tr ? String(mapObj.tr).slice(0, 300) : null,
       livePath:       this._cachedMapData?.livePath || [],
@@ -4002,177 +4030,389 @@ class MowerDevice extends Homey.Device {
   }
 
   async _migrateMaintenancePointSchema() {
-    const schemaVersion = 2;
+    const schemaVersion = 6;
     const markerKey = 'garage_maintenance_point_schema_version';
     const currentVersion = Number(await safeGetStoreValue(this, markerKey)) || 0;
     if (currentVersion >= schemaVersion) return;
 
-    // Versions prior to schema v2 persisted untyped maintenance coordinates.
-    // Those values were not reliably bound to a map and could therefore survive
-    // app downgrades, map replacements and parser changes. Clear only these known
-    // legacy cache keys once; normal user settings, flows and garage geometry are
-    // deliberately untouched.
-    const legacyKeys = [
-      'garage_maintenance_point_verified_index2',
-      'garage_maintenance_point_last_valid',
+    const asPoint = (value, source = 'legacy-migration') => {
+      if (!value) return null;
+      if (typeof value === 'string') {
+        try { value = JSON.parse(value); } catch (_) {
+          const m = value.match(/^\s*(-?\d+(?:\.\d+)?)\s*[,;| ]\s*(-?\d+(?:\.\d+)?)\s*$/);
+          if (!m) return null;
+          value = { x: Number(m[1]), y: Number(m[2]) };
+        }
+      }
+      if (Array.isArray(value)) value = { x: value[0], y: value[1] };
+      if (!value || !Number.isFinite(Number(value.x)) || !Number.isFinite(Number(value.y))) return null;
+      return { ...value, x: Number(value.x), y: Number(value.y), source: value.source || source };
+    };
+
+    // Preserve only unversioned maintenance-point data. Earlier private RC
+    // versioned keys were never released and are intentionally unsupported.
+    const legacyAuthorityKeys = [
       'garage_maintenance_point',
       'maintenance_point',
+    ];
+    let recovered = asPoint(await safeGetStoreValue(this, 'garage_maintenance_authority'), 'maintenance-authority');
+    let recoveredKey = recovered ? 'garage_maintenance_authority' : null;
+    if (!recovered) {
+      for (const key of legacyAuthorityKeys) {
+        const point = asPoint(await safeGetStoreValue(this, key), key);
+        if (point) { recovered = point; recoveredKey = key; break; }
+      }
+    }
+
+    if (recovered) {
+      const now = Date.now();
+      const authority = {
+        ...recovered,
+        source: recovered.source || 'migration',
+        verifiedBy: recovered.verifiedBy || `schema_v6_recovered:${recoveredKey}`,
+        authorityKind: recovered.authorityKind || 'migrated_verified',
+        authorityReason: recovered.authorityReason || `schema_v6_recovered:${recoveredKey}`,
+        mapKey: this._maintenanceMapKey(),
+        schemaVersion,
+        confirmedAt: Number(recovered.confirmedAt || recovered.savedAt) || now,
+        savedAt: now,
+      };
+      await this.setStoreValue('garage_maintenance_authority', authority);
+      await this.setStoreValue('garage_maintenance_point', authority);
+      this.log(`[maintenance] schema v${schemaVersion}: preserved ${recoveredKey} at ${Math.round(authority.x)},${Math.round(authority.y)}`);
+    }
+
+    // Remove obsolete transient keys after the one-time import.
+    const obsoleteKeys = [
+      'garage_maintenance_point_last_valid',
       'garage_maintenance_point_candidate',
       'garage_maintenance_point_lock',
-      'garage_maintenance_point_source_migrated_v1',
-      'maintenance_point_source_migrated_v1',
     ];
-    for (const key of legacyKeys) {
+    for (const key of obsoleteKeys) {
       try {
         if (typeof this.unsetStoreValue === 'function') await this.unsetStoreValue(key);
         else await this.setStoreValue(key, null);
       } catch (err) {
-        this.error(`[maintenance] unable to clear legacy store key ${key}:`, err.message);
+        this.error(`[maintenance] unable to clear obsolete key ${key}:`, err.message);
       }
     }
     this._maintenancePointCandidate = null;
     await this.setStoreValue(markerKey, schemaVersion);
-    this.log(`[maintenance] schema migration v${schemaVersion} completed; legacy unbound point cache cleared`);
   }
 
+
   _maintenanceMapKey() {
-    // The map checksum changes when the original app edits map metadata (including
-    // moving the maintenance point), which made a valid stored marker disappear.
-    // Device store is scoped per mower, so map index is the stable identity needed.
+    // The map checksum changes when the original app edits map metadata, including
+    // the maintenance point itself. Binding the marker to that checksum made a
+    // valid point disappear exactly after such an edit. Device store is already
+    // scoped per mower, so active map index is the stable identity required here.
     return `map:${Number(this._activeMapIndex) || 0}`;
   }
 
   async _resolveStableMaintenancePoint() {
+    const schemaVersion = 6;
+    const mapKey = this._maintenanceMapKey();
     const asPoint = (v, fallbackSource = 'stored') => {
       if (!v) return null;
-      if (typeof v === 'string') {
-        try { v = JSON.parse(v); } catch (_) { return null; }
-      }
-      if (Array.isArray(v) && Number.isFinite(Number(v[0])) && Number.isFinite(Number(v[1]))) {
-        return { x: Number(v[0]), y: Number(v[1]), source: fallbackSource };
-      }
-      if (typeof v === 'object' && Number.isFinite(Number(v.x)) && Number.isFinite(Number(v.y))) {
-        return {
-          x: Number(v.x), y: Number(v.y),
-          source: String(v.source || fallbackSource),
-          savedAt: Number(v.savedAt) || undefined,
-          mapKey: v.mapKey ? String(v.mapKey) : undefined,
-          schemaVersion: Number(v.schemaVersion) || undefined,
-          verifiedBy: v.verifiedBy || undefined,
-        };
-      }
-      return null;
+      if (typeof v === 'string') { try { v = JSON.parse(v); } catch (_) { return null; } }
+      if (Array.isArray(v)) v = { x: v[0], y: v[1] };
+      if (!v || !Number.isFinite(Number(v.x)) || !Number.isFinite(Number(v.y))) return null;
+      return { ...v, x: Number(v.x), y: Number(v.y), source: String(v.source || fallbackSource) };
     };
-    const distance = (a, b) => (a && b)
-      ? Math.hypot(Number(a.x) - Number(b.x), Number(a.y) - Number(b.y)) : Infinity;
-    const mapKey = this._maintenanceMapKey();
-    const activeIndex = Number(this._activeMapIndex) || 0;
-    const schemaVersion = 2;
-    const isCurrent = (p) => {
-      if (!p || p.schemaVersion !== schemaVersion) return false;
-      if (!p.mapKey || p.mapKey === mapKey) return true;
-      // Legacy key format was "index:md5sum" — accept if the map index still matches.
-      return Number(String(p.mapKey).split(':')[0]) === activeIndex;
-    };
-    const logOnce = (message, detail = '') => {
-      const now = Date.now();
-      if (now - Number(this._maintenancePointLogAt || 0) < 15000) return;
-      this._maintenancePointLogAt = now;
-      this.log(`[maintenance] ${message}${detail ? `: ${detail}` : ''}`);
+    const distance = (a, b) => a && b ? Math.hypot(a.x - b.x, a.y - b.y) : Infinity;
+    const normalize = (p, extra = {}) => p ? ({
+      ...p, ...extra, mapKey, schemaVersion, savedAt: Number(p.savedAt) || Date.now(),
+    }) : null;
+    const showStable = (point) => {
+      if (point && this._cachedMapData) this._cachedMapData.maintenancePoint = { ...point };
+      return point;
     };
 
-    // Native map data is always the primary source. A verified robot position is
-    // only a fallback for firmware/map formats where no definite native marker is
-    // exposed. This keeps the implementation generic and avoids user-specific
-    // coordinates while still supporting devices with incomplete map metadata.
-    const nativeMapPoint = asPoint(this._cachedMapData?.maintenancePoint, 'native-map');
-    const storedNative = asPoint(await safeGetStoreValue(this, 'garage_maintenance_point_native_v2'), 'native-map');
-    const verified = asPoint(await safeGetStoreValue(this, 'garage_maintenance_point_verified_v2'), 'verified');
-
-    // A position physically reached through the mower's native maintenance command
-    // is the strongest available evidence. It therefore overrides stale or
-    // ambiguous map metadata for the same map. This is generic: no coordinates or
-    // device IDs are hard-coded, and the point is captured only after a deliberate
-    // maintenance trip from confirmed home with stable live telemetry.
-    if (isCurrent(verified) && String(verified.verifiedBy || '').startsWith('manual_home_index2')) {
-      logOnce('using physically verified native maintenance point', `map=${mapKey}`);
-      return verified;
+    // Maintenance authority model:
+    // - opcode 109/index 1 is authoritative for the target identity inside the mower;
+    // - a confirmed native arrival is authoritative for its physical coordinate;
+    // - a native map marker becomes authoritative only after independent confirmation;
+    // - a manual point is an explicit fallback and is never erased by a missing map packet.
+    let authority = asPoint(await safeGetStoreValue(this, 'garage_maintenance_authority'), 'maintenance-authority');
+    if (!authority) {
+      // Compatibility mirror only; schema migration normally imports this first.
+      authority = asPoint(await safeGetStoreValue(this, 'garage_maintenance_point'), 'maintenance-point-mirror');
+      if (authority) {
+        authority = normalize(authority, {
+          authorityKind: authority.authorityKind || 'migrated_verified',
+          authorityReason: authority.authorityReason || 'mirror_recovery',
+          confirmedAt: Number(authority.confirmedAt || authority.savedAt) || Date.now(),
+        });
+        await this.setStoreValue('garage_maintenance_authority', authority).catch(() => {});
+      }
     }
 
-    if (nativeMapPoint) {
-      const candidate = {
-        x: nativeMapPoint.x,
-        y: nativeMapPoint.y,
-        source: 'native-map',
-        mapKey,
-        schemaVersion,
+    const native = asPoint(this._cachedMapData?.nativeMaintenancePointRaw, 'native-map-raw');
+    if (!native) {
+      // A partial/empty map response is never evidence that the point was deleted.
+      return authority ? showStable(normalize(authority)) : null;
+    }
+
+    const nativeStable = normalize(native, { source: 'native-map', verifiedBy: 'native_map_observation' });
+    const observationId = String(this._cachedMapData?.maintenanceObservationId || this._cachedMapData?.md5sum || 'unknown');
+    const now = Date.now();
+
+    // Keep the previously observed raw native marker as the change baseline.
+    // A physically confirmed/manual authority must not be replaced merely because
+    // the same stale native marker is returned twice after a map refresh.
+    const previousRaw = asPoint(await safeGetStoreValue(this, 'garage_maintenance_raw_marker'), 'native-raw-marker');
+    const rawMarkerActuallyChanged = previousRaw ? distance(previousRaw, nativeStable) > 350 : false;
+    await this.setStoreValue('garage_maintenance_raw_marker', {
+      ...nativeStable, lastObservationId: observationId, observedAt: now,
+    }).catch(() => {});
+
+    // Small map drift cannot displace a physically/manual confirmed authority.
+    if (authority && distance(authority, nativeStable) <= 350) {
+      if (String(authority.authorityKind || '').startsWith('native_map')) {
+        authority = normalize(nativeStable, {
+          authorityKind: 'native_map_confirmed',
+          authorityReason: 'native_map_small_correction',
+          confirmedAt: Number(authority.confirmedAt) || now,
+        });
+        await this.setStoreValue('garage_maintenance_authority', authority).catch(() => {});
+        await this.setStoreValue('garage_maintenance_point', authority).catch(() => {});
+      }
+      await this.unsetStoreValue?.('garage_maintenance_candidate').catch(() => {});
+      return showStable(normalize(authority));
+    }
+
+    // A physically confirmed or manual authority may only be displaced after the
+    // original app's *raw* marker itself has genuinely moved. If no prior raw
+    // baseline exists, record this observation as the baseline and keep the
+    // stronger authority. This prevents a stale native marker from pulling the
+    // point back after a successful physical calibration.
+    const authorityKind = String(authority?.authorityKind || '');
+    const authorityIsStrongerThanMap = authority && !authorityKind.startsWith('native_map');
+    let candidate = asPoint(await safeGetStoreValue(this, 'garage_maintenance_candidate'), 'native-candidate');
+    const continuingChangedMarkerCandidate = candidate
+      && candidate.mapKey === mapKey
+      && now - Number(candidate.firstAt || 0) <= 5 * 60 * 1000
+      && distance(candidate, nativeStable) <= 300;
+    if (authorityIsStrongerThanMap
+        && !continuingChangedMarkerCandidate
+        && (!previousRaw || !rawMarkerActuallyChanged)) {
+      await this.unsetStoreValue?.('garage_maintenance_candidate').catch(() => {});
+      this._maintenancePointCandidate = null;
+      return showStable(normalize(authority));
+    }
+
+    // New or substantially changed original-app marker: require two independent
+    // complete map observations. The old authority remains visible and usable meanwhile.
+    const sameCandidate = candidate
+      && candidate.mapKey === mapKey
+      && now - Number(candidate.firstAt || 0) <= 5 * 60 * 1000
+      && distance(candidate, nativeStable) <= 300;
+    const independent = !sameCandidate || String(candidate.lastObservationId || '') !== observationId;
+    if (!sameCandidate) {
+      candidate = {
+        ...nativeStable, source: 'native-candidate', mapKey, schemaVersion,
+        hits: 1, firstAt: now, lastAt: now, lastObservationId: observationId,
       };
-      const currentStoredNative = isCurrent(storedNative) ? storedNative : null;
+    } else if (independent) {
+      candidate = {
+        ...candidate, x: nativeStable.x, y: nativeStable.y,
+        hits: Number(candidate.hits || 1) + 1, lastAt: now, lastObservationId: observationId,
+      };
+    }
+    await this.setStoreValue('garage_maintenance_candidate', candidate).catch(() => {});
+    this._maintenancePointCandidate = candidate;
 
-      if (!currentStoredNative) {
-        const stable = { ...candidate, savedAt: Date.now() };
-        await this.setStoreValue('garage_maintenance_point_native_v2', stable).catch(() => {});
-        this._maintenancePointCandidate = null;
-        logOnce('native maintenance point acquired', `${Math.round(stable.x)},${Math.round(stable.y)} map=${mapKey}`);
-        return stable;
-      }
-
-      if (distance(currentStoredNative, candidate) <= 100) {
-        this._maintenancePointCandidate = null;
-        return currentStoredNative;
-      }
-
-      const previous = this._maintenancePointCandidate;
-      if (previous && previous.mapKey === mapKey && distance(previous, candidate) <= 80) {
-        previous.hits = Number(previous.hits || 1) + 1;
-        previous.lastSeenAt = Date.now();
-      } else {
-        this._maintenancePointCandidate = { ...candidate, hits: 1, firstSeenAt: Date.now(), lastSeenAt: Date.now() };
-      }
-
-      const motionLocked = !!this._garageSafety?._manualMaintenanceTransit
-        || !!this._garageSafety?._safeReturnInProgress
-        || !!this._garageSafety?._returnGuardActive;
-      if (!motionLocked && Number(this._maintenancePointCandidate?.hits || 0) >= 4) {
-        const stable = { ...candidate, savedAt: Date.now() };
-        await this.setStoreValue('garage_maintenance_point_native_v2', stable).catch(() => {});
-        this._maintenancePointCandidate = null;
-        logOnce('native maintenance point adaptively updated', `${Math.round(stable.x)},${Math.round(stable.y)} map=${mapKey}`);
-        return stable;
-      }
-
-      logOnce('native maintenance point change pending', `hits=${Number(this._maintenancePointCandidate?.hits || 0)} map=${mapKey}`);
-      return currentStoredNative;
+    if (Number(candidate.hits || 0) >= 2) {
+      const confirmed = normalize(nativeStable, {
+        source: 'native-map', verifiedBy: 'native_map_sync_confirmed',
+        authorityKind: 'native_map_confirmed',
+        authorityReason: authority ? 'original_app_point_changed' : 'original_app_point_discovered',
+        confirmedAt: now,
+      });
+      await this.setStoreValue('garage_maintenance_authority', confirmed).catch(() => {});
+      await this.setStoreValue('garage_maintenance_point', confirmed).catch(() => {});
+      await this.unsetStoreValue?.('garage_maintenance_candidate').catch(() => {});
+      this._maintenancePointCandidate = null;
+      this.log(`[maintenance] authority changed to confirmed original-app marker: ${Math.round(confirmed.x)},${Math.round(confirmed.y)} ${mapKey}`);
+      return showStable(confirmed);
     }
 
-    this._maintenancePointCandidate = null;
-    if (isCurrent(storedNative)) return storedNative;
-    if (isCurrent(verified)) {
-      logOnce('using verified maintenance point fallback', `map=${mapKey}`);
-      return verified;
-    }
-
-    // Legacy/unbound values are intentionally ignored. They may still exist after
-    // a downgrade, but schema v2 never renders or uses them.
-    return null;
+    return authority ? showStable(normalize(authority)) : null;
   }
 
-  async _storeVerifiedIndex2MaintenancePoint(position, source = 'native_index2_arrival') {
+  async _storeVerifiedMaintenancePoint(position, source = 'native_maintenance_arrival') {
     if (!position || !Number.isFinite(Number(position.x)) || !Number.isFinite(Number(position.y))) return null;
-    const mapKey = this._maintenanceMapKey();
+    const sourceText = String(source || 'native_maintenance_arrival');
+    // A firmware-confirmed/native-command arrival is the strongest available
+    // coordinate authority. The mower itself owns the native index-1 target;
+    // Homey only learns its physical coordinate from the confirmed arrival.
+    const nativeArrivalConfirmed = /native_status_75|native_command_arrival|explicit_native_maintenance_arrival|maintenance_arrival_nearby_realign|maintenance_arrival_initial_set/.test(sourceText);
+    const authorityKind = nativeArrivalConfirmed
+      ? 'native_arrival_confirmed'
+      : (/manual_current_position|map_editor/.test(sourceText) ? 'manual_fallback' : 'physically_verified');
+    const now = Date.now();
     const stable = {
-      x: Number(position.x),
-      y: Number(position.y),
-      source: 'verified',
-      verifiedBy: source,
-      mapKey,
-      schemaVersion: 2,
-      savedAt: Date.now(),
+      x: Number(position.x), y: Number(position.y), source: 'verified',
+      verifiedBy: sourceText, authorityKind, authorityReason: sourceText,
+      mapKey: this._maintenanceMapKey(), schemaVersion: 6,
+      confirmedAt: now, savedAt: now,
     };
     this._maintenancePointCandidate = null;
-    await this.setStoreValue('garage_maintenance_point_verified_v2', stable).catch(() => {});
-    this.log(`[maintenance] verified maintenance point stored for map ${mapKey}`);
+    await this.setStoreValue('garage_maintenance_authority', stable).catch(() => {});
+
+    // Preserve only the actual raw original-app marker as comparison baseline.
+    // Never copy the stable display marker here, because it may already be the
+    // learned physical coordinate and would hide a later real app-side change.
+    const rawNative = this._cachedMapData?.nativeMaintenancePointRaw;
+    if (rawNative && Number.isFinite(Number(rawNative.x)) && Number.isFinite(Number(rawNative.y))) {
+      await this.setStoreValue('garage_maintenance_raw_marker', {
+        x: Number(rawNative.x), y: Number(rawNative.y), source: 'native-map-raw',
+        observedAt: now, mapKey: this._maintenanceMapKey(), schemaVersion: 6,
+      }).catch(() => {});
+    }
+
+    await this.unsetStoreValue?.('garage_maintenance_candidate').catch(() => {});
+    await this.setStoreValue('garage_maintenance_point', stable).catch(() => {});
+    if (this._cachedMapData) this._cachedMapData.maintenancePoint = { ...stable };
+    this.log(`[maintenance] authority set: kind=${authorityKind} reason=${sourceText} point=${Math.round(stable.x)},${Math.round(stable.y)}`);
     return stable;
+  }
+
+
+  async _commitPendingNativeMaintenanceArrival() {
+    const pending = this._pendingNativeMaintenanceArrival;
+    if (!pending || Date.now() > Number(pending.expiresAt || 0)) {
+      this._pendingNativeMaintenanceArrival = null;
+      return false;
+    }
+
+    const live = typeof this._getBufferedLivePosition === 'function'
+      ? this._getBufferedLivePosition(20000)
+      : this._livePos;
+    if (!live || !Number.isFinite(Number(live.x)) || !Number.isFinite(Number(live.y))) return false;
+
+    const liveTs = Number(live.ts || this._lastLivePosAt || 0);
+    // The final position packet may arrive shortly before or shortly after status
+    // 75. Reject genuinely old coordinates, but accept the normal cloud ordering.
+    if (!liveTs || liveTs < Number(pending.at || 0) - 12000 || Date.now() - liveTs > 20000) return false;
+
+    const observationKey = `${Math.round(Number(live.x) / 50)}:${Math.round(Number(live.y) / 50)}`;
+    if (this._nativeMaintenanceArrivalLatched === observationKey) {
+      this._pendingNativeMaintenanceArrival = null;
+      return true;
+    }
+
+    const stored = await this._storeVerifiedMaintenancePoint(
+      { x: Math.round(Number(live.x)), y: Math.round(Number(live.y)) },
+      pending.reason || 'native_command_arrival',
+    );
+    if (!stored) return false;
+
+    this._nativeMaintenanceArrivalLatched = observationKey;
+    this._pendingNativeMaintenanceArrival = null;
+    this._nativeMaintenanceStableArrival = null;
+    this._nativeMaintenanceCommandAt = 0;
+    this._maintenancePointCandidate = null;
+    // Make the new physically verified point visible immediately, without waiting
+    // for another map request or for the old visual marker to disappear upstream.
+    if (this._cachedMapData) this._cachedMapData.maintenancePoint = { ...stored };
+    this.log(`[maintenance] authoritative native arrival replaced previous point at ${stored.x},${stored.y} (${pending.reason})`);
+    // Complete the active garage maintenance journey immediately. The firmware
+    // confirmation is stronger than the map-distance watcher and must not wait
+    // for a second button press or another polling cycle.
+    if (this._garageSafety && typeof this._garageSafety.confirmNativeMaintenanceArrival === 'function') {
+      await this._garageSafety.confirmNativeMaintenanceArrival(
+        pending.reason || 'native_command_arrival',
+        { x: stored.x, y: stored.y, ts: liveTs },
+      ).catch((e) => this.error('[maintenance] garage arrival confirmation:', e.message));
+    }
+    return true;
+  }
+
+  async _observeNativeMaintenanceArrival(rawStatusCode, effectiveStatus = '', faultCode = 0) {
+    // Status 75 (MAINTENANCE_PAUSED) is authoritative firmware proof and may be
+    // committed immediately. Some A2/cloud combinations only expose a generic
+    // paused/standby state after opcode 109. That fallback is deliberately more
+    // conservative: two independent, fault-free observations with a stable fresh
+    // position are required, so an immediate command rejection or transient pause
+    // cannot overwrite the valid maintenance point.
+    const now = Date.now();
+    const raw75 = Number(rawStatusCode) === 75;
+    const status = String(effectiveStatus || '').toLowerCase();
+    const commandAge = this._nativeMaintenanceCommandAt
+      ? now - Number(this._nativeMaintenanceCommandAt)
+      : Number.POSITIVE_INFINITY;
+    const recentNativeCommand = commandAge >= 0 && commandAge <= 3 * 60 * 1000;
+    const commandHadTimeToStart = commandAge >= 5000;
+    const noFault = Number(faultCode || 0) === 0;
+
+    if (raw75 && noFault) {
+      this._nativeMaintenanceStableArrival = null;
+      this._pendingNativeMaintenanceArrival = {
+        at: now,
+        expiresAt: now + 45000,
+        reason: 'native_status_75_original_app_arrival',
+      };
+      return this._commitPendingNativeMaintenanceArrival();
+    }
+
+    const fallbackState = status === 'paused' || status === 'standby';
+    if (!recentNativeCommand || !commandHadTimeToStart || !fallbackState || !noFault) {
+      if (!recentNativeCommand) {
+        this._nativeMaintenanceArrivalLatched = false;
+        this._nativeMaintenanceStableArrival = null;
+      } else if (!noFault || status === 'error') {
+        // A red/error response after opcode 109 is a failed task, never arrival.
+        this._nativeMaintenanceStableArrival = null;
+        this._pendingNativeMaintenanceArrival = null;
+        this._nativeMaintenanceCommandAt = 0;
+      }
+      return false;
+    }
+
+    const live = typeof this._getBufferedLivePosition === 'function'
+      ? this._getBufferedLivePosition(15000)
+      : this._livePos;
+    if (!live || !Number.isFinite(Number(live.x)) || !Number.isFinite(Number(live.y))) return false;
+    const liveTs = Number(live.ts || this._lastLivePosAt || 0);
+    if (!liveTs || now - liveTs > 15000 || liveTs < Number(this._nativeMaintenanceCommandAt) - 12000) return false;
+
+    const previous = this._nativeMaintenanceStableArrival;
+    const sameState = previous && previous.phase === 'stationary';
+    const independent = previous
+      && now - Number(previous.firstAt || 0) >= 4000
+      && Number(liveTs) > Number(previous.liveTs || 0);
+    const withinWindow = previous && now - Number(previous.firstAt || 0) <= 45000;
+    const stablePosition = previous
+      && Math.hypot(Number(live.x) - Number(previous.x), Number(live.y) - Number(previous.y)) <= 350;
+
+    if (sameState && independent && withinWindow && stablePosition) {
+      this._nativeMaintenanceStableArrival = null;
+      this._pendingNativeMaintenanceArrival = {
+        at: now,
+        expiresAt: now + 45000,
+        reason: `native_command_arrival_stable_${status}`,
+      };
+      this.log(`[maintenance] stable ${status} after native command confirmed at ${Math.round(Number(live.x))},${Math.round(Number(live.y))}`);
+      return this._commitPendingNativeMaintenanceArrival();
+    }
+
+    // Start/restart the confirmation window. Repeated processing of the same poll
+    // does not count because the second observation must be at least four seconds
+    // later and carry a fresh accepted position timestamp.
+    if (!previous || !sameState || !withinWindow || !stablePosition) {
+      this._nativeMaintenanceStableArrival = {
+        phase: 'stationary',
+        status,
+        x: Number(live.x),
+        y: Number(live.y),
+        liveTs,
+        firstAt: now,
+        observedAt: now,
+      };
+      this.log(`[maintenance] stable-arrival candidate: ${status} at ${Math.round(Number(live.x))},${Math.round(Number(live.y))}`);
+    }
+    return false;
   }
 
   async _fallbackMapFromTelemetry() {
@@ -4465,11 +4705,7 @@ class MowerDevice extends Homey.Device {
     await this.setStoreValue('garage_line_b', lineB);
     await this.setStoreValue('garage_danger_center', dangerCenter);
     if (maintenancePoint) {
-      if (typeof this._storeVerifiedIndex2MaintenancePoint === 'function') {
-        await this._storeVerifiedIndex2MaintenancePoint(maintenancePoint, 'map_editor');
-      } else {
-        await this.setStoreValue('garage_maintenance_point', maintenancePoint);
-      }
+      await this._storeVerifiedMaintenancePoint(maintenancePoint, 'map_editor');
     }
 
     if (this._garageSafety?.markers?.resetRuntime) this._garageSafety.markers.resetRuntime();
