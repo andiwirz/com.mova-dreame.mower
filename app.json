@@ -2910,6 +2910,19 @@
               }
             },
             {
+              "id": "slow_motion_enabled",
+              "type": "checkbox",
+              "label": {
+                "en": "Permanent Slow Motion (experimental)",
+                "de": "Dauerhafte Langsamfahrt (experimentell)"
+              },
+              "value": false,
+              "hint": {
+                "en": "Uses the mower's native low-speed mode for the full day. This does not directly control wheel torque or prevent every wheel-spin recovery attempt. When disabled, the normal night schedule above is restored.",
+                "de": "Verwendet den nativen Langsamfahrmodus des Mähers ganztägig. Dies steuert nicht direkt das Raddrehmoment und verhindert nicht jeden Freifahrversuch mit durchdrehenden Rädern. Nach dem Ausschalten wird der normale Nachtzeitplan oben wiederhergestellt."
+              }
+            },
+            {
               "id": "low_start",
               "type": "number",
               "label": {
