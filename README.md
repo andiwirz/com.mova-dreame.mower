@@ -15,6 +15,7 @@ MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct
 - **Lighting** — configure the LED activation time window and per-scenario light behaviour (standby, mowing, charging, error)
 - **Do Not Disturb** — set a quiet window during which the mower will not start automatically and returns to dock if already mowing
 - **Low Speed at Night** — set a time window during which the mower slows down automatically to protect animals active at night
+- **Permanent Slow Motion (experimental)** — keeps the mower's native LOW mode enabled throughout the day; this does not control wheel torque or traction recovery
 - **Lifetime mowing statistics** — total mowed area (m²), total mowing time (h), and total mowing sessions, sourced from the device's built-in mowing history (MIHIS); visible in Homey Insights
 - **Session duration** — running minute counter for the current mowing session; persists across app restarts so the timer is never reset mid-session
 - **Consumable status** — blade life, cleaning brush life, and robot maintenance remaining (%) read from the device
@@ -87,6 +88,7 @@ MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct
 | Do Not Disturb — Start / End | Hour of day for the DND window (e.g. 22 = 22:00, 8 = 08:00 next day) |
 | Low Speed at Night — Enabled | Mower slows down automatically during the set window to protect animals active at night |
 | Low Speed at Night — Start / End | Hour of day for the low-speed window (e.g. 20 = 20:00, 8 = 08:00 next day) |
+| Permanent Slow Motion (experimental) | Enables the native LOW mode for the full day; disabling it restores the configured Low Speed at Night schedule |
 | Battery — Return threshold (%) | Mower returns to dock when battery drops to this level |
 | Battery — Resume threshold (%) | Mower resumes its task once the battery reaches this level after charging |
 | Battery — Resume mowing after charging | When enabled, the mower automatically resumes its unfinished task after charging completes |
@@ -433,87 +435,13 @@ Single JSON-string property. Read via property poll; write via `setDeviceData` w
 | `LessColl` | Collision avoidance sensitivity (source: ioBroker.dreame — key unverified on live device) | `0`=off, `1`=on | ~ |
 | `SmartCharge` | Smart auto-charging (source: ioBroker.dreame — key unverified on live device) | `0`=off, `1`=on | ~ |
 
-## RC80
-See `GARAGE_RC80_SAFETY_LINE_DWELL_FALLBACK.md`.
 
+## 1.1.38 Garage reliability and maintenance-point fixes
+- Uses the native MOVA/Dreame maintenance-point command with point index 1.
+- Keeps one verified maintenance-point authority and synchronizes confirmed changes from the original app.
+- Learns the point from a confirmed native arrival and realigns small position differences without allowing large jumps.
+- Uses the same departure phases and timing as a normal garage start: departure, adjustment, positioning and transit.
+- Prevents normal gate closing during departure, adjustment, positioning and maintenance-point transit.
+- Keeps the gate sensor runtime fallback without treating a single late contact event as a permanent sensor failure.
+- Includes the optional experimental Permanent Slow Motion setting based on the native LOW schedule mode.
 
-## RC81
-See `GARAGE_RC81_EXIT_CLOSE_PRIORITY_ARBITER.md`.
-
-
-## RC94
-- A/B-Sicherheitslinie wieder direkt aus den gespeicherten Markerpositionen gezeichnet.
-- Garage → Rasen-Pfeil und Beschriftung zusammen mit der Linie wieder sichtbar.
-- Dock, Wartungspunkt, Gefahrenbereich und Sicherheitsring unverändert.
-
-
-## RC96
-- Blauen Richtungspfeil entfernt.
-- Große kombinierte Richtungsbeschriftung entfernt.
-- „Garage“ klein und dezent neben der Dockingstation platziert.
-- „Rasen“ klein und dezent auf der gegenüberliegenden Seite der A/B-Sicherheitslinie platziert.
-- Keine Änderung an Markern, Sicherheitsgeometrie oder Garagenlogik.
-
-
-## RC98 – Map label and legend polish
-- Legende weiter vom linken und unteren Kartenrand entfernt, Symbole größer und Text heller.
-- „Rasen“ / „Lawn“ deutlich größer und halbtransparent mittig unterhalb von Zone 1.
-- „Garage“ klein und dezent neben der Dockingstation.
-- Keine Änderungen an Editor, Markern, Fahrweg, Fahrtrichtung oder Garagenlogik.
-
-
-## RC99 – Label and legend alignment
-
-- „Rasen“ / „Lawn“ etwas weiter links und höher positioniert.
-- Legende weiter vom Kartenrand abgesetzt und mit dezentem Hintergrund versehen.
-- Keine Änderungen an Editor, Markern, Fahrweg, Fahrtrichtung oder Garagenlogik.
-
-
-## RC103 – Context-aware Start Button
-
-- In garage mode, Start Mowing while paused outside is handled as Resume without opening the garage.
-- Start is ignored while mowing is already active or a safe return is in progress.
-- A full garage start is allowed only when docked/charging is securely confirmed.
-- Existing gate, outbound, safety-line, return and map logic remains unchanged.
-
-
-## RC106 garage resume guard
-The outside-resume guard now releases automatically after stable mowing outside the danger area. A stable native return request is still routed through the normal safe-return logic.
-
-
-## RC107 – Confirmed return context for inbound safety line
-
-- A normal mowing or paused path crossing the safety line toward the garage is now logged only.
-- The line can no longer create a return without a previously confirmed native or explicit return context.
-- Existing safe-return routing, ETA, maintenance-point decision and gate control remain unchanged.
-
-## RC108 – Closed-gate front-return and outbound status fix
-
-External-app returns that reach the narrow area directly in front of a closed garage can now be identified from several stable position samples even if the native `returning` status arrives late. The mower is routed through the existing maintenance-point return flow; the gate is never opened merely because of one position or line crossing. Outbound phases also keep display priority so “Mäht” no longer flashes during Ausfahrt/Justieren/Positionieren.
-
-## RC109 – Outside recovery after interrupted start
-
-RC109 prevents an already exited mower from being stopped or stranded when the native start confirmation arrives late. Start Mowing can recover an outside idle mower without reopening the gate, and Return to Dock remains available despite stale home state so the existing maintenance-point return path can take over.
-
-
-## RC110 – Resume, fixed maintenance marker and sensor-health reset
-
-Start Mowing on a paused mower outside now follows the same robust resume path as Pause/Resume even when the cloud still reports a stale home state. The maintenance marker is never replaced by live mower telemetry, and every real door-contact open/closed event immediately restores sensor health and cancels stale timeout fallbacks.
-
-## RC112 – Resume state synchronization
-
-Fixes the case where **Start Mowing** physically resumed a paused mower but Homey remained on `Paused`. A short semantic resume latch now keeps the internal state, tile and Pause/Resume command synchronized with the actual resumed mission, while a deliberate Pause still takes effect immediately. See `docs/RC112_RESUME_STATE_SYNC_FIX.md`.
-
-
-## RC113 – Gate-open handshake late-event fix
-
-- A real `open` contact now becomes authoritative start-release proof immediately, independent of a temporarily stale sensor-health capability.
-- The start waits through the complete sensor and configured stabilisation window and accepts a slightly delayed open event instead of permanently suppressing the outbound mower command.
-- Open-contact and timer-backed release proof now use the same central verification path.
-- Existing start, pause/resume, maintenance-point, return and door-close logic remains unchanged.
-
-### 1.2.1 maintenance marker regression fix
-- Keeps the confirmed A2 native maintenance-point index 2.
-- Restores the maintenance marker from the original MOVA map as the primary source.
-- Removes the safety-line-derived marker fallback that could display a wrong point.
-- Never replaces the marker with live mower telemetry.
