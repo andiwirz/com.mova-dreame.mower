@@ -1,0 +1,14 @@
+# Developer-only files that must not be shipped to the App Store.
+#
+# NOTE: this file cannot exclude scoped packages (node_modules/@types etc.) —
+# the Homey CLI ignores such patterns. Dev dependencies are kept out of the
+# published package by pruning them first; see the `prepack` script in
+# package.json and the publishing note in README.md.
+
+# Build-time image tooling (sharp) is only used by this script to render
+# App Store preview images on a developer machine.
+scripts/
+
+# Developer documentation. The App Store reads readme.txt / readme.de.txt.
+docs/
+README.md

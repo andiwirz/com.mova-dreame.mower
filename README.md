@@ -253,6 +253,21 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 - Set active map *(autocomplete: map name)*
 - Refresh all data
 
+## Development & Publishing
+
+`mqtt` is the only runtime dependency. `sharp` is a devDependency used solely by
+`scripts/generate-previews.js` to render App Store preview images; its platform
+binaries add roughly 9 MB to the packaged app if they are still installed when
+publishing.
+
+```bash
+npm run publish:homey
+```
+
+This prunes devDependencies before calling `homey app publish`. To restore the
+full toolchain afterwards (e.g. to regenerate previews), run `npm install` — or
+just `npm run previews`, which reinstalls first.
+
 ## Supported Brands & Regions
 
 | Brand | Regions |
