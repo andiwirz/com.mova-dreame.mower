@@ -1194,6 +1194,16 @@ class MowerDevice extends Homey.Device {
     this._dockPollCounter  = 1;
 
 
+    // MQTT live-feed state. _mqttGeneration rises on every client teardown so
+    // callbacks from a replaced client can identify themselves as superseded.
+    this._mqttClient      = null;
+    this._mqttGeneration  = 0;
+    this._mqttFailCount   = 0;
+    this._mqttStopped     = false;
+    this._mqttAuthFailed  = false;
+    this._mqttAuthRetried = false;
+    this._mqttToken       = null;
+
     this._startPolling();
     this._connectMqtt();
   }
@@ -2564,6 +2574,9 @@ class MowerDevice extends Homey.Device {
       this.setStoreValue('token_expiry',  tokenExpiry),
     ]);
     await this.setAvailable();
+    // Re-auth replaces the broker password too; without this the live feed
+    // would keep retrying with the token the user just invalidated.
+    this.onMqttTokenRotated();
     this.log('[repair] tokens updated — device marked available');
   }
 
@@ -2579,6 +2592,9 @@ class MowerDevice extends Homey.Device {
       this.setStoreValue('token_expiry',  tk.tokenExpiry),
     ]);
     this._persistedTokenExpiry = tk.tokenExpiry;
+    // The MQTT broker password is this access token. Tell the live feed about
+    // the rotation so a dropped link never reconnects with the dead one.
+    this.onMqttTokenRotated();
   }
 
   async _handlePollError(err) {
@@ -3803,6 +3819,28 @@ class MowerDevice extends Homey.Device {
 
   // ─── MQTT live position ─────────────────────────────────────────────────
 
+  /** True when an MQTT error/close was caused by rejected credentials. */
+  _isMqttAuthError(err) {
+    if (!err) return false;
+    const msg = String(err.message || '').toLowerCase();
+    // mqtt.js surfaces CONNACK return codes 4 (bad username/password) and
+    // 5 (not authorized) both as `err.code` and in the message text.
+    return err.code === 4 || err.code === 5
+      || msg.includes('not authorized')
+      || msg.includes('bad user name')
+      || msg.includes('bad username');
+  }
+
+  /**
+   * (Re)connect the MQTT live-position feed.
+   *
+   * The broker password is the OAuth access token, which the API rotates about
+   * every two hours. mqtt.js `reconnect()` replays the options the client was
+   * built with, so a reconnect after a rotation would authenticate with a dead
+   * token forever. Therefore every attempt builds a *new* client from the token
+   * that is current at that moment, and `_mqttGeneration` invalidates callbacks
+   * belonging to a client we have already replaced.
+   */
   _connectMqtt() {
     const did = this.getData().id;
     const tokens = this._api.getTokens();
@@ -3816,12 +3854,18 @@ class MowerDevice extends Homey.Device {
     const url = `mqtts://${host}`;
     const clientId = `p_${crypto.randomBytes(8).toString('hex')}`;
 
+    // Tear down any previous client first; its callbacks are muted by the
+    // generation bump inside _destroyMqttClient().
+    this._destroyMqttClient();
+    this._mqttStopped = false;
+    this._mqttToken = tokens.accessToken;
+
     this._mqttTopic = `/status/${did}/${uid}/${model}/${region}/`;
     this.log(`[mqtt] connecting to ${url} uid=${uid} topic=${this._mqttTopic}`);
 
     try {
-      this._mqttFailCount = 0;
-      this._mqttClient = mqtt.connect(url, {
+      const generation = this._mqttGeneration;
+      const client = mqtt.connect(url, {
         clientId,
         username: String(uid),
         password: tokens.accessToken,
@@ -3829,17 +3873,23 @@ class MowerDevice extends Homey.Device {
         reconnectPeriod: 0,   // manual backoff below
         connectTimeout: 10000,
       });
+      this._mqttClient = client;
 
-      this._mqttClient.on('connect', () => {
+      const isCurrent = () => generation === this._mqttGeneration;
+
+      client.on('connect', () => {
+        if (!isCurrent()) return;
         this._mqttFailCount = 0;
+        this._mqttAuthRetried = false;
         this.log(`[mqtt] connected — subscribing to ${this._mqttTopic}`);
-        this._mqttClient.subscribe(this._mqttTopic, (err) => {
+        client.subscribe(this._mqttTopic, (err) => {
           if (err) this.error('[mqtt] subscribe error:', err.message);
           else this.log('[mqtt] subscribed successfully');
         });
       });
 
-      this._mqttClient.on('message', async (topic, message) => {
+      client.on('message', async (topic, message) => {
+        if (!isCurrent()) return;
         try {
           await this._handleMqttMessage(topic, message);
         } catch (e) {
@@ -3847,12 +3897,25 @@ class MowerDevice extends Homey.Device {
         }
       });
 
-      this._mqttClient.on('error', (err) => {
+      client.on('error', (err) => {
+        if (!isCurrent()) return;
         this.error('[mqtt] error:', err.message);
+        if (this._isMqttAuthError(err)) this._mqttAuthFailed = true;
       });
 
-      this._mqttClient.on('close', () => {
-        if (!this._mqttClient) return; // intentional disconnect
+      client.on('close', () => {
+        if (!isCurrent() || this._mqttStopped) return; // superseded or intentional
+        // Rejected credentials are not a network problem: retrying the same dead
+        // token on a 30s→10min ladder only wastes the attempt budget. Refresh
+        // once and reconnect immediately; only if that also fails do we back off.
+        if (this._mqttAuthFailed && !this._mqttAuthRetried) {
+          this._mqttAuthFailed = false;
+          this._mqttAuthRetried = true;
+          this.log('[mqtt] auth rejected — refreshing token and reconnecting');
+          this._reconnectMqttWithFreshToken('auth_rejected');
+          return;
+        }
+        this._mqttAuthFailed = false;
         this._mqttFailCount = (this._mqttFailCount || 0) + 1;
         if (this._mqttFailCount > 10) {
           this.log('[mqtt] too many failures — giving up');
@@ -3862,7 +3925,8 @@ class MowerDevice extends Homey.Device {
         const delay = Math.min(30000 * (2 ** (this._mqttFailCount - 1)), 600000);
         this.log(`[mqtt] connection closed — retry in ${delay / 1000}s (attempt ${this._mqttFailCount})`);
         this.homey.setTimeout(() => {
-          if (this._mqttClient) this._mqttClient.reconnect();
+          if (!isCurrent() || this._mqttStopped) return;
+          this._connectMqtt();
         }, delay);
       });
     } catch (e) {
@@ -3870,12 +3934,52 @@ class MowerDevice extends Homey.Device {
     }
   }
 
-  _disconnectMqtt() {
-    if (this._mqttClient) {
-      this._mqttClient.end(true);
-      this._mqttClient = null;
-      this.log('[mqtt] disconnected');
+  /** Force a refresh so the new client authenticates with a valid token. */
+  async _reconnectMqttWithFreshToken(reason) {
+    try {
+      await this._api.forceTokenRefresh();
+    } catch (e) {
+      this.error('[mqtt] token refresh failed:', e.message);
     }
+    if (this._mqttStopped) return;
+    this.log(`[mqtt] reconnecting (${reason})`);
+    this._connectMqtt();
+  }
+
+  /**
+   * Called after the API rotated its tokens. An established session keeps
+   * working — brokers only check credentials at CONNECT — so this does not
+   * reconnect a healthy link; it only makes sure a *dropped* one comes back
+   * with the current token instead of the one captured at app start.
+   */
+  onMqttTokenRotated() {
+    if (!this._mqttClient || this._mqttStopped) return;
+    const current = this._api.getTokens().accessToken;
+    if (!current || current === this._mqttToken) return;
+    this._mqttToken = current;
+    if (this._mqttClient.connected) {
+      this.log('[mqtt] token rotated — live session kept, next reconnect uses the new token');
+      return;
+    }
+    this.log('[mqtt] token rotated while disconnected — reconnecting now');
+    this._connectMqtt();
+  }
+
+  /** Drop the current client and mute every callback still referencing it. */
+  _destroyMqttClient() {
+    this._mqttGeneration = (this._mqttGeneration || 0) + 1;
+    this._mqttAuthFailed = false;
+    if (this._mqttClient) {
+      try { this._mqttClient.end(true); } catch (_) { /* force-close errors are irrelevant */ }
+      this._mqttClient = null;
+    }
+  }
+
+  _disconnectMqtt() {
+    if (!this._mqttClient) return;
+    this._mqttStopped = true;
+    this._destroyMqttClient();
+    this.log('[mqtt] disconnected');
   }
 
   async _handleMqttMessage(topic, message) {
