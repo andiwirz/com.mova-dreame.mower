@@ -1,0 +1,42 @@
+{
+  "name": {
+    "de": "Mäher Totalübersicht",
+    "en": "Mower Overview"
+  },
+  "height": 980,
+  "devices": {
+    "type": "app",
+    "singular": true
+  },
+  "settings": [],
+  "api": {
+    "getOverview": {
+      "method": "GET",
+      "path": "/overview"
+    },
+    "camera": {
+      "method": "POST",
+      "path": "/camera"
+    },
+    "getMapData": {
+      "method": "GET",
+      "path": "/"
+    },
+    "updateGarageMarkers": {
+      "method": "PUT",
+      "path": "/garage-markers"
+    },
+    "updateObstacleRule": {
+      "method": "PUT",
+      "path": "/obstacle-rule"
+    },
+    "command": {
+      "method": "POST",
+      "path": "/command"
+    },
+    "getMapSnapshot": {
+      "method": "GET",
+      "path": "/map-snapshot"
+    }
+  }
+}

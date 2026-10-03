@@ -192,5 +192,18 @@
     "72": "Returning — pause timeout",
     "73": "Top cover open / Robot lifted",
     "unknown": "Error __code__"
+  },
+  "fault_notice": {
+    "error": "Mower error",
+    "warning": "Mower warning",
+    "generic_error": "The mower reports an error."
+  },
+  "fault_actions": {
+    "2": "Free the mower, release the emergency stop, then resume the mowing task.",
+    "7": "Check the cutter disc and remove the blockage before resuming.",
+    "23": "Release the emergency stop before resuming the mowing task.",
+    "37": "Clear the obstacle or blocked path, then resume mowing.",
+    "73": "Place the mower safely or close the cover, then resume.",
+    "default": "Resolve the mower problem before resuming the mowing task."
   }
 }

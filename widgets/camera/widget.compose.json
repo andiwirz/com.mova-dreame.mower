@@ -1,0 +1,22 @@
+{
+  "name": {
+    "de": "Mäher Kamera",
+    "en": "Mower Camera"
+  },
+  "height": 360,
+  "devices": {
+    "type": "app",
+    "singular": true
+  },
+  "settings": [],
+  "api": {
+    "getOverview": {
+      "method": "GET",
+      "path": "/overview"
+    },
+    "camera": {
+      "method": "POST",
+      "path": "/camera"
+    }
+  }
+}

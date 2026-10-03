@@ -1,0 +1,27 @@
+{
+  "type": "enum",
+  "title": {
+    "en": "Turning Mode",
+    "de": "Wendemodus"
+  },
+  "values": [
+    {
+      "id": "efficient",
+      "title": {
+        "en": "Efficient",
+        "de": "Effizient"
+      }
+    },
+    {
+      "id": "lawn_care",
+      "title": {
+        "en": "Lawn Care",
+        "de": "Rasenpflege"
+      }
+    }
+  ],
+  "getable": true,
+  "setable": true,
+  "uiComponent": "picker",
+  "insights": false
+}

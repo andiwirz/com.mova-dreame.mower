@@ -39,3 +39,7 @@ At return detection the route is selected once from fresh map geometry:
 ## Emergency recovery
 
 Emergency Mode has priority over all normal return states. If a mower is detected in the gate area while the gate is moving, the gate direction is reversed (opening to closing, closing to opening), the mower is evacuated to the locked maintenance point, and only after confirmed arrival is the gate opened and the mower released for safe docking. Maintenance timeouts never release the gate or docking command.
+
+## User interface when Garage Mode is disabled
+
+Garage-specific controls and overlays are hidden when Garage Mode is off. The Total Overview hides the complete gate-control section, and all map views/editors hide the safety line, danger/caution areas, garage/dock marker and garage labels. The mower's native maintenance point remains available and visible independently through its own map toggle. Pylons/native no-go zones also remain visible and editable because they are independent mower-map features.

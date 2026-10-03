@@ -159,6 +159,53 @@ class MowerDriver extends Homey.Driver {
   async onRepair(session, device) {
     let api = null;
 
+    // Diagnostic only: view transitions are useful when Homey cannot load a
+    // custom repair asset. No credentials or map data are logged here.
+    session.setHandler('showView', async (viewId) => {
+      this.log('[repair] view', String(viewId || 'unknown'));
+      return true;
+    });
+
+    // The repair flow doubles as a device-local map editor. This makes the
+    // interactive garage/safety editor available even when no dashboard widget
+    // has been installed. It uses the same device methods/store keys as the widget.
+    session.setHandler('get_map_editor_data', async () => {
+      if (!device || typeof device.getMapData !== 'function') return null;
+      return await Promise.resolve(device.getMapData()) ?? null;
+    });
+
+    session.setHandler('refresh_map_editor_data', async () => {
+      if (!device) return null;
+      if (typeof device.refreshMapData === 'function') {
+        return await Promise.resolve(device.refreshMapData({ hard: true })) ?? null;
+      }
+      if (typeof device.getMapData === 'function') return await Promise.resolve(device.getMapData()) ?? null;
+      return null;
+    });
+
+    session.setHandler('save_map_editor_markers', async (payload) => {
+      if (!device || typeof device.updateGarageOverlayMarkers !== 'function') {
+        throw new Error('Mower device does not support map marker editing');
+      }
+      return device.updateGarageOverlayMarkers(payload || {});
+    });
+
+    session.setHandler('save_map_obstacle_rule', async (payload) => {
+      this.log('[repair] pylon action requested', payload?.deleteForbidden ? 'delete' : payload?.remove ? 'hide' : payload?.action === 'avoid' ? 'save zone' : 'marker',
+        'id=', String(payload?.id || '').slice(0, 64));
+      if (!device || typeof device.updateObstacleRule !== 'function') {
+        throw new Error('Mower device does not support obstacle marker editing');
+      }
+      try {
+        const result = await device.updateObstacleRule(payload || {});
+        this.log('[repair] pylon action confirmed', result?.rule?.nativeId ?? 'marker');
+        return result;
+      } catch (err) {
+        this.error('[repair] pylon action failed:', err.message);
+        throw err;
+      }
+    });
+
     // Let the repair page pre-select the correct brand and region.
     session.setHandler('get_repair_settings', async () => ({
       brand:  await device.getStoreValue('brand')  || 'mova',

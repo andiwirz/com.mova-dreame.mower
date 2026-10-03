@@ -1,0 +1,33 @@
+XP2P RUNTIME PROVENANCE
+=======================
+
+Current integration
+-------------------
+- Homey-local camera transport: startService -> setDeviceXp2pInfo -> postCommandRequestSync -> delegateHttpFlv.
+- The exposed Homey path is video-only (H.264). Camera audio and the former audio/AAC diagnostics are not part of the current UI/runtime contract.
+- The packaged worker reference source is `../source/xp2p_delegate_runner.c`.
+- The local support shims are built from the source files under `../source/`.
+- Runtime hashes are pinned and verified by `lib/video/DreameXp2pRuntimeBootstrap.js`.
+
+Bundled worker and local shims
+------------------------------
+- `bin/dreame-xp2p-host-runner` is derived from the open-source EvotecIT/homeassistant-dreamelawnmower XP2P worker flow and keeps the DXP1/DXR1 worker protocol used by this integration.
+- `lib/libnodelab_dnsfix.so` and `lib/libnodelab_xnettrace.so` are local support shims. Corresponding source is included under `native/xp2p/source/`. Their historical names do not create an external NodeLab runtime dependency.
+- The xnet trace/repair shim contains no account credentials or user-specific LAN addresses in the packaged release.
+
+Android support runtime
+-----------------------
+- Android linker/Bionic/VNDK support files are pinned to immutable Android Open Source Project revisions in `DreameXp2pRuntimeBootstrap.js`.
+- Exact component hashes are validated before use.
+- Licence/NOTICE requirements for those prebuilts are documented in `docs/THIRD_PARTY_NOTICES.md`.
+
+Tencent XP2P SDK
+-----------------
+- The proprietary Tencent XP2P shared library is NOT bundled in this repository/package.
+- At first camera use the app downloads Maven artifact `com.tencent.iot.thirdparty.android:xp2p-sdk:2.4.50`.
+- Both the AAR and extracted arm64 shared library are accepted only after their pinned SHA-256 values match.
+
+Security/privacy
+----------------
+- Runtime diagnostics must not log account tokens, P2P secrets, command-response bodies or media payloads.
+- Local relay access is protected by an ephemeral per-session token generated at runtime; that token is never part of the source package.
