@@ -1,13 +1,14 @@
 {
   "name": "com.mova-dreame.mower",
-  "version": "1.1.41",
+  "version": "1.2.0",
   "description": "Control MOVA and Dreame robotic lawn mowers from Homey",
   "main": "app.js",
   "scripts": {
     "start": "homey app run",
     "previews": "npm install && node scripts/generate-previews.js",
     "prepublish:homey": "npm prune --omit=dev",
-    "publish:homey": "npm run prepublish:homey && homey app publish"
+    "publish:homey": "npm run prepublish:homey && homey app publish",
+    "test": "node --test tests/*.test.js"
   },
   "keywords": [
     "homey",
@@ -23,9 +24,9 @@
     "mqtt": "^5.15.1"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.9.0"
   },
   "devDependencies": {
-    "sharp": "^0.35.3"
+    "sharp": "^0.35.4"
   }
 }

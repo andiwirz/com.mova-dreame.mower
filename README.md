@@ -15,7 +15,6 @@ MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct
 - **Lighting** — configure the LED activation time window and per-scenario light behaviour (standby, mowing, charging, error)
 - **Do Not Disturb** — set a quiet window during which the mower will not start automatically and returns to dock if already mowing
 - **Low Speed at Night** — set a time window during which the mower slows down automatically to protect animals active at night
-- **Permanent Slow Motion (experimental)** — keeps the mower's native LOW mode enabled throughout the day; this does not control wheel torque or traction recovery
 - **Lifetime mowing statistics** — total mowed area (m²), total mowing time (h), and total mowing sessions, sourced from the device's built-in mowing history (MIHIS); visible in Homey Insights
 - **Session duration** — running minute counter for the current mowing session; persists across app restarts so the timer is never reset mid-session
 - **Consumable status** — blade life, cleaning brush life, and robot maintenance remaining (%) read from the device
@@ -88,7 +87,6 @@ MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct
 | Do Not Disturb — Start / End | Hour of day for the DND window (e.g. 22 = 22:00, 8 = 08:00 next day) |
 | Low Speed at Night — Enabled | Mower slows down automatically during the set window to protect animals active at night |
 | Low Speed at Night — Start / End | Hour of day for the low-speed window (e.g. 20 = 20:00, 8 = 08:00 next day) |
-| Permanent Slow Motion (experimental) | Enables the native LOW mode for the full day; disabling it restores the configured Low Speed at Night schedule |
 | Battery — Return threshold (%) | Mower returns to dock when battery drops to this level |
 | Battery — Resume threshold (%) | Mower resumes its task once the battery reaches this level after charging |
 | Battery — Resume mowing after charging | When enabled, the mower automatically resumes its unfinished task after charging completes |
@@ -459,4 +457,3 @@ Single JSON-string property. Read via property poll; write via `setDeviceData` w
 - Prevents normal gate closing during departure, adjustment, positioning and maintenance-point transit.
 - Keeps the gate sensor runtime fallback without treating a single late contact event as a permanent sensor failure.
 - Includes the optional experimental Permanent Slow Motion setting based on the native LOW schedule mode.
-

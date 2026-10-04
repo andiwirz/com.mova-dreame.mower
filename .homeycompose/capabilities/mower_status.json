@@ -90,6 +90,13 @@
       }
     },
     {
+      "id": "garage_start_pending",
+      "title": {
+        "en": "Starting mower",
+        "de": "Startbefehl wird ausgeführt"
+      }
+    },
+    {
       "id": "garage_exiting",
       "title": {
         "en": "Exiting garage",

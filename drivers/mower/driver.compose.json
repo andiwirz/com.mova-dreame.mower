@@ -24,6 +24,7 @@
     "alarm_generic",
     "mower_error",
     "mow_efficiency",
+    "turning_method",
     "collision_avoidance",
     "firmware_update",
     "measure_duration",
@@ -117,6 +118,12 @@
   "repair": [
     {
       "id": "repair"
+    },
+    {
+      "id": "map_editor"
+    },
+    {
+      "id": "reauth"
     }
   ],
   "settings": [
@@ -776,19 +783,6 @@
           }
         },
         {
-          "id": "slow_motion_enabled",
-          "type": "checkbox",
-          "label": {
-            "en": "Permanent Slow Motion (experimental)",
-            "de": "Dauerhafte Langsamfahrt (experimentell)"
-          },
-          "value": false,
-          "hint": {
-            "en": "Uses the mower's native low-speed mode for the full day. This does not directly control wheel torque or prevent every wheel-spin recovery attempt. When disabled, the normal night schedule above is restored.",
-            "de": "Verwendet den nativen Langsamfahrmodus des Mähers ganztägig. Dies steuert nicht direkt das Raddrehmoment und verhindert nicht jeden Freifahrversuch mit durchdrehenden Rädern. Nach dem Ausschalten wird der normale Nachtzeitplan oben wiederhergestellt."
-          }
-        },
-        {
           "id": "low_start",
           "type": "number",
           "label": {
@@ -1154,16 +1148,16 @@
           "id": "garage_open_duration_seconds",
           "type": "number",
           "label": {
-            "en": "Door opening time without sensor (s)",
-            "de": "Tor-Öffnungsdauer ohne Sensor (s)"
+            "en": "Door opening time (s)",
+            "de": "Tor-Öffnungsdauer (s)"
           },
           "value": 10,
           "min": 0,
           "max": 120,
           "step": 1,
           "hint": {
-            "en": "Used only when the door sensor is disabled or unavailable.",
-            "de": "Wird nur genutzt, wenn der Torsensor deaktiviert oder nicht verfügbar ist."
+            "en": "Also used to reassert an already displayed open door before a return.",
+            "de": "Auch zur erneuten Offen-Anforderung vor einer Rückfahrt bei bereits als offen angezeigtem Tor."
           }
         },
         {
@@ -1178,8 +1172,8 @@
           "max": 120,
           "step": 1,
           "hint": {
-            "en": "Used only when the door sensor is disabled or unavailable.",
-            "de": "Wird nur genutzt, wenn der Torsensor deaktiviert oder nicht verfügbar ist."
+            "en": "Also used to reassert an already displayed open door before a return.",
+            "de": "Auch zur erneuten Offen-Anforderung vor einer Rückfahrt bei bereits als offen angezeigtem Tor."
           }
         },
         {
@@ -1387,6 +1381,19 @@
           }
         },
         {
+          "id": "map_safe_mowing",
+          "type": "checkbox",
+          "label": {
+            "en": "Safe mowing: allow pylon exclusion zones",
+            "de": "Sicher mähen: Sperrzonen an Pylonen zulassen"
+          },
+          "value": false,
+          "hint": {
+            "en": "Enable native square exclusion zones around detected pylons in the map editor. Existing manufacturer zones remain separate.",
+            "de": "Quadratische Sperrzonen um erkannte Pylonen einzeln im Karteneditor anlegen. Vorhandene Sperrzonen der Original-App bleiben getrennt."
+          }
+        },
+        {
           "id": "map_show_robot_position",
           "type": "checkbox",
           "label": {
@@ -1399,10 +1406,14 @@
           "id": "map_show_direction",
           "type": "checkbox",
           "label": {
-            "en": "Show mower direction on map",
-            "de": "Fahrtrichtung auf Karte anzeigen"
+            "en": "Show alternating mowing pattern on map",
+            "de": "Mähmuster hell/dunkel auf Karte anzeigen"
           },
-          "value": true
+          "value": true,
+          "hint": {
+            "en": "Shows recorded mowing passes light/dark by travel direction. The complete driven route remains until the next mowing job.",
+            "de": "Zeigt aufgezeichnete Mähbahnen je Fahrtrichtung hell/dunkel. Die vollständige gefahrene Route bleibt bis zum nächsten Mähvorgang erhalten."
+          }
         },
         {
           "id": "map_show_route",
@@ -1462,6 +1473,37 @@
           "hint": {
             "en": "After saving this setting, the marker buttons become visible again and this toggle resets itself.",
             "de": "Nach dem Speichern werden die Marker-Buttons wieder sichtbar und dieser Schalter springt zurück."
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": {
+        "en": "Live Video",
+        "de": "Live Video"
+      },
+      "children": [
+        {
+          "id": "video_enabled",
+          "type": "checkbox",
+          "label": {
+            "en": "Enable Live Video",
+            "de": "Live Video aktivieren"
+          },
+          "value": false
+        },
+        {
+          "id": "garage_mission_push_notifications",
+          "type": "checkbox",
+          "label": {
+            "de": "Mäher-/Garagen-Hinweis-Flow",
+            "en": "Mower / garage notice Flow"
+          },
+          "value": false,
+          "hint": {
+            "de": "Löst den Flow-Trigger „Mäher-/Garagen-Hinweis“ bei Ausfahrt, Rückkehr sowie Tor öffnet/schließt aus. Nur bei aktiviertem Garagenmodus verfügbar. Im Flow kannst du daraus gezielt eine mobile Push-Mitteilung bauen; Timeline-Meldungen bleiben davon unabhängig.",
+            "en": "Triggers “Mower / garage notice” on departure, return and gate opening/closing. Available only with Garage Mode enabled. Use the Flow tokens to create selected mobile push alerts; Timeline messages remain independent."
           }
         }
       ]

@@ -192,5 +192,18 @@
   "mow_efficiency": {
     "standard": "Standard",
     "efficient": "Effizient"
+  },
+  "fault_notice": {
+    "error": "Mäher-Fehler",
+    "warning": "Mäher-Warnung",
+    "generic_error": "Der Mäher meldet einen Fehler."
+  },
+  "fault_actions": {
+    "2": "Mäher freimachen, Not-Stopp entriegeln und den Mähvorgang anschließend fortsetzen.",
+    "7": "Schneidscheibe prüfen und Blockierung entfernen, bevor der Mähvorgang fortgesetzt wird.",
+    "23": "Not-Stopp entriegeln und erst danach den Mähvorgang fortsetzen.",
+    "37": "Hindernis bzw. blockierten Weg beseitigen und den Mähvorgang fortsetzen.",
+    "73": "Roboter sicher abstellen bzw. Abdeckung schließen und danach fortsetzen.",
+    "default": "Problem am Mäher beheben und den Mähvorgang erst anschließend fortsetzen."
   }
 }

@@ -67,10 +67,14 @@
       "id": "show_direction",
       "type": "checkbox",
       "label": {
-        "en": "Show mower direction",
-        "de": "Fahrtrichtung anzeigen"
+        "en": "Show alternating mowing pattern",
+        "de": "Mähmuster hell/dunkel anzeigen"
       },
-      "value": true
+      "value": true,
+      "hint": {
+        "en": "Shows the recorded mowing lanes as a persistent light/dark pattern: one travel direction bright, the opposite direction darker. Turns stay neutral. No instantaneous heading arrow is shown.",
+        "de": "Zeigt die aufgezeichneten Mähbahnen dauerhaft als Hell/Dunkel-Muster: eine Fahrtrichtung hell, die Gegenrichtung dunkler. Wendungen bleiben neutral. Es wird kein momentaner Richtungspfeil angezeigt."
+      }
     },
     {
       "id": "show_maintenance_point",
@@ -79,7 +83,11 @@
         "en": "Show maintenance point",
         "de": "Wartungspunkt anzeigen"
       },
-      "value": true
+      "value": true,
+      "hint": {
+        "en": "Shows the mower maintenance point independently of Garage Mode.",
+        "de": "Zeigt den Wartungspunkt des Mähers unabhängig vom Garagenmodus."
+      }
     },
     {
       "id": "show_garage_overlay",
@@ -90,8 +98,8 @@
       },
       "value": true,
       "hint": {
-        "en": "Shows all garage-specific elements together. Only effective when garage mode is enabled.",
-        "de": "Zeigt alle garagenspezifischen Elemente gemeinsam. Nur bei aktiviertem Garagenmodus wirksam."
+        "en": "Shows the safety line, danger/caution areas, garage/dock marker and related garage labels. Only effective while Garage Mode is enabled.",
+        "de": "Zeigt Sicherheitslinie, Gefahren-/Vorsichtsbereiche, Garage-/Dock-Markierung und zugehörige Garagenbeschriftungen. Nur bei aktiviertem Garagenmodus wirksam."
       }
     }
   ],
@@ -103,6 +111,10 @@
     "updateGarageMarkers": {
       "method": "PUT",
       "path": "/garage-markers"
+    },
+    "updateObstacleRule": {
+      "method": "PUT",
+      "path": "/obstacle-rule"
     }
   }
 }

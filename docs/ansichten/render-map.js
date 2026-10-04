@@ -1,0 +1,5 @@
+'use strict';const vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');const sharp=require(process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES+'/sharp');
+const html=fs.readFileSync(path.join(__dirname,'../../widgets/map/public/index.html'),'utf8');const ctx={navigator:{language:'de-DE'}};vm.createContext(ctx);vm.runInContext(html.match(/<script>\s*([\s\S]*?)<\/script>/i)[1],ctx);
+const route=[];for(let x=500,i=0;x<=7500;x+=500,i++){for(let y=500;y<=5500;y+=500)route.push([x,i%2?6000-y:y]);}
+const data={name:'Beispielgarten',boundary:{x1:0,y1:0,x2:8000,y2:6000},mowingAreas:[[1,{path:[{x:0,y:0},{x:8000,y:0},{x:8000,y:6000},{x:0,y:6000}]}]],obstaclePylons:[{id:'beispiel',x:4000,y:3500,rule:{action:'observe',radius:500}}],forbiddenAreas:[],spotAreas:[],contours:[],livePath:route,robotPos:[7500,5500],overlayVisibility:{garageMode:false}};
+const svg=ctx.buildSvg(data,{show_path:true,show_direction:true});fs.writeFileSync(path.join(__dirname,'Maehmuster.svg'),svg);sharp(Buffer.from(svg)).resize(1000,750,{fit:'contain',background:'#1c2720'}).png().toFile(path.join(__dirname,'Maehmuster.png'));
