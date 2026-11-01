@@ -97,5 +97,15 @@
     "72": "Kehrt zurück — Pause-Timeout",
     "73": "Abdeckung geöffnet / Roboter angehoben",
     "unknown": "Fehler __code__"
+  },
+  "fault_hints": {
+    "1": "Mäher auf ebenem Boden aufrecht hinstellen und den Mähvorgang anschliessend fortsetzen.",
+    "2": "Mäher freimachen, Not-Stopp entriegeln und den Mähvorgang anschliessend fortsetzen.",
+    "7": "Schneidscheibe prüfen und Blockierung entfernen, bevor der Mähvorgang fortgesetzt wird.",
+    "12": "Abdeckung des LiDAR-Sensors entfernen und danach fortsetzen.",
+    "16": "LiDAR-Sensor mit einem weichen Tuch reinigen und danach fortsetzen.",
+    "23": "Not-Stopp entriegeln und erst danach den Mähvorgang fortsetzen.",
+    "73": "Roboter sicher abstellen bzw. Abdeckung schliessen und danach fortsetzen.",
+    "default": "Problem am Mäher beheben und den Mähvorgang erst anschliessend fortsetzen."
   }
 }

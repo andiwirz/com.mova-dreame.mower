@@ -211,7 +211,7 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 - Mower returning to dock *(tokens: interruption type, reason, code)*
 - Mower status changed *(token: status)*
 - Charging status changed *(token: status)*
-- Mower error occurred *(tokens: error code, error description)*
+- Mower error occurred *(tokens: error code, error description, what to do)*
 - Battery drops below X% *(arg: threshold %)*
 - Consumable drops below X% *(arg: threshold %; tokens: consumable type, remaining %)*
 - Firmware update available

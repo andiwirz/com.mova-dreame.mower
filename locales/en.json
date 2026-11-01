@@ -192,5 +192,15 @@
     "72": "Returning — pause timeout",
     "73": "Top cover open / Robot lifted",
     "unknown": "Error __code__"
+  },
+  "fault_hints": {
+    "1": "Set the mower upright on level ground, then resume the mowing task.",
+    "2": "Free the mower, release the emergency stop, then resume the mowing task.",
+    "7": "Check the cutter disc and remove the blockage before resuming.",
+    "12": "Remove whatever is covering the LiDAR sensor, then resume.",
+    "16": "Clean the LiDAR sensor with a soft cloth, then resume.",
+    "23": "Release the emergency stop before resuming the mowing task.",
+    "73": "Place the mower safely or close the cover, then resume.",
+    "default": "Resolve the mower problem before resuming the mowing task."
   }
 }

@@ -1174,6 +1174,14 @@
               "en": "Error Description",
               "de": "Fehlerbeschreibung"
             }
+          },
+          {
+            "name": "error_hint",
+            "type": "string",
+            "title": {
+              "en": "What to do",
+              "de": "Was tun"
+            }
           }
         ],
         "id": "mower_error"

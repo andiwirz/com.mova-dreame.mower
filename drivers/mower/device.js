@@ -3321,7 +3321,10 @@ class MowerDevice extends Homey.Device {
                             || this.homey.__('error_codes.unknown').replace('__code__', faultCode);
       if (this.hasCapability('mower_error')) await this._setCap('mower_error', errorDescription);
       if (isError) {
-        this._trgError.trigger(this, { error_code: faultCode, error_description: errorDescription }, {})
+        const hintKey = `fault_hints.${faultCode}`;
+        const specificHint = this.homey.__(hintKey);
+        const errorHint = (specificHint && specificHint !== hintKey) ? specificHint : (this.homey.__('fault_hints.default') || '');
+        this._trgError.trigger(this, { error_code: faultCode, error_description: errorDescription, error_hint: errorHint }, {})
           .catch((e) => this.error('mower_error trigger:', e.message));
       }
     } else if (this.hasCapability('mower_error')) {

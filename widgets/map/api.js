@@ -13,7 +13,9 @@ function findDevice(homey, requestedDeviceId) {
       if (requestedDeviceId && ids.includes(String(requestedDeviceId))) return device;
     }
   }
-  return firstDevice;
+  // A stale deviceId (mower removed and re-added) must not fall through to another
+  // mower — marker edits would otherwise be saved on the wrong device.
+  return requestedDeviceId ? null : firstDevice;
 }
 
 module.exports = {

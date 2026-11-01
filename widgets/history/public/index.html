@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { width: 100%; overflow: hidden; }
+    html, body { width: 100%; overflow: hidden; touch-action: pan-y; }
     body {
       background: transparent;
       font-family: system-ui, -apple-system, sans-serif;
@@ -38,6 +38,7 @@
       font-size: 13px;
       appearance: none;
       cursor: pointer;
+      touch-action: manipulation;
       outline: none;
     }
     select:focus { border-color: rgba(255,255,255,0.5); }
@@ -110,6 +111,7 @@
       font-size: 20px;
       line-height: 1;
       cursor: pointer;
+      touch-action: manipulation;
       display: flex;
       align-items: center;
       justify-content: center;
