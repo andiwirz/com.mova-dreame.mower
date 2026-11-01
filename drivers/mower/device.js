@@ -1131,13 +1131,9 @@ class MowerDevice extends Homey.Device {
 
     this.registerCapabilityListener('cutting_height', async (value) => {
       try {
-        this._ensureCachedPRE();
-        const pre = [...this._cachedPRE];
-        pre[4] = Math.round(value);
         this._preWriteCuttingHeight = this.getCapabilityValue('cutting_height');
-        this.log(`[cutting_height] writing PRE[4]=${pre[4]}mm`);
-        await this._api.writePRE(did, pre);
-        this._cachedPRE            = pre;
+        this.log(`[cutting_height] writing PRE[4]=${Math.round(value)}mm`);
+        await this._writePREFields(did, { 4: Math.round(value) }, 'cutting_height');
         this._cuttingHeightWriteTs = Date.now();
         this.log('[cutting_height] write OK — poll overwrite suppressed for 90s');
       } catch (err) {
@@ -1148,12 +1144,9 @@ class MowerDevice extends Homey.Device {
 
     this.registerCapabilityListener('mow_efficiency', async (value) => {
       try {
-        this._ensureCachedPRE();
-        const pre = [...this._cachedPRE];
-        pre[3] = value === 'efficient' ? 1 : 0;
-        this.log(`[mow_efficiency] writing PRE[3]=${pre[3]} (${value})`);
-        await this._api.writePRE(did, pre);
-        this._cachedPRE = pre;
+        const efficient = value === 'efficient' ? 1 : 0;
+        this.log(`[mow_efficiency] writing PRE[3]=${efficient} (${value})`);
+        await this._writePREFields(did, { 3: efficient }, 'mow_efficiency');
         this.log('[mow_efficiency] write OK');
       } catch (err) {
         this.error('[mow_efficiency] listener error:', err.message);
@@ -1273,15 +1266,13 @@ class MowerDevice extends Homey.Device {
     };
     const preKeys = Object.keys(PRE_SETTINGS_MAP).filter((k) => changedKeys.includes(k));
     if (preKeys.length > 0) {
-      this._ensureCachedPRE();
-      const pre = [...this._cachedPRE];
+      const updates = {};
       for (const key of preKeys) {
         const { index, bool } = PRE_SETTINGS_MAP[key];
-        pre[index] = bool ? (newSettings[key] ? 1 : 0) : Number(newSettings[key]);
+        updates[index] = bool ? (newSettings[key] ? 1 : 0) : Number(newSettings[key]);
       }
       this.log(`[settings] PRE update for: ${preKeys.join(', ')}`);
-      await this._safeWrite('pre', () => this._api.writePRE(did, pre));
-      this._cachedPRE = pre;
+      await this._safeWrite('pre', () => this._writePREFields(did, updates, 'settings'));
     }
 
     // Child lock
@@ -2646,6 +2637,56 @@ class MowerDevice extends Homey.Device {
     }
   }
 
+  /**
+   * Read PRE from the mower for the active map. Returns null when the firmware
+   * does not support the read; a rejection (r ≠ 0) is remembered until restart
+   * so unsupported mowers don't pay an extra round trip on every write.
+   */
+  async _readNativePRE(did) {
+    if (this._nativePREUnsupported) return null;
+    const mapIdx = this._activeMapIndex ?? 0;
+    try {
+      const pre = await this._api.getPRE(did, mapIdx, 0);
+      if (Array.isArray(pre) && pre.length >= 19 && pre.every((v) => Number.isFinite(Number(v)))) return pre.map(Number);
+      this.log(`[pre] native read map=${mapIdx} returned no usable array:`, JSON.stringify(pre));
+    } catch (err) {
+      if (err.preRejected) this._nativePREUnsupported = true;
+      this.log(`[pre] native read map=${mapIdx} failed: ${err.message}`);
+    }
+    return null;
+  }
+
+  /**
+   * Read-modify-write of PRE: modifies only the given indices.
+   * Prefers the array read from the mower so fields beyond our 19-field
+   * reconstruction (and fields the reconstruction guesses) stay untouched;
+   * falls back to the SETTINGS reconstruction when the read is unavailable.
+   * @param {Object<number, number>} updates  index → new value
+   * @returns {Promise<number[]>} the written array
+   */
+  async _writePREFields(did, updates, tag) {
+    const native = await this._readNativePRE(did);
+    let base;
+    if (native) {
+      this._ensureCachedPRE();
+      const diff = native.slice(0, 19)
+        .map((v, i) => (v !== Number(this._cachedPRE[i]) ? `[${i}] ${this._cachedPRE[i]}→${v}` : null))
+        .filter(Boolean);
+      this.log(`[pre] ${tag}: using native PRE (${native.length} fields): ${JSON.stringify(native)}`
+        + (diff.length ? ` — differs from reconstruction at ${diff.join(', ')}` : ''));
+      base = native;
+    } else {
+      this._ensureCachedPRE();
+      this.log(`[pre] ${tag}: using reconstructed PRE: ${JSON.stringify(this._cachedPRE)}`);
+      base = this._cachedPRE;
+    }
+    const pre = [...base];
+    for (const [index, value] of Object.entries(updates)) pre[Number(index)] = value;
+    await this._api.writePRE(did, pre);
+    this._cachedPRE = pre;
+    return pre;
+  }
+
   _buildPREFallback() {
     const b = (v) => (v ? 1 : 0);
     const heightMm = this.getCapabilityValue('cutting_height') ?? 40;
@@ -2675,9 +2716,9 @@ class MowerDevice extends Homey.Device {
   /**
    * Reconstruct the 19-element PRE config array from the zone-0 SETTINGS object.
    *
-   * The device does not expose PRE via any readable API (getCFG returns a [0,0]
-   * stub; a direct getPRE action returns r:3). Instead we rebuild it here from the
-   * SETTINGS fields the device reports on every poll. The field-to-index mapping
+   * Fallback for _writePREFields when the mower rejects getPRE (a bare PRE read
+   * without idx/region returns r:3, and older firmware may not support it at all).
+   * We rebuild it here from the SETTINGS fields the device reports on every poll. The field-to-index mapping
    * was confirmed by correlating a live packet capture of the official MOVA app
    * writing PRE with the simultaneously reported SETTINGS values.
    *
@@ -2767,9 +2808,8 @@ class MowerDevice extends Homey.Device {
     const mapEntry = zones[this._activeMapIndex ?? 0] ?? zones[0];
     const s = mapEntry?.settings?.['0'] ?? mapEntry?.settings ?? mapEntry ?? {};
 
-    // Rebuild the PRE array from SETTINGS fields on every poll so it's always
-    // fresh and ready for cutting_height write operations (read-modify-write).
-    // The device doesn't expose PRE via any readable API; we reconstruct it here.
+    // Rebuild the PRE array from SETTINGS fields on every poll so a fallback is
+    // ready when the mower rejects the native PRE read (see _writePREFields).
     const builtPRE = this._buildPREFromSettings(s);
     if (builtPRE) {
       const changed = JSON.stringify(builtPRE) !== JSON.stringify(this._cachedPRE);
@@ -3567,12 +3607,8 @@ class MowerDevice extends Homey.Device {
 
   async cmdSetCuttingHeight(height) {
     this.log(`[cmd] setCuttingHeight height=${height}mm`);
-    this._ensureCachedPRE();
-    const pre = [...this._cachedPRE];
-    pre[4] = Math.round(height);
     this._preWriteCuttingHeight = this.getCapabilityValue('cutting_height');
-    await this._api.writePRE(this.getData().id, pre);
-    this._cachedPRE            = pre;
+    await this._writePREFields(this.getData().id, { 4: Math.round(height) }, 'flow cutting_height');
     this._cuttingHeightWriteTs = Date.now();
     await this._setCap('cutting_height', height);
   }
@@ -3606,11 +3642,7 @@ class MowerDevice extends Homey.Device {
 
   async cmdSetEfficiencyMode(mode) {
     this.log(`[cmd] setEfficiencyMode mode=${mode}`);
-    this._ensureCachedPRE();
-    const pre = [...this._cachedPRE];
-    pre[3] = mode === 'efficient' ? 1 : 0;
-    await this._api.writePRE(this.getData().id, pre);
-    this._cachedPRE = pre;
+    await this._writePREFields(this.getData().id, { 3: mode === 'efficient' ? 1 : 0 }, 'flow mow_efficiency');
     await this._setCap('mow_efficiency', mode);
   }
 
