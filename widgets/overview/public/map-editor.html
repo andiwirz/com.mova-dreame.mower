@@ -254,8 +254,12 @@
 
     function showMsg(text, isErr) {
         if (typeof text === 'string') text = localizeUiText(text);
-      document.getElementById('map-wrap').innerHTML =
-        '<div class="msg' + (isErr ? ' err' : '') + '">' + text + '</div>';
+      var wrap=document.getElementById('map-wrap');
+      if(!wrap)return;
+      var message=document.createElement('div');
+      message.className='msg'+(isErr?' err':'');
+      message.textContent=String(text||'');
+      wrap.replaceChildren(message);
     }
 
     function hasFullGardenGeometry(data) {
@@ -1573,7 +1577,7 @@
       if (direct) document.getElementById('pylon-delete-zone').disabled = !!pending;
       document.getElementById('pylon-remove').disabled = direct || !!owned || !!pending;
       var saveBtn = document.getElementById('pylon-save');
-      saveBtn.textContent = 'Speichern';
+      saveBtn.textContent = t('Save no-go zone','Sperrzone speichern');
       saveBtn.disabled = !!pending || !_lastData || _lastData.mapSafeMowing !== true;
       document.getElementById('pylon-reload').disabled = !!_pylonReloadDone || !!_pylonSaving;
       document.getElementById('pylon-meta').textContent = direct
