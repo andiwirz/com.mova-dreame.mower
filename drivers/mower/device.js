@@ -5669,7 +5669,11 @@ class MowerDevice extends Homey.Device {
       // When the operator starts P2 while a freshly proved OPEN gate lets the
       // firmware leave the dock directly, TASK 109 may arrive before the dock
       // bit flips. Defer OBSERVATION, not a motor command, to the fresh exit.
-      if (this._garageSafety?._doorOpenVerifiedThisRuntime?.()) {
+      const pendingLearn = this._pendingExternalMaintenancePointAssociation;
+      const associationFresh = pendingLearn && Number(pendingLearn.map) === Number(this._activeMapIndex ?? 0)
+        && Date.now() - Number(pendingLearn.at || 0) >= 0
+        && Date.now() - Number(pendingLearn.at || 0) < 15 * 60 * 1000;
+      if (this._garageSafety?._doorOpenVerifiedThisRuntime?.() || associationFresh) {
         this._deferredExternalMaintenanceTask = {
           task: { ...task }, at: Date.now(), map: Number(this._activeMapIndex ?? 0),
         };
@@ -5730,7 +5734,8 @@ class MowerDevice extends Homey.Device {
     // A single owner-authorised P2 learning request may get ONE automatic
     // native 109 replay if completion never arrives. An inferred orphan 109,
     // without that operator-owned pairing, NEVER authorises autonomous motion.
-    this._nativeMaintenanceLearnBackupEligible = verifiedOperatorAssociation && index >= 2;
+    this._nativeMaintenanceLearnBackupEligible = verifiedOperatorAssociation && index >= 2
+      && this.getSetting?.('garage_mode_enabled') === true;
     this._nativeMaintenanceBackupMap = Number(this._activeMapIndex ?? 0);
     this._nativeMaintenanceLearnBackupRetriedAt = 0;
     this._nativeMaintenanceIndexInferred = inferred;
@@ -5972,8 +5977,8 @@ class MowerDevice extends Homey.Device {
         uiComponent: visible ? 'button' : null,
         title: { en: `Go to ${enName}`, de: `${deName} anfahren` },
         hint: {
-          en: nativeConfirmed ? `Sends the mower to native maintenance point P${pointIndex}.` : `P${pointIndex} has no verified coordinates. Tap to open the gate safely, then reissue P${pointIndex} in the original MOVA app; Homey observes the real arrival.`,
-          de: nativeConfirmed ? `Fährt zum nativen Wartungspunkt P${pointIndex}.` : `P${pointIndex}: native Position fehlt noch. Antippen öffnet das Tor nach Sicherheitsprüfung; danach P${pointIndex} in der MOVA-Original-App anfahren. Homey beobachtet die Ankunft.`,
+          en: nativeConfirmed ? `Sends the mower to native maintenance point P${pointIndex}.` : `P${pointIndex} has no verified coordinates. Tap to arm learning; the gate opens safely ONLY with Garage Mode on. Then send P${pointIndex} in the original MOVA app; Homey observes its real arrival.`,
+          de: nativeConfirmed ? `Fährt zum nativen Wartungspunkt P${pointIndex}.` : `P${pointIndex}: native Position fehlt noch. Antippen bereitet das Anlernen vor und öffnet das Tor nur bei aktivem Garagenmodus nach Sicherheitsprüfung. Danach P${pointIndex} in der MOVA-Original-App anfahren.`,
         },
       });
       // Keep a listener even for currently hidden shortcuts. Previously built
@@ -10669,12 +10674,68 @@ class MowerDevice extends Homey.Device {
     });
   }
 
+  // All ordinary/manual native map edits must revalidate the task and
+  // physical standstill AFTER editor select/begin (200/204) and BEFORE
+  // changing geometry (215/218). A prior IDLE check cannot guarantee this.
+  // The return/waypoint-specific 200/204 exception uses its own callback.
+  async _nonReturnNativeZoneMutationAuthorized(mapIndex, transaction = {}) {
+    const legs = Array.isArray(transaction.legs) ? transaction.legs : [];
+    const select = legs.find(leg => leg.name === 'select' && leg.opcode === 200);
+    const begin = legs.find(leg => leg.name === 'begin' && leg.opcode === 204);
+    if (!select?.accepted || !begin?.accepted
+        || select.taskAck !== true || begin.taskAck !== true) return false;
+    const g = this._garageSafety;
+    const token = g?._commandToken;
+    if (!g || Number(this._activeMapIndex) !== Number(mapIndex)
+        || g._manualGateStopped || g._emergencyHoldActive?.()
+        || g._outbound || g._safeReturnInProgress || g._returnGuardActive
+        || g._manualMaintenanceTransit) return false;
+    const native = String(this._nativeMowerStatus || '').toLowerCase();
+    if (['returning', 'leaving', 'remote_control', 'edge_mowing'].includes(native)) return false;
+    const did = this.getData?.()?.id;
+    if (!did || typeof this._api?.getProperties !== 'function'
+        || typeof g._readNativeStationaryPositionForGarage !== 'function') return false;
+    // Read task-free native IDLE independently, also while docked. Do not
+    // treat the UI status, a PAUSED task or an accepted TASK ACK as proof.
+    const response = await this._api.getProperties(did, [[2, 1]], {timeout:1400}).catch(() => null);
+    const prop = response?.code === 0
+      ? response.data?.result?.find(item => Number(item.siid) === 2
+          && Number(item.piid) === 1 && Number(item.code || 0) === 0) : null;
+    if (Number(prop?.value) !== 2) return false;
+    let baseline = this._livePos;
+    if (!baseline || !Number.isFinite(Number(baseline.x))
+        || !Number.isFinite(Number(baseline.y))
+        || Number(baseline.ts || 0) <= 0
+        || Date.now() - Number(baseline.ts) > 8000
+        || (baseline.mapIndex != null && Number(baseline.mapIndex) !== Number(mapIndex))) {
+      baseline = null;
+    }
+    // This helper takes TWO native SIID 1:4 reads 650 ms apart (max 70 mm
+    // drift), bound to the same map and command token. Never trust LOCN.
+    const witnessed = await g._readNativeStationaryPositionForGarage(
+      token, baseline, 900, {rebaseAfterConfirmedStop: !baseline},
+    ).catch(() => null);
+    if (!witnessed || token !== g._commandToken
+        || Number(this._activeMapIndex) !== Number(mapIndex)
+        || g._manualGateStopped || g._emergencyHoldActive?.()
+        || g._outbound || g._safeReturnInProgress || g._returnGuardActive
+        || g._manualMaintenanceTransit) return false;
+    const live = this._livePos;
+    if (live && Number(live.ts) > Number(witnessed.ts) - 1000
+        && Number.isFinite(Number(live.x)) && Number.isFinite(Number(live.y))
+        && Math.hypot(Number(live.x) - Number(witnessed.x),
+          Number(live.y) - Number(witnessed.y)) > 150) return false;
+    return true;
+  }
+
   _pylonMapEditTaskOptions() {
     return {
       // Sequence ordering survives wall-clock corrections observed on Homey.
       captureTaskCursor: () => Number(this._mapEditTaskSequence || 0),
       waitForTask: (opcode, afterTs, timeoutMs, cursor) => this._waitForMapEditTask(opcode, afterTs, timeoutMs, cursor),
       taskTimeouts: { select: 7000, begin: 4500, mutation: 4500, commit: 4500 },
+      canMutate: transaction => this._nonReturnNativeZoneMutationAuthorized(
+        Number(this._activeMapIndex), transaction),
     };
   }
 
