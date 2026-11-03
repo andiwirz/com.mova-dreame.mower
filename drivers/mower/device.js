@@ -10701,7 +10701,17 @@ class MowerDevice extends Homey.Device {
     const prop = response?.code === 0
       ? response.data?.result?.find(item => Number(item.siid) === 2
           && Number(item.piid) === 1 && Number(item.code || 0) === 0) : null;
-    if (Number(prop?.value) !== 2) return false;
+    // The docked/charging mower may report a code other than 2 even though
+    // no task is running. Preserve the upstream station edit workflow ONLY
+    // after an independent fresh native IN_STATION / undocking=0 read.
+    // PAUSED or mowing status outside the station never qualifies.
+    if (Number(prop?.value) !== 2) {
+      if (!g.isDockedHomeStatus?.() || g._missionOutside || g._outbound
+          || g._safeReturnInProgress
+          || typeof this._refreshNativeDockForStart !== 'function') return false;
+      const station = await this._refreshNativeDockForStart({diagnosticOnly:true}).catch(() => null);
+      if (station?.dockingState !== 'IN_STATION' || Number(station.undocking) !== 0) return false;
+    }
     let baseline = this._livePos;
     if (!baseline || !Number.isFinite(Number(baseline.x))
         || !Number.isFinite(Number(baseline.y))
