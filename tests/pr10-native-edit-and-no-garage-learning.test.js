@@ -121,6 +121,7 @@ test('missing named P2 learning with Garage Mode OFF never drives or opens gate'
     _safeReturnInProgress:false,_externalStartRecoveryActive:false,
     _externalStartIntentHandling:false,
     enabled:()=>false,isReturnCycleActive:()=>false,
+    _maintenanceJourneyOwnsNavigation:()=>false,
     _emergencyHoldActive:()=>false,
     ensureDoorOpen:async()=>{actions.push('gate_open');throw Error('must not open');},
     log:()=>{},refreshTileStatus:async()=>{}});
