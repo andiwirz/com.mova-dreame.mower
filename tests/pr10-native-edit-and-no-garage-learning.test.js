@@ -50,6 +50,14 @@ test('no mutation if task is PAUSED or moving after editor select/begin',async()
     assert.equal(await d._nonReturnNativeZoneMutationAuthorized(0,acknowledged),false);
   }
 });
+test('verified native dock permits a charging-state map edit; mere cached dock never does',async()=>{
+  const {d,g}=editing({status:13});
+  g.isDockedHomeStatus=()=>true;
+  d._refreshNativeDockForStart=async()=>({dockingState:'IN_STATION',undocking:0});
+  assert.equal(await d._nonReturnNativeZoneMutationAuthorized(0,acknowledged),true);
+  d._refreshNativeDockForStart=async()=>({dockingState:'OUT_OF_STATION',undocking:1});
+  assert.equal(await d._nonReturnNativeZoneMutationAuthorized(0,acknowledged),false);
+});
 test('no mutation on missing paired position, conflicting position or return ownership',async()=>{
   for(const opts of [{read:false},{motion:true},{garageReturn:true}]){
     const {d}=editing(opts);
