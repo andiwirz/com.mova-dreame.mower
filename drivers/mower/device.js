@@ -10738,14 +10738,17 @@ class MowerDevice extends Homey.Device {
     return true;
   }
 
-  _pylonMapEditTaskOptions() {
+  _pylonMapEditTaskOptions(mapIndex = this._activeMapIndex) {
+    // Freeze the transaction map when selecting the editor. A later map
+    // switch must not rebind the mutation guard to a different active map.
+    const expectedMapIndex = Number(mapIndex);
     return {
       // Sequence ordering survives wall-clock corrections observed on Homey.
       captureTaskCursor: () => Number(this._mapEditTaskSequence || 0),
       waitForTask: (opcode, afterTs, timeoutMs, cursor) => this._waitForMapEditTask(opcode, afterTs, timeoutMs, cursor),
       taskTimeouts: { select: 7000, begin: 4500, mutation: 4500, commit: 4500 },
       canMutate: transaction => this._nonReturnNativeZoneMutationAuthorized(
-        Number(this._activeMapIndex), transaction),
+        expectedMapIndex, transaction),
     };
   }
 
