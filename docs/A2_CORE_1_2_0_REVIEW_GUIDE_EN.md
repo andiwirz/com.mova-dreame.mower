@@ -86,3 +86,44 @@ I contacted Dreame on **8 October 2026** to ask about the use of a strictly opt-
 4. Once CORE is accepted, I can rebase a **camera-only draft** on your merged branch with complete correspondence and third-party notices for a separate discussion. I will not describe it as licensed or authorized without that review.
 
 Thanks again for the careful feedback on #9, especially the `slow_motion_enabled`, PRE, turning-mode, English localization and capability migration observations. Your 1.1.43 changes are treated as upstream functionality and retained rather than replaced.
+
+
+## Consolidated feature/dependency walkthrough for maintainers (PR #10 review update)
+
+### Repair / Manage mower is the central bilingual configuration entry
+
+The **device → Repair → Manage mower** screen organizes **Map editor**, **Maintenance points**, **Garage Mode** (only when enabled), and **Reconnect**. Screens, buttons, confirmations and safety messages are provided in **English and German**; the user may choose DE/EN. Map editing and point naming must NOT depend on an enabled garage. Garage-specific door/contact/line controls remain behind the enabled Garage Mode setting.
+
+The map itself is also exposed as a Homey **device-view mowing-map image**; this static map-media feature is **not video/camera streaming**. The standalone map widget and **Total Overview** dashboard complement the device controls.
+
+### Exact native map user experience
+
+Select **Edit**, tap a detected pylon or an existing red no-go zone, enter a **name/description** and a **protection radius** where applicable, and choose its native lifecycle. The policies are **permanent**, **3/7/14 days**, **departure only**, **departure + mowing**, **mowing only**, **mowing + return**, and **return only**. These policies are independent of Garage Mode. To avoid a gap in protection, "mowing only" and "mowing + return" may be pre-armed **before departure**, while "return only" must wait for a verified safe return checkpoint: the labels are user intents, not permission to edit a map during a task. Real mower polygons, not merely displayed icons, are added and removed when safe. The interface includes visible **blue pending states**, a **10-second cancelable close countdown** after accepted writes, and reload/recheck for unconfirmed edits.
+
+An A2 native edit uses the vendor editor's **200 → 204 → 215 (create/update) or 218 (delete) → 201** sequence. A successful API or MQTT TASK acknowledgment alone does **not** certify the changed map. The system checks **actual MAPD/MAPI geometry**, associated map/index and stable identity, including compatible zones created in the original MOVA/Dreame app and cross-checking cloud readings. Mower-assigned zone IDs can be recycled; matching uses **geometry plus map identity**, not just an ID. Actual moving/PAUSED tasks cannot be rewritten as if stationary; unknown or anomalous map contents stay pending or blocked. Ordinary/manual edits now also have a **post-200/204 native IDLE or independently verified IN_STATION plus two native position reads** check immediately before the physical mutation; return edits retain their stricter, separate return-token/position/door checks.
+
+### P1–P5 creation, editing, starred current point and grass protection
+
+Users can configure **up to five named maintenance points** (P1–P5), **rename** their labels in Repair or by choosing **Edit → tap point on map**, and select the primary point. A **★ star marks the currently selected primary point** on the native map. A name is Homey metadata and does not conjure native coordinates. A named, as-yet-unconfirmed P2–P5 is shown on the device card but never dispatched as a blind motor command or substituted with P1.
+
+To **learn an unknown point**, first press its **named point button on the Homey mower device card**. With **Garage Mode ON**, Homey requires native station evidence, commands/validates a safe **gate opening**, and only then prompts for the **same P-number in the original manufacturer app**. With **Garage Mode OFF**, the button arms **the same manufacturer-app arrival observer without operating any gate**; then command that exact waypoint in the original app. A native opcode **109** by itself is not coordinate proof: Homey checks the genuine original-app task, map, stable physical arrival/firmware **75** and geometric identity before storing the coordinates. An unconfirmed point is not used for automatic return; a narrowly controlled single native fallback is confined to validated garage-mode evidence, never automatic when garage mode is OFF.
+
+To avoid wear and lawn damage at one repeated stopping spot, optional **automatic waypoint rotation** is available **only when Garage Mode ON and at least two native-confirmed points exist**. Fixed and alternating modes are available. The point advances **once after completed mowing and independently confirmed docking**, not upon duplicate telemetry or a simple rename. All point buttons and Flow IDs preserve their underlying P-index to avoid existing Flow breakage.
+
+### Garage start/return and timing
+
+With Garage Mode ON only: intercept original-app departure, stop/pause an unsafe initial task until the gate is physically opened and confirmed, check safety line and danger area, and close only when independently cleared. **Priority 1** confirms safe exit; **Priority 2** uses stable line/side/dwell data; **Priority 3** requires three qualified crossing attempts and rechecks position after PAUSE before CLOSE/RESUME. None permits closing on a mower in the opening.
+
+An original-app return preserves the **first location** and the **actual post-stop location** separately. Decide direct return versus a verified waypoint route from geometry and ETA, not a stale map tile; when possible begin opening the gate in parallel. A return needing a **physical native zone edit** stops at a proven safe checkpoint, performs native task-free STOP/IDLE and bounded map confirmation, then resumes guarded DOCK/waypoint navigation. **Without a required geometry change, the extra map-edit STOP is skipped.** The restart schedule allows a conditional **18-second initial credit** only after a physically proven native zone STOP with live sensor and line protection, not as a blanket allowance. The gate safety-line brake remains independent. The native return-map readback budget is **30 seconds**, not an unlimited retry loop.
+
+Recovery/visual takeover separates operator observations from physical native/gate-contact proofs; it does not silently overrule collision safeguards. The **Total Overview widget itself remains addable without Garage Mode** because widget registration is static. The garage summary and automatic gate controls are dynamically gated; normal mowing map/dashboard remains useful without Garage Mode, and explicit supervised rescue can still be shown in exceptional/off modes. Please do not describe this as the entire widget disappearing from Homey's picker.
+
+### Flow compatibility, UI load and camera boundary
+
+Use the single new **`garage_mower_notice` Flow trigger** (`kind`, `message`, `reason`) for consolidated, bilingual, deduplicated informational and safety notices. Optional routine notifications obey Garage Mode settings; mandatory safety signals still fire. **Legacy emergency/safety/door triggers are deliberately kept** and can also fire so existing user Flows do not disappear: "one central new notification card" means a consolidated *new interface*, not deletion of the historical triggers.
+
+Dynamic Pause/Resume, garage toggles and waypoint buttons retain their identities. Serialized/deduplicated `setCapabilityOptions` writes avoid repeatedly recreating Homey Flow cards. MQTT position updates, conservative polling and map snapshot refresh remain load-controlled.
+
+**No live video** or Tencent XP2P, Android runtime/shims or redistributed binaries are included. Camera requires a separate optional PR **after** CORE acceptance and separate third-party licensing, provenance and build review.
+
+**Verification boundary:** supervised A2 field runs and the prior 270/270 extracted-CORE tests predate this final review-hardening commit; nine focused new regression cases have been added, but the exact updated branch still requires executing `npm test`, Homey publish validation and upgrade smoke testing. Do not infer physical certification for other models.
