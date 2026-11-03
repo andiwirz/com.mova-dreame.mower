@@ -1,13 +1,52 @@
 {
-  "title": { "en": "Mowing interrupted", "de": "Mähen unterbrochen" },
+  "title": {
+    "en": "Mowing interrupted",
+    "de": "Mähen unterbrochen"
+  },
   "hint": {
     "en": "Fires when the mower reports why it stopped or returned early: rain, frost, do-not-disturb or low battery. Mowing that finished normally does not fire this card.",
     "de": "Wird ausgelöst, wenn der Mäher meldet, warum er vorzeitig stoppt oder zurückfährt: Regen, Frost, Ruhezeit oder niedriger Akku. Ein regulär beendeter Mähvorgang löst diese Karte nicht aus."
   },
-  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }],
+  "args": [
+    {
+      "name": "device",
+      "type": "device",
+      "filter": "driver_id=mower"
+    }
+  ],
   "tokens": [
-    { "name": "reason_type", "type": "string", "title": { "en": "Interruption type", "de": "Unterbrechungsart" }, "example": { "en": "rain", "de": "rain" } },
-    { "name": "reason",      "type": "string", "title": { "en": "Interruption reason", "de": "Unterbrechungsgrund" }, "example": { "en": "Scheduled task interrupted — rain", "de": "Geplante Aufgabe unterbrochen — Regen" } },
-    { "name": "reason_code", "type": "number", "title": { "en": "Interruption code", "de": "Unterbrechungscode" }, "example": 57 }
+    {
+      "name": "reason_type",
+      "type": "string",
+      "title": {
+        "en": "Interruption type",
+        "de": "Unterbrechungsart"
+      },
+      "example": {
+        "en": "rain",
+        "de": "rain"
+      }
+    },
+    {
+      "name": "reason",
+      "type": "string",
+      "title": {
+        "en": "Interruption reason",
+        "de": "Unterbrechungsgrund"
+      },
+      "example": {
+        "en": "Scheduled task interrupted — rain",
+        "de": "Geplante Aufgabe unterbrochen — Regen"
+      }
+    },
+    {
+      "name": "reason_code",
+      "type": "number",
+      "title": {
+        "en": "Interruption code",
+        "de": "Unterbrechungscode"
+      },
+      "example": 57
+    }
   ]
 }

@@ -1,3 +1,16 @@
+# A2 CORE contribution — based on upstream 1.1.43
+
+This staging source keeps Andy Wirz's **1.1.43** upstream files and layers the **CORE-only A2 enhancements** over them. Video/Tencent XP2P and compatibility shims are **not included**.
+
+- Review first: [detailed CORE PR description](docs/A2_CORE_1_2_0_REVIEW_GUIDE_EN.md)
+- German handover: [notes](docs/A2_CORE_1_2_0_UEBERGABE_DE.md)
+- Garage safety details: [Garage Mode](docs/GARAGE_MODE.md)
+- Unit/regression test: `npm test`
+- Homey publish validation: run `homey app validate --level publish` in a machine with the Homey CLI; **not verified in this workspace**.
+- Upstream references: 1.1.43 SHA `7af9b936a3f5acdefec08f097a68da2180cb9c5c`; old #9 was closed without merge.
+
+---
+
 MOVA & Dreame Mower connects your robotic lawn mower to Homey, giving you direct control over mowing, edge mowing, and zone management — all from a single app. Whether you own a MOVA or Dreame robot, the integration works through the official cloud API and supports European, Chinese, and North American server regions.
 
 ## Features

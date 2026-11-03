@@ -1,0 +1,230 @@
+<style>
+*{box-sizing:border-box}html,body{margin:0}body{font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--homey-background-color,#f7f8fa);color:var(--homey-text-color,#252932);padding:18px 14px 35px}main{max-width:650px;margin:auto}h1{font-size:22px;margin:0 0 8px}.lead,.hint,.small{font-size:12px;line-height:1.5;opacity:.73}.lead{margin:0 0 18px}.panel{background:rgba(125,125,125,.11);border-radius:14px;padding:15px;margin:13px 0}details.panel{padding:0}summary{cursor:pointer;padding:17px;font-weight:700;list-style:none}summary::after{content:'⌄';float:right}details[open] summary::after{content:'⌃'}details .body{padding:0 16px 17px}.reset-section{margin-top:14px;border-top:1px solid rgba(127,127,127,.25)}.reset-section>summary{padding:12px 0;font-size:13px}.reset-section>.body{padding:0 0 12px}.field{padding:11px 0;border-top:1px solid rgba(127,127,127,.17)}.field:first-child{border-top:0}.field[hidden],[hidden]{display:none!important}label{display:block;font-size:14px;font-weight:600;margin-bottom:7px}input:not([type=checkbox]),select{width:100%;border:1px solid rgba(127,127,127,.5);border-radius:9px;padding:9px;font:inherit;background:var(--homey-background-color,#fff);color:var(--homey-text-color,#171717)}input[type=checkbox]{width:20px;height:20px;vertical-align:middle;margin:0 8px 0 0}.checklabel{display:flex;align-items:center;gap:4px}button{padding:11px 15px;border-radius:9px;border:0;cursor:pointer;font:inherit;font-weight:650}button.primary{background:#248c56;color:#fff}button.secondary{background:rgba(127,127,127,.23);color:inherit}button.danger{background:rgba(200,40,40,.15);color:#ce3030}button:disabled{opacity:.45;cursor:default}.button-row{display:flex;flex-wrap:wrap;gap:10px}.status{white-space:pre-wrap;line-height:1.5;font-size:13px;margin:10px 0}.warn{border-left:3px solid #ce8730;padding:10px 12px;background:rgba(205,145,30,.08);border-radius:6px}.ok{color:#248c56}.nav{display:block;width:100%;margin:8px 0;text-align:left}p{line-height:1.5}
+</style>
+<main>
+<h1 id="heading">Garage configuration</h1><p class="lead" id="lead">Loading garage settings. If this screen stays empty, reopen it or check the app log.</p>
+<div id="loading" class="panel" role="status" aria-live="polite">Reading device settings…</div><div id="off" class="panel" hidden></div>
+<div id="app" hidden>
+  <div class="panel warn" id="migration-review" role="alert" hidden>
+    <p id="migration-review-text"></p>
+    <button type="button" class="secondary" id="migration-confirm"></button>
+  </div>
+  <div class="panel warn" id="busy" hidden></div>
+  <div id="sections"></div>
+  <div class="panel" id="garage-rotation-panel" hidden>
+    <h3 id="rotation-title"></h3>
+    <p class="small" id="rotation-hint"></p>
+    <label id="rotation-label" for="point-rotation"></label>
+    <select id="point-rotation"><option value="fixed"></option><option value="alternate"></option></select>
+    <div class="button-row" style="margin-top:10px"><button id="point-save" class="primary" type="button"></button><button id="point-manage" class="secondary" type="button"></button></div>
+    <p id="point-message" class="status" role="status"></p>
+  </div>
+  <details class="panel" id="marker-diagnostics-panel"><summary id="diag-title"></summary><div class="body">
+    <p class="small" id="marker-diagnosis"></p>
+    <div class="reset-section" role="group" aria-labelledby="reset-title">
+      <p id="reset-title" class="small" style="font-weight:700;margin:12px 0 5px"></p>
+      <p class="small" id="reset-hint"></p><button class="danger" id="reset" type="button"></button>
+    </div>
+  </div></details>
+  <div class="panel">
+    <div class="button-row"><button class="primary" id="save" type="button"></button><button class="secondary" id="map" type="button"></button><button class="secondary" id="done" type="button"></button></div>
+    <p class="small" id="map-hint"></p><div id="message" class="status" role="status"></div>
+  </div>
+</div>
+</main>
+<script>
+// Homey may evaluate a Repair fragment before inserting its DOM/bridge.
+// Never leave the user with an unlabelled blank skeleton after a failure.
+(function bootGarageSettings(attempt=0){
+  const root=document.getElementById('heading');
+  const loading=document.getElementById('loading');
+  if (!root || !loading || !document.getElementById('point-rotation')
+      || typeof Homey==='undefined' || typeof Homey.emit!=='function') {
+    if (attempt<50) return setTimeout(()=>bootGarageSettings(attempt+1),80);
+    if (loading) loading.textContent=(String(typeof navigator==='undefined'?'en':navigator.language).toLowerCase().startsWith('de')?'Garagenverwaltung konnte nicht gestartet werden. Reparieren schließen und Homey-App-Log prüfen.':'Garage configuration could not start. Close Repair and check the Homey app log.');
+    try { Homey?.ready?.(); } catch(_) {}
+    return;
+  }
+  if (root.dataset.garageSettingsStarted==='yes') return;
+  // Resolve from the app backend, not the iOS embedded browser.
+  let started=false;
+  let fallbackTimer;
+  function start(language){
+    if(started)return;started=true;clearTimeout(fallbackTimer);
+    root.dataset.garageSettingsStarted='yes';
+    try{initGarageSettings(language)}catch(error){
+      const de=/^de(?:[-_]|$)/i.test(String(language||navigator.language||'en'));
+      loading.textContent=(de?'Garagenverwaltung konnte nicht initialisiert werden: ':'Garage configuration failed to initialize: ')+String(error?.message||error);
+      try{Homey.ready?.()}catch(_){}
+    }
+  }
+  fallbackTimer=setTimeout(()=>start(null),1500);
+  try{
+    const result=Homey.emit('get_repair_ui_language',{},(error,language)=>{if(!error&&typeof language==='string')start(language);else start(null)});
+    if(result&&typeof result.then==='function')result.then(start,()=>start(null));
+  }catch(_){start(null)}
+})(0);
+function initGarageSettings(serverLanguage){
+'use strict';
+const rawLanguage=typeof Homey.getLanguage==='function'?Homey.getLanguage():null;
+const fallbackLanguage=typeof navigator==='undefined'?'en':navigator.language;
+let localeOverride=null;try{localeOverride=localStorage.getItem('mova.repair.uiLanguage')}catch(_){}
+const de=/^de(?:[-_]|$)/i.test(String(localeOverride||rawLanguage||serverLanguage||document.documentElement?.lang||fallbackLanguage||'en'));
+if(document.documentElement)document.documentElement.lang=de?'de':'en';
+const t=(a,b)=>de?b:a;
+const $=id=>document.getElementById(id);
+const emit=(name,payload)=>new Promise((resolve,reject)=>{
+  let settled=false;
+  const timer=setTimeout(()=>{if(settled)return;settled=true;reject(new Error(t('Homey did not answer within 20 seconds. Reopen Repair and check the app log.','Homey antwortet seit 20 Sekunden nicht. Reparieren erneut öffnen und App-Log prüfen.')));},20000);
+  try { Homey.emit(name,payload,(error,data)=>{if(settled)return;settled=true;clearTimeout(timer);error?reject(error):resolve(data);}); }
+  catch(error){if(settled)return;settled=true;clearTimeout(timer);reject(error);}
+});
+const tr=(item)=>typeof item==='string'?item:(item?.[de?'de':'en']||item?.en||item?.de||'');
+const labels={
+ heading:t('Garage Mode','Garagenmodus'),
+ lead:t('This page only configures garage-dependent functions. Manage maintenance points independently in the maintenance menu.','Hier werden nur garagenabhängige Funktionen eingestellt. Wartungspunkte werden unabhängig davon im Menü Wartungspunkte verwaltet.'),
+ loading:t('Reading device settings…','Geräteeinstellungen werden geladen …'),
+ off:t('Garage Mode is off. Manage maintenance points in their separate menu.','Garagenmodus ist deaktiviert. Wartungspunkte können im eigenen Menü verwaltet werden.'),
+ busy:t('Garage mission active: changes are locked until the mower is safely stationary.','Garagenfahrt aktiv: Änderungen sind gesperrt, bis der Mäher sicher stillsteht.'),
+ point:t('Maintenance points (P1–P5)','Wartungspunkte (P1–P5)'),
+ pointAddHint:t('Add or rename a point in Homey here. First create the actual native destination in the MOVA/Dreame app. Only points with a confirmed position can be selected for automatic garage trips. A saved name is NOT proof of a safe destination.', 'Hier kannst du Punkte in Homey anlegen oder umbenennen. Den tatsächlichen nativen Zielpunkt zuerst in der MOVA-/Dreame-App anlegen. Nur Punkte mit bestätigter Position können für automatische Garagenfahrten ausgewählt werden. Ein gespeicherter Name ist KEINE Fahrfreigabe.'),
+ pointAddLabel:t('Point number (1–5)','Punktnummer (1–5)'),
+ pointAddNameLabel:t('Name in Homey','Name in Homey'),
+ pointAddSave:t('Save point name in Homey','Wartungspunkt in Homey speichern'),
+ pointRemove:t('Remove point name from Homey','Punktnamen in Homey entfernen'),
+ pointReady:t('confirmed, available','bestätigt, verfügbar'),
+ pointPending:t('native position not yet confirmed','native Position noch nicht bestätigt'),
+ pointUnnamed:t('not configured in Homey','in Homey noch nicht eingerichtet'),
+ pointNamed:t('name saved','Name gespeichert'),
+ pointNameError:t('Enter a point name.','Bitte einen Namen eingeben.'),
+ pointNameSaved:t('Name saved. This does not create a native destination.','Name gespeichert. Damit wurde noch kein nativer Zielpunkt erstellt.'),
+ pointHint:t('Choose a named primary point even without Garage Mode. Automatic rotation requires Garage Mode and two confirmed native points. An unconfirmed point cannot be driven to.','Hauptpunkt unabhängig vom Garagenmodus auswählen. Automatischer Wechsel erfordert Garagenmodus und zwei bestätigte native Punkte. Ein unbestätigter Punkt kann nicht angefahren werden.'),
+ pointSingle:t('Name another maintenance point to choose it as primary.','Benenne einen weiteren Wartungspunkt, um ihn als Hauptpunkt wählen zu können.'),
+ pointPrimary:t('Select point','Punkt auswählen'),
+ pointRotation:t('Selection behavior','Auswahlverhalten'),
+ fixed:t('Fixed selection','Fester Punkt'),
+ alternate:t('Rotate after completed mowing','Nach abgeschlossenem Mähen wechseln'),
+ save:t('Save garage settings','Garageneinstellungen speichern'),
+ savePoint:t('Save selection & rotation','Auswahl und Wechselregel speichern'),
+ done:t('Done – close menu','Fertig – Menü schließen'),
+ map:t('Edit safety line & danger area','Sicherheitslinie & Gefahrenbereich bearbeiten'),
+ mapHint:t('Geometry is edited on the map. Visibility controls above affect only the display, not emergency or gate protection.','Die Geometrie wird in der Karte bearbeitet. Die obigen Anzeige-Schalter ändern nur die Darstellung, nicht den Emergency- oder Torschutz.'),
+ resetTitle:t('Reset garage safety markers','Garagen-Sicherheitsmarkierungen zurücksetzen'),
+ resetHint:t('Dangerous: clears stored safety line / garage marker coordinates. Only use while docked and after explicit confirmation.','Achtung: Löscht gespeicherte Sicherheitslinie und Garagenmarkierungen. Nur im angedockten Zustand nach ausdrücklicher Bestätigung verwenden.'),
+ reset:t('Reset markers…','Markierungen zurücksetzen …'),
+ confirm:t('Really reset garage safety markers? This cannot be undone.','Garagen-Sicherheitsmarkierungen wirklich zurücksetzen? Das kann nicht rückgängig gemacht werden.'),
+ saved:t('Saved. Map and garage configuration have been refreshed.','Gespeichert. Karte und Garagenkonfiguration wurden aktualisiert.'),
+ pointSaved:t('Primary point saved: P','Hauptwartungspunkt gespeichert: P'),
+ error:t('Save failed: ','Speichern fehlgeschlagen: '),
+ diagTitle:t('Marker diagnostics','Markierungsdiagnose'),
+ diagEmpty:t('No diagnosis received yet.','Noch keine Diagnose erhalten.')
+};
+labels.rotationTitle=t('Automatic maintenance point rotation','Automatischer Wartungspunktwechsel');
+labels.rotationHint=t('The selected primary point is used for the next return. With Garage Mode and at least two confirmed native points, the selection advances once after mowing and physically confirmed docking.','Der ausgewählte Hauptwartungspunkt wird bei der nächsten Rückkehr verwendet. Bei aktiviertem Garagenmodus und zwei bestätigten nativen Punkten wechselt die Auswahl nach dem Mähen und sicher bestätigtem Andocken genau einmal.');
+labels.rotationLabel=t('Rotation after completed mowing','Wechsel nach abgeschlossenem Mähen');
+labels.rotationSave=t('Save automatic rotation','Automatischen Wechsel speichern');
+labels.rotationManage=t('Manage maintenance points','Wartungspunkte verwalten');
+
+Object.entries({done:'done',heading:'heading',lead:'lead',loading:'loading',off:'off',busy:'busy',save:'save',map:'map',mapHint:'map-hint',resetTitle:'reset-title',resetHint:'reset-hint',reset:'reset',diagTitle:'diag-title',rotationTitle:'rotation-title',rotationHint:'rotation-hint',rotationLabel:'rotation-label',rotationSave:'point-save',rotationManage:'point-manage'}).forEach(([k,id])=>$(id).textContent=labels[k]);
+$('point-rotation').querySelector('[value=fixed]').textContent=labels.fixed;
+$('point-rotation').querySelector('[value=alternate]').textContent=labels.alternate;
+try{Homey.setTitle(labels.heading);$('heading').hidden=true}catch(_){}
+let initial={},schema={},busy=false,fields={};
+function makeField(key,def,group){
+ const row=document.createElement('div');row.className='field';row.dataset.key=key;
+ const label=document.createElement('label');label.textContent=tr(def.label);label.htmlFor='setting-'+key;row.appendChild(label);
+ let input;let value=initial[key]??def.value;
+ if(def.type==='checkbox'){
+  input=document.createElement('input');input.type='checkbox';input.checked=value===true;
+  label.classList.add('checklabel');label.insertBefore(input,label.firstChild);
+ }else if(def.type==='dropdown'){
+  input=document.createElement('select');for(const option of def.values||[]){const el=document.createElement('option');el.value=String(option.id);el.textContent=tr(option.label);input.appendChild(el);}input.value=String(value);
+ }else{
+  input=document.createElement('input');input.type=def.type==='number'?'number':'text';input.value=value??'';if(def.type==='number'){input.min=String(def.min);input.max=String(def.max);input.step=String(def.step||1);}if(def.type==='text')input.maxLength=80;
+ }
+ input.id='setting-'+key;input.dataset.setting=key;input.addEventListener('change',refreshVisibility);
+ if(def.type!=='checkbox')row.appendChild(input);
+ if(def.hint){const hint=document.createElement('p');hint.className='hint';hint.textContent=tr(def.hint);row.appendChild(hint);}
+ group.appendChild(row);fields[key]={row,input,def};
+}
+function refreshVisibility(){
+ const v=k=>fields[k]?.input?.type==='checkbox'?fields[k].input.checked:fields[k]?.input?.value;
+ const sensor=!!v('garage_sensor_enabled'),logging=!!v('garage_logging_enabled'),speed=v('garage_speed_source');
+ if(!logging&&fields.garage_debug_verbose)fields.garage_debug_verbose.input.checked=false;
+ for(const [key,f] of Object.entries(fields)){
+  let show=true;
+  if(key==='garage_sensor_min_battery')show=sensor;
+  if(['garage_mower_speed_value','garage_speed_unit'].includes(key))show=speed==='user';
+  if(key==='garage_debug_verbose')show=logging;
+  if(['garage_show_safety_line','garage_show_danger_area'].includes(key))show=!!v('garage_map_overlay_enabled');
+  f.row.hidden=!show;
+  f.input.disabled=busy;
+ }
+ $('save').disabled=busy;$('point-save').disabled=busy;
+}
+function currentValues(){const obj={};for(const [key,f] of Object.entries(fields)){
+ const {input,def}=f;obj[key]=def.type==='checkbox'?input.checked:def.type==='number'?Number(input.value):input.value;
+ }return obj;}
+function render(cfg){
+ schema=cfg.catalog.fields;initial=cfg.values||{};busy=!!cfg.busy;
+ $('marker-diagnosis').textContent=cfg.markerDiagnosis||labels.diagEmpty;
+ window._garageKnownPoints=cfg.pointSelection?.known||[1];
+ $('loading').hidden=true;$('off').hidden=!!cfg.garageEnabled;
+ $('app').hidden=!cfg.garageEnabled;
+ $('migration-review').hidden=!cfg.migrationReviewRequired;
+ if(cfg.migrationReviewRequired) $('migration-review-text').textContent=t(
+  'Some previous safety settings could not be recovered automatically. Check sensor, door travel time and safety distances before moving the mower. The pre-upgrade snapshot was preserved.',
+  'Einige bisherige Sicherheitseinstellungen konnten nicht automatisch übernommen werden. Vor der nächsten Fahrt Sensor, Torlaufzeiten und Sicherheitsabstände prüfen. Eine Sicherung des alten Stands wurde gespeichert.');
+ $('migration-confirm').textContent=t('I verified all garage safety settings', 'Ich habe alle Garagen-Sicherheitseinstellungen geprüft');
+ $('busy').hidden=!busy;
+ $('sections').replaceChildren();fields={};
+ for(const group of cfg.catalog.groups){
+  if(group.id==='names')continue; // names are edited in the unified maintenance-point manager below
+  const node=document.createElement('details');node.className='panel';node.open=['door','safety','notifications'].includes(group.id);
+  const head=document.createElement('summary');head.textContent=tr(group.label);node.appendChild(head);
+  const inner=document.createElement('div');inner.className='body';for(const key of group.keys)makeField(key,schema[key],inner);node.appendChild(inner);$('sections').appendChild(node);
+ }
+ const points=cfg.pointSelection||{};
+ const choices=Array.isArray(points.available)?points.available:[];
+ // Rotation is a garage-only feature; do not advertise the setting until
+ // TWO independently confirmed native points are selectable. Names alone
+ // are not geometric proof. Keep all P1-P5 management in the other Repair view.
+ const canRotate=cfg.garageEnabled===true && choices.length>=2;
+ $('garage-rotation-panel').hidden=!canRotate;
+ $('point-rotation').value=canRotate && points.rotation==='alternate' ? 'alternate' : 'fixed';
+ $('point-rotation').disabled=busy || !canRotate;
+ $('point-save').disabled=busy || !canRotate;
+}
+async function load(){try{const cfg=await emit('get_garage_repair_configuration',{});render(cfg);}catch(e){$('loading').textContent=t('Could not load configuration: ','Konfiguration konnte nicht geladen werden: ')+String(e.message||e);}}
+$('migration-confirm').addEventListener('click',async()=>{
+ $('migration-confirm').disabled=true;
+ try { await emit('confirm_garage_repair_migration',{}); await load(); }
+ catch(error) { $('migration-review-text').textContent=t('Could not confirm: ','Bestätigung fehlgeschlagen: ')+String(error?.message||error); }
+ finally { $('migration-confirm').disabled=false; }
+});
+$('save').addEventListener('click',async()=>{
+ const values=currentValues(),diff={};for(const [key,value] of Object.entries(values)){if(!Object.is(value,initial[key]))diff[key]=value;}
+ $('save').disabled=true;$('message').textContent='';
+ try{if(Object.keys(diff).length){await emit('save_garage_repair_configuration',diff);} $('message').textContent=labels.saved;await load();}
+ catch(e){$('message').textContent=labels.error+String(e.message||e);refreshVisibility();}
+});
+$('point-save').addEventListener('click',async()=>{
+ $('point-save').disabled=true;
+ try{
+  const state=await emit('get_maintenance_point_config',{});
+  await emit('save_maintenance_point_config',{selected:Number(state.selected||1),rotation:$('point-rotation').value});
+  $('point-message').textContent=t('Rotation saved.','Wechselregel gespeichert.');await load();
+ }catch(error){$('point-message').textContent=labels.error+String(error.message||error);}
+});
+$('point-manage').addEventListener('click',()=>Homey.showView('maintenance_settings'));
+$('map').addEventListener('click',()=>Homey.showView('map_editor'));
+$('done').addEventListener('click',()=>Homey.done());
+$('reset').addEventListener('click',async()=>{
+ if(!confirm(labels.confirm))return;
+ try{await emit('reset_garage_markers',{confirm:'RESET GARAGE MARKERS'});$('message').textContent=labels.saved;await load();}
+ catch(e){$('message').textContent=labels.error+String(e.message||e);}
+});
+try{if(Homey.ready)Homey.ready()}catch(_){}
+load();
+}
+</script>

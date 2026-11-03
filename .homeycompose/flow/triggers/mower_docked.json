@@ -1,9 +1,48 @@
 {
-  "title": { "en": "Mower docked at station", "de": "Mähroboter an Ladestation" },
-  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }],
+  "title": {
+    "en": "Mower docked at station",
+    "de": "Mähroboter an Ladestation"
+  },
+  "args": [
+    {
+      "name": "device",
+      "type": "device",
+      "filter": "driver_id=mower"
+    }
+  ],
   "tokens": [
-    { "name": "reason_type", "type": "string", "title": { "en": "Interruption type", "de": "Unterbrechungsart" }, "example": { "en": "rain", "de": "rain" } },
-    { "name": "reason",      "type": "string", "title": { "en": "Interruption reason", "de": "Unterbrechungsgrund" }, "example": { "en": "Scheduled task interrupted — rain", "de": "Geplante Aufgabe unterbrochen — Regen" } },
-    { "name": "reason_code", "type": "number", "title": { "en": "Interruption code", "de": "Unterbrechungscode" }, "example": 57 }
+    {
+      "name": "reason_type",
+      "type": "string",
+      "title": {
+        "en": "Interruption type",
+        "de": "Unterbrechungsart"
+      },
+      "example": {
+        "en": "rain",
+        "de": "rain"
+      }
+    },
+    {
+      "name": "reason",
+      "type": "string",
+      "title": {
+        "en": "Interruption reason",
+        "de": "Unterbrechungsgrund"
+      },
+      "example": {
+        "en": "Scheduled task interrupted — rain",
+        "de": "Geplante Aufgabe unterbrochen — Regen"
+      }
+    },
+    {
+      "name": "reason_code",
+      "type": "number",
+      "title": {
+        "en": "Interruption code",
+        "de": "Unterbrechungscode"
+      },
+      "example": 57
+    }
   ]
 }

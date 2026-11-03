@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { width: 100%; height: 100%; overflow: hidden; }
+    html, body { width: 100%; height: 100%; overflow: hidden; touch-action: auto; }
     body {
       background: transparent;
       display: flex;
@@ -14,6 +14,7 @@
     }
     #map-wrap {
       flex: 1;
+      touch-action: auto;
       width: 100%;
       min-width: 100%;
       display: flex;
@@ -22,7 +23,7 @@
       overflow: hidden;
       min-height: 0;
     }
-    #map-wrap svg { width: 100%; min-width: 100%; height: 100%; display: block; }
+    #map-wrap svg { width: 100%; min-width: 100%; height: 100%; display: block; touch-action: auto; }
     #footer {
       font-size: 10px;
       color: var(--homey-text-color, rgba(255,255,255,0.45));
@@ -30,13 +31,13 @@
       align-items: center;
       justify-content: space-between;
       padding: 2px 4px 3px 6px;
-      white-space: nowrap;
-      overflow: hidden;
+      white-space: normal;
+      overflow: visible;
+      min-width: 0;
+      gap: 5px;
     }
     #footer-text {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      flex: 1;
+      flex:1;min-width:0;white-space:normal;overflow-wrap:anywhere;line-height:1.35;
     }
     #refresh-btn {
       background: none;
@@ -51,7 +52,19 @@
       transition: opacity 0.15s;
     }
     #refresh-btn:hover { opacity: 1; }
-    #footer-actions { display:flex; align-items:center; gap:4px; flex-shrink:0; }
+    #footer-actions { display:flex; align-items:center; gap:4px; flex-shrink:0; min-width:0; }
+
+#map-status-panel { flex-shrink:0; margin:0 6px 5px; padding:7px 9px; border-radius:7px; background:rgba(70,110,83,.12); color:var(--homey-text-color,#344b3c); font-size:11px; line-height:1.45; overflow-wrap:anywhere; white-space:pre-wrap; }
+#map-status-panel[hidden] { display:none; }
+#footer-actions .map-action:not(.primary) { background:rgba(127,127,127,.20)!important; border:1px solid rgba(127,127,127,.24); }
+
+#footer-info { font-size:11px; min-width:30px; }
+    #footer-info { min-width:28px; min-height:28px; font-size:15px; padding:2px; }
+    #footer.editing #footer-text{display:none}
+    #footer.editing #footer-info{display:none}
+    #footer.editing #footer-actions{width:100%;justify-content:space-between;flex-wrap:wrap}
+    #footer.editing #edit-actions.active{display:flex;flex:1;min-width:0;flex-wrap:wrap;gap:5px}
+    #footer.editing .map-action{white-space:normal;min-width:0;padding:6px 8px}
     .map-action { border:0; border-radius:7px; padding:3px 7px; font-size:10px; cursor:pointer; background:rgba(255,255,255,0.12); color:var(--homey-text-color,#fff); }
     .map-action.primary { background:rgba(76,175,80,0.82); color:#fff; }
     .map-action.danger { background:rgba(255,255,255,0.10); }
@@ -60,6 +73,8 @@
     #edit-actions.active { display:flex; }
     #edit-btn.hidden { display:none; }
     .edit-hint { opacity:.72; }
+    #map-wrap.editing, #map-wrap.editing svg { touch-action:none; }
+    svg.editing { touch-action:none; }
     svg.editing [data-edit-marker] { cursor:grab; touch-action:none; }
     svg.editing [data-edit-marker].dragging { cursor:grabbing; }
     #refresh-btn.loading { animation: spin 0.7s linear infinite; }
@@ -72,41 +87,175 @@
       line-height: 1.4;
     }
     .msg.err { color: #e74c3c; }
-  </style>
+
+
+
+    #maintenance-name-editor{display:none;position:fixed;inset:0;z-index:30;padding:14px;background:rgba(0,0,0,.62);align-items:center;justify-content:center}
+    #maintenance-name-editor.active{display:flex}
+    #maintenance-name-card{width:min(340px,100%);background:#17191a;color:#f5f5f5;border:1px solid rgba(255,255,255,.12);border-radius:9px;padding:12px;box-shadow:0 10px 30px rgba(0,0,0,.48)}
+    #maintenance-name-card h3{font-size:13px;margin:0 0 8px}
+    #maintenance-name-help{font-size:10px;opacity:.66;line-height:1.35;margin-bottom:9px}
+    #maintenance-name-input{width:100%;min-height:34px;border:1px solid #3a3d3f;border-radius:5px;padding:7px 9px;background:#090a0b;color:#fff;font:12px system-ui,sans-serif}
+    .maintenance-name-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}
+    .maintenance-name-actions button{min-height:34px;border:0;border-radius:4px;padding:6px 8px;font-size:11px;background:#e7e7e7;color:#202124}
+    #maintenance-name-cancel{background:#36383a;color:#eee}#maintenance-name-save{background:#278a50;color:#fff;font-weight:600}
+    #maintenance-name-feedback{min-height:1.2em;color:#ff8a80;font-size:10px;margin-top:5px}
+
+    #pylon-editor { display:none; position:fixed; inset:0; z-index:20; background:rgba(0,0,0,.48); align-items:flex-end; justify-content:center; }
+    #pylon-editor.active { display:flex; }
+    #pylon-card { box-sizing:border-box; width:min(520px,100%); max-width:100vw; max-height:calc(100dvh - 24px); overflow-y:auto; background:#202124; color:#f5f5f5; border:1px solid rgba(255,255,255,.10); border-radius:12px 12px 0 0; padding:14px 14px max(18px,env(safe-area-inset-bottom)); box-shadow:0 -8px 30px rgba(0,0,0,.35); }
+    #pylon-card h3 { font-size:15px; margin-bottom:8px; }
+    .pylon-row { display:flex; align-items:center; gap:8px; margin:8px 0; font-size:12px; }
+    .pylon-row label { min-width:90px; opacity:.75; }
+    .pylon-row select,.pylon-row input { box-sizing:border-box; min-width:0; flex:1; border:1px solid rgba(255,255,255,.10); border-radius:5px; padding:7px 8px; background:#3a3b3e; color:#fff; }
+    .pylon-meta { font-size:10px; opacity:.62; line-height:1.35; margin:6px 0 10px; word-break:break-word; }
+    .pylon-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    .pylon-actions button { min-width:0; min-height:42px; white-space:normal; border:0; border-radius:4px; padding:8px; font-size:12px; background:#e7e7e7; color:#202124; }
+    .pylon-actions button:disabled { opacity:1; background:#36383a !important; color:#76797c !important; cursor:default; }
+    .pylon-actions .reload { grid-column:1 / -1; background:#244c69; color:#fff; }
+    .pylon-actions .hold { grid-column:1 / -1; background:#3b3d40; color:#fff; }
+    #pylon-remove:not(:disabled) { background:#67312e; color:#ffc0bb; }
+    #pylon-delete-zone:not(:disabled) { background:#ff6b61; color:#171717; font-weight:700; }
+    #pylon-cancel:not(:disabled) { background:#e7e7e7; color:#202124; }
+    #pylon-save:not(:disabled) { background:#278a50; color:#fff; font-weight:600; }
+    #pylon-feedback { min-height:1.4em; font-size:12px; margin:6px 0; }
+    #pylon-feedback.error { color:#ff8a80; }
+    svg.editing [data-pylon-id] { cursor:pointer; touch-action:none; pointer-events:all; }
+    svg.editing [data-native-zone-id] { cursor:pointer; touch-action:none; pointer-events:all; }
+    svg:not(.editing) [data-maintenance-hit-index] { pointer-events:none; }
+    svg.editing [data-maintenance-hit-index] { cursor:pointer; pointer-events:all; }
+    svg.editing [data-maintenance-name-index] { cursor:text; pointer-events:none; }
+    svg.editing text { pointer-events:none; }
+    .pylon-pending-ring { fill:none; stroke:#42a5f5; stroke-width:4; stroke-dasharray:12 7; stroke-linecap:round; vector-effect:non-scaling-stroke; animation:pylon-pending-dash .75s linear infinite,pylon-pending-pulse 1.4s ease-in-out infinite; pointer-events:none; }
+    .pylon-pending-zone { fill:rgba(66,165,245,.14); stroke:#42a5f5; stroke-width:4; stroke-dasharray:12 7; stroke-linecap:round; vector-effect:non-scaling-stroke; animation:pylon-pending-dash .75s linear infinite,pylon-pending-pulse 1.4s ease-in-out infinite; pointer-events:none; }
+    @keyframes pylon-pending-dash { to { stroke-dashoffset:-32; } }
+    @keyframes pylon-pending-pulse { 50% { opacity:.45; } }
+
+/* 1.2.21 unified restrained map actions: text only, no grey button plates. */
+.map-action, .map-action.primary, .map-action.danger,
+#footer-actions .map-action:not(.primary), #footer-info { background:transparent!important; border:0!important; box-shadow:none!important; }
+.map-action.primary { color:#38a56a!important; font-weight:700; }
+.map-action:focus-visible { outline:2px solid #38a56a; outline-offset:2px; }
+.map-action:hover:not(:disabled) { text-decoration:underline; }
+
+/* 1.2.22: Save is the sole filled map footer action. Other controls remain text-only. */
+.map-action.primary#save-edit-btn {background:#278a50!important;color:#fff!important;border:1px solid #217442!important;border-radius:7px;padding:5px 9px;font-weight:700;box-shadow:none!important;}
+.map-action.primary#save-edit-btn:disabled {opacity:.45;}
+
+#pylon-feedback[data-result="pending"], #pylon-feedback[data-result="unverified"] { color:#a06b17; white-space:pre-wrap; }
+#pylon-feedback[data-result="confirmed"] { color:#278a50; white-space:pre-wrap; }
+#pylon-feedback[data-result="failed"] { color:#ba3a35; white-space:pre-wrap; }
+</style>
 </head>
 <body>
   <div id="map-wrap"><div class="msg">Loading map…</div></div>
   <div id="footer">
     <span id="footer-text"></span>
     <span id="footer-actions">
-      <button id="edit-btn" class="map-action" title="Edit markers / Marker bearbeiten">Edit</button>
+      <button id="footer-info" class="map-action map-info" type="button" aria-controls="map-status-panel" aria-expanded="false" aria-label="Show map status and notes" title="Show map status and notes">ⓘ</button>
+      <button id="edit-btn" class="map-action" title="Edit / Bearbeiten">Edit</button>
       <span id="edit-actions">
         <button id="cancel-edit-btn" class="map-action danger">Cancel</button>
+        <button id="toggle-markers-btn" class="map-action" type="button" aria-pressed="false" title="Sicherheitslinie und Wartungspunkte ausblenden; Pylone bleiben anklickbar / Hide safety line and maintenance points; pylons stay clickable">Anzeige vereinfachen / Simplify view</button>
         <button id="save-edit-btn" class="map-action primary">Save</button>
       </span>
       <button id="refresh-btn" title="Refresh map / Karte aktualisieren">↻</button>
     </span>
   </div>
 
+  <div id="map-status-panel" hidden role="status" aria-live="polite"></div>
+<div id="maintenance-name-editor"><div id="maintenance-name-card" role="dialog" aria-modal="true" aria-labelledby="maintenance-name-title"><h3 id="maintenance-name-title"></h3><div id="maintenance-name-help"></div><input id="maintenance-name-input" type="text" maxlength="40" autocomplete="off"><label class="maintenance-primary-choice"><input id="maintenance-primary-toggle" type="checkbox"><span id="maintenance-primary-text"></span></label><div id="maintenance-name-feedback" role="status" aria-live="polite"></div><div class="maintenance-name-actions"><button id="maintenance-name-cancel" type="button"></button><button id="maintenance-name-save" type="button"></button></div></div></div>
+  <div id="pylon-editor">
+    <div id="pylon-card">
+      <h3>Pylon / Problemstelle</h3>
+      <div class="pylon-meta" id="pylon-meta"></div>
+      <div class="pylon-row"><label>Radius</label><input id="pylon-radius" type="number" min="50" max="300" step="1" value="50"><span>cm</span></div>
+      <div class="pylon-row"><label>Aktiv / Active</label><select id="pylon-lifecycle">
+        <option value="permanent">Dauerhaft / Permanent</option>
+        <option value="days_3">3 Tage / 3 days</option>
+        <option value="days_7">7 Tage / 7 days</option>
+        <option value="days_14">14 Tage / 14 days</option>
+        <option value="departure">Nur Ausfahrt / Departure only</option>
+        <option value="departure_mowing">Ausfahrt + Mähen / Departure + mowing</option>
+        <option value="mowing">Nur Mähen / Mowing only</option>
+        <option value="mowing_return">Mähen + Rückkehr / Mowing + return</option>
+        <option value="return">Nur Rückkehr / Return only</option>
+      </select></div><div id="phase-zone-prearm-disclosure" class="hint" style="font-size:11px;line-height:1.35;margin:4px 0 8px">Hinweis: „Nur Mähen“ und „Mähen + Rückkehr“ werden zum Schutz bereits vor der Ausfahrt aktiviert; „Nur Rückkehr“ nicht. / Note: “Mowing only” and “Mowing + return” are armed before departure for safety; “Return only” is not.</div><details class="zone-policy-help" style="margin:6px 0 12px;color:#aaa;font-size:11px;line-height:1.4"><summary style="cursor:pointer">Hinweise / Notes</summary><div id="phase-zone-availability-note" class="hint" style="margin-top:6px;font-size:11px;line-height:1.4">Native Sperrzonen: Löschen erfolgt ohne Rückkehr-Blockade bei fehlender Rückmeldung. Wiederherstellung vor dem Mähen erfordert eine bestätigte Karte. Auffällige Kartendaten sperren automatische Änderungen. Missionszonen benötigen Homey beim Missionsstart. Fahrphasenregeln funktionieren auch ohne Garagenmodus. Native Änderungen erfolgen nur bei bestätigtem Stillstand ohne aktiven Auftrag. Externe Starts liefern diesen Prüfpunkt nicht immer rechtzeitig; bei Homey-Start werden Schutzbereiche vorsorglich aktiviert. / Native zone schedules: delete is best-effort (unconfirmed stays unconfirmed); restoring a protective zone before mowing needs a verified native map. Suspicious native maps disable automatic edits. Mission zones require Homey at mission start. Phase rules work without Garage Mode too. Native switching occurs only at a verified task-free stationary checkpoint; external app starts may not provide such a checkpoint before movement. Homey-started mowing pre-arms protection conservatively.</div></details>
+      <div class="pylon-row"><label>Name / Notiz</label><input id="pylon-note" type="text" maxlength="120"></div>
+      <div class="pylon-meta" id="pylon-zone-status"></div>
+      <div id="pylon-feedback" role="status" aria-live="polite"></div>
+      <div class="pylon-actions"><button id="pylon-reload" class="reload">Karte neu laden / prüfen</button><button id="pylon-hold" class="hold" hidden>Offen halten</button><button id="pylon-remove" class="remove">Markierung ausblenden</button><button id="pylon-delete-zone" class="remove">Sperrzone löschen</button><button id="pylon-cancel">Abbrechen</button><button id="pylon-save">Sperrzone speichern</button></div>
+    </div>
+  </div>
+
   <script>
+      var _uiGerman = (navigator.language || 'en').toLowerCase().startsWith('de');
+      var _uiPairs = [["Marker mit „Edit“ verschieben; Änderungen mit „Save“ speichern. Das Dashboard-Widget ist nicht erforderlich.", "Move markers with “Edit”; save changes with “Save”. The dashboard widget is not required."], ["Pylon / Problemstelle", "Pylon / problem area"], ["Aktiv / Active", "Active"], ["Dauerhaft / Permanent", "Permanent"], ["3 Tage / 3 days", "3 days"], ["7 Tage / 7 days", "7 days"], ["14 Tage / 14 days", "14 days"], ["Nur Ausfahrt / Departure only", "Departure only"], ["Ausfahrt + Mähen / Departure + mowing", "Departure + mowing"], ["Nur Mähen / Mowing only", "Mowing only"], ["Mähen + Rückkehr / Mowing + return", "Mowing + return"], ["Nur Rückkehr / Return only", "Return only"], ["Name / Notiz", "Name / note"], ["Karte neu laden / prüfen", "Reload / verify map"], ["Offen halten", "Keep open"], ["Markierung ausblenden", "Hide marker"], ["Sperrzone löschen", "Delete no-go zone"], ["Abbrechen", "Cancel"], ["Sperrzone speichern", "Save no-go zone"], ["Gartenkarte wird geladen …", "Loading garden map…"], ["Fehler beim Laden der Karte", "Failed to load map"], ["Karte antwortet nicht. Bitte Verbindung prüfen und erneut laden.", "Map is not responding. Check the connection and reload."], ["Karte konnte nicht neu geladen werden", "Map could not be reloaded"], ["Keine Bestätigung vom Mäher erhalten.", "No confirmation was received from the mower."], ["Mäher nicht verbunden.", "Mower is not connected."], ["Noch keine Kartendaten verfügbar – bitte Karte aktualisieren.", "No map data available yet — refresh the map."], ["Noch keine bestätigte Sperrzone an dieser Pylone.", "No confirmed no-go zone exists for this pylon yet."], ["Radius zwischen 50 und 300 cm eingeben (mindestens 1 m Durchmesser).", "Enter a radius between 50 and 300 cm (at least 1 m diameter)."], ["Sicher mähen", "Safe mowing"], ["Speichern fehlgeschlagen. Bitte den Log prüfen.", "Save failed. Check the app log."], ["Tor offen", "Gate open"], ["Native Karte wird einmal frisch vom Mäher gelesen …", "Reading a fresh native map from the mower…"], ["Karte neu geladen ✓", "Map reloaded ✓"], ["Markierung wird ausgeblendet …", "Hiding marker…"], ["Löschen wurde gesendet – native Bestätigung läuft im Hintergrund …", "Deletion sent — native confirmation continues in the background…"], ["Sperrzone wurde gesendet – native Bestätigung läuft im Hintergrund …", "No-go-zone change sent — native confirmation continues in the background…"], ["Änderung wurde gesendet; Bestätigung vom Mäher steht noch aus.", "Change sent; mower confirmation is still pending."], ["Regel gespeichert; Änderung wird am nächsten geeigneten Stillstand geprüft.", "Rule saved; map transition will be checked at a suitable stationary state."], ["Regel gespeichert; Kartenänderung wird am nächsten geeigneten Stillstand geprüft.", "Rule saved; map transition will be checked at a suitable stationary state."], ["Name und Aktivzeit werden in Homey gespeichert …", "Saving name and lifecycle in Homey…"], ["Speichern", "Save"], ["Native Sperrzone", "Native no-go zone"]];
+
+      _uiPairs = _uiPairs.concat([["Zeit-/Fahrphasenregel gespeichert; native Anpassung wird am nächsten geeigneten Stillstand geprüft.", "Time/mission rule saved; native changes are checked at the next suitable standstill."], ["direkt aus der Mäherkarte. Name und Aktivzeit werden in Homey verwaltet; die Zone bleibt eine native Mäher-Sperrzone.", "from the native mower map. Name and lifecycle are managed in Homey; this remains a native mower no-go zone."], ["Regel gespeichert; Kartenänderung wird am nächsten geeigneten Stillstand geprüft.", "Rule saved; map transition is checked at the next suitable standstill."], ["Die alte Homey-Zuordnung passt nicht mehr zu diesem Pylon. Eine vorhandene rote Sperrzone kann direkt in der Karte ausgewählt werden.", "The old Homey association no longer matches this pylon. Select an existing red no-go zone directly on the map."], ["aktiv und geometrisch bestätigt.", "active and geometrically verified."], ["Alte unbestätigte Änderung verworfen – Sperrzone kann neu gespeichert werden.", "Old unconfirmed change discarded; the no-go zone can be saved again."], ["Der Mäher hat die Sperrzone nicht in die aktuelle Karte übernommen – erneutes Speichern ist möglich.", "The mower did not add the no-go zone to the current map; saving can be retried."], ["Der Mäher hat das Löschen nicht in die aktuelle Karte übernommen – erneutes Löschen ist möglich.", "The mower did not apply the deletion to the current map; deletion can be retried."]]);
+      _uiPairs = _uiPairs.concat([["Native Sperrzone ist in der neu geladenen Karte nicht mehr vorhanden.", "The native no-go zone is no longer present in the reloaded map."], ["Pylone ist in der neu geladenen Karte nicht mehr vorhanden.", "The pylon is no longer present in the reloaded map."], ["Bestätigt:", "Verified:"], ["Sperrzone #", "No-go zone #"], ["ist in der Mäherkarte vorhanden.", "is present in the mower map."], ["Karte wurde neu abgefragt. Die native Bestätigung steht noch aus; der Hintergrundprüfer läuft weiter.", "Map requested again. Native confirmation is pending; the background verifier continues."], ["Alte unbestätigte Änderung ist nicht in der frischen Mäherkarte. Jetzt kannst du die Sperrzone einmal neu speichern.", "The old unconfirmed change is absent from the fresh mower map. You can save the no-go zone again."], ["Keine native Sperrzone gefunden. Der alte Pending-Zustand ist freigegeben; jetzt kannst du einmal neu speichern.", "No native no-go zone found. The old pending state is cleared; you can save again."], ["Karte neu geladen. Prüfe Radius/Notiz und speichere die Sperrzone.", "Map reloaded. Check radius/note and save the no-go zone."]]);
+      _uiPairs.push(["Hinweise / Notes", "Notes"]);
+      _uiPairs.push(["Anzeige vereinfachen / Simplify view", "Simplify view"]);
+      _uiPairs.push(["Sicherheitslinie und Wartungspunkte ausblenden; Pylone bleiben anklickbar / Hide safety line and maintenance points; pylons stay clickable", "Hide safety line and maintenance points; pylons stay clickable"]);
+      _uiPairs.push(["Haupt-Wartungspunkt – Position in der MOVA-/Dreame-App ändern", "Primary maintenance point – move it in the MOVA/Dreame app"]);
+      _uiPairs.push(["Wartungspunkt oder seinen Namen antippen zum Umbenennen; Position nur in der MOVA-/Dreame-App ändern.", "Tap a maintenance point or its label to rename it; change its native location in the MOVA/Dreame app."]);
+      _uiPairs.push(["Fenster bleibt geöffnet. Der automatische Countdown wurde abgebrochen.", "Dialog stays open. Automatic countdown canceled."]);
+      _uiPairs.push([" Fenster schließt automatisch in (", " Window closes automatically in ("]);
+
+      _uiPairs.push(["Prüfung läuft …", "Checking…"]);
+      _uiPairs.push(["Sperrzone gelöscht ✓", "No-go zone deleted ✓"]);
+      _uiPairs.push(["Erneut prüfen", "Check again"]);
+      _uiPairs.push(["Noch keine native Bestätigung – kein erfolgreicher Reparaturabschluss.", "Native confirmation still missing — repair is not complete."]);
+      _uiPairs.push(["Kartenabruf erfolgreich; native Reparatur nicht bestätigt.", "Map retrieved successfully; native repair remains unconfirmed."]);
+      _uiPairs.push(["Karte konnte nicht neu geladen werden.", "Could not reload map."]);
+      function t(en, de) { return _uiGerman ? de : en; }
+      function localizeUiText(value) {
+        var out = String(value == null ? '' : value);
+        for (var i=0;i<_uiPairs.length;i++) { var de=_uiPairs[i][0], en=_uiPairs[i][1]; out=out.split(de).join(_uiGerman ? de.split(' / ')[0] : en); }
+        return out;
+      }
+      function localizeStaticUi() {
+        document.documentElement.lang=_uiGerman?'de':'en';
+        for (var button of [['edit-btn','Edit','Bearbeiten'],['cancel-edit-btn','Cancel','Abbrechen'],['save-edit-btn','Save safety markers','Sicherheitsmarkierungen speichern']]) { var el=document.getElementById(button[0]);if(el)el.textContent=t(button[1],button[2]); }
+        var walker=document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); var n;
+        while((n=walker.nextNode())) { if(!n.parentElement || /^(SCRIPT|STYLE)$/.test(n.parentElement.tagName)) continue; n.nodeValue=localizeUiText(n.nodeValue); }
+        document.querySelectorAll('[title],[placeholder],[aria-label]').forEach(function(el) { ['title','placeholder','aria-label'].forEach(function(a) { if(el.hasAttribute(a)) el.setAttribute(a,localizeUiText(el.getAttribute(a))); }); });
+        var mapRefresh=document.getElementById('refresh-btn'); if(mapRefresh) mapRefresh.title=t('Refresh map','Karte aktualisieren');
+        var prearm=document.getElementById('phase-zone-prearm-disclosure'); if(prearm) prearm.textContent=t("Note: “Mowing only” and “Mowing + return” are armed before departure for safety; “Return only” is not.","Hinweis: „Nur Mähen“ und „Mähen + Rückkehr“ werden zum Schutz bereits vor der Ausfahrt aktiviert; „Nur Rückkehr“ nicht.");
+        var note=document.getElementById('phase-zone-availability-note'); if(note) note.textContent=t("Native zone schedules: delete is best-effort (unconfirmed stays unconfirmed); restoring a protective zone before mowing needs a verified native map. Suspicious native maps disable automatic edits. Mission zones require Homey at mission start. Phase rules work without Garage Mode too. Native switching occurs only at a verified task-free stationary checkpoint; external app starts may not provide such a checkpoint before movement. Homey-started mowing pre-arms protection conservatively.", "Native Sperrzonen: Löschen erfolgt ohne Rückkehr-Blockade bei fehlender Rückmeldung. Wiederherstellung vor dem Mähen erfordert eine bestätigte Karte. Auffällige Kartendaten sperren automatische Änderungen. Missionszonen benötigen Homey beim Missionsstart. Fahrphasenregeln funktionieren auch ohne Garagenmodus. Native Änderungen erfolgen nur bei bestätigtem Stillstand ohne aktiven Auftrag. Externe Starts liefern diesen Prüfpunkt nicht immer rechtzeitig; bei Homey-Start werden Schutzbereiche vorsorglich aktiviert.");
+      }
+      // Translate after the Homey/widget locale is known (onHomeyReady).
+
     'use strict';
 
     var _homey = null;
     var _settings = { show_zones: true, show_forbidden: true, show_spots: true, show_robot: true, show_obstacles: true, show_garage_overlay: true, show_path: true, show_direction: true, show_maintenance_point: true };
     var _lastData = null;
     var _lastFullMapData = null;
+    var _lastPylonUiRevision = -1;
     var _lastVbW = 0, _lastVbH = 0;
     var _stableWidgetWidth = 0;
     var _stableWidgetHeight = 0;
     var _editMode = false;
+    var _editMarkersHidden = false;
     var _editDraft = null;
     var _dragMarker = null;
     var _deviceId = null;
     var _initialGeometryWaits = 0;
+    var _selectedPylon = null;
+    var _pylonSaving = false;
+    var _pylonReloadDone = false;
+    var _pylonCloseTimer = null;
+    var _pylonCloseRemaining = 0;
 
     function showMsg(text, isErr) {
-      document.getElementById('map-wrap').innerHTML =
-        '<div class="msg' + (isErr ? ' err' : '') + '">' + text + '</div>';
+        if (typeof text === 'string') text = localizeUiText(text);
+      var wrap=document.getElementById('map-wrap');
+      if(!wrap)return;
+      var message=document.createElement('div');
+      message.className='msg'+(isErr?' err':'');
+      message.textContent=String(text||'');
+      wrap.replaceChildren(message);
     }
 
     function hasFullGardenGeometry(data) {
@@ -130,6 +279,17 @@
     }
 
     function onMapData(data) {
+      // Backend bumps this revision when native pylon verification state changes.
+      // Drop the widget's in-page full-map cache once so the next payload is
+      // handled like a clean reopen instead of being merged with stale geometry.
+      var incomingPylonRevision = data && Number.isFinite(Number(data.pylonUiRevision))
+        ? Number(data.pylonUiRevision) : 0;
+      if (_lastPylonUiRevision >= 0 && incomingPylonRevision !== _lastPylonUiRevision) {
+        _lastData = null;
+        _lastFullMapData = null;
+        _initialGeometryWaits = 0;
+      }
+      _lastPylonUiRevision = incomingPylonRevision;
       // Never establish the initial viewport from telemetry/fallback or a partial
       // one-zone payload. That transient payload caused the sporadic garage close-up.
       if (!_lastFullMapData && data && (data.mapFallbackReason || !hasFullGardenGeometry(data))) {
@@ -139,15 +299,15 @@
         // to deliver it — up to ~2 min (24 × 5 s) — before falling through to render
         // the sparse fallback canvas. Partial geometry (wrong zone count) only waits
         // 4 × 5 s as before.
-        var maxWaits = data.mapFallbackReason ? 24 : 4;
+        var maxWaits = data.mapFallbackReason ? 1 : 4;
         if (_initialGeometryWaits <= maxWaits) {
-          showMsg((navigator.language || '').toLowerCase().startsWith('de') ? 'Karte wird vollständig geladen …' : 'Loading complete map …');
+          showMsg(t('Loading garden map …', 'Gartenkarte wird geladen …'));
           return;
         }
       }
       if (!data || !data.boundary) {
         if (_lastFullMapData) { _lastData = _lastFullMapData; renderMap(); return; }
-        showMsg((navigator.language || '').toLowerCase().startsWith('de') ? 'Noch keine Kartendaten verfügbar – bitte Karte aktualisieren.' : 'No map data available yet — refresh the map.');
+        showMsg(t('No map data available yet — refresh the map.', 'Noch keine Kartendaten verfügbar – bitte Karte aktualisieren.'));
         return;
       }
       if (hasFullGardenGeometry(data)) {
@@ -160,11 +320,24 @@
       } else {
         _lastData = data;
       }
-      // Show the Edit button only when Garage Mode is active — it exclusively
-      // serves to reposition safety markers (A/B, danger centre, maintenance point).
-      var garageActive = !!(data.overlayVisibility && data.overlayVisibility.garageMode);
-      document.getElementById('edit-btn').classList.toggle('hidden', !garageActive);
-      if (!_dragMarker) renderMap();
+      // Edit is available for garage markers and/or detected obstacle pylons.
+      var displayData = _lastData || data;
+      var garageActive = !!(displayData.overlayVisibility && displayData.overlayVisibility.garageMode);
+      var hasPylons = Array.isArray(displayData.obstaclePylons) && displayData.obstaclePylons.length > 0;
+      document.getElementById('edit-btn').classList.toggle('hidden', _editMode);
+      // Keep editor drafts stable while editing, but do not hide asynchronous
+      // pending transitions. A native MAPD confirmation or newly accepted
+      // create/delete must update the blue animation even with Edit open.
+      var visualSignature = JSON.stringify({
+        creates:(displayData.nativeZonePendingCreates || []).map(function(op) { return op.policyKey; }),
+        deletes:(displayData.nativeZonePendingDeletes || []).map(function(op) { return op.nativeId; }),
+        orphans:(displayData.obstaclePendingOrphans || []).map(function(op) { return op.ruleId + ':' + op.pending; }),
+        pylons:(displayData.obstaclePylons || []).filter(function(p) { return p && p.rule && p.rule.pending; })
+          .map(function(p) { return p.ruleId + ':' + p.rule.pending; }),
+      });
+      var pendingVisualChanged = visualSignature !== onMapData._lastPendingVisualSignature;
+      onMapData._lastPendingVisualSignature = visualSignature;
+      if (!_dragMarker && (!_editMode || pendingVisualChanged)) renderMap();
     }
 
     function renderMap() {
@@ -173,7 +346,30 @@
         document.getElementById('map-wrap').innerHTML = buildSvg(_lastData, _settings);
         bindEditMarkers();
         const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        document.getElementById('footer-text').textContent = _lastData.name + ' · ' + ts;
+        var footerText=document.getElementById('footer-text');
+        var completed=(_lastData.routeRenderMode==='final' && _lastData.routeCompletionConfirmed === true);
+        var mapName=String(_lastData.name||'Map');
+        if(mapName==='Map')mapName=t('Map','Karte');
+        var mapStatusItems=[t('Map','Karte')+': '+mapName,
+          t('View refreshed','Ansicht abgerufen')+': '+ts];
+        if(_lastData.mowerStatus){
+          var mowerState=String(_lastData.mowerStatus);
+          var mowerLabels={mowing:t('Mowing','Mäht'),paused:t('Paused','Pausiert'),returning:t('Returning','Rückkehr'),charging:t('Charging','Lädt'),garage_home:t('At home','Zuhause'),idle:t('Ready','Bereit'),docked:t('Docked','Gedockt'),garage_exiting:t('Leaving garage','Ausfahrt'),garage_adjusting:t('Adjusting','Justieren'),garage_positioning:t('Positioning','Positionierung')};
+          mapStatusItems.push(t('Mower status','Mäherstatus')+': '+(mowerLabels[mowerState]||mowerState));
+        }
+        if(_lastData.routeCompletionConfirmed === true)mapStatusItems.push(t('Mowing completed in Homey · mowing pattern saved','Mähen in Homey abgeschlossen · Mähmuster gespeichert'));
+        var fullMapStatus=mapStatusItems.join('\n');
+        footerText.textContent=t('Map','Karte')+' · '+ts+(completed?' · ✓':'');
+        footerText.title=fullMapStatus;
+        var infoButton=document.getElementById('footer-info');
+        if(infoButton){
+          infoButton.title=t('Show map status and notes','Kartenstatus und Hinweise anzeigen');
+          infoButton.setAttribute('aria-label',infoButton.title);
+          infoButton.textContent='ⓘ';
+          infoButton._fullStatus=fullMapStatus;
+          var statusPanel=document.getElementById('map-status-panel');
+          if(statusPanel && !statusPanel.hidden) statusPanel.textContent=fullMapStatus;
+        }
         if (_lastVbW > 0 && _lastVbH > 0 && _homey && _homey.setHeight) {
           var measuredW = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0, 300);
           // Homey/iOS briefly reports a much smaller iframe width while the page is
@@ -192,6 +388,168 @@
       }
     }
 
+    // Read-only mowing pattern overlay. The recorded route is analysed as a
+    // sequence of travel segments. We estimate the dominant mowing axis modulo
+    // 180 degrees, then draw passes in one direction bright and the opposite
+    // direction darker. Turn/connectors are left as the neutral base route.
+    //
+    // This is VISUAL ONLY: it never changes mower state, garage safety or route
+    // data, and it deliberately does not use the mower's instantaneous heading.
+    function buildMowingPatternPaths(path, tx, ty, refSize, sw, finalMode) {
+      if (!Array.isArray(path) || path.length < 2) return '';
+
+      const segments = [];
+      let previous = null;
+      let sumCos2 = 0;
+      let sumSin2 = 0;
+      let totalWeight = 0;
+
+      const validPoint = (pt) => Array.isArray(pt) && pt.length >= 2
+        && pt[0] !== 32767
+        && typeof pt[0] === 'number' && typeof pt[1] === 'number'
+        && Number.isFinite(pt[0]) && Number.isFinite(pt[1]);
+      const median = (values) => {
+        if (!values.length) return null;
+        const sorted = values.slice().sort((a,b) => a-b);
+        const mid = Math.floor(sorted.length / 2);
+        return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+      };
+
+      for (let i = 0; i < path.length; i++) {
+        const pt = path[i];
+        if (!validPoint(pt)) { previous = null; continue; }
+        if (previous) {
+          const dx = pt[0] - previous[0];
+          const dy = pt[1] - previous[1];
+          const length = Math.hypot(dx, dy);
+          if (length > 0.001 && length <= 3000) {
+            const angle = Math.atan2(dy, dx);
+            const weight = Math.min(length, 3000);
+            sumCos2 += Math.cos(angle * 2) * weight;
+            sumSin2 += Math.sin(angle * 2) * weight;
+            totalWeight += weight;
+            segments.push({ a: previous, b: pt, dx, dy, length });
+          }
+        }
+        previous = pt;
+      }
+
+      if (!segments.length || totalWeight <= 0) return '';
+      const axis = Math.atan2(sumSin2, sumCos2) / 2;
+      const ux = Math.cos(axis);
+      const uy = Math.sin(axis);
+      const crossOf = (x,y) => -x * uy + y * ux;
+      const alongOf = (x,y) => x * ux + y * uy;
+      const aligned = segments.map(seg => ({
+        seg,
+        along: Math.abs(seg.dx * ux + seg.dy * uy),
+        across: Math.abs(-seg.dx * uy + seg.dy * ux),
+        cross: crossOf((seg.a[0]+seg.b[0])/2, (seg.a[1]+seg.b[1])/2),
+      })).filter(x => x.along / x.seg.length >= 0.70);
+      if (!aligned.length) return '';
+
+      // Infer the lane pitch from true cross-axis connectors and, for a final
+      // completed-job render, also from the stable centres of parallel passes.
+      const connectorSpacings = segments.map(seg => ({
+        seg,
+        along: Math.abs(seg.dx * ux + seg.dy * uy),
+        across: Math.abs(-seg.dx * uy + seg.dy * ux),
+      })).filter(x => x.along / x.seg.length < 0.35 && x.across >= 120 && x.across <= 800)
+        .map(x => x.across);
+
+      const crossValues = aligned.filter(x => x.seg.length >= 80).map(x => x.cross).sort((a,b)=>a-b);
+      const clusters = [];
+      for (const value of crossValues) {
+        const last = clusters[clusters.length - 1];
+        if (!last || Math.abs(value - last.mean) > 95) clusters.push({sum:value,count:1,mean:value});
+        else { last.sum += value; last.count += 1; last.mean = last.sum / last.count; }
+      }
+      const centreSpacings = [];
+      for (let i=1;i<clusters.length;i++) {
+        const d = clusters[i].mean - clusters[i-1].mean;
+        if (d >= 120 && d <= 800) centreSpacings.push(d);
+      }
+      const inferredPitch = median(connectorSpacings.length ? connectorSpacings : centreSpacings) || 250;
+      const lanePitch = Math.max(120, Math.min(800, inferredPitch));
+      const bandWidth = lanePitch * (finalMode ? 0.86 : 0.96);
+      const laneOrigin = clusters.length ? clusters[0].mean
+        : aligned.reduce((m,x)=>Math.min(m,x.cross), Infinity);
+      const coord = (n) => Number(n).toFixed(1);
+      let light = '';
+      let dark = '';
+
+      if (finalMode) {
+        // Completed jobs are re-rendered from lane geometry instead of replaying
+        // every GPS/M_PATH segment. Retraced pieces and little steering wiggles
+        // collapse into one clean lane, while larger gaps remain gaps. This is
+        // presentation-only and never changes the mower route or coverage data.
+        const lanes = new Map();
+        for (const item of aligned) {
+          if (item.seg.length < 45) continue;
+          const laneIndex = Math.round((item.cross - laneOrigin) / lanePitch);
+          const a = alongOf(item.seg.a[0], item.seg.a[1]);
+          const b = alongOf(item.seg.b[0], item.seg.b[1]);
+          const lo = Math.min(a,b), hi = Math.max(a,b);
+          if (!Number.isFinite(lo) || !Number.isFinite(hi) || hi-lo < 20) continue;
+          let lane = lanes.get(laneIndex);
+          if (!lane) { lane={intervals:[],crossSum:0,weight:0}; lanes.set(laneIndex,lane); }
+          lane.intervals.push([lo,hi]);
+          lane.crossSum += item.cross * item.seg.length;
+          lane.weight += item.seg.length;
+        }
+
+        const maxMergeGap = Math.max(650, lanePitch * 2.25);
+        for (const [laneIndex,lane] of Array.from(lanes.entries()).sort((a,b)=>a[0]-b[0])) {
+          if (!lane.intervals.length) continue;
+          lane.intervals.sort((a,b)=>a[0]-b[0]);
+          const merged=[];
+          for (const interval of lane.intervals) {
+            const last=merged[merged.length-1];
+            if (!last || interval[0] - last[1] > maxMergeGap) merged.push(interval.slice());
+            else last[1]=Math.max(last[1],interval[1]);
+          }
+          const observedCross = lane.weight ? lane.crossSum/lane.weight : laneOrigin + laneIndex*lanePitch;
+          // Snap mostly to the inferred lane grid, but retain a little measured
+          // offset so slightly curved lawns do not look artificially displaced.
+          const regularCross = laneOrigin + laneIndex*lanePitch;
+          const laneCross = regularCross*0.78 + observedCross*0.22;
+          for (const interval of merged) {
+            if (interval[1]-interval[0] < 120) continue;
+            const x1 = interval[0]*ux - laneCross*uy;
+            const y1 = interval[0]*uy + laneCross*ux;
+            const x2 = interval[1]*ux - laneCross*uy;
+            const y2 = interval[1]*uy + laneCross*ux;
+            const sx1=tx(x1), sy1=ty(y1), sx2=tx(x2), sy2=ty(y2);
+            if (![sx1,sy1,sx2,sy2].every(Number.isFinite)) continue;
+            const cmd='M'+coord(sx1)+','+coord(sy1)+'L'+coord(sx2)+','+coord(sy2);
+            if (Math.abs(laneIndex)%2===0) light+=cmd; else dark+=cmd;
+          }
+        }
+      } else {
+        // Live view: keep real travelled geometry, but lane colour is anchored to
+        // cross-axis position so a brief correction cannot flip the stripe.
+        for (const item of aligned) {
+          const seg=item.seg;
+          const x1=tx(seg.a[0]), y1=ty(seg.a[1]), x2=tx(seg.b[0]), y2=ty(seg.b[1]);
+          if (![x1,y1,x2,y2].every(Number.isFinite)) continue;
+          const laneIndex=Math.round((item.cross-laneOrigin)/lanePitch);
+          const cmd='M'+coord(x1)+','+coord(y1)+'L'+coord(x2)+','+coord(y2);
+          if (Math.abs(laneIndex)%2===0) light+=cmd; else dark+=cmd;
+        }
+      }
+
+      if (!light && !dark) return '';
+      const cap = finalMode ? 'butt' : 'round';
+      let svg='';
+      if (dark) svg += '<path class="mowing-pattern-dark" d="'+dark
+        +'" fill="none" stroke="rgba(80,137,73,0.90)" stroke-width="'+bandWidth.toFixed(2)
+        +'" stroke-linecap="'+cap+'" stroke-linejoin="round" pointer-events="none"/>';
+      if (light) svg += '<path class="mowing-pattern-light" d="'+light
+        +'" fill="none" stroke="rgba(164,205,137,0.90)" stroke-width="'+bandWidth.toFixed(2)
+        +'" stroke-linecap="'+cap+'" stroke-linejoin="round" pointer-events="none"/>';
+      return svg;
+    }
+
     // ── SVG builder ──────────────────────────────────────────────────────────
 
     function buildSvg(data, s) {
@@ -203,7 +561,7 @@
       var showPath       = s.show_path !== false && (!data.overlayVisibility || data.overlayVisibility.showRoute !== false);
       var showRobot      = s.show_robot !== false && (!data.overlayVisibility || data.overlayVisibility.showRobot !== false);
       var showDirection = s.show_direction !== false && (!data.overlayVisibility || data.overlayVisibility.showDirection !== false);
-      var showMaintenancePoint = s.show_maintenance_point !== false && (!data.overlayVisibility || data.overlayVisibility.showMaintenancePoint !== false);
+      var showMaintenancePoint = !_editMarkersHidden && (Boolean(data.mainMaintenancePointIndex) || (s.show_maintenance_point !== false && (!data.overlayVisibility || data.overlayVisibility.showMaintenancePoint !== false)));
       var showObstacles  = s.show_obstacles !== false;
       // RC52: normalise every known persisted marker representation before
       // deciding visibility. Some Homey/store combinations return JSON strings;
@@ -232,6 +590,13 @@
       normalizedOverlay.lineB = normPoint(normalizedOverlay.lineB) || normPoint(data.safetyLineB);
       normalizedOverlay.dangerCenter = normPoint(normalizedOverlay.dangerCenter) || normPoint(data.dangerCenter);
       normalizedOverlay.maintenancePoint = normPoint(normalizedOverlay.maintenancePoint) || normPoint(data.maintenancePoint);
+      normalizedOverlay.maintenancePoints = Array.isArray(data.maintenancePoints) ? data.maintenancePoints.map(function (point) {
+        var p = normPoint(point);
+        var index = Number(point && point.index);
+        return p && Number.isInteger(index) && index >= 1 && index <= 5
+          ? { x:p.x, y:p.y, index:index, main:point.main === true, name:String(point.name || (t('Maintenance point ','Wartungspunkt ') + index)) }
+          : null;
+      }).filter(Boolean) : [];
       // RC91: no visual fallback for persisted garage markers. Danger centre,
       // maintenance point and A/B remain independent coordinates. Missing data is
       // omitted instead of being snapped to the dock or another marker.
@@ -251,7 +616,7 @@
       // display-only transform makes the map disagree with the safety engine.
 
       var garageMode = !!(data.overlayVisibility && data.overlayVisibility.garageMode);
-      var showGarageOverlay = garageMode && s.show_garage_overlay !== false && (!data.overlayVisibility || data.overlayVisibility.showGarageOverlay !== false);
+      var showGarageOverlay = !_editMarkersHidden && garageMode && s.show_garage_overlay !== false && (!data.overlayVisibility || data.overlayVisibility.showGarageOverlay !== false);
 
       const { boundary, mowingAreas, forbiddenAreas, spotAreas, contours, livePath } = data;
       const bx1 = boundary.x1, by1 = boundary.y1, bx2 = boundary.x2, by2 = boundary.y2;
@@ -268,6 +633,63 @@
         return path.map(function(p) {
           return tx(p.x).toFixed(1) + ',' + ty(p.y).toFixed(1);
         }).join(' ');
+      }
+
+      // Select a free quadrant around a maintenance marker. Hazard and pylon
+      // targets, native no-go geometry, the safety line, and earlier labels receive priority.
+      var maintenanceLabelPlacements = [];
+      function placeMaintenanceLabel(px, py, width, font, radius) {
+        var height=font*1.45, gap=Math.max(font*0.8,radius*0.35), pad=Math.max(4,font*0.25);
+        var candidates=[
+          {x:px+radius+gap,y:py-radius-gap-height},
+          {x:px+radius+gap,y:py+radius+gap},
+          {x:px-radius-gap-width,y:py-radius-gap-height},
+          {x:px-radius-gap-width,y:py+radius+gap}
+        ];
+        var blockers=[];
+        if (showObstacles && Array.isArray(data.obstaclePylons)) data.obstaclePylons.forEach(function(p){
+          if(!p||!Number.isFinite(Number(p.x))||!Number.isFinite(Number(p.y)))return;
+          var cx=Number(tx(p.x)),cy=Number(ty(p.y)),r=refSize*0.021*2.55;
+          blockers.push({left:cx-r-pad,right:cx+r+pad,top:cy-r-pad,bottom:cy+r+pad,weight:12});
+        });
+        if(showForbidden&&_editMode&&data.mapSafeMowing===true)forbiddenAreas.forEach(function(entry){
+          var zone=Array.isArray(entry)&&entry[1];
+          if(!zone||!Array.isArray(zone.path)||zone.path.length<3)return;
+          var xs=zone.path.map(function(p){return Number(tx(p.x));}),ys=zone.path.map(function(p){return Number(ty(p.y));});
+          blockers.push({left:Math.min.apply(null,xs)-pad,right:Math.max.apply(null,xs)+pad,top:Math.min.apply(null,ys)-pad,bottom:Math.max.apply(null,ys)+pad,weight:10});
+        });
+        var safetyLine=null;
+        if(showGarageOverlay&&normalizedOverlay.lineA&&normalizedOverlay.lineB)safetyLine={a:{x:Number(tx(normalizedOverlay.lineA.x)),y:Number(ty(normalizedOverlay.lineA.y))},b:{x:Number(tx(normalizedOverlay.lineB.x)),y:Number(ty(normalizedOverlay.lineB.y))}};
+        var best=null,bestScore=Infinity;
+        candidates.forEach(function(c){
+          var rect={left:c.x-pad,right:c.x+width+pad,top:c.y-pad,bottom:c.y+height+pad},score=0;
+          blockers.forEach(function(b){if(rect.left<b.right&&rect.right>b.left&&rect.top<b.bottom&&rect.bottom>b.top)score+=b.weight;});
+          maintenanceLabelPlacements.forEach(function(b){if(rect.left<b.right&&rect.right>b.left&&rect.top<b.bottom&&rect.bottom>b.top)score+=6;});
+          if(safetyLine){
+            var linePad=sw*2.5;
+            for(var si=0;si<=12;si++){
+              var f=si/12,sx=safetyLine.a.x+(safetyLine.b.x-safetyLine.a.x)*f,sy=safetyLine.a.y+(safetyLine.b.y-safetyLine.a.y)*f;
+              var dx=Math.max(rect.left-sx,0,sx-rect.right),dy=Math.max(rect.top-sy,0,sy-rect.bottom);
+              if(Math.hypot(dx,dy)<linePad){score+=8;break;}
+            }
+          }
+          var outside=Math.max(0,vbX-rect.left)+Math.max(0,rect.right-(vbX+vbW))+Math.max(0,vbY-rect.top)+Math.max(0,rect.bottom-(vbY+vbH));
+          score+=outside*0.05;
+          if(score<bestScore){bestScore=score;best=c;}
+        });
+        maintenanceLabelPlacements.push({left:best.x-pad,right:best.x+width+pad,top:best.y-pad,bottom:best.y+height+pad});
+        return {x:best.x,y:best.y+font*0.72};
+      }
+
+      function escapeSvgText(value) {
+        return String(value == null ? '' : value)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+      }
+      function nativeZoneLabel(nativeId) {
+        var labels = Array.isArray(data.nativeZoneLabels) ? data.nativeZoneLabels : [];
+        var match = labels.find(function(item) { return Number(item && item.nativeId) === Number(nativeId); });
+        return match && String(match.note || '').trim() ? String(match.note).trim() : '';
       }
 
       // Pre-compute tight viewBox so all sizing can use garden dimensions
@@ -295,7 +717,7 @@
         if (rpsx < featureMinX) featureMinX = rpsx; if (rpsx > featureMaxX) featureMaxX = rpsx;
         if (rpsy < featureMinY) featureMinY = rpsy; if (rpsy > featureMaxY) featureMaxY = rpsy;
       }
-      if ((showGarageOverlay || showMaintenancePoint) && data.garageOverlay) {
+      if (showGarageOverlay || showMaintenancePoint) {
         var go = normalizedOverlay;
         function expandPointObj(p, r) {
           if (!p || p.x == null || p.y == null) return;
@@ -313,6 +735,7 @@
           if (data.chargerPos && data.chargerPos.x != null) expandPointObj(data.chargerPos, 350);
         }
         if (showMaintenancePoint) expandPointObj(go.maintenancePoint, 400);
+        if (showMaintenancePoint) go.maintenancePoints.forEach(function (point) { expandPointObj(point, 500); });
       }
       var vbX, vbY, vbW, vbH;
       const W0 = bx2 - bx1, H0 = by2 - by1;
@@ -380,23 +803,48 @@
           const entry = forbiddenAreas[i];
           if (!Array.isArray(entry)) continue;
           const zone = entry[1];
-          if (!zone || !zone.path || !zone.path.length) continue;
-          if (zone.shapeType === 3 && zone.path.length >= 2) {
-            const p1 = zone.path[0], p2 = zone.path[1];
-            const ecx = (p1.x + p2.x) / 2, ecy = (p1.y + p2.y) / 2;
-            const erx = Math.abs(p2.x - p1.x) / 2, ery = Math.abs(p2.y - p1.y) / 2;
-            let epts = '';
-            for (let k = 0; k < 36; k++) {
-              const theta = 2 * Math.PI * k / 36;
-              epts += (k ? ' ' : '') + tx(ecx + erx * Math.cos(theta)).toFixed(1) + ',' + ty(ecy + ery * Math.sin(theta)).toFixed(1);
-            }
-            g += '<polygon points="' + epts + '" fill="rgba(220,80,60,0.25)" stroke="rgba(220,80,60,0.9)" stroke-width="' + sw + '" stroke-dasharray="' + (sw * 3) + ',' + (sw * 2) + '"/>';
+          if (!zone || !Array.isArray(zone.path) || zone.path.length < 3) continue;
+          // The native parser has already expanded circles (shapeType 3) into
+          // perimeter points. Treating its first two points as opposite corners
+          // collapses the circle to a tiny shape and hides it on the map.
+          var nativeZoneId = Number(entry[0]);
+          var nativeZoneClickable = _editMode && data.mapSafeMowing === true && Number.isInteger(nativeZoneId) && nativeZoneId > 0 && zone.homeyOptimistic !== true;
+          var nativePendingDelete = Array.isArray(data.nativeZonePendingDeletes) && data.nativeZonePendingDeletes.some(function(op) {
+            return Number(op && op.nativeId) === nativeZoneId;
+          });
+          if (zone.shapeType === 3) {
+            g += '<polygon points="' + toPoints(zone.path) + '" fill="rgba(220,80,60,0.25)" stroke="rgba(220,80,60,0.9)" stroke-width="' + sw + '" stroke-dasharray="' + (sw * 3) + ',' + (sw * 2) + '"/>';
+            if (nativePendingDelete) g += '<polygon class="pylon-pending-zone" points="' + toPoints(zone.path) + '"><animate attributeName="stroke-dashoffset" from="0" to="-76" dur=".75s" repeatCount="indefinite"/></polygon>';
+            if (nativeZoneClickable) g += '<polygon data-native-zone-id="' + nativeZoneId + '" points="' + toPoints(zone.path) + '" fill="rgba(0,0,0,.001)" stroke="transparent" stroke-width="' + (sw * 8) + '" pointer-events="all"/>';
           } else {
             const fcx = zone.path.reduce(function(s, p) { return s + tx(p.x); }, 0) / zone.path.length;
             const fcy = zone.path.reduce(function(s, p) { return s + ty(p.y); }, 0) / zone.path.length;
             const rot = zone.angle ? (zone.angle).toFixed(3) : '0';
-            g += '<polygon points="' + toPoints(zone.path) + '" fill="rgba(220,80,60,0.25)" stroke="rgba(220,80,60,0.9)" stroke-width="' + sw + '" stroke-dasharray="' + (sw * 3) + ',' + (sw * 2) + '" transform="rotate(' + rot + ',' + fcx.toFixed(1) + ',' + fcy.toFixed(1) + ')"/>';
+            var nativeTransform = 'rotate(' + rot + ',' + fcx.toFixed(1) + ',' + fcy.toFixed(1) + ')';
+            g += '<polygon points="' + toPoints(zone.path) + '" fill="rgba(220,80,60,0.25)" stroke="rgba(220,80,60,0.9)" stroke-width="' + sw + '" stroke-dasharray="' + (sw * 3) + ',' + (sw * 2) + '" transform="' + nativeTransform + '"/>';
+            if (nativePendingDelete) g += '<polygon class="pylon-pending-zone" points="' + toPoints(zone.path) + '" transform="' + nativeTransform + '"><animate attributeName="stroke-dashoffset" from="0" to="-76" dur=".75s" repeatCount="indefinite"/></polygon>';
+            if (nativeZoneClickable) g += '<polygon data-native-zone-id="' + nativeZoneId + '" points="' + toPoints(zone.path) + '" fill="rgba(0,0,0,.001)" stroke="transparent" stroke-width="' + (sw * 8) + '" pointer-events="all" transform="' + nativeTransform + '"/>';
           }
+          var nativeName = nativeZoneLabel(nativeZoneId);
+          if (nativeName) {
+            var labelX = zone.path.reduce(function(sum, pt) { return sum + tx(pt.x); }, 0) / zone.path.length;
+            var labelY = zone.path.reduce(function(sum, pt) { return sum + ty(pt.y); }, 0) / zone.path.length;
+            g += '<text x="' + labelX.toFixed(1) + '" y="' + labelY.toFixed(1) + '" text-anchor="middle" dominant-baseline="middle" fill="#ffd8d2" stroke="rgba(20,20,20,.9)" stroke-width="' + (sw * .9) + '" paint-order="stroke" font-size="' + Math.max(sw * 5.5, fontSize * .55).toFixed(1) + '" font-family="system-ui,sans-serif" font-weight="700" pointer-events="none">' + escapeSvgText(nativeName) + '</text>';
+          }
+        }
+      }
+
+      // An original-MOVA native zone may have been removed and then recreated
+      // while the map payload still lacks its new ID. Project only the saved
+      // *pending* geometry in blue; this is never a red/verified no-go zone.
+      // Do not depend on OBS pylons, which may disappear across missions.
+      if (showForbidden && Array.isArray(data.nativeZonePendingCreates)) {
+        for (var npi = 0; npi < data.nativeZonePendingCreates.length; npi++) {
+          var overlay = data.nativeZonePendingCreates[npi];
+          if (!overlay || overlay.pending !== 'create' || !Array.isArray(overlay.path) || overlay.path.length < 3) continue;
+          var valid = overlay.path.every(function(pt) { return Number.isFinite(Number(pt.x)) && Number.isFinite(Number(pt.y)); });
+          if (!valid) continue;
+          g += '<polygon class="pylon-pending-zone" points="' + toPoints(overlay.path) + '"><animate attributeName="stroke-dashoffset" from="0" to="-76" dur=".75s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;.45;1" dur="1.4s" repeatCount="indefinite"/></polygon>';
         }
       }
 
@@ -430,8 +878,11 @@
           penDown = true;
         }
         if (d) {
-          g += '<path d="' + d + '" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="' + (sw * 2) + '" stroke-linecap="round" stroke-linejoin="round"/>';
+          // Neutral complete driven path. The alternating mowing overlay below
+          // sits on top of this and intentionally leaves turns/connectors neutral.
+          g += '<path class="driven-route" d="' + d + '" fill="none" stroke="rgba(255,255,255,0.20)" stroke-width="' + (sw * 2) + '" stroke-linecap="round" stroke-linejoin="round"/>';
         }
+        if (showDirection) g += buildMowingPatternPaths(livePath, tx, ty, refSize, sw, data.routeRenderMode === 'final');
       }
 
       // Obstacle markers from MAP JSON (orange warning circles)
@@ -480,15 +931,67 @@
         }
       }
 
-      // Optional mower heading arrow. It is purely visual and never affects control logic.
-      if (showRobot && showDirection && data.robotPos && data.robotPos.length >= 2 && data.robotAngle != null) {
-        var rdx = tx(data.robotPos[0]).toFixed(1), rdy = ty(data.robotPos[1]).toFixed(1);
-        var alen = refSize * 0.07;
-        var rad = (Number(data.robotAngle) - 90) * Math.PI / 180;
-        var ax = (Number(rdx) + Math.cos(rad) * alen).toFixed(1);
-        var ay = (Number(rdy) + Math.sin(rad) * alen).toFixed(1);
-        g += '<line x1="' + rdx + '" y1="' + rdy + '" x2="' + ax + '" y2="' + ay + '" stroke="rgba(76,175,80,0.95)" stroke-width="' + (sw * 2) + '" stroke-linecap="round"/>';
+      // Normalized Dreame/MOVA obstacle pylons. In edit mode these are clickable
+      // and can carry Homey-local protection rules without writing unknown map commands.
+      if (showObstacles && Array.isArray(data.obstaclePylons) && data.obstaclePylons.length) {
+        for (var pyi = 0; pyi < data.obstaclePylons.length; pyi++) {
+          var py = data.obstaclePylons[pyi];
+          if (!py || !Number.isFinite(Number(py.x)) || !Number.isFinite(Number(py.y))) continue;
+          var pcx = Number(tx(py.x)), pcy = Number(ty(py.y));
+          var pr = refSize * 0.021;
+          var act = py.rule && py.rule.action || 'observe';
+          var rawPendingRule = py.rule && py.rule.pending;
+          // Keep the blue Pending state visible until native geometry really
+          // confirms the create/delete. TASK/commit acknowledgement alone is
+          // not a geometry confirmation.
+          var pendingRule = rawPendingRule || null;
+          var rr = py.rule && Number(py.rule.radius) ? Number(py.rule.radius) : 500;
+          var stroke = act === 'avoid' ? 'rgba(244,67,54,.95)' : (act === 'slow' ? 'rgba(255,193,7,.95)' : (act === 'no_turn' ? 'rgba(156,39,176,.95)' : 'rgba(255,152,0,.95)'));
+          // The native protection itself is the red square from forbiddenAreas.
+          // Do not draw an additional red radius circle once a native zone exists
+          // (or while create/delete is pending); that circle looked like a second
+          // physical no-go zone although it was only Homey's radius reference.
+          if (act === 'avoid' && !rawPendingRule && !(py.rule && py.rule.nativeId != null) && Number(py.rule.radius) > 0) g += '<circle cx="' + pcx.toFixed(1) + '" cy="' + pcy.toFixed(1) + '" r="' + rr.toFixed(1) + '" fill="none" stroke="' + stroke + '" stroke-width="' + (sw * .8) + '" stroke-dasharray="' + (sw * 3) + ',' + (sw * 2) + '" opacity=".60"/>';
+          var ptsTri = pcx.toFixed(1) + ',' + (pcy-pr).toFixed(1) + ' ' + (pcx-pr*.88).toFixed(1) + ',' + (pcy+pr*.70).toFixed(1) + ' ' + (pcx+pr*.88).toFixed(1) + ',' + (pcy+pr*.70).toFixed(1);
+          // A saved rule whose MOVA OBS source vanished is a read-only location
+          // reminder, not a new native obstacle or a verified no-go polygon.
+          var storedReminder = py.storedRule === true;
+          var pylonEditable = !storedReminder && _editMode && data.mapSafeMowing === true;
+          g += '<g' + (pylonEditable ? ' data-pylon-id="' + encodeURIComponent(py.id) + '"' : '') + '>';
+          if (storedReminder) g += '<title>Gespeicherte Sperrzonenregel – Pylon vom Mäher aktuell nicht gemeldet; native Bestätigung ausstehend</title>';
+          if (pylonEditable) g += '<circle cx="' + pcx.toFixed(1) + '" cy="' + pcy.toFixed(1) + '" r="' + (pr * 2.55).toFixed(1) + '" fill="transparent" pointer-events="all"/>';
+          // Device-side o=215/o=218 acknowledgement is immediate, while Dreame's
+          // cloud MAP.* snapshot may lag by a minute or more. Project that
+          // acknowledged-but-not-yet-read-back state explicitly so Save/Delete
+          // can never look like a no-op. The blue square is only a Homey pending
+          // overlay and remains blue until native geometry confirms the write.
+          if (pendingRule === 'create') {
+            var pendingHalf = Math.max(500, Number(rr) || 500);
+            g += '<rect class="pylon-pending-zone" x="' + (pcx-pendingHalf).toFixed(1) + '" y="' + (pcy-pendingHalf).toFixed(1) + '" width="' + (pendingHalf*2).toFixed(1) + '" height="' + (pendingHalf*2).toFixed(1) + '"><animate attributeName="stroke-dashoffset" from="0" to="-76" dur=".75s" repeatCount="indefinite"/></rect>';
+          }
+          if (pendingRule) g += '<circle class="pylon-pending-ring" cx="' + pcx.toFixed(1) + '" cy="' + pcy.toFixed(1) + '" r="' + (pr * 1.95).toFixed(1) + '"><animate attributeName="stroke-dashoffset" from="0" to="-76" dur=".75s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;.45;1" dur="1.4s" repeatCount="indefinite"/></circle>';
+          g += '<polygon points="' + ptsTri + '" fill="' + (storedReminder ? 'rgba(106,125,143,.85)' : 'rgba(255,152,0,.88)') + '" stroke="#fff" stroke-width="' + sw + '" pointer-events="none"/>';
+          g += '<text x="' + pcx.toFixed(1) + '" y="' + (pcy+pr*.24).toFixed(1) + '" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="' + (refSize*.025).toFixed(0) + '" font-family="system-ui,sans-serif" font-weight="900" pointer-events="none">!</text>';
+          g += '</g>';
+        }
       }
+
+      // OBS/AIOBS may temporarily omit a pylon with an unfinished native edit.
+      // Blue only: no artificial obstacle, no red verified zone, no click action.
+      if (showObstacles && Array.isArray(data.obstaclePendingOrphans)) {
+        for (var opi = 0; opi < data.obstaclePendingOrphans.length; opi++) {
+          var orphan = data.obstaclePendingOrphans[opi];
+          if (!orphan || (orphan.pending !== 'create' && orphan.pending !== 'delete') ||
+              !Number.isFinite(Number(orphan.x)) || !Number.isFinite(Number(orphan.y))) continue;
+          var ocx = Number(tx(orphan.x)), ocy = Number(ty(orphan.y));
+          var orad = Math.max(500, Math.min(3000, Number(orphan.radius) || 500));
+          if (orphan.pending === 'create') g += '<rect class="pylon-pending-zone" x="' + (ocx-orad).toFixed(1) + '" y="' + (ocy-orad).toFixed(1) + '" width="' + (orad*2).toFixed(1) + '" height="' + (orad*2).toFixed(1) + '"><animate attributeName="stroke-dashoffset" from="0" to="-76" dur=".75s" repeatCount="indefinite"/></rect>';
+          g += '<circle class="pylon-pending-ring" cx="' + ocx.toFixed(1) + '" cy="' + ocy.toFixed(1) + '" r="' + (refSize * 0.041).toFixed(1) + '"><animate attributeName="stroke-dashoffset" from="0" to="-76" dur=".75s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;.45;1" dur="1.4s" repeatCount="indefinite"/></circle>';
+        }
+      }
+
+      // No instantaneous heading arrow: the user-facing direction layer now
+      // represents the persistent mowing pattern of the whole route.
 
       // Garage overlay: render in a deterministic layer order so the safety
       // line and maintenance point stay visible and are not hidden by the garage.
@@ -501,15 +1004,15 @@
           var dcx = Number(tx(go.dangerCenter.x));
           var dcy = Number(ty(go.dangerCenter.y));
           if (go.cautionRadius) {
-            g += '<circle cx="' + dcx.toFixed(1) + '" cy="' + dcy.toFixed(1) + '" r="' + Number(go.cautionRadius).toFixed(1) + '" fill="rgba(255,193,7,0.05)" stroke="rgba(255,193,7,0.78)" stroke-width="' + (sw * 1.15) + '" stroke-dasharray="' + (sw * 4.2) + ',' + (sw * 2.4) + '"/>';
+            g += '<circle pointer-events="none" cx="' + dcx.toFixed(1) + '" cy="' + dcy.toFixed(1) + '" r="' + Number(go.cautionRadius).toFixed(1) + '" fill="rgba(255,193,7,0.05)" stroke="rgba(255,193,7,0.78)" stroke-width="' + (sw * 1.15) + '" stroke-dasharray="' + (sw * 4.2) + ',' + (sw * 2.4) + '"/>';
           }
           if (go.dangerRadius) {
-            g += '<circle cx="' + dcx.toFixed(1) + '" cy="' + dcy.toFixed(1) + '" r="' + Number(go.dangerRadius).toFixed(1) + '" fill="rgba(244,67,54,0.10)" stroke="rgba(244,67,54,0.88)" stroke-width="' + (sw * 1.35) + '"/>';
+            g += '<circle pointer-events="none" cx="' + dcx.toFixed(1) + '" cy="' + dcy.toFixed(1) + '" r="' + Number(go.dangerRadius).toFixed(1) + '" fill="rgba(244,67,54,0.10)" stroke="rgba(244,67,54,0.88)" stroke-width="' + (sw * 1.35) + '"/>';
           }
           if (_editMode) {
             var dangerHandleR = refSize * 0.027;
             g += '<circle data-edit-marker="dangerCenter" cx="' + dcx.toFixed(1) + '" cy="' + dcy.toFixed(1) + '" r="' + dangerHandleR.toFixed(1) + '" fill="rgba(244,67,54,0.88)" stroke="#fff" stroke-width="' + (sw * 1.3) + '"/>';
-            g += '<text x="' + dcx.toFixed(1) + '" y="' + dcy.toFixed(1) + '" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="' + (refSize * 0.018).toFixed(0) + '" font-family="system-ui,sans-serif" font-weight="800">G</text>';
+            g += '<text x="' + dcx.toFixed(1) + '" y="' + dcy.toFixed(1) + '" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="' + (refSize * 0.018).toFixed(0) + '" font-family="system-ui,sans-serif" font-weight="800" pointer-events="none">G</text>';
           }
         }
 
@@ -534,8 +1037,8 @@
 
           if (hasA && hasB) {
           // High-contrast double stroke, but kept slimmer than RC52.2.
-          g += '<line x1="' + laX.toFixed(1) + '" y1="' + laY.toFixed(1) + '" x2="' + lbX.toFixed(1) + '" y2="' + lbY.toFixed(1) + '" stroke="rgba(255,255,255,0.96)" stroke-width="' + (sw * 4.0) + '" stroke-linecap="round"/>';
-          g += '<line x1="' + laX.toFixed(1) + '" y1="' + laY.toFixed(1) + '" x2="' + lbX.toFixed(1) + '" y2="' + lbY.toFixed(1) + '" stroke="rgba(255,87,34,0.98)" stroke-width="' + (sw * 2.15) + '" stroke-linecap="round"/>';
+          g += '<line pointer-events="none" x1="' + laX.toFixed(1) + '" y1="' + laY.toFixed(1) + '" x2="' + lbX.toFixed(1) + '" y2="' + lbY.toFixed(1) + '" stroke="rgba(255,255,255,0.96)" stroke-width="' + (sw * 4.0) + '" stroke-linecap="round"/>';
+          g += '<line pointer-events="none" x1="' + laX.toFixed(1) + '" y1="' + laY.toFixed(1) + '" x2="' + lbX.toFixed(1) + '" y2="' + lbY.toFixed(1) + '" stroke="rgba(255,87,34,0.98)" stroke-width="' + (sw * 2.15) + '" stroke-linecap="round"/>';
 
           // RC96 UI cleanup: the blue direction arrow and the large combined
           // label were redundant and crowded the crossing line. Keep only two
@@ -572,16 +1075,21 @@
         var badgeFont = (refSize * 0.018).toFixed(0);
         function endpointBadge(x, y, label) {
           g += '<circle data-edit-marker="line' + label + '" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + badgeR.toFixed(1) + '" fill="rgba(255,87,34,0.98)" stroke="#fff" stroke-width="' + (sw * 0.9) + '"/>';
-          g += '<text x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="' + badgeFont + '" font-family="system-ui,sans-serif" font-weight="800">' + label + '</text>';
+          g += '<text x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="' + badgeFont + '" font-family="system-ui,sans-serif" font-weight="800" pointer-events="none">' + label + '</text>';
         }
         if (hasA && Number.isFinite(laX) && Number.isFinite(laY)) endpointBadge(laX, laY, 'A');
         if (hasB && Number.isFinite(lbX) && Number.isFinite(lbY)) endpointBadge(lbX, lbY, 'B');
       }
 
-      // Maintenance point is independent of garage mode. It is intentionally a
+      // Maintenance point is independent of Garage Mode. It is intentionally a
       // small vector marker (no image/emoji and no large text label).
-      if (showMaintenancePoint && data.garageOverlay) {
-        var mp = normalizedOverlay.maintenancePoint;
+      if (showMaintenancePoint) {
+        var mainMaintenanceIndex = Number(data.mainMaintenancePointIndex) || 1;
+        var mp = normalizedOverlay.maintenancePoints.find(function (point) { return Number(point.index) === mainMaintenanceIndex; }) || (mainMaintenanceIndex === 1 ? normalizedOverlay.maintenancePoint : null);
+        var primaryMaintenance = go.maintenancePoints.find(function (point) { return Number(point.index) === mainMaintenanceIndex; });
+        var primaryName = String(primaryMaintenance && primaryMaintenance.name || data.maintenancePointName || (t('Maintenance point ','Wartungspunkt ') + mainMaintenanceIndex))
+          .replace(/[&<>"']/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; });
+        if (data.mainMaintenancePointIndex) primaryName = '★ ' + primaryName;
         var mpx, mpy;
         if (mp && Number.isFinite(Number(mp.x)) && Number.isFinite(Number(mp.y))) {
           mpx = Number(tx(mp.x));
@@ -592,11 +1100,8 @@
           var lw = sw * 1.05;
           // Clearly visible maintenance target. The outer ring remains visible
           // even while the live mower marker is exactly on top of the point.
-          g += '<circle cx="' + mpx.toFixed(1) + '" cy="' + mpy.toFixed(1) + '" r="' + (mr * 1.45).toFixed(1) + '" fill="none" stroke="rgba(186,104,200,0.95)" stroke-width="' + (lw * 1.15) + '" stroke-dasharray="' + (mr * 0.48).toFixed(1) + ' ' + (mr * 0.28).toFixed(1) + '"/>';
-          g += '<circle cx="' + mpx.toFixed(1) + '" cy="' + mpy.toFixed(1) + '" r="' + mr.toFixed(1) + '" fill="rgba(123,31,162,0.88)" stroke="rgba(255,255,255,0.96)" stroke-width="' + lw + '"/>';
-          if (_editMode) {
-            g += '<circle data-edit-marker="maintenancePoint" cx="' + mpx.toFixed(1) + '" cy="' + mpy.toFixed(1) + '" r="' + (mr * 2.35).toFixed(1) + '" fill="rgba(123,31,162,0.22)" stroke="#fff" stroke-width="' + (lw * 0.8) + '"/>';
-          }
+          g += '<circle data-maintenance-hit-index="' + mainMaintenanceIndex + '" cx="' + mpx.toFixed(1) + '" cy="' + mpy.toFixed(1) + '" r="' + (mr * 1.45).toFixed(1) + '" fill="none" stroke="rgba(186,104,200,0.95)" stroke-width="' + (lw * 1.15) + '" stroke-dasharray="' + (mr * 0.48).toFixed(1) + ' ' + (mr * 0.28).toFixed(1) + '"><title>' + primaryName + ' – Position in der MOVA-/Dreame-App ändern</title></circle>';
+          g += '<circle data-maintenance-hit-index="' + mainMaintenanceIndex + '" cx="' + mpx.toFixed(1) + '" cy="' + mpy.toFixed(1) + '" r="' + mr.toFixed(1) + '" fill="rgba(123,31,162,0.88)" stroke="rgba(255,255,255,0.96)" stroke-width="' + lw + '"><title>' + primaryName + ' – Position in der MOVA-/Dreame-App ändern</title></circle>';
           // Compact vector wrench: handle + open jaw.
           var x1 = mpx - mr * 0.40, y1 = mpy + mr * 0.40;
           var x2 = mpx + mr * 0.22, y2 = mpy - mr * 0.22;
@@ -605,7 +1110,44 @@
             + ' L ' + (mpx + mr * 0.38).toFixed(1) + ' ' + (mpy - mr * 0.35).toFixed(1)
             + ' L ' + (mpx + mr * 0.43).toFixed(1) + ' ' + (mpy - mr * 0.02).toFixed(1)
             + '" fill="none" stroke="#fff" stroke-width="' + (lw * 1.45) + '" stroke-linecap="round" stroke-linejoin="round"/>';
+          var primaryFont = Math.max(9, refSize * 0.015);
+          var primaryLabelWidth = Math.max(primaryFont * 4, primaryName.length * primaryFont * 0.65 + primaryFont * 0.76);
+          var primaryLabelPosition = placeMaintenanceLabel(mpx,mpy,primaryLabelWidth,primaryFont,mr);
+          var primaryLabelX = primaryLabelPosition.x;
+          var primaryLabelY = primaryLabelPosition.y;
+          g += '<g class="maintenance-point-name" data-maintenance-point="' + mainMaintenanceIndex + '"><title>' + primaryName + ' (P' + mainMaintenanceIndex + ')</title>'
+            + '<rect data-maintenance-name-index="' + mainMaintenanceIndex + '" x="' + primaryLabelX.toFixed(1) + '" y="' + (primaryLabelY - primaryFont * 0.72).toFixed(1) + '" width="' + primaryLabelWidth.toFixed(1) + '" height="' + (primaryFont * 1.45).toFixed(1) + '" rx="' + (primaryFont * 0.25).toFixed(1) + '" fill="rgba(20,30,24,0.82)" stroke="rgba(186,104,200,0.95)" stroke-width="' + (sw * 0.55).toFixed(1) + '"/>'
+            + '<text data-maintenance-name-index="' + mainMaintenanceIndex + '" x="' + (primaryLabelX + primaryFont * 0.38).toFixed(1) + '" y="' + primaryLabelY.toFixed(1) + '" textLength="' + (primaryLabelWidth - primaryFont * 0.76).toFixed(1) + '" lengthAdjust="spacingAndGlyphs" dominant-baseline="middle" fill="#fff" font-size="' + primaryFont.toFixed(1) + '" font-family="system-ui,sans-serif" font-weight="650">' + primaryName + '</text></g>';
         }
+      }
+
+      // Additional MOVA/Dreame targets use distinct colors and the Homey-local
+      // names. Native <title> provides a hover label on clients that support it;
+      // the number remains visible on touch screens as well.
+      if (showMaintenancePoint) {
+        // Visual role, not point ID: selected main = violet, all other points = blue.
+        var maintenancePointColors = { 1:'#377ecb', 2:'#377ecb', 3:'#377ecb', 4:'#377ecb', 5:'#377ecb' };
+        go.maintenancePoints.forEach(function (point) {
+          if (Number(point.index) === (Number(data.mainMaintenancePointIndex) || 1)) return;
+          var px = Number(tx(point.x)), py = Number(ty(point.y));
+          if (!Number.isFinite(px) || !Number.isFinite(py)) return;
+          var color = maintenancePointColors[point.index] || '#546e7a';
+          var radius = refSize * 0.019;
+          var label = point.name.replace(/[&<>"']/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; });
+          var labelFont = Math.max(9, refSize * 0.014);
+          var labelWidth = Math.max(labelFont * 4, label.length * labelFont * 0.65 + labelFont * 0.76);
+          var labelPosition = placeMaintenanceLabel(px,py,labelWidth,labelFont,radius);
+          var labelX = labelPosition.x;
+          var labelY = labelPosition.y;
+          g += '<g class="maintenance-point-marker" data-maintenance-point="' + point.index + '">'
+            + '<title>' + label + ' (P' + point.index + ')</title>'
+            + '<circle data-maintenance-hit-index="' + point.index + '" cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="' + (radius * 1.45).toFixed(1) + '" fill="' + color + '" fill-opacity="0.24" stroke="' + color + '" stroke-width="' + (sw * 1.2).toFixed(1) + '"/>'
+            + '<circle data-maintenance-hit-index="' + point.index + '" cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="' + radius.toFixed(1) + '" fill="' + color + '" stroke="#fff" stroke-width="' + (sw * 1.1).toFixed(1) + '"/>'
+            + '<text x="' + px.toFixed(1) + '" y="' + py.toFixed(1) + '" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="' + (radius * 1.1).toFixed(1) + '" font-family="system-ui,sans-serif" font-weight="800" pointer-events="none">' + point.index + '</text>'
+            + '<rect data-maintenance-name-index="' + point.index + '" x="' + labelX.toFixed(1) + '" y="' + (labelY - labelFont * 0.72).toFixed(1) + '" width="' + labelWidth.toFixed(1) + '" height="' + (labelFont * 1.45).toFixed(1) + '" rx="' + (labelFont * 0.25).toFixed(1) + '" fill="rgba(20,30,24,0.82)" stroke="' + color + '" stroke-width="' + (sw * 0.55).toFixed(1) + '"/>'
+            + '<text data-maintenance-name-index="' + point.index + '" x="' + (labelX + labelFont * 0.38).toFixed(1) + '" y="' + labelY.toFixed(1) + '" textLength="' + (labelWidth - labelFont * 0.76).toFixed(1) + '" lengthAdjust="spacingAndGlyphs" dominant-baseline="middle" fill="#fff" font-size="' + labelFont.toFixed(1) + '" font-family="system-ui,sans-serif" font-weight="650">' + label + '</text>'
+            + '</g>';
+        });
       }
 
       // Garage / dock marker is drawn after the line and maintenance point, but
@@ -626,7 +1168,7 @@
       // RC98: localized, uncluttered area labels. Garage stays small beside
       // the dock. Lawn/Rasen is a larger, low-opacity map label below Zone 1.
       if (showGarageOverlay && safetySideLabels) {
-        var isDeSideLabel = String((navigator && navigator.language) || '').toLowerCase().indexOf('de') === 0;
+        var isDeSideLabel = _uiGerman;
         var garageLabelSize = Math.max(9, refSize * 0.0135);
         g += '<text x="' + safetySideLabels.garageX.toFixed(1) + '" y="' + safetySideLabels.garageY.toFixed(1)
           + '" text-anchor="middle" dominant-baseline="middle" fill="rgba(255,255,255,0.72)" font-size="'
@@ -654,7 +1196,7 @@
         var legendPadY = legendR * 1.05;
         var legendBoxW = Math.max(refSize * 0.205, legendR * 13.6);
         var legendBoxH = legendGap + legendR * 2 + legendPadY * 2;
-        var isDeLegend = String((navigator && navigator.language) || '').toLowerCase().indexOf('de') === 0;
+        var isDeLegend = _uiGerman;
         g += '<g opacity="0.94" pointer-events="none">'
           + '<rect x="' + (legendX - legendR - legendPadX).toFixed(1) + '" y="' + (legendY - legendR - legendPadY).toFixed(1) + '" width="' + legendBoxW.toFixed(1) + '" height="' + legendBoxH.toFixed(1) + '" rx="' + (legendR * 1.15).toFixed(1) + '" fill="rgba(5,18,10,0.58)" stroke="rgba(255,255,255,0.10)" stroke-width="' + (sw * 0.35).toFixed(1) + '"/>'
           + '<circle cx="' + legendX.toFixed(1) + '" cy="' + legendY.toFixed(1) + '" r="' + legendR.toFixed(1) + '" fill="rgba(244,67,54,0.20)" stroke="rgba(244,67,54,0.98)" stroke-width="' + (sw * 0.95) + '"/>'
@@ -672,7 +1214,7 @@
       if (garageMode && garageSensorMode) {
         var doorState = String((data.overlayVisibility && data.overlayVisibility.garageDoorState) || 'unknown');
         if (doorState !== 'open' && doorState !== 'closed') doorState = 'unknown';
-        var isDeDoor = String((navigator && navigator.language) || '').toLowerCase().indexOf('de') === 0;
+        var isDeDoor = _uiGerman;
         var doorLabel = doorState === 'open'
           ? (isDeDoor ? 'Tor offen' : 'Door open')
           : doorState === 'closed'
@@ -772,27 +1314,44 @@
     }
 
     function setEditUi(active) {
+      if (!active) _editMarkersHidden = false;
       _editMode = !!active;
       document.getElementById('edit-btn').classList.toggle('hidden', _editMode);
       document.getElementById('edit-actions').classList.toggle('active', _editMode);
+      document.getElementById('footer').classList.toggle('editing', _editMode);
+      document.getElementById('map-wrap').classList.toggle('editing', _editMode);
       document.getElementById('refresh-btn').disabled = _editMode;
       document.getElementById('footer-text').classList.toggle('edit-hint', _editMode);
-      if (_editMode) document.getElementById('footer-text').textContent = 'A, B, G oder Wartungspunkt verschieben';
+      var saveButton=document.getElementById('save-edit-btn');
+      saveButton.textContent=t('Save','Speichern');
+      saveButton.title=t('Save safety markers','Sicherheitsmarkierungen speichern');
+      saveButton.setAttribute('aria-label',saveButton.title);
+      var markersButton = document.getElementById('toggle-markers-btn');
+      markersButton.setAttribute('aria-pressed', String(_editMarkersHidden));
+      markersButton.textContent = _editMarkersHidden
+        ? t('Show full view','Vollständige Anzeige')
+        : t('Simplify view','Anzeige vereinfachen');
+      markersButton.title = _editMarkersHidden
+        ? t('Show garage safety line, danger area and maintenance points. This affects the display only.','Garagen-Sicherheitslinie, Gefahrenbereich und Wartungspunkte wieder anzeigen. Nur die Darstellung wird geändert.')
+        : t('Hide garage safety line, danger area and maintenance points. Pylons remain clickable. Safety protection is unchanged.','Garagen-Sicherheitslinie, Gefahrenbereich und Wartungspunkte ausblenden. Pylonen bleiben bedienbar; die Schutzfunktion bleibt aktiv.');
+      markersButton.setAttribute('aria-label', markersButton.textContent);
+      var mapStatusPanel=document.getElementById('map-status-panel');
+      if(_editMode && mapStatusPanel){ mapStatusPanel.hidden=true;document.getElementById('footer-info').setAttribute('aria-expanded','false'); }
+      if (_editMode) document.getElementById('footer-text').textContent = t('Move line/danger markers or tap a pylon. Tap a maintenance point or its name to rename it; move its position in the MOVA/Dreame app.', 'Sicherheitslinie/Gefahrenbereich verschieben oder Pylon antippen. Wartungspunkt oder seinen Namen antippen zum Umbenennen; Position nur in der MOVA-/Dreame-App ändern.');
+      if(_editMode)document.getElementById('footer').title=document.getElementById('footer-text').textContent;
     }
 
     function startMarkerEdit() {
-      if (!_lastData || !_lastData.garageOverlay) return;
-      var go = _lastData.garageOverlay;
+      if (!_lastData) return;
+      var go = _lastData.garageOverlay || {};
       _editDraft = {
         lineA: clonePoint(go.lineA || _lastData.safetyLineA),
         lineB: clonePoint(go.lineB || _lastData.safetyLineB),
         dangerCenter: clonePoint(go.dangerCenter || _lastData.dangerCenter),
         maintenancePoint: clonePoint(go.maintenancePoint || _lastData.maintenancePoint)
       };
-      if (!_editDraft.lineA || !_editDraft.lineB || !_editDraft.dangerCenter || !_editDraft.maintenancePoint) {
-        showMsg('A, B, Gefahrenpunkt oder Wartungspunkt fehlen – Marker zuerst normal setzen.', true);
-        return;
-      }
+      // Missing garage markers do not block pylon editing. Garage drag handles are
+      // simply omitted; detected pylons remain clickable.
       setEditUi(true);
       renderMap();
     }
@@ -812,10 +1371,64 @@
       return { x: local.x + Number(b.x1), y: Number(b.y2) - local.y };
     }
 
+    var _maintenanceNameIndex=0,_maintenanceNameEditorBound=false;
+    function closeMaintenanceNameEditor(){document.getElementById('maintenance-name-editor').classList.remove('active')}
+    function openMaintenanceNameEditor(index,current){
+      var root=document.getElementById('maintenance-name-editor'),input=document.getElementById('maintenance-name-input');if(!root||!input)return;_maintenanceNameIndex=index;
+      document.getElementById('maintenance-name-title').textContent=t('Maintenance point name','Name des Wartungspunkts');document.getElementById('maintenance-name-help').textContent=t('This name is stored in Homey only.','Dieser Name wird nur in Homey gespeichert.');
+      document.getElementById('maintenance-name-cancel').textContent=t('Cancel','Abbrechen');document.getElementById('maintenance-name-save').textContent=t('Save','Speichern');document.getElementById('maintenance-name-feedback').textContent='';input.value=current||'';document.getElementById('maintenance-primary-text').textContent=t('Primary point','Hauptpunkt');document.getElementById('maintenance-primary-toggle').checked=Number(_lastData.mainMaintenancePointIndex||1)===Number(index);root.classList.add('active');
+      if(!_maintenanceNameEditorBound){_maintenanceNameEditorBound=true;document.getElementById('maintenance-name-cancel').addEventListener('click',closeMaintenanceNameEditor);root.addEventListener('click',function(e){if(e.target===root)closeMaintenanceNameEditor()});input.addEventListener('keydown',function(e){if(e.key==='Escape')closeMaintenanceNameEditor();if(e.key==='Enter')document.getElementById('maintenance-name-save').click()});
+        document.getElementById('maintenance-name-save').addEventListener('click',function(){var btn=this,feedback=document.getElementById('maintenance-name-feedback'),name=input.value;btn.disabled=true;var req=typeof _homey.api==='function'?_homey.api('PUT','/maintenance-point-name?deviceId='+encodeURIComponent(_deviceId),{index:_maintenanceNameIndex,name:name,primary:document.getElementById('maintenance-primary-toggle').checked}):_homey.emit('save_maintenance_point_name',{index:_maintenanceNameIndex,name:name,primary:document.getElementById('maintenance-primary-toggle').checked});Promise.resolve(req).then(function(){return typeof _homey.api==='function'?_homey.api('GET','/?deviceId='+encodeURIComponent(_deviceId)+'&_='+Date.now(),{}):_homey.emit('get_map_editor_data')}).then(onMapData).then(closeMaintenanceNameEditor).catch(function(err){feedback.textContent=err?.message||t('Could not save maintenance point name.','Wartungspunktname konnte nicht gespeichert werden.')}).finally(function(){btn.disabled=false})})}
+      setTimeout(function(){input.focus();input.select()},0)
+    }
     function bindEditMarkers() {
-      if (!_editMode) return;
       var svg = document.querySelector('#map-wrap svg');
       if (!svg) return;
+      // Naming is deliberately available on the normal map as well as in marker
+      // edit mode. A tap on either the rendered point circle or its name opens
+      // the Homey-only name editor; it never changes a native coordinate.
+      svg.addEventListener('click', function(ev) {
+        if (!_editMode || _editMarkersHidden) return;
+        if (ev.target && ev.target.closest && ev.target.closest('[data-edit-marker],[data-pylon-id],[data-native-zone-id]')) return;
+        var target = ev.target && ev.target.closest && ev.target.closest('[data-maintenance-hit-index],[data-maintenance-name-index],[data-maintenance-point]');
+        var index = target ? Number(target.getAttribute('data-maintenance-hit-index') || target.getAttribute('data-maintenance-name-index') || target.getAttribute('data-maintenance-point')) : 0;
+        // A label may be text with pointer-events disabled. The larger touch
+        // radius also lets a finger select a small SVG point on mobile maps.
+        if (!index && Number.isFinite(ev.clientX) && Number.isFinite(ev.clientY)) {
+          var labels = svg.querySelectorAll('rect[data-maintenance-name-index]');
+          for (var li = 0; li < labels.length; li++) {
+            var rect = labels[li].getBoundingClientRect();
+            if (ev.clientX >= rect.left - 4 && ev.clientX <= rect.right + 4 && ev.clientY >= rect.top - 4 && ev.clientY <= rect.bottom + 4) {
+              index = Number(labels[li].getAttribute('data-maintenance-name-index'));
+              break;
+            }
+          }
+        }
+        if (!index && Number.isFinite(ev.clientX) && Number.isFinite(ev.clientY)) {
+          var rings = svg.querySelectorAll('circle[data-maintenance-hit-index]');
+          var closestDistance = Infinity;
+          for (var ri = 0; ri < rings.length; ri++) {
+            var circle = rings[ri];
+            var bounds = circle.getBoundingClientRect();
+            if (bounds.width <= 0 || bounds.height <= 0) continue;
+            var distance = Math.hypot(ev.clientX - (bounds.left + bounds.width / 2), ev.clientY - (bounds.top + bounds.height / 2));
+            // 18 CSS pixels minimum for touch; keep the selection local.
+            var reach = Math.max(18, Math.min(30, Math.max(bounds.width, bounds.height) / 2 + 5));
+            if (distance <= reach && distance < closestDistance) {
+              closestDistance = distance;
+              index = Number(circle.getAttribute('data-maintenance-hit-index'));
+            }
+          }
+        }
+        if (!Number.isInteger(index) || index < 1 || index > 5) return;
+        var point = (_lastData.maintenancePoints || []).find(function(item) { return Number(item.index) === index; });
+        var mainIndex = Number(_lastData.mainMaintenancePointIndex) || 1;
+        var current = String(point && point.name || (index === mainIndex ? _lastData.maintenancePointName : '') || '');
+        ev.preventDefault();
+        ev.stopPropagation();
+        openMaintenanceNameEditor(index, current);
+      });
+      if (!_editMode) return;
       var markers = svg.querySelectorAll('[data-edit-marker]');
       markers.forEach(function(el) {
         el.addEventListener('pointerdown', function(ev) {
@@ -825,6 +1438,64 @@
           try { el.setPointerCapture(ev.pointerId); } catch (e) {}
         });
       });
+      var pylons = svg.querySelectorAll('[data-pylon-id]');
+      pylons.forEach(function(el) {
+        var tap = null;
+        el.addEventListener('pointerdown', function(ev) {
+          ev.stopPropagation();
+          tap = { id: ev.pointerId, x: ev.clientX, y: ev.clientY, at: Date.now(), moved: false };
+          try { el.setPointerCapture(ev.pointerId); } catch (e) {}
+        });
+        el.addEventListener('pointermove', function(ev) {
+          if (!tap || tap.id !== ev.pointerId) return;
+          if (Math.hypot(ev.clientX - tap.x, ev.clientY - tap.y) > 14) tap.moved = true;
+        });
+        el.addEventListener('pointerup', function(ev) {
+          if (!tap || tap.id !== ev.pointerId) return;
+          var goodTap = !tap.moved && Date.now() - tap.at < 900
+            && Math.hypot(ev.clientX - tap.x, ev.clientY - tap.y) <= 14;
+          tap = null;
+          if (!goodTap) return;
+          ev.preventDefault(); ev.stopPropagation();
+          el._lastPylonOpenAt = Date.now();
+          openPylonEditor(decodeURIComponent(el.getAttribute('data-pylon-id')));
+        });
+        el.addEventListener('click', function(ev) {
+          if (Date.now() - Number(el._lastPylonOpenAt || 0) < 750) return;
+          ev.preventDefault(); ev.stopPropagation();
+          openPylonEditor(decodeURIComponent(el.getAttribute('data-pylon-id')));
+        });
+        el.addEventListener('pointercancel', function() { tap = null; });
+      });
+      var nativeZones = svg.querySelectorAll('[data-native-zone-id]');
+      nativeZones.forEach(function(el) {
+        var nativeTap = null;
+        el.addEventListener('pointerdown', function(ev) {
+          ev.stopPropagation();
+          nativeTap = { id:ev.pointerId, x:ev.clientX, y:ev.clientY, at:Date.now(), moved:false };
+          try { el.setPointerCapture(ev.pointerId); } catch (e) {}
+        });
+        el.addEventListener('pointermove', function(ev) {
+          if (!nativeTap || nativeTap.id !== ev.pointerId) return;
+          if (Math.hypot(ev.clientX-nativeTap.x, ev.clientY-nativeTap.y) > 14) nativeTap.moved = true;
+        });
+        el.addEventListener('pointerup', function(ev) {
+          if (!nativeTap || nativeTap.id !== ev.pointerId) return;
+          var goodTap = !nativeTap.moved && Date.now()-nativeTap.at < 900
+            && Math.hypot(ev.clientX-nativeTap.x, ev.clientY-nativeTap.y) <= 14;
+          nativeTap = null;
+          if (!goodTap) return;
+          ev.preventDefault(); ev.stopPropagation();
+          el._lastNativeOpenAt = Date.now();
+          openNativeZoneEditor(Number(el.getAttribute('data-native-zone-id')));
+        });
+        el.addEventListener('click', function(ev) {
+          if (Date.now()-Number(el._lastNativeOpenAt || 0) < 750) return;
+          ev.preventDefault(); ev.stopPropagation();
+          openNativeZoneEditor(Number(el.getAttribute('data-native-zone-id')));
+        });
+        el.addEventListener('pointercancel', function() { nativeTap = null; });
+      });
     }
 
     function saveMarkerEdit() {
@@ -832,8 +1503,11 @@
       var btn = document.getElementById('save-edit-btn');
       btn.disabled = true;
       btn.textContent = '…';
-      _homey.api('PUT', '/garage-markers?deviceId=' + encodeURIComponent(_deviceId), _editDraft)
-        .then(function(result) {
+      var completeGarageDraft = _editDraft.lineA && _editDraft.lineB && _editDraft.dangerCenter && _editDraft.maintenancePoint;
+      var save = completeGarageDraft
+        ? _homey.api('PUT', '/garage-markers?deviceId=' + encodeURIComponent(_deviceId), _editDraft)
+        : Promise.resolve({ ok:true });
+      save.then(function() {
           _editDraft = null;
           setEditUi(false);
           return _homey.api('GET', '/?deviceId=' + encodeURIComponent(_deviceId) + '&_=' + Date.now(), {});
@@ -843,9 +1517,388 @@
         .finally(function() { btn.disabled = false; btn.textContent = 'Save'; });
     }
 
+    function findPylon(id) {
+      var list = _lastData && Array.isArray(_lastData.obstaclePylons) ? _lastData.obstaclePylons : [];
+      return list.find(function(p) { return p && p.id === id; }) || null;
+    }
+
+    function findNativeZone(nativeId) {
+      var id = Number(nativeId);
+      if (!Number.isInteger(id) || !_lastData || !Array.isArray(_lastData.forbiddenAreas)) return null;
+      var entry = _lastData.forbiddenAreas.find(function(e) { return Array.isArray(e) && Number(e[0]) === id; });
+      if (!entry || !entry[1] || !Array.isArray(entry[1].path) || entry[1].path.length < 3) return null;
+      var zone = entry[1];
+      var xs = zone.path.map(function(pt) { return Number(pt.x); }).filter(Number.isFinite);
+      var ys = zone.path.map(function(pt) { return Number(pt.y); }).filter(Number.isFinite);
+      if (!xs.length || !ys.length) return null;
+      var cx = (Math.min.apply(null,xs)+Math.max.apply(null,xs))/2;
+      var cy = (Math.min.apply(null,ys)+Math.max.apply(null,ys))/2;
+      var half = Math.max(500, Math.round(Math.max(Math.max.apply(null,xs)-Math.min.apply(null,xs), Math.max.apply(null,ys)-Math.min.apply(null,ys))/2));
+      var pending = Array.isArray(_lastData.nativeZonePendingDeletes) && _lastData.nativeZonePendingDeletes.some(function(op) {
+        return Number(op && op.nativeId) === id;
+      });
+      var labels = Array.isArray(_lastData.nativeZoneLabels) ? _lastData.nativeZoneLabels : [];
+      var label = labels.find(function(item) { return Number(item && item.nativeId) === id; });
+      var policies = Array.isArray(_lastData.nativeZonePolicies) ? _lastData.nativeZonePolicies : [];
+      var policy = policies.find(function(item) { return Number(item && item.nativeId) === id; });
+      return {
+        id:'native-zone:'+id, ruleId:null, nativeDirect:true, nativeZoneId:id,
+        x:cx, y:cy, source:'map', type:'native',
+        rule:{ action:'avoid', radius:half, note:label ? String(label.note || '') : '', nativeId:id, nativeConfirmed:true, nativePresent:true,
+          pending:pending?'delete':null, verification:'native_map_direct',
+          lifecycle:policy ? String(policy.lifecycle || 'permanent') : 'permanent',
+          lifecycleExpiresAt:policy ? Number(policy.lifecycleExpiresAt || 0) || null : null,
+          lifecycleSuspended:!!(policy && policy.lifecycleSuspended),
+          lifecycleTransitionPending:policy ? (policy.lifecycleTransitionPending || null) : null }
+      };
+    }
+
+    function setPylonDialogState(p, keepFeedback) {
+      if (!p) return;
+      _selectedPylon = p;
+      var direct = p.nativeDirect === true;
+      var title = document.querySelector('#pylon-card h3');
+      if (title) title.textContent = localizeUiText(direct ? 'Native Sperrzone' : 'Pylon / Problemstelle');
+      var radiusInput = document.getElementById('pylon-radius');
+      var lifecycleInput = document.getElementById('pylon-lifecycle');
+      var noteInput = document.getElementById('pylon-note');
+      radiusInput.value = Math.round(((p.rule && p.rule.radius) || 500) / 10);
+      lifecycleInput.value = ((p.rule && p.rule.lifecycle) || 'permanent');
+      noteInput.value = ((p.rule && p.rule.note) || '');
+      radiusInput.disabled = direct;
+      // Native zones from the Dreame/MOVA app can be named locally in Homey.
+      // The label never changes the mower's native map object.
+      noteInput.disabled = false;
+      var pending = p.rule && p.rule.pending;
+      var lifecycleTransition = p.rule && p.rule.lifecycleTransitionPending;
+      // Keep lifecycle selectable while no native mutation is pending.
+      lifecycleInput.disabled = !!pending;
+      var staleBinding = !!(p.rule && p.rule.staleBinding);
+      var owned = p.rule && p.rule.nativeId != null;
+      owned = direct || !!(p.rule && p.rule.nativeConfirmed === true)
+        || !!(owned && p.rule.nativeConfirmed !== false && !staleBinding);
+      var verification = p.rule && p.rule.verification;
+      document.getElementById('pylon-zone-status').textContent = localizeUiText(direct
+        ? (lifecycleTransition
+          ? 'Native Sperrzone #' + p.nativeZoneId + ': Zeit-/Fahrphasenregel gespeichert; native Anpassung wird am nächsten geeigneten Stillstand geprüft.'
+          : 'Native Sperrzone #' + p.nativeZoneId + ' direkt aus der Mäherkarte. Name und Aktivzeit werden in Homey verwaltet; die Zone bleibt eine native Mäher-Sperrzone.')
+        : pending ? 'Änderung wurde gesendet; Bestätigung vom Mäher steht noch aus.'
+        : lifecycleTransition ? 'Regel gespeichert; Kartenänderung wird am nächsten geeigneten Stillstand geprüft.'
+        : p.rule && p.rule.lifecycleSuspended ? 'Regel gespeichert; Änderung wird am nächsten geeigneten Stillstand geprüft.'
+        : staleBinding ? 'Die alte Homey-Zuordnung passt nicht mehr zu diesem Pylon. Eine vorhandene rote Sperrzone kann direkt in der Karte ausgewählt werden.'
+        : owned ? 'Native Sperrzone #' + p.rule.nativeId + ' aktiv und geometrisch bestätigt.'
+        : verification === 'legacy_unconfirmed_cleared' || verification === 'legacy_circle_unconfirmed_cleared'
+          ? 'Alte unbestätigte Änderung verworfen – Sperrzone kann neu gespeichert werden.'
+        : verification === 'native_create_unconfirmed_timeout' || verification === 'native_create_unconfirmed_retryable'
+          ? 'Der Mäher hat die Sperrzone nicht in die aktuelle Karte übernommen – erneutes Speichern ist möglich.'
+        : verification === 'native_delete_unconfirmed_timeout' || verification === 'native_delete_unconfirmed_retryable'
+          ? 'Der Mäher hat das Löschen nicht in die aktuelle Karte übernommen – erneutes Löschen ist möglich.'
+          : 'Noch keine bestätigte Sperrzone an dieser Pylone.');
+      var feedback = document.getElementById('pylon-feedback');
+      if (!keepFeedback) { feedback.textContent = localizeUiText(''); feedback.classList.remove('error'); }
+      document.getElementById('pylon-delete-zone').disabled = !owned || !!pending;
+      if (direct) document.getElementById('pylon-delete-zone').disabled = !!pending;
+      document.getElementById('pylon-remove').disabled = direct || !!owned || !!pending;
+      var saveBtn = document.getElementById('pylon-save');
+      saveBtn.textContent = t('Save no-go zone','Sperrzone speichern');
+      saveBtn.disabled = !!pending || !_lastData || _lastData.mapSafeMowing !== true;
+      document.getElementById('pylon-reload').disabled = !!_pylonReloadDone || !!_pylonSaving;
+      document.getElementById('pylon-meta').textContent = direct
+        ? 'map · native #' + p.nativeZoneId + ' · ' + Math.round(p.x) + ', ' + Math.round(p.y)
+        : (p.type || 'unknown') + ' · ' + (p.source || '-') + ' · ' + Math.round(p.x) + ', ' + Math.round(p.y);
+    }
+
+    function clearPylonAutoClose() {
+      if (_pylonCloseTimer) clearInterval(_pylonCloseTimer);
+      _pylonCloseTimer = null;
+      _pylonCloseRemaining = 0;
+      var hold = document.getElementById('pylon-hold');
+      if (hold) hold.hidden = true;
+    }
+
+    function finishPylonEditorAfterSave() {
+      clearPylonAutoClose();
+      closePylonEditor();
+      setEditUi(false);
+      renderMap();
+    }
+
+    function startPylonAutoClose(message) {
+      clearPylonAutoClose();
+      var feedback = document.getElementById('pylon-feedback');
+      var hold = document.getElementById('pylon-hold');
+      _pylonCloseRemaining = 10;
+      if (hold) hold.hidden = false;
+      function paint() {
+        feedback.classList.remove('error');
+        feedback.textContent = localizeUiText(message + ' Fenster schließt automatisch in (' + _pylonCloseRemaining + ') s.');
+      }
+      paint();
+      _pylonCloseTimer = setInterval(function() {
+        _pylonCloseRemaining -= 1;
+        if (_pylonCloseRemaining <= 0) { finishPylonEditorAfterSave(); return; }
+        paint();
+      }, 1000);
+    }
+
+    function openPylonEditor(id) {
+      // Pylons stay visible when "Sicher mähen" is disabled, but are deliberately
+      // non-interactive in that mode. This keeps the map truthful without offering
+      // a control that cannot be executed safely.
+      if (!_lastData || _lastData.mapSafeMowing !== true) return;
+      var p = findPylon(id);
+      if (!p) return;
+      clearPylonAutoClose();
+      _pylonReloadDone = false;
+      var reloadBtn = document.getElementById('pylon-reload');
+      if (reloadBtn) { reloadBtn.textContent = localizeUiText('Karte neu laden / prüfen'); reloadBtn.disabled = false; }
+      setPylonDialogState(p, false);
+      document.getElementById('pylon-editor').classList.add('active');
+    }
+
+    function openNativeZoneEditor(nativeId) {
+      if (!_lastData || _lastData.mapSafeMowing !== true) return;
+      var p = findNativeZone(nativeId);
+      if (!p) return;
+      clearPylonAutoClose();
+      _pylonReloadDone = false;
+      var reloadBtn = document.getElementById('pylon-reload');
+      if (reloadBtn) { reloadBtn.textContent = localizeUiText('Karte neu laden / prüfen'); reloadBtn.disabled = false; }
+      setPylonDialogState(p, false);
+      document.getElementById('pylon-editor').classList.add('active');
+    }
+
+    function closePylonEditor() {
+      clearPylonAutoClose();
+      _pylonReloadDone = false;
+      var reloadBtn = document.getElementById('pylon-reload');
+      if (reloadBtn) reloadBtn.textContent = localizeUiText('Karte neu laden / prüfen');
+      _selectedPylon = null;
+      document.getElementById('pylon-editor').classList.remove('active');
+    }
+
+    function loadFreshPylonMap() {
+      if (!_homey || !_deviceId) return Promise.reject(new Error('Mäher nicht verbunden.'));
+      return _homey.api('GET', '/?deviceId=' + encodeURIComponent(_deviceId) + '&refresh=1&hard=1&_=' + Date.now(), {})
+        .then(function(data) {
+          // Treat a manual reload like a clean map reopen. Do this only after a
+          // successful backend hard refresh so a network error cannot blank the
+          // currently usable map.
+          _lastData = null;
+          _lastFullMapData = null;
+          _initialGeometryWaits = 0;
+          _lastPylonUiRevision = -1;
+          return data;
+        });
+    }
+
+    function reloadSelectedPylon() {
+      if (!_selectedPylon || _pylonSaving || _pylonReloadDone) return;
+      var selectedId = _selectedPylon.id;
+      var selectedDirect = _selectedPylon.nativeDirect === true;
+      var selectedNativeId = selectedDirect ? Number(_selectedPylon.nativeZoneId) : null;
+      var feedback = document.getElementById('pylon-feedback');
+      var reloadBtn = document.getElementById('pylon-reload');
+      reloadBtn.disabled = true;
+      reloadBtn.textContent = localizeUiText('Prüfung läuft …');
+      feedback.dataset.result = 'pending';
+      feedback.classList.remove('error');
+      feedback.textContent = localizeUiText('Native Karte wird einmal frisch vom Mäher gelesen …');
+      loadFreshPylonMap()
+        .then(function(data) {
+          if (data) onMapData(data);
+          var p = selectedDirect ? findNativeZone(selectedNativeId) : findPylon(selectedId);
+          if (!p && selectedDirect && _selectedPylon && _selectedPylon.rule && _selectedPylon.rule.pending === 'delete') {
+            _pylonReloadDone = true;
+            reloadBtn.textContent = localizeUiText('Sperrzone gelöscht ✓');
+            feedback.textContent = localizeUiText('Bestätigt: Native Sperrzone #'+selectedNativeId+' ist in der neu geladenen Mäherkarte nicht mehr vorhanden.');
+            feedback.classList.remove('error');
+            feedback.dataset.result = 'confirmed';
+            startPylonAutoClose(feedback.textContent);
+            return;
+          }
+          if (!p) throw new Error(selectedDirect ? 'Native Sperrzone ist in der neu geladenen Karte nicht mehr vorhanden.' : 'Pylone ist in der neu geladenen Karte nicht mehr vorhanden.');
+          _pylonReloadDone = true;
+          reloadBtn.textContent = localizeUiText('Karte neu geladen ✓');
+          setPylonDialogState(p, true);
+          if (p.nativeDirect === true && !p.rule?.pending) {
+            feedback.textContent = localizeUiText('Bestätigt: Native Sperrzone #' + p.nativeZoneId + ' ist in der Mäherkarte vorhanden.');
+            feedback.classList.remove('error');
+          } else if (p.rule && p.rule.pending) {
+            feedback.textContent = localizeUiText('Karte wurde neu abgefragt. Die native Bestätigung steht noch aus; der Hintergrundprüfer läuft weiter.');
+            feedback.classList.remove('error');
+          } else if (p.rule && p.rule.nativeId != null) {
+            feedback.textContent = localizeUiText('Bestätigt: Sperrzone #' + p.rule.nativeId + ' ist in der Mäherkarte vorhanden.');
+            feedback.classList.remove('error');
+          } else if (p.rule && (p.rule.verification === 'legacy_unconfirmed_cleared' || p.rule.verification === 'legacy_circle_unconfirmed_cleared')) {
+            feedback.textContent = localizeUiText('Alte unbestätigte Änderung ist nicht in der frischen Mäherkarte. Jetzt kannst du die Sperrzone einmal neu speichern.');
+            feedback.classList.remove('error');
+          } else if (p.rule && p.rule.verification === 'native_create_unconfirmed_timeout') {
+            feedback.textContent = localizeUiText('Keine native Sperrzone gefunden. Der alte Pending-Zustand ist freigegeben; jetzt kannst du einmal neu speichern.');
+            feedback.classList.remove('error');
+          } else {
+            feedback.textContent = localizeUiText('Karte neu geladen. Prüfe Radius/Notiz und speichere die Sperrzone.');
+            feedback.classList.remove('error');
+          }
+          // A manually refreshed map may still contain an unverified native change.
+          // Only close automatically after a native presence proof.
+          // dialog visible for 10 seconds so the user can inspect the fresh
+          // result, then close automatically. "Offen halten" cancels only this
+          // countdown. One forced reload per opened dialog avoids hammering the
+          // mower/cloud map endpoint.
+          var nativeVerified = (p.nativeDirect === true && !p.rule?.pending) || !!(p.rule && p.rule.nativeId != null && p.rule.nativeConfirmed === true && p.rule.nativePresent !== false && !p.rule.pending);
+          if (p.rule && p.rule.pending) {
+            _pylonReloadDone = false;
+            reloadBtn.textContent = localizeUiText('Erneut prüfen');
+            feedback.dataset.result = 'pending';
+            feedback.textContent += '\n'+localizeUiText('Noch keine native Bestätigung – kein erfolgreicher Reparaturabschluss.');
+          } else if (nativeVerified) {
+            feedback.dataset.result = 'confirmed';
+            startPylonAutoClose(feedback.textContent);
+          } else {
+            _pylonReloadDone = false;
+            reloadBtn.textContent = localizeUiText('Erneut prüfen');
+            feedback.dataset.result = 'unverified';
+            feedback.textContent += '\n'+localizeUiText('Kartenabruf erfolgreich; native Reparatur nicht bestätigt.');
+          }
+        })
+        .catch(function(err) {
+          _pylonReloadDone = false;
+          reloadBtn.textContent = localizeUiText('Karte neu laden / prüfen');
+          feedback.textContent = localizeUiText((err && (err.message || err.error || String(err))) || 'Karte konnte nicht neu geladen werden.');
+          feedback.classList.add('error');
+          feedback.dataset.result = 'failed';
+        })
+        .finally(function() { reloadBtn.disabled = !!_pylonReloadDone; });
+    }
+
+    function savePylonRule(mode) {
+      if (!_selectedPylon || !_homey || _pylonSaving || !_lastData || _lastData.mapSafeMowing !== true) return;
+      var selectedId = _selectedPylon.id;
+      var selectedDirect = _selectedPylon.nativeDirect === true;
+      var selectedNativeId = selectedDirect ? Number(_selectedPylon.nativeZoneId) : null;
+      var feedback = document.getElementById('pylon-feedback');
+      function report(message, error) { feedback.textContent = localizeUiText(message); feedback.classList.toggle('error', !!error); feedback.dataset.result = error ? 'failed' : 'pending'; }
+      var radiusCm = Number(document.getElementById('pylon-radius').value);
+      if (mode === 'save' && !selectedDirect && (!Number.isInteger(radiusCm) || radiusCm < 50 || radiusCm > 300)) {
+        report('Radius zwischen 50 und 300 cm eingeben (mindestens 1 m Durchmesser).', true); return;
+      }
+      var body = {
+        id: selectedId,
+        ruleId: selectedDirect ? null : (_selectedPylon.ruleId || null),
+        nativeZoneId: selectedDirect ? selectedNativeId : null,
+        nativeHintId: !selectedDirect && _selectedPylon.rule && Number.isInteger(Number(_selectedPylon.rule.nativeId))
+          ? Number(_selectedPylon.rule.nativeId) : null,
+        remove: mode === 'hide', deleteForbidden: mode === 'delete',
+        action: selectedDirect && mode === 'save' ? 'label' : (mode === 'save' ? 'avoid' : 'observe'), radiusCm: radiusCm,
+        lifecycle: mode === 'save' ? document.getElementById('pylon-lifecycle').value : null,
+        note: document.getElementById('pylon-note').value || ''
+      };
+      clearPylonAutoClose();
+      var previousRule = Object.assign({}, (_selectedPylon && _selectedPylon.rule) || {});
+      _pylonSaving = true;
+      ['pylon-save','pylon-delete-zone','pylon-remove','pylon-reload'].forEach(function(id) { document.getElementById(id).disabled = true; });
+
+      // Optimistic *pending* only: never claim protection before MAP.* confirms
+      // it, but show the animated blue ring immediately on Save/Delete so there
+      // is visible feedback while the Dreame cloud map catches up.
+      if (!selectedDirect && (mode === 'save' || mode === 'delete')) {
+        var optimisticRule = Object.assign({}, previousRule, {
+          pending: mode === 'save' ? 'create' : 'delete',
+          action: mode === 'save' ? 'observe' : (previousRule.action || 'avoid'),
+          radius: mode === 'save' ? radiusCm * 10 : previousRule.radius,
+          lifecycle: mode === 'save' ? document.getElementById('pylon-lifecycle').value : (previousRule.lifecycle || 'permanent')
+        });
+        _selectedPylon = Object.assign({}, _selectedPylon, { rule: optimisticRule });
+        var optimisticLive = findPylon(selectedId);
+        if (optimisticLive) optimisticLive.rule = optimisticRule;
+        renderMap();
+      }
+
+      report(mode === 'save' && selectedDirect ? 'Name und Aktivzeit werden in Homey gespeichert …' :
+        mode === 'save' ? 'Sperrzone wurde gesendet – native Bestätigung läuft im Hintergrund …' :
+        mode === 'delete' ? 'Löschen wurde gesendet – native Bestätigung läuft im Hintergrund …' : 'Markierung wird ausgeblendet …');
+      Promise.resolve().then(function() { return _homey.api('PUT', '/obstacle-rule?deviceId=' + encodeURIComponent(_deviceId), body); })
+        .then(function(result) {
+          if (!result || result.ok !== true) throw new Error('Keine Bestätigung vom Mäher erhalten.');
+          if (result.rule && !selectedDirect) {
+            _selectedPylon = Object.assign({}, _selectedPylon, { rule: result.rule, ruleId: result.ruleId || _selectedPylon.ruleId });
+            var livePylon = findPylon(selectedId);
+            if (livePylon) { livePylon.rule = result.rule; if (result.ruleId) livePylon.ruleId = result.ruleId; }
+          }
+          if (selectedDirect && mode === 'save') {
+            var noteValue = String(result.note != null ? result.note : body.note || '').trim();
+            var labels = Array.isArray(_lastData.nativeZoneLabels) ? _lastData.nativeZoneLabels.slice() : [];
+            labels = labels.filter(function(item) { return Number(item && item.nativeId) !== selectedNativeId; });
+            if (noteValue) labels.push({ nativeId:selectedNativeId, note:noteValue, updatedAt:Date.now() });
+            _lastData.nativeZoneLabels = labels;
+            var policyResult = result.policy || {};
+            var policies = Array.isArray(_lastData.nativeZonePolicies) ? _lastData.nativeZonePolicies.slice() : [];
+            policies = policies.filter(function(item) { return Number(item && item.nativeId) !== selectedNativeId; });
+            if (policyResult.lifecycle) policies.push({
+              nativeId:selectedNativeId, lifecycle:policyResult.lifecycle,
+              lifecycleExpiresAt:policyResult.lifecycleExpiresAt || null,
+              lifecycleSuspended:!!policyResult.lifecycleSuspended,
+              lifecycleTransitionPending:policyResult.lifecycleTransitionPending || null,
+              updatedAt:Date.now()
+            });
+            _lastData.nativeZonePolicies = policies;
+            _selectedPylon.rule = Object.assign({}, _selectedPylon.rule || {}, {
+              note:noteValue,
+              lifecycle:policyResult.lifecycle || body.lifecycle || 'permanent',
+              lifecycleExpiresAt:policyResult.lifecycleExpiresAt || null,
+              lifecycleSuspended:!!policyResult.lifecycleSuspended,
+              lifecycleTransitionPending:policyResult.lifecycleTransitionPending || null
+            });
+          }
+          // The explicit Save/Delete/Hide action closes immediately once the
+          // backend accepted the request. Native verification may remain pending
+          // in the background; the map's blue ring communicates that state.
+          renderMap();
+          var nativePending = !!(result.pending || result.rule && result.rule.pending);
+          if (nativePending && selectedDirect && mode === 'delete') {
+            _selectedPylon.rule = Object.assign({}, _selectedPylon.rule || {}, { pending: 'delete' });
+          }
+          if (nativePending) {
+            // Acceptance is not native confirmation. Keep the blue Pending
+            // overlay visible on the map and auto-close only the dialog after
+            // a short, cancelable countdown (same path for create and delete).
+            // A failed request never closes automatically.
+            if (selectedDirect && mode === 'delete' && _lastData) {
+              var pendingDeletes = Array.isArray(_lastData.nativeZonePendingDeletes)
+                ? _lastData.nativeZonePendingDeletes.slice() : [];
+              if (!pendingDeletes.some(function(item) { return Number(item && item.nativeId) === selectedNativeId; }))
+                pendingDeletes.push({ nativeId:selectedNativeId, pending:'delete', updatedAt:Date.now() });
+              _lastData.nativeZonePendingDeletes = pendingDeletes;
+              renderMap();
+            }
+            feedback.dataset.result = 'pending';
+            startPylonAutoClose('Änderung angenommen – native Bestätigung steht noch aus. Der blaue Pending-Effekt auf der Karte bleibt bis zur Bestätigung sichtbar.');
+          } else {
+            feedback.dataset.result = 'confirmed';
+            finishPylonEditorAfterSave();
+          }
+          return result;
+        })
+        .catch(function(err) {
+          if (!selectedDirect) _selectedPylon = Object.assign({}, _selectedPylon || {}, { rule: previousRule });
+          var rollbackLive = selectedDirect ? null : findPylon(selectedId);
+          if (rollbackLive) rollbackLive.rule = previousRule;
+          renderMap();
+          report((err && (err.message || err.error || String(err))) || 'Speichern fehlgeschlagen. Bitte den Log prüfen.', true);
+        })
+        .finally(function() {
+          _pylonSaving = false;
+          if (_selectedPylon) setPylonDialogState(_selectedPylon, true);
+        });
+    }
+
     // ── Entry point ──────────────────────────────────────────────────────────
 
     function onHomeyReady(Homey) {
+      if (typeof Homey.getLanguage==='function' && Homey.getLanguage()) _uiGerman=String(Homey.getLanguage()).toLowerCase().startsWith('de');
+      localizeStaticUi();
+      document.title=t('Mowing map','Mähkarte');
       _homey = Homey;
       const ids = Homey.getDeviceIds();
       const deviceId = ids && ids[0];
@@ -853,13 +1906,24 @@
 
       if (!deviceId) {
         Homey.ready();
-        showMsg('Open widget settings and select a device');
+        showMsg(t('Open widget settings and select a device','Widget-Einstellungen öffnen und ein Gerät auswählen'));
         return;
       }
 
+      var _mapMoving = false;
+      function mapPollDelay() { return _mapMoving ? 1800 : 8000; }
       function loadMap() {
-        return Homey.api('GET', '/?deviceId=' + encodeURIComponent(deviceId) + '&_=' + Date.now(), {})
-          .then(function(data) { _consecutiveErrors = 0; onMapData(data); })
+        var timeoutId;
+        return Promise.race([
+          Homey.api('GET', '/?deviceId=' + encodeURIComponent(deviceId) + '&_=' + Date.now(), {}),
+          new Promise(function(_, reject) { timeoutId = setTimeout(function() { reject(new Error('Karte antwortet nicht. Bitte Verbindung prüfen und erneut laden.')); }, 15000); })
+        ]).finally(function() { clearTimeout(timeoutId); })
+          .then(function(data) {
+            _consecutiveErrors = 0;
+            var active = ['mowing','edge_mowing','leaving','returning','paused','remote_control','mapping','garage_exiting','garage_adjusting','garage_positioning','garage_maintenance_transit'];
+            _mapMoving = !!(data && active.indexOf(String(data.mowerStatus || '')) >= 0);
+            onMapData(data);
+          })
           .catch(function(err) {
             _consecutiveErrors++;
             // After 6 consecutive failures (~30 s) the Homey session has likely
@@ -869,9 +1933,29 @@
           });
       }
 
+      document.getElementById('footer-info').addEventListener('click',function(){
+        var panel=document.getElementById('map-status-panel');
+        if(!panel)return;
+        panel.hidden=!panel.hidden;
+        this.setAttribute('aria-expanded',String(!panel.hidden));
+        if(!panel.hidden)panel.textContent=this._fullStatus||document.getElementById('footer-text').title||t('Map status is not yet available.','Kartenstatus ist noch nicht verfügbar.');
+      });
       document.getElementById('edit-btn').addEventListener('click', startMarkerEdit);
+      document.getElementById('toggle-markers-btn').addEventListener('click', function() { if (!_editMode) return; _editMarkersHidden = !_editMarkersHidden; setEditUi(true); renderMap(); });
       document.getElementById('cancel-edit-btn').addEventListener('click', cancelMarkerEdit);
       document.getElementById('save-edit-btn').addEventListener('click', saveMarkerEdit);
+      document.getElementById('pylon-cancel').addEventListener('click', closePylonEditor);
+      document.getElementById('pylon-hold').addEventListener('click', function() {
+        clearPylonAutoClose();
+        var feedback = document.getElementById('pylon-feedback');
+        feedback.classList.remove('error');
+        feedback.textContent = localizeUiText('Fenster bleibt geöffnet. Der automatische Countdown wurde abgebrochen.');
+      });
+      document.getElementById('pylon-save').addEventListener('click', function() { savePylonRule('save'); });
+      document.getElementById('pylon-remove').addEventListener('click', function() { savePylonRule('hide'); });
+      document.getElementById('pylon-delete-zone').addEventListener('click', function() { savePylonRule('delete'); });
+      document.getElementById('pylon-reload').addEventListener('click', reloadSelectedPylon);
+      document.getElementById('pylon-editor').addEventListener('click', function(ev) { if (ev.target === this) closePylonEditor(); });
       window.addEventListener('pointermove', function(ev) {
         if (!_dragMarker || !_editDraft) return;
         var svg = document.querySelector('#map-wrap svg');
@@ -890,7 +1974,9 @@
       refreshBtn.addEventListener('click', function() {
         refreshBtn.classList.add('loading');
         refreshBtn.disabled = true;
-        loadMap().then(function() {
+        loadFreshPylonMap().then(function(data) { if (data) onMapData(data); }).catch(function(err) {
+          showMsg((err && err.message) || 'Karte konnte nicht neu geladen werden', true);
+        }).finally(function() {
           refreshBtn.classList.remove('loading');
           refreshBtn.disabled = false;
         });
@@ -899,11 +1985,20 @@
       var _consecutiveErrors = 0;
       var _hiddenAt = 0;
 
+      var _mapTimer = null;
+      function scheduleMap(delay) {
+        clearTimeout(_mapTimer);
+        _mapTimer = setTimeout(function tick() {
+          if (document.visibilityState !== 'hidden') {
+            loadMap().catch(function() {}).finally(function() { scheduleMap(mapPollDelay()); });
+            return;
+          }
+          scheduleMap(mapPollDelay());
+        }, delay);
+      }
       function start() {
         loadMap();
-        setInterval(function() {
-          loadMap().catch(function() {});
-        }, 5000);
+        scheduleMap(mapPollDelay());
       }
 
       // Reload only after the widget has been hidden for > 5 minutes — enough
@@ -913,6 +2008,8 @@
           _hiddenAt = Date.now();
         } else if (_hiddenAt && Date.now() - _hiddenAt > 300000) {
           window.location.reload();
+        } else {
+          scheduleMap(250);
         }
       });
 
@@ -942,7 +2039,7 @@
 
       try { Homey.on('settings', applySettings); } catch (e) {}
       loadSettings();
-      setInterval(loadSettings, 5000);
+      setInterval(function(){ if (document.visibilityState !== 'hidden') loadSettings(); }, 30000);
 
       Homey.ready();
     }

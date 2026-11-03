@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.mova-dreame.mower",
-  "version": "1.1.43",
+  "version": "1.2.0",
   "compatibility": ">=12.3.0",
   "sdk": 3,
   "name": {
@@ -9,8 +9,8 @@
     "de": "MOVA & Dreame Mähroboter"
   },
   "description": {
-    "en": "Control, automate and monitor your robotic lawn mower from Homey",
-    "de": "Mähroboter steuern, überwachen und automatisieren – direkt in Homey"
+    "en": "Control and monitor compatible MOVA and Dreame mowers with Homey (independent community project).",
+    "de": "Kompatible MOVA-/Dreame-Mäher mit Homey steuern und überwachen (unabhängiges Community-Projekt)."
   },
   "brandColor": "#000000",
   "category": [
@@ -43,6 +43,54 @@
     }
   },
   "changelog": {
+    "1.2.0": {
+      "en": "A2 CORE: native no-go zones with time- and mission-based rules, also without Garage Mode; convert detected obstacles to native zones and verify map changes. P1–P5 maintenance points with guided learning and optional garage rotation, safer manufacturer-app departures/returns, supervised recovery, and improved maps, widgets and bilingual messages. Existing settings and flows are preserved where supported. Based on upstream 1.1.43; no camera or video components.",
+      "de": "A2 CORE: Native Sperrzonen mit Zeit- und Fahrphasenregeln auch ohne Garagenmodus; erkannte Hindernisse als echte Sperrzonen übernehmen und Kartenänderungen bestätigen. Wartungspunkte P1–P5 mit geführter Anlernung und optionaler Garagenrotation, sicherere Aus- und Rückfahrten über die Original-App, beaufsichtigte Wiederherstellung sowie verbesserte Karten, Widgets und Meldungen. Bestehende Einstellungen und Flows bleiben soweit unterstützt erhalten. Auf Basis von Andis 1.1.43; ohne Kamera/Video."
+    },
+    "1.1.43": {
+      "en": "Changing cutting height, efficiency mode or edge/obstacle settings now reads the settings from the mower first and changes only the requested value. Previously the app rebuilt the full settings list from cloud data, which could reset other settings such as the mowing direction and dropped fields on newer firmware. Mowers that do not support the read keep working as before. New token \"What to do\" on \"Mower error occurred\" with a short hint for common faults. Map widget: a widget pointing to a removed mower no longer shows or edits another mower. History widget: the dashboard now scrolls over the widget on phones.",
+      "de": "Beim Ändern von Schnitthöhe, Effizienzmodus oder Rand-/Hindernis-Einstellungen liest die App die Einstellungen jetzt zuerst vom Mäher und ändert nur den gewünschten Wert. Bisher wurde die ganze Einstellungsliste aus Cloud-Daten nachgebaut, was andere Einstellungen wie die Mährichtung zurücksetzen konnte und bei neuerer Firmware Felder abschnitt. Mäher, die das Lesen nicht unterstützen, funktionieren wie bisher. Neues Token „Was tun“ bei „Mähroboter Fehler aufgetreten“ mit einem kurzen Hinweis für häufige Fehler. Karten-Widget: Ein Widget, das auf einen entfernten Mäher zeigt, zeigt oder bearbeitet keinen anderen Mäher mehr. Verlaufs-Widget: Auf dem Handy lässt sich das Dashboard über dem Widget wieder scrollen."
+    },
+    "1.1.42": {
+      "en": "New Flow trigger \"Mowing interrupted\" with the reason as tokens (type: rain, frost, do_not_disturb or low_battery; text; code). \"Mower returning to dock\" and \"Mower docked at station\" now carry the same tokens (type \"none\" when the run was not interrupted), so Flows can tell a finished run apart from one stopped by the weather. \"Mowing completed\" no longer fires when a run was interrupted, e.g. by rain.",
+      "de": "Neuer Flow-Trigger „Mähen unterbrochen\" mit dem Grund als Tokens (Art: rain, frost, do_not_disturb oder low_battery; Text; Code). „Mäher fährt zur Station zurück\" und „Mähroboter an Ladestation\" enthalten jetzt dieselben Tokens (Art „none\", wenn der Lauf nicht unterbrochen wurde), sodass Flows einen beendeten Lauf von einem wetterbedingten Abbruch unterscheiden können. „Mähen abgeschlossen\" wird bei einer Unterbrechung, etwa durch Regen, nicht mehr ausgelöst."
+    },
+    "1.1.41": {
+      "en": "Fixed the live position feed going silent until the app was restarted: the MQTT broker password is the account access token, which is rotated about every two hours, but a reconnect still replayed the token captured at app start. Any reconnect after a rotation therefore failed to authenticate permanently. Reconnects now always use the current token, a rejected login triggers one immediate token refresh instead of a 40-minute retry ladder, and a healthy live connection is no longer disturbed by a rotation. Garage Mode reliability (community contribution): maintenance-point arrivals are now confirmed by the mower firmware or by stable stationary telemetry after the native command; a missing maintenance point is learned automatically after a confirmed arrival, and confirmed changes made in the official MOVA/Dreame app are synchronized. The departure to the maintenance point follows the same phases as a normal garage start (departure, adjusting, positioning, transit) and the gate can no longer close during any of them. Door sensor: a missed open/close confirmation now falls back to the configured gate runtime instead of blocking, a late sensor contact counts as a valid confirmation, and a movement timeout no longer marks the sensor itself as failed. The danger marker can no longer be captured accidentally at the charging station, and switching Garage Mode off during a maintenance trip no longer leaves the status stuck. New experimental setting: Permanent Slow Motion (native LOW mode all day). Upgrade fix: verified maintenance points stored by previous versions are migrated, so existing installations keep their learned point. The app settings page now shows a loading screen while the device list is fetched, and the installed app is about 9 MB smaller because build-only tooling is no longer shipped.",
+      "de": "Behoben: die Live-Positionsanzeige verstummte bis zum App-Neustart. Das MQTT-Passwort ist das Konto-Zugriffstoken, das etwa alle zwei Stunden erneuert wird — beim Wiederverbinden wurde aber weiterhin das beim App-Start gemerkte Token verwendet. Jeder Verbindungsabbruch nach einer Token-Erneuerung führte daher zu dauerhaftem Anmeldefehler. Neuverbindungen nutzen jetzt immer das aktuelle Token, eine abgelehnte Anmeldung löst eine sofortige Token-Erneuerung statt einer 40-minütigen Wiederholungskette aus, und eine funktionierende Live-Verbindung wird durch eine Token-Erneuerung nicht mehr gestört. Garagenmodus-Zuverlässigkeit (Community-Beitrag): Wartungspunkt-Ankünfte werden jetzt durch die Mäher-Firmware oder durch stabile stationäre Telemetrie nach dem nativen Befehl bestätigt; ein fehlender Wartungspunkt wird nach einer bestätigten Ankunft automatisch gelernt, und bestätigte Änderungen aus der offiziellen MOVA/Dreame-App werden übernommen. Die Ausfahrt zum Wartungspunkt folgt denselben Phasen wie ein normaler Garagenstart (Ausfahrt, Justieren, Positionieren, Fahrt) und das Tor kann während keiner dieser Phasen mehr schließen. Torsensor: eine verpasste Öffnungs-/Schließbestätigung fällt jetzt auf die konfigurierte Torlaufzeit zurück statt zu blockieren, ein verspäteter Sensorkontakt zählt als gültige Bestätigung, und ein Bewegungs-Timeout markiert den Sensor selbst nicht mehr als defekt. Der Gefahren-Marker kann nicht mehr versehentlich an der Ladestation gesetzt werden, und das Ausschalten des Garagenmodus während einer Wartungsfahrt lässt den Status nicht mehr hängen. Neue experimentelle Einstellung: Dauerhafte Langsamfahrt (nativer LOW-Modus ganztägig). Upgrade-Fix: verifizierte Wartungspunkte aus früheren Versionen werden migriert, sodass bestehende Installationen ihren gelernten Punkt behalten. Die App-Einstellungsseite zeigt jetzt einen Ladebildschirm, während die Geräteliste abgerufen wird, und die installierte App ist rund 9 MB kleiner, weil reine Build-Werkzeuge nicht mehr mitgeliefert werden."
+    },
+    "1.1.39": {
+      "en": "Garage Mode reliability improvements (community contribution): maintenance-point arrivals are now confirmed by the mower firmware (status 75) or by stable stationary telemetry after the native command; a missing maintenance point is learned automatically after a confirmed arrival; confirmed point changes made in the official MOVA/Dreame app are synchronized; the departure to the maintenance point follows the same phases as a normal garage start (departure, adjusting, positioning, transit) and the gate can no longer close during any of these phases. Door sensor handling: a missed open/close confirmation now falls back to the configured gate runtime instead of blocking, a late sensor contact counts as valid confirmation, and a movement timeout no longer marks the sensor itself as failed. The danger marker can no longer be captured accidentally at the charging station. New experimental setting: Permanent Slow Motion (native LOW mode all day). Upgrade fix: verified maintenance points stored by previous versions (schema v2) are migrated so existing installations keep their learned point. The app settings page now shows a loading screen while the device list is being fetched.",
+      "de": "Garagenmodus-Zuverlässigkeitsverbesserungen (Community-Beitrag): Wartungspunkt-Ankünfte werden jetzt durch die Mäher-Firmware (Status 75) oder durch stabile stationäre Telemetrie nach dem nativen Befehl bestätigt; ein fehlender Wartungspunkt wird nach einer bestätigten Ankunft automatisch gelernt; bestätigte Punktänderungen aus der offiziellen MOVA/Dreame-App werden synchronisiert; die Ausfahrt zum Wartungspunkt folgt denselben Phasen wie ein normaler Garagenstart (Ausfahrt, Justieren, Positionieren, Fahrt) und das Tor kann während keiner dieser Phasen mehr schließen. Torsensor: eine verpasste Öffnungs-/Schließbestätigung fällt jetzt auf die konfigurierte Torlaufzeit zurück statt zu blockieren, ein verspäteter Sensorkontakt zählt als gültige Bestätigung, und ein Bewegungs-Timeout markiert den Sensor selbst nicht mehr als defekt. Der Gefahren-Marker kann nicht mehr versehentlich an der Ladestation gesetzt werden. Neue experimentelle Einstellung: Dauerhafte Langsamfahrt (nativer LOW-Modus ganztägig). Upgrade-Fix: verifizierte Wartungspunkte aus früheren Versionen (Schema v2) werden migriert, sodass bestehende Installationen ihren gelernten Punkt behalten. Die App-Einstellungsseite zeigt jetzt einen Ladebildschirm, während die Geräteliste abgerufen wird."
+    },
+    "1.1.38": {
+      "en": "Fixed spurious Homey flow-card recreation (flowcardaction.create / flowcardtrigger.create) on every mowing start/stop and on every app restart. Three causes removed: (1) the command buttons no longer write a 'disabled' flag via setCapabilityOptions() on status transitions; (2) the dynamic button labels ('Mowing started', 'Returning', 'Driving to maintenance point') are replaced by static titles — every label change forced Homey to reinitialise all flow cards; (3) after an app restart the first options write per button fired even when nothing had changed — the guard now compares against the options Homey already has persisted before writing. Functional button protection is unchanged (enforced in _commandUnavailableReason). The Pause button still toggles between Pause and Resume. Added missing English translation pair.email_placeholder.",
+      "de": "Unerwünschte Homey-Flow-Karten-Neuinitialisierung (flowcardaction.create / flowcardtrigger.create) bei jedem Mähstart/-stopp und bei jedem App-Neustart behoben. Drei Ursachen beseitigt: (1) die Befehlsschaltflächen schreiben kein 'disabled'-Flag mehr via setCapabilityOptions() bei Statuswechseln; (2) die dynamischen Schaltflächen-Beschriftungen ('Mähen gestartet', 'Rückkehr läuft', 'Wartungspunkt läuft') wurden durch statische Titel ersetzt — jede Beschriftungsänderung zwang Homey, alle Flow-Karten neu zu erstellen; (3) nach einem App-Neustart wurde der erste Options-Schreibvorgang pro Schaltfläche auch ohne Änderung ausgeführt — der Guard vergleicht jetzt zuerst mit den von Homey bereits gespeicherten Optionen. Der funktionale Schutz der Schaltflächen bleibt unverändert (_commandUnavailableReason). Die Pause-Taste wechselt weiterhin zwischen Pause und Fortsetzen. Fehlende englische Übersetzung pair.email_placeholder ergänzt."
+    },
+    "1.1.37": {
+      "en": "Map widget: the Edit button (for repositioning Garage Mode safety markers) is now hidden when Garage Mode is not active.",
+      "de": "Karten-Widget: der Edit-Button (zum Verschieben der Garagenmodus-Sicherheitsmarker) wird jetzt ausgeblendet wenn der Garagenmodus nicht aktiv ist."
+    },
+    "1.1.36": {
+      "en": "Fixed map widget showing a zoomed-in view of the dock/starting position after ~5 minutes: the periodic MAPI refresh (every 5 min) could overwrite the cached map with a zone-less response (wrong index or transient cloud state), causing the widget to zoom into just the robot position. The cache is now protected against zone-less downgrades; the viewBox also falls back to the full boundary whenever no mowing zones are present. Added all missing English translations (settings, status, charging_status, mower_mode, task_status, mower_pattern, mowing_speed, mow_efficiency, and missing pair/error keys). History widget and map widget UI strings are now bilingual (English default, German for de-* browser locale); history widget html lang corrected to en.",
+      "de": "Karten-Widget zeigte nach ~5 Minuten eine reingezoomte Ansicht der Station: die periodische MAPI-Aktualisierung (alle 5 Min.) konnte den Cache mit einer zonenleeren Antwort überschreiben, wodurch das Widget nur noch auf die Roboter-Position zoomte. Der Cache ist jetzt gegen zonenarme Downgrades geschützt; der ViewBox fällt auch dann auf die volle Gartengrenze zurück wenn keine Mähzonen vorhanden sind. Alle fehlenden englischen Übersetzungen ergänzt (settings, status, charging_status, mower_mode, task_status, mower_pattern, mowing_speed, mow_efficiency sowie fehlende pair/error-Schlüssel). UI-Texte im History- und Map-Widget sind jetzt zweisprachig (Englisch als Standard, Deutsch für de-* Browser-Locale); html lang-Attribut im History-Widget auf en korrigiert."
+    },
+    "1.1.35": {
+      "en": "Fixed map widget showing a zoomed-in view of the dock/starting position after ~5 minutes: the periodic MAPI refresh (every 5 min) could overwrite the cached map with a zone-less response (wrong index or transient cloud state), causing the widget to zoom into just the robot position. The cache is now protected against zone-less downgrades; the viewBox also falls back to the full boundary whenever no mowing zones are present. Fixed Homey flow-card recreation loop caused by setCapabilityOptions() calls on every poll. Added all missing English translations (settings, status, charging_status, mower_mode, task_status, mower_pattern, mowing_speed, mow_efficiency, and missing pair/error keys). History widget and map widget UI strings are now bilingual (English default, German for de-* browser locale); history widget html lang corrected to en.",
+      "de": "Karten-Widget zeigte nach ~5 Minuten eine reingezoomte Ansicht der Station: die periodische MAPI-Aktualisierung (alle 5 Min.) konnte den Cache mit einer zonenleeren Antwort überschreiben, wodurch das Widget nur noch auf die Roboter-Position zoomte. Der Cache ist jetzt gegen zonenarme Downgrades geschützt; der ViewBox fällt auch dann auf die volle Gartengrenze zurück wenn keine Mähzonen vorhanden sind. Endlosschleife bei Homey-Flow-Karten durch setCapabilityOptions()-Aufrufe bei jedem Poll behoben. Alle fehlenden englischen Übersetzungen ergänzt (settings, status, charging_status, mower_mode, task_status, mower_pattern, mowing_speed, mow_efficiency sowie fehlende pair/error-Schlüssel). UI-Texte im History- und Map-Widget sind jetzt zweisprachig (Englisch als Standard, Deutsch für de-* Browser-Locale); html lang-Attribut im History-Widget auf en korrigiert."
+    },
+    "1.1.34": {
+      "en": "Map widget reliability improvements: fixed maintenance point marker disappearing when existing stored points used the old key format (backward-compatible isCurrent check). Widget session recovery: page now reloads automatically after being hidden for more than 5 minutes (e.g. phone locked) so the Homey session is refreshed; consecutive API failures also trigger a reload. Fixed widget showing a zoomed-in view on the mower after a Homey app restart: the map API fetch now uses a mutex to prevent concurrent requests from flooding the cloud API; telemetry fallback renders use the full boundary instead of a tight bbox around the mower position; the widget waits up to 2 minutes for real map data before falling back to the telemetry view.",
+      "de": "Map-Widget Zuverlässigkeitsverbesserungen: Wartungspunkt-Marker verschwand wenn gespeicherte Punkte das alte Schlüsselformat verwendeten (abwärtskompatible isCurrent-Prüfung). Widget-Session-Wiederherstellung: Seite lädt automatisch neu wenn sie länger als 5 Minuten verdeckt war (z.B. Telefon gesperrt), sodass die Homey-Session erneuert wird; aufeinanderfolgende API-Fehler lösen ebenfalls einen Neustart aus. Behoben: Widget zeigte nach Homey-App-Neustart eine auf den Mäher gezoomte Ansicht — der Karten-API-Abruf verwendet jetzt einen Mutex um gleichzeitige Anfragen zu verhindern; Telemetrie-Fallback-Ansichten verwenden die volle Kartengrenze statt einer engen Bbox um die Mäherposition; das Widget wartet bis zu 2 Minuten auf echte Kartendaten bevor es auf die Telemetrie-Ansicht zurückfällt."
+    },
+    "1.1.33": {
+      "en": "Fixed widget map not loading after app restart when the mower is mowing but MAP chunks have not yet arrived in the first poll. Three safety improvements from PR #7: maintenance point marker no longer disappears after editing the map in the MOVA app (map key now based on map index, not md5sum); gate-motion interlock now counts only independent live-position updates (prevents a cached position from triggering a false emergency); opening an emergency reversal now requires two independent position confirmations instead of one.",
+      "de": "Karte im Widget wird nach App-Neustart nicht mehr geladen wenn der Mäher mäht aber die Kartendaten noch nicht im ersten Poll ankamen — behoben. Drei Sicherheitsverbesserungen aus PR #7: Wartungspunkt-Marker verschwindet nicht mehr nach einer Kartenbearbeitung in der MOVA-App (Karten-Schlüssel basiert jetzt auf dem Karten-Index statt dem md5sum); Gate-Motion-Interlock zählt nur noch wirklich unabhängige Positions-Updates (verhindert dass ein gecachter Wert einen falschen Emergency auslöst); Notfall-Umkehr beim Öffnen erfordert jetzt zwei unabhängige Positionsbestätigungen statt einer."
+    },
+    "1.1.32": {
+      "en": "Code cleanup and robustness fixes in GarageSafetyEngine: removed duplicate constructor field assignments, initialised internal maps and timers eagerly, degraded-dock watchdog timer is now cancellable, duplicate state-reset blocks removed. Garage marker buttons (Save danger area, Save safety lines A/B) are now reliably stripped from existing installations when Garage Mode is disabled — they are removed on every app start via the standard capability cleanup and re-added only when Garage Mode is enabled.",
+      "de": "Code-Bereinigung und Robustheitsfixes in der GarageSafetyEngine: doppelte Konstruktor-Feldzuweisungen entfernt, interne Maps und Timer werden jetzt direkt initialisiert, der Degraded-Dock-Watchdog-Timer ist jetzt abbrechbar, doppelte Zustandsreset-Blöcke entfernt. Garage-Marker-Schaltflächen (Gefahrenbereich, Sicherheitslinie A/B speichern) werden bei bestehenden Installationen jetzt zuverlässig entfernt wenn der Garagenmodus deaktiviert ist — sie werden beim App-Start bereinigt und nur wieder hinzugefügt wenn der Garagenmodus aktiviert ist."
+    },
     "1.1.31": {
       "en": "Garage marker buttons (Save danger area centre, Save safety line A/B) are now hidden on the device card when Garage Mode is disabled — they appear automatically when Garage Mode is enabled.",
       "de": "Garage-Marker-Schaltflächen (Gefahrenbereich-Mitte speichern, Sicherheitslinie A/B speichern) werden auf der Gerätekarte ausgeblendet wenn der Garagenmodus deaktiviert ist — sie erscheinen automatisch wenn der Garagenmodus aktiviert wird."
@@ -72,8 +120,8 @@
       "de": "Garagenmodus-Capabilities (Schaltflächen, Torstatus, Sicherheitsstatus, Sensorstatus) werden auf der Gerätekarte ausgeblendet wenn der Garagenmodus in den Einstellungen deaktiviert ist — sie erscheinen automatisch wenn der Garagenmodus aktiviert wird."
     },
     "1.1.24": {
-      "en": "Fixed 'Mowing completed' Flow trigger firing twice on mowers with automatic edge-mowing: the trigger no longer fires when the mower briefly returns between the main area and edge phase — it now waits until the mower reaches a true resting state (docked / charging / idle).",
-      "de": "Flow-Auslöser 'Mähen abgeschlossen' feuerte zweimal bei Mähern mit automatischer Kantenmahd: Der Auslöser feuert nicht mehr wenn der Mäher zwischen Haupt- und Kantenphase kurz zurückfährt — er wartet nun bis der Mäher tatsächlich eine Ruheposition erreicht (angedockt / lädt / bereit)."
+      "en": "Added optional Garage Mode with safe automatic gate control, configurable A-B safety line, danger and caution areas, maintenance waypoint routing, editable live-map overlays, robust pause/resume handling, safe external returns and recovery after interrupted starts. Garage Mode is disabled by default and does not affect standard mower behaviour unless configured. Fixed 'Mowing completed' Flow trigger firing twice on mowers with automatic edge-mowing.",
+      "de": "Optionalen Garagenmodus hinzugefügt mit sicherer Torsteuerung, A-B-Sicherheitslinie, Gefahrenbereich, Wartungspunkt-Routing, bearbeitbaren Karten-Overlays und stabiler Pause-/Fortsetzen-Logik. Standardmäßig deaktiviert. Flow-Auslöser 'Mähen abgeschlossen' feuerte zweimal bei Mähern mit automatischer Kantenmahd — behoben."
     },
     "1.1.23": {
       "en": "Updated App Store description. Replaced widget preview images with simplified, guideline-compliant versions (no text, transparent background, distinct designs for Map and History widgets).",
@@ -413,6 +461,13 @@
       "Smart Garden",
       "Automatisierung",
       "Rasenmäh-Roboter"
+    ]
+  },
+  "contributors": {
+    "developers": [
+      {
+        "name": "EvotecIT"
+      }
     ]
   },
   "flow": {
@@ -815,7 +870,8 @@
             "filter": "driver_id=mower"
           }
         ],
-        "id": "garage_emergency"
+        "id": "garage_emergency",
+        "deprecated": true
       },
       {
         "title": {
@@ -888,6 +944,46 @@
           }
         ],
         "id": "garage_maintenance_point_reached"
+      },
+      {
+        "title": {
+          "en": "Mower / garage notice",
+          "de": "Mäher-/Garagen-Hinweis"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "tokens": [
+          {
+            "name": "kind",
+            "type": "string",
+            "title": {
+              "en": "Type",
+              "de": "Typ"
+            }
+          },
+          {
+            "name": "message",
+            "type": "string",
+            "title": {
+              "en": "Message",
+              "de": "Meldung"
+            }
+          },
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "id": "garage_mower_notice"
       },
       {
         "title": {
@@ -1023,7 +1119,8 @@
             "filter": "driver_id=mower"
           }
         ],
-        "id": "garage_safety_block"
+        "id": "garage_safety_block",
+        "deprecated": true
       },
       {
         "title": {
@@ -1099,6 +1196,38 @@
       },
       {
         "title": {
+          "de": "Garagentor stoppen angefordert",
+          "en": "Garage door stop requested"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "titleFormatted": {
+          "de": "Garagentor stoppen angefordert",
+          "en": "Garage door stop requested"
+        },
+        "hint": {
+          "de": "Mit der echten STOP-Aktion des Torantriebs verknüpfen. Ein Auf/Zu-Umschalter ist keine verlässliche STOP-Aktion.",
+          "en": "Connect to the actual gate motor STOP action. A toggle is not a reliable stop action."
+        },
+        "id": "garage_stop_requested"
+      },
+      {
+        "title": {
           "en": "Mower docked at station",
           "de": "Mähroboter an Ladestation"
         },
@@ -1109,6 +1238,7 @@
             "filter": "driver_id=mower"
           }
         ],
+        "id": "mower_docked",
         "tokens": [
           {
             "name": "reason_type",
@@ -1143,8 +1273,7 @@
             },
             "example": 57
           }
-        ],
-        "id": "mower_docked"
+        ]
       },
       {
         "title": {
@@ -1198,6 +1327,7 @@
             "filter": "driver_id=mower"
           }
         ],
+        "id": "mower_returning",
         "tokens": [
           {
             "name": "reason_type",
@@ -1232,8 +1362,7 @@
             },
             "example": 57
           }
-        ],
-        "id": "mower_returning"
+        ]
       },
       {
         "title": {
@@ -1272,6 +1401,20 @@
           }
         ],
         "id": "mowing_completed"
+      },
+      {
+        "title": {
+          "en": "Mowing started",
+          "de": "Mähen gestartet"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "mowing_started"
       },
       {
         "title": {
@@ -1325,20 +1468,6 @@
           }
         ],
         "id": "mowing_interrupted"
-      },
-      {
-        "title": {
-          "en": "Mowing started",
-          "de": "Mähen gestartet"
-        },
-        "args": [
-          {
-            "name": "device",
-            "type": "device",
-            "filter": "driver_id=mower"
-          }
-        ],
-        "id": "mowing_started"
       }
     ],
     "conditions": [
@@ -1741,18 +1870,39 @@
         "id": "garage_set_sensor_battery"
       },
       {
+        "id": "go_to_maintenance_point",
         "title": {
           "en": "Go to maintenance point",
-          "de": "Zum Wartungspunkt fahren"
+          "de": "Wartungspunkt anfahren"
+        },
+        "titleFormatted": {
+          "en": "Go to maintenance point [[maintenance_point]]",
+          "de": "Wartungspunkt [[maintenance_point]] anfahren"
         },
         "args": [
           {
             "name": "device",
             "type": "device",
             "filter": "driver_id=mower"
+          },
+          {
+            "name": "maintenance_point",
+            "type": "autocomplete",
+            "required": false,
+            "title": {
+              "en": "Maintenance point (optional)",
+              "de": "Wartungspunkt (optional)"
+            },
+            "placeholder": {
+              "en": "Primary maintenance point (default)",
+              "de": "Hauptwartungspunkt (Standard)"
+            }
           }
         ],
-        "id": "go_to_maintenance_point"
+        "hint": {
+          "de": "Ohne Auswahl fährt der Flow immer zum aktuellen Hauptwartungspunkt. Eine feste Auswahl P1–P5 behält ihre Punktnummer bei Namens- und Hauptpunktwechsel. Die Option „Rotation“ erscheint nur, wenn Garagenmodus und automatischer Wartungspunktwechsel aktiv sind. Wird die Rotation später deaktiviert, stoppt der Flow mit einer Meldung statt einen anderen Punkt anzufahren.",
+          "en": "With no selection, the Flow always goes to the currently configured primary maintenance point. A fixed P1–P5 choice retains its point number after renaming and primary changes. Rotation appears only while Garage Mode and automatic point rotation are enabled. If rotation is later disabled, the Flow reports an error rather than driving to another point."
+        }
       },
       {
         "title": {
@@ -2277,6 +2427,7 @@
         "cmd_stop",
         "cmd_dock",
         "cmd_maintenance_point",
+        "cmd_maintenance_point_1",
         "cmd_refresh",
         "mower_status",
         "mow_map",
@@ -2382,6 +2533,18 @@
       "repair": [
         {
           "id": "repair"
+        },
+        {
+          "id": "map_editor"
+        },
+        {
+          "id": "garage_settings"
+        },
+        {
+          "id": "maintenance_settings"
+        },
+        {
+          "id": "reauth"
         }
       ],
       "settings": [
@@ -3368,287 +3531,32 @@
                 "en": "Enable garage mode",
                 "de": "Garagenmodus aktivieren"
               },
-              "value": false
-            },
+              "value": false,
+              "hint": {
+                "en": "Enable or disable Garage Mode. Additional garage settings (door, sensor, safety line, danger area and map overlays) are under Mower device → Repair (Manage mower) → Garage Mode. Maintenance points have their own menu there and remain available even with Garage Mode off.",
+                "de": "Aktiviert oder deaktiviert den Garagenmodus. Weitere Garageneinstellungen (Tor, Sensor, Sicherheitslinie, Gefahrenbereich und Kartenanzeige) findest du unter Mähergerät → Reparieren (Mäher verwalten) → Garagenmodus. Wartungspunkte haben dort ein eigenes Menü und bleiben auch ohne Garagenmodus verfügbar."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Mowing map",
+            "de": "Mähkarte"
+          },
+          "children": [
             {
-              "id": "garage_sensor_enabled",
+              "id": "map_safe_mowing",
               "type": "checkbox",
               "label": {
-                "en": "Use garage door sensor",
-                "de": "Torsensor verwenden"
-              },
-              "value": false
-            },
-            {
-              "id": "garage_sensor_min_battery",
-              "type": "number",
-              "label": {
-                "en": "Minimum sensor battery (%)",
-                "de": "Mindestladung Torsensor (%)"
-              },
-              "value": 15,
-              "min": 0,
-              "max": 100,
-              "step": 1
-            },
-            {
-              "id": "garage_sensor_watchdog_minutes",
-              "type": "number",
-              "label": {
-                "en": "Sensor offline timeout (min)",
-                "de": "Sensor-Offline-Zeit (min)"
-              },
-              "value": 30,
-              "min": 1,
-              "max": 240,
-              "step": 1
-            },
-            {
-              "id": "garage_open_stabilize_seconds",
-              "type": "number",
-              "label": {
-                "en": "Open stabilisation time (s)",
-                "de": "Tor-offen-Stabilisierungszeit (s)"
-              },
-              "value": 10,
-              "min": 0,
-              "max": 60,
-              "step": 1
-            },
-            {
-              "id": "garage_open_duration_seconds",
-              "type": "number",
-              "label": {
-                "en": "Door opening time without sensor (s)",
-                "de": "Tor-Öffnungsdauer ohne Sensor (s)"
-              },
-              "value": 10,
-              "min": 0,
-              "max": 120,
-              "step": 1,
-              "hint": {
-                "en": "Used only when the door sensor is disabled or unavailable.",
-                "de": "Wird nur genutzt, wenn der Torsensor deaktiviert oder nicht verfügbar ist."
-              }
-            },
-            {
-              "id": "garage_close_duration_seconds",
-              "type": "number",
-              "label": {
-                "en": "Door closing time without sensor (s)",
-                "de": "Tor-Schließdauer ohne Sensor (s)"
-              },
-              "value": 10,
-              "min": 0,
-              "max": 120,
-              "step": 1,
-              "hint": {
-                "en": "Used only when the door sensor is disabled or unavailable.",
-                "de": "Wird nur genutzt, wenn der Torsensor deaktiviert oder nicht verfügbar ist."
-              }
-            },
-            {
-              "id": "garage_speed_source",
-              "type": "dropdown",
-              "label": {
-                "en": "Speed source for garage ETA",
-                "de": "Geschwindigkeitsquelle für Garagen-ETA"
-              },
-              "value": "auto",
-              "values": [
-                {
-                  "id": "auto",
-                  "label": {
-                    "en": "Automatic: live → measured → model → user",
-                    "de": "Automatisch: Live → gemessen → Modell → Benutzer"
-                  }
-                },
-                {
-                  "id": "live",
-                  "label": {
-                    "en": "Prefer live mower speed",
-                    "de": "Live-Geschwindigkeit bevorzugen"
-                  }
-                },
-                {
-                  "id": "measured",
-                  "label": {
-                    "en": "Prefer measured position average",
-                    "de": "Gemessenen Positionsdurchschnitt bevorzugen"
-                  }
-                },
-                {
-                  "id": "model",
-                  "label": {
-                    "en": "Prefer model default",
-                    "de": "Modellstandard bevorzugen"
-                  }
-                },
-                {
-                  "id": "user",
-                  "label": {
-                    "en": "Use user setting only",
-                    "de": "Nur Benutzereinstellung verwenden"
-                  }
-                }
-              ],
-              "hint": {
-                "en": "Used only for garage return ETA and half-map decision logging. Live speed is used automatically if the mower exposes it.",
-                "de": "Nur für Rückkehr-ETA und Halb-Karten-Entscheidungen. Live-Geschwindigkeit wird automatisch genutzt, falls der Mäher sie liefert."
-              }
-            },
-            {
-              "id": "garage_mower_speed_value",
-              "type": "number",
-              "label": {
-                "en": "Fallback/custom mower speed",
-                "de": "Fallback-/benutzerdefinierte Mähergeschwindigkeit"
-              },
-              "value": 1.8,
-              "min": 0,
-              "max": 10000,
-              "step": 0.1,
-              "hint": {
-                "en": "Used only when no higher-priority speed source is available or when speed source is set to user only. Internally converted to m/s.",
-                "de": "Wird nur genutzt, wenn keine höher priorisierte Quelle verfügbar ist oder die Quelle auf Nur Benutzer steht. Intern wird in m/s umgerechnet."
-              }
-            },
-            {
-              "id": "garage_speed_unit",
-              "type": "dropdown",
-              "label": {
-                "en": "Speed unit",
-                "de": "Geschwindigkeitseinheit"
-              },
-              "value": "kmh",
-              "values": [
-                {
-                  "id": "kmh",
-                  "label": {
-                    "en": "km/h",
-                    "de": "km/h"
-                  }
-                },
-                {
-                  "id": "mph",
-                  "label": {
-                    "en": "mph",
-                    "de": "mph"
-                  }
-                },
-                {
-                  "id": "mmps",
-                  "label": {
-                    "en": "mm/s",
-                    "de": "mm/s"
-                  }
-                },
-                {
-                  "id": "mps",
-                  "label": {
-                    "en": "m/s",
-                    "de": "m/s"
-                  }
-                }
-              ]
-            },
-            {
-              "id": "garage_danger_radius_mm",
-              "type": "number",
-              "label": {
-                "en": "Danger area radius (mm)",
-                "de": "Gefahrenbereich-Radius (mm)"
-              },
-              "value": 1200,
-              "min": 100,
-              "max": 10000,
-              "step": 100
-            },
-            {
-              "id": "garage_danger_hysteresis_mm",
-              "type": "number",
-              "label": {
-                "en": "Danger area hysteresis (mm)",
-                "de": "Gefahrenbereich-Hysterese (mm)"
-              },
-              "value": 250,
-              "min": 0,
-              "max": 2000,
-              "step": 50,
-              "hint": {
-                "en": "Prevents inside/outside flicker at the edge of the danger circle.",
-                "de": "Verhindert Flackern am Rand des Gefahrenbereich-Kreises."
-              }
-            },
-            {
-              "id": "garage_line_hysteresis_mm",
-              "type": "number",
-              "label": {
-                "en": "Safety line hysteresis (mm)",
-                "de": "Sicherheitslinien-Hysterese (mm)"
-              },
-              "value": 250,
-              "min": 0,
-              "max": 2000,
-              "step": 50,
-              "hint": {
-                "en": "Line side only changes after the mower is clearly on the other side.",
-                "de": "Die Linienseite wechselt erst, wenn der Mäher klar auf der anderen Seite ist."
-              }
-            },
-            {
-              "id": "garage_line_segment_margin_mm",
-              "type": "number",
-              "label": {
-                "en": "Safety line segment margin (mm)",
-                "de": "Sicherheitslinien-Karenz A/B (mm)"
-              },
-              "value": 500,
-              "min": 0,
-              "max": 3000,
-              "step": 50,
-              "hint": {
-                "en": "Only crossings on the A-B line segment plus this margin are accepted.",
-                "de": "Nur Querungen auf dem Abschnitt A–B plus dieser Karenz werden ausgewertet."
-              }
-            },
-            {
-              "id": "garage_marker_diagnosis",
-              "type": "label",
-              "label": {
-                "en": "Marker diagnosis",
-                "de": "Marker-Diagnose"
-              },
-              "value": "Noch nicht geprüft",
-              "hint": {
-                "en": "Shows which garage markers are set and whether the safety line is plausible.",
-                "de": "Zeigt, welche Garagenmarker gesetzt sind und ob die Sicherheitslinie plausibel ist."
-              }
-            },
-            {
-              "id": "garage_logging_enabled",
-              "type": "checkbox",
-              "label": {
-                "en": "Enable garage logging",
-                "de": "Garagen-Logging aktivieren"
+                "en": "Safe mowing: allow pylon exclusion zones",
+                "de": "Sicher mähen: Sperrzonen an Pylonen zulassen"
               },
               "value": false,
               "hint": {
-                "en": "Shows normal, user-relevant garage events in the Homey timeline.",
-                "de": "Zeigt normale, benutzerrelevante Garagenereignisse in der Homey-Zeitleiste."
-              }
-            },
-            {
-              "id": "garage_debug_verbose",
-              "type": "checkbox",
-              "label": {
-                "en": "Enable debug logging",
-                "de": "Debug-Logging aktivieren"
-              },
-              "value": false,
-              "hint": {
-                "en": "Adds detailed internal garage states and diagnostic decisions to the timeline. Requires garage logging to be enabled.",
-                "de": "Ergänzt detaillierte interne Garagenzustände und Diagnoseentscheidungen in der Zeitleiste. Garagen-Logging muss dafür aktiviert sein."
+                "en": "Enable native square exclusion zones around detected pylons in the map editor. Existing manufacturer zones remain separate.",
+                "de": "Quadratische Sperrzonen um erkannte Pylonen einzeln im Karteneditor anlegen. Vorhandene Sperrzonen der Original-App bleiben getrennt."
               }
             },
             {
@@ -3664,10 +3572,14 @@
               "id": "map_show_direction",
               "type": "checkbox",
               "label": {
-                "en": "Show mower direction on map",
-                "de": "Fahrtrichtung auf Karte anzeigen"
+                "en": "Show alternating mowing pattern on map",
+                "de": "Mähmuster hell/dunkel auf Karte anzeigen"
               },
-              "value": true
+              "value": true,
+              "hint": {
+                "en": "Shows recorded mowing passes light/dark by travel direction. The complete driven route remains until the next mowing job.",
+                "de": "Zeigt aufgezeichnete Mähbahnen je Fahrtrichtung hell/dunkel. Die vollständige gefahrene Route bleibt bis zum nächsten Mähvorgang erhalten."
+              }
             },
             {
               "id": "map_show_route",
@@ -3677,57 +3589,6 @@
                 "de": "Gefahrene Route auf Karte anzeigen"
               },
               "value": true
-            },
-            {
-              "id": "map_show_maintenance_point",
-              "type": "checkbox",
-              "label": {
-                "en": "Show maintenance point on map",
-                "de": "Wartungspunkt auf Karte anzeigen"
-              },
-              "value": true
-            },
-            {
-              "id": "garage_map_overlay_enabled",
-              "type": "checkbox",
-              "label": {
-                "en": "Show garage overlay on map",
-                "de": "Garagen-Overlay auf Karte anzeigen"
-              },
-              "value": false,
-              "hint": {
-                "en": "Draws safety line, danger area, maintenance point and caution zone on the map widget. Original map remains unchanged when disabled.",
-                "de": "Zeichnet Sicherheitslinie, Gefahrenbereich, Wartungspunkt und Vorsichtszone im Karten-Widget. Bei deaktivierter Option bleibt die Karte unverändert."
-              }
-            },
-            {
-              "id": "garage_caution_radius_mm",
-              "type": "number",
-              "label": {
-                "en": "Caution zone radius (mm)",
-                "de": "Vorsichtsbereich-Radius (mm)"
-              },
-              "value": 1800,
-              "min": 0,
-              "max": 10000,
-              "step": 100,
-              "hint": {
-                "en": "Additional visual/diagnostic slow-care area around the garage. 0 disables it.",
-                "de": "Zusätzlicher visueller/diagnostischer Vorsichtsbereich um die Garage. 0 deaktiviert ihn."
-              }
-            },
-            {
-              "id": "garage_reset_markers",
-              "type": "checkbox",
-              "label": {
-                "en": "Reset garage markers",
-                "de": "Garagenmarker zurücksetzen"
-              },
-              "value": false,
-              "hint": {
-                "en": "After saving this setting, the marker buttons become visible again and this toggle resets itself.",
-                "de": "Nach dem Speichern werden die Marker-Buttons wieder sichtbar und dieser Schalter springt zurück."
-              }
             }
           ]
         }
@@ -3832,10 +3693,14 @@
           "id": "show_direction",
           "type": "checkbox",
           "label": {
-            "en": "Show mower direction",
-            "de": "Fahrtrichtung anzeigen"
+            "en": "Show alternating mowing pattern",
+            "de": "Mähmuster hell/dunkel anzeigen"
           },
-          "value": true
+          "value": true,
+          "hint": {
+            "en": "Shows the recorded mowing lanes as a persistent light/dark pattern: one travel direction bright, the opposite direction darker. Turns stay neutral. No instantaneous heading arrow is shown.",
+            "de": "Zeigt die aufgezeichneten Mähbahnen dauerhaft als Hell/Dunkel-Muster: eine Fahrtrichtung hell, die Gegenrichtung dunkler. Wendungen bleiben neutral. Es wird kein momentaner Richtungspfeil angezeigt."
+          }
         },
         {
           "id": "show_maintenance_point",
@@ -3844,7 +3709,11 @@
             "en": "Show maintenance point",
             "de": "Wartungspunkt anzeigen"
           },
-          "value": true
+          "value": true,
+          "hint": {
+            "en": "Shows the mower maintenance point independently of Garage Mode.",
+            "de": "Zeigt den Wartungspunkt des Mähers unabhängig vom Garagenmodus."
+          }
         },
         {
           "id": "show_garage_overlay",
@@ -3855,8 +3724,8 @@
           },
           "value": true,
           "hint": {
-            "en": "Shows all garage-specific elements together. Only effective when garage mode is enabled.",
-            "de": "Zeigt alle garagenspezifischen Elemente gemeinsam. Nur bei aktiviertem Garagenmodus wirksam."
+            "en": "Shows the safety line, danger/caution areas, garage/dock marker and related garage labels. Only effective while Garage Mode is enabled.",
+            "de": "Zeigt Sicherheitslinie, Gefahren-/Vorsichtsbereiche, Garage-/Dock-Markierung und zugehörige Garagenbeschriftungen. Nur bei aktiviertem Garagenmodus wirksam."
           }
         }
       ],
@@ -3868,9 +3737,60 @@
         "updateGarageMarkers": {
           "method": "PUT",
           "path": "/garage-markers"
+        },
+        "updateMaintenancePointName": {
+          "method": "PUT",
+          "path": "/maintenance-point-name"
+        },
+        "updateObstacleRule": {
+          "method": "PUT",
+          "path": "/obstacle-rule"
         }
       },
       "id": "map"
+    },
+    "overview": {
+      "name": {
+        "de": "Mäher Totalübersicht",
+        "en": "Mower Overview"
+      },
+      "height": 980,
+      "devices": {
+        "type": "app",
+        "singular": true
+      },
+      "settings": [],
+      "api": {
+        "getOverview": {
+          "method": "GET",
+          "path": "/overview"
+        },
+        "getMapData": {
+          "method": "GET",
+          "path": "/"
+        },
+        "updateGarageMarkers": {
+          "method": "PUT",
+          "path": "/garage-markers"
+        },
+        "updateMaintenancePointName": {
+          "method": "PUT",
+          "path": "/maintenance-point-name"
+        },
+        "updateObstacleRule": {
+          "method": "PUT",
+          "path": "/obstacle-rule"
+        },
+        "command": {
+          "method": "POST",
+          "path": "/command"
+        },
+        "getMapSnapshot": {
+          "method": "GET",
+          "path": "/map-snapshot"
+        }
+      },
+      "id": "overview"
     }
   },
   "capabilities": {
@@ -4120,6 +4040,81 @@
       "hint": {
         "en": "Sends the mower to its configured maintenance point.",
         "de": "Fährt den Mähroboter zu seinem konfigurierten Wartungspunkt."
+      }
+    },
+    "cmd_maintenance_point_1": {
+      "type": "boolean",
+      "title": {
+        "en": "Go to Maintenance Point 1",
+        "de": "Wartungspunkt 1 anfahren"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_maintenance_point_1.svg",
+      "hint": {
+        "en": "Goes to native maintenance point P1 when it is not the current main point.",
+        "de": "Fährt zum nativen Wartungspunkt P1, wenn dieser nicht der aktuelle Hauptpunkt ist."
+      }
+    },
+    "cmd_maintenance_point_2": {
+      "type": "boolean",
+      "title": {
+        "en": "Go to Maintenance Point 2",
+        "de": "Wartungspunkt 2 anfahren"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_maintenance_point_2.svg",
+      "hint": {
+        "en": "Sends the mower to native maintenance point 2 configured in the MOVA/Dreame app. This point is not used for automatic garage returns.",
+        "de": "Fährt den Mäher zum nativen Wartungspunkt 2 aus der MOVA/Dreame-App. Dieser Punkt wird nicht für automatische Garagenrückfahrten verwendet."
+      }
+    },
+    "cmd_maintenance_point_3": {
+      "type": "boolean",
+      "title": {
+        "en": "Go to Maintenance Point 3",
+        "de": "Wartungspunkt 3 anfahren"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_maintenance_point_3.svg",
+      "hint": {
+        "en": "Sends the mower to native maintenance point 3 configured in the MOVA/Dreame app. This point is not used for automatic garage returns.",
+        "de": "Fährt den Mäher zum nativen Wartungspunkt 3 aus der MOVA/Dreame-App. Dieser Punkt wird nicht für automatische Garagenrückfahrten verwendet."
+      }
+    },
+    "cmd_maintenance_point_4": {
+      "type": "boolean",
+      "title": {
+        "en": "Go to Maintenance Point 4",
+        "de": "Wartungspunkt 4 anfahren"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_maintenance_point_4.svg",
+      "hint": {
+        "en": "Sends the mower to native maintenance point 4 configured in the MOVA/Dreame app. This point is not used for automatic garage returns.",
+        "de": "Fährt den Mäher zum nativen Wartungspunkt 4 aus der MOVA/Dreame-App. Dieser Punkt wird nicht für automatische Garagenrückfahrten verwendet."
+      }
+    },
+    "cmd_maintenance_point_5": {
+      "type": "boolean",
+      "title": {
+        "en": "Go to Maintenance Point 5",
+        "de": "Wartungspunkt 5 anfahren"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_maintenance_point_5.svg",
+      "hint": {
+        "en": "Sends the mower to native maintenance point 5 configured in the MOVA/Dreame app. This point is not used for automatic garage returns.",
+        "de": "Fährt den Mäher zum nativen Wartungspunkt 5 aus der MOVA/Dreame-App. Dieser Punkt wird nicht für automatische Garagenrückfahrten verwendet."
       }
     },
     "cmd_pause": {
@@ -4636,6 +4631,17 @@
       "insights": false,
       "uiComponent": "sensor"
     },
+    "lawn_care_mode": {
+      "type": "boolean",
+      "title": {
+        "en": "Lawn Care Turning",
+        "de": "Rasenpflege"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "toggle",
+      "insights": false
+    },
     "measure_duration": {
       "type": "number",
       "title": {
@@ -4898,6 +4904,27 @@
           }
         },
         {
+          "id": "garage_zone_removing",
+          "title": {
+            "en": "Hiding no-go zones",
+            "de": "Sperrzonen ausblenden"
+          }
+        },
+        {
+          "id": "garage_zone_restoring",
+          "title": {
+            "en": "Restoring no-go zones",
+            "de": "Sperrzonen einblenden"
+          }
+        },
+        {
+          "id": "garage_start_pending",
+          "title": {
+            "en": "Starting mower",
+            "de": "Startbefehl wird ausgeführt"
+          }
+        },
+        {
           "id": "garage_exiting",
           "title": {
             "en": "Exiting garage",
@@ -4979,6 +5006,33 @@
       "max": 100,
       "step": 1,
       "icon": "/assets/capabilities/mower_volume.svg"
+    },
+    "turning_method": {
+      "type": "enum",
+      "title": {
+        "en": "Turning Mode",
+        "de": "Wendemodus"
+      },
+      "values": [
+        {
+          "id": "efficient",
+          "title": {
+            "en": "Efficient",
+            "de": "Effizient"
+          }
+        },
+        {
+          "id": "lawn_care",
+          "title": {
+            "en": "Lawn Care",
+            "de": "Rasenpflege"
+          }
+        }
+      ],
+      "getable": true,
+      "setable": true,
+      "uiComponent": "picker",
+      "insights": false
     }
   }
 }

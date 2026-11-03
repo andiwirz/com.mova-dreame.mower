@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+ <meta charset="utf-8"/>
+ <meta content="width=device-width,initial-scale=1" name="viewport"/>
+ <link href="style.css?v=1.2.66" rel="stylesheet"/>
+ <title>
+  Mower overview
+ </title>
+ <body>
+  <header>
+   <div>
+    <h1 id="name">
+     Mower overview
+    </h1>
+    <small id="status">
+     Loading status…
+    </small>
+   </div>
+   <span class="badge" id="battery">
+    —
+   </span>
+  </header>
+  <section hidden="" id="garageSection">
+   <div class="title">
+    Garage door
+   </div>
+   <div class="garage-summary" id="garageSummary" data-state="active" role="status" aria-live="polite">
+    <strong id="garageSummaryTitle">Garage automation</strong>
+    <small id="garageSummaryDetail">Reading mower and gate status…</small>
+   </div>
+   <div class="door" id="door">
+    End position unknown
+   </div>
+   <div class="meta muted">
+    <span id="sensor">
+     Sensor: —
+    </span>
+    <span id="safety">
+     Safety: —
+    </span>
+   </div>
+   <div class="grid" id="garageDoorActions">
+    <button data-action="gate_open">
+     Open door
+    </button>
+    <button data-action="gate_close">
+     Close door
+    </button>
+   </div>
+   <p id="garageDoorActionHint" class="note"></p>
+   <div class="gate-visual-check" id="gateVisualCheck" hidden role="group" aria-label="On-site status verification">
+    <div class="visual-check-label">On-site check · report only, no safety override</div>
+    <div class="gate-visual-actions">
+     <button data-action="dock_visual_docked" type="button" aria-pressed="false">🏠 Mower at home (visual check)</button>
+     <button data-action="gate_visual_open" type="button" aria-pressed="false">↑ Gate safely OPEN</button>
+     <button data-action="gate_visual_closed" type="button" aria-pressed="false">↓ Gate safely CLOSED</button>
+    </div>
+    <p id="gateVisualResult" role="status" aria-live="polite" class="note"></p>
+   </div>
+   <div class="contextual-return" id="contextualReturnActions" hidden>
+    <strong id="contextualReturnTitle">Return needs attention</strong>
+    <p id="contextualReturnHint" class="note">Check mower position and gate before choosing a supervised action.</p>
+    <div class="contextual-return-grid">
+     <button type="button" data-action="context_return_checked">Check position &amp; request return</button>
+     <button type="button" data-action="context_maintenance_checked">Drive to maintenance point</button>
+    </div>
+    <p id="contextualReturnResult" role="status" aria-live="polite" class="note"></p>
+   </div>
+   <div class="dock-diagnostics" id="dockDiagnostics" hidden>
+    <div class="dock-diagnostics-row">
+     <div class="dock-diagnostics-label">
+      <strong>
+       Docking status
+      </strong>
+      <small aria-live="polite" id="dockReadout" role="status">
+       Not checked yet
+      </small>
+     </div>
+     <button data-action="recovery_dock_check" type="button">
+      Check dock
+     </button>
+    </div>
+    <p aria-live="polite" class="dock-check-detail" id="dockCheckResult" role="status">
+    </p>
+   </div>
+   <div id="externalMaintenanceChoice" hidden class="recovery-status-card">
+    <strong id="externalMaintenanceChoiceTitle">Original-App: Wartungspunkt-Ziel wählen</strong>
+    <p class="note" id="externalMaintenanceChoiceHint">Tor ist offen, der ursprüngliche Herstellerauftrag enthielt keine Punktnummer. Bitte einen verfügbaren Wartungspunkt auswählen.</p>
+    <div class="grid">
+      <button data-action="external_maintenance_point_1" type="button">P1 anfahren</button>
+      <button data-action="external_maintenance_point_2" type="button">P2 anfahren</button>
+      <button data-action="external_maintenance_point_3" type="button">P3 anfahren</button>
+      <button data-action="external_maintenance_point_4" type="button">P4 anfahren</button>
+      <button data-action="external_maintenance_point_5" type="button">P5 anfahren</button>
+      <button data-action="external_maintenance_cancel" type="button">Abbrechen / Cancel</button>
+    </div>
+   </div>
+   <button data-action="recovery_begin_manual" id="operatorManualButton" type="button" hidden>Manuelle Übernahme aktivieren</button>
+   <button class="garage-pause-button" data-action="garage_pause">
+    Pause garage automation
+   </button>
+   <div class="normal-restore" hidden id="normalRestoreBox">
+    <strong id="normalRestoreTitle">Restore normal operation</strong>
+    <p id="normalRestoreHint" class="note">Check mower docking and physically closed gate.</p>
+    <div class="normal-visual-checks" role="group" aria-label="Visual safety checks">
+     <button type="button" data-action="recovery_operator_dock" aria-pressed="false">🏠 Mower visibly docked</button>
+     <button type="button" data-action="recovery_position_outside" aria-pressed="false">Mower safely OUTSIDE (visual)</button>
+     <button type="button" data-action="recovery_confirm_closed" aria-pressed="false">↓ Gate visibly CLOSED (operator)</button>
+    </div>
+    <button data-action="recovery_pause_safely" type="button" hidden>Safely PAUSE mower</button>
+    <p id="recoveryMotionHint" class="note" hidden></p>
+    <div class="recovery-quick-controls" id="recoveryQuickControls">
+     <button data-action="recovery_quick_return" type="button">Rückkehr</button>
+     <div class="recovery-point-choose">
+      <label for="recoveryPointSelect">Wartungspunkt</label>
+      <select id="recoveryPointSelect" aria-label="Wartungspunkt auswählen">
+       <option value="1">P1</option><option value="2">P2</option><option value="3">P3</option><option value="4">P4</option><option value="5">P5</option>
+      </select>
+      <button data-action="recovery_quick_waypoint" type="button">Anfahren</button>
+     </div>
+    </div>
+    <button data-action="recovery_restore_normal" type="button">Automatik wieder aktivieren</button>
+    <p id="normalRestoreResult" role="status" aria-live="polite"></p>
+   </div>
+   <details class="recovery-optional" id="recoveryDetails" hidden>
+    <summary>More recovery options</summary>
+   <div class="recovery-status-card" hidden="" id="recoveryQuickStatus">
+    <strong id="recoverySummaryTitle">
+     Safety status
+    </strong>
+    <p class="note" id="recoverySummaryText">
+    </p>
+    <div class="recovery-primary-actions" id="recoveryPrimaryActions">
+     <button data-action="recovery_rearm" type="button">
+      Restore automation
+     </button>
+    </div>
+    <p aria-live="polite" class="recovery-inline-result" id="recoveryInlineResult" role="status">
+    </p>
+   </div>
+   <div class="note" id="garageNote">
+   </div>
+   <div hidden="" id="manualRecoverySection">
+    <details class="recovery-advanced">
+     <summary>
+      Manual recovery options
+     </summary>
+     <p id="manualRecoveryInfo">
+      Manual rescue · automatic gate control disabled
+     </p>
+     <div class="grid" id="manualLocationChooser">
+
+      <button data-action="recovery_position_inside" type="button">Mäher ist DRINNEN (Sichtprüfung)</button>
+
+     </div>
+     <p class="note" id="manualLocationHint">Standortangabe ist nur eine Sichtbestätigung, keine GPS- oder Fahrfreigabe.</p>
+     <div class="grid">
+      <button data-action="recovery_confirm_open">
+       Confirm gate physically open
+      </button>
+      <button data-action="recovery_maintenance">
+       Drive to maintenance point
+      </button>
+      <button data-action="recovery_return">
+       Return to dock · no gate command
+      </button>
+      <button data-action="recovery_takeover">
+       Manual takeover · use original app
+      </button>
+      <button data-action="recovery_direct_dock" type="button">Direct DOCK (manual, no gate automation)</button>
+      <button data-action="recovery_direct_point_1" type="button">Direct P1</button>
+      <button data-action="recovery_direct_point_2" type="button">Direct P2</button>
+      <button data-action="recovery_direct_point_3" type="button">Direct P3</button>
+      <button data-action="recovery_direct_point_4" type="button">Direct P4</button>
+      <button data-action="recovery_direct_point_5" type="button">Direct P5</button>
+     </div>
+    </details>
+   </div>
+   </details>
+  </section>
+  <section>
+   <div class="title">
+    Mowing map · Light / dark
+   </div>
+   <div class="overview-map-stage" id="overviewMapStage">
+    <div aria-label="Mowing map" class="map-static" id="mapStatic" role="img">
+     <div class="map-loading">
+      Loading map…
+     </div>
+    </div>
+    <div class="map-editor-inline" hidden="" id="overviewMapInline">
+    </div>
+    <button aria-controls="mapStatic overviewMapInline" aria-expanded="false" aria-label="Enlarge map" class="overview-map-expand" id="overviewMapExpand" title="Enlarge map" type="button">
+     ⛶
+    </button>
+   </div>
+   <div class="overview-map-footer" id="overviewMapFooter">
+    <span id="overviewMapMeta">
+     Map
+    </span>
+    <span class="overview-map-actions">
+     <button aria-controls="overviewMapStatusPanel" aria-expanded="false" aria-label="Show map status and notes" class="overview-map-action overview-map-info" id="overviewMapInfo" title="Show map status and notes" type="button">
+      ⓘ
+     </button>
+     <button aria-controls="overviewMapInline" class="overview-map-action" id="overviewMapEdit" type="button">
+      Edit
+     </button>
+     <button class="overview-map-refresh" id="overviewMapRefresh" title="Refresh map" type="button">
+      ↻
+     </button>
+    </span>
+   </div>
+   <div aria-live="polite" class="overview-map-status" hidden="" id="overviewMapStatusPanel" role="status">
+   </div>
+  </section>
+  <section>
+   <div class="title">
+    Control mower
+   </div>
+   <div class="grid" id="ordinaryMowerControls">
+    <button data-action="mow">
+     Mow
+    </button>
+    <button data-action="spot">
+     Spot mow
+    </button>
+    <button data-action="pause">
+     Pause / Resume
+    </button>
+    <button data-action="stop">
+     Stop mower
+    </button>
+    <button data-action="return">
+     Return to dock
+    </button>
+    <button data-action="maintenance">
+     Maintenance point
+    </button>
+   </div>
+   <div aria-live="polite" class="action-status" id="actionStatus">
+   </div>
+   <div class="note">
+    Spot mowing uses the spot selected on the mower.
+   </div>
+  </section>
+  <div class="error" id="error" role="status">
+  </div>
+  <script src="dock-status.js?v=1.2.50">
+  </script>
+  <script src="recovery-visibility.js?v=1.2.66"></script>
+  <script src="garage-summary.js?v=1.2.66"></script>
+  <script src="dashboard.js?v=1.2.66">
+  </script>
+ </body>
+</html>

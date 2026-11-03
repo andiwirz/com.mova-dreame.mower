@@ -1,6 +1,7 @@
 {
+  "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.mova-dreame.mower",
-  "version": "1.1.43",
+  "version": "1.2.0",
   "compatibility": ">=12.3.0",
   "sdk": 3,
   "name": {
@@ -8,8 +9,8 @@
     "de": "MOVA & Dreame Mähroboter"
   },
   "description": {
-    "en": "Control, automate and monitor your robotic lawn mower from Homey",
-    "de": "Mähroboter steuern, überwachen und automatisieren – direkt in Homey"
+    "en": "Control and monitor compatible MOVA and Dreame mowers with Homey (independent community project).",
+    "de": "Kompatible MOVA-/Dreame-Mäher mit Homey steuern und überwachen (unabhängiges Community-Projekt)."
   },
   "brandColor": "#000000",
   "category": [
@@ -42,6 +43,54 @@
     }
   },
   "changelog": {
+    "1.2.0": {
+      "en": "A2 CORE: native no-go zones with time- and mission-based rules, also without Garage Mode; convert detected obstacles to native zones and verify map changes. P1–P5 maintenance points with guided learning and optional garage rotation, safer manufacturer-app departures/returns, supervised recovery, and improved maps, widgets and bilingual messages. Existing settings and flows are preserved where supported. Based on upstream 1.1.43; no camera or video components.",
+      "de": "A2 CORE: Native Sperrzonen mit Zeit- und Fahrphasenregeln auch ohne Garagenmodus; erkannte Hindernisse als echte Sperrzonen übernehmen und Kartenänderungen bestätigen. Wartungspunkte P1–P5 mit geführter Anlernung und optionaler Garagenrotation, sicherere Aus- und Rückfahrten über die Original-App, beaufsichtigte Wiederherstellung sowie verbesserte Karten, Widgets und Meldungen. Bestehende Einstellungen und Flows bleiben soweit unterstützt erhalten. Auf Basis von Andis 1.1.43; ohne Kamera/Video."
+    },
+    "1.1.43": {
+      "en": "Changing cutting height, efficiency mode or edge/obstacle settings now reads the settings from the mower first and changes only the requested value. Previously the app rebuilt the full settings list from cloud data, which could reset other settings such as the mowing direction and dropped fields on newer firmware. Mowers that do not support the read keep working as before. New token \"What to do\" on \"Mower error occurred\" with a short hint for common faults. Map widget: a widget pointing to a removed mower no longer shows or edits another mower. History widget: the dashboard now scrolls over the widget on phones.",
+      "de": "Beim Ändern von Schnitthöhe, Effizienzmodus oder Rand-/Hindernis-Einstellungen liest die App die Einstellungen jetzt zuerst vom Mäher und ändert nur den gewünschten Wert. Bisher wurde die ganze Einstellungsliste aus Cloud-Daten nachgebaut, was andere Einstellungen wie die Mährichtung zurücksetzen konnte und bei neuerer Firmware Felder abschnitt. Mäher, die das Lesen nicht unterstützen, funktionieren wie bisher. Neues Token „Was tun“ bei „Mähroboter Fehler aufgetreten“ mit einem kurzen Hinweis für häufige Fehler. Karten-Widget: Ein Widget, das auf einen entfernten Mäher zeigt, zeigt oder bearbeitet keinen anderen Mäher mehr. Verlaufs-Widget: Auf dem Handy lässt sich das Dashboard über dem Widget wieder scrollen."
+    },
+    "1.1.42": {
+      "en": "New Flow trigger \"Mowing interrupted\" with the reason as tokens (type: rain, frost, do_not_disturb or low_battery; text; code). \"Mower returning to dock\" and \"Mower docked at station\" now carry the same tokens (type \"none\" when the run was not interrupted), so Flows can tell a finished run apart from one stopped by the weather. \"Mowing completed\" no longer fires when a run was interrupted, e.g. by rain.",
+      "de": "Neuer Flow-Trigger „Mähen unterbrochen\" mit dem Grund als Tokens (Art: rain, frost, do_not_disturb oder low_battery; Text; Code). „Mäher fährt zur Station zurück\" und „Mähroboter an Ladestation\" enthalten jetzt dieselben Tokens (Art „none\", wenn der Lauf nicht unterbrochen wurde), sodass Flows einen beendeten Lauf von einem wetterbedingten Abbruch unterscheiden können. „Mähen abgeschlossen\" wird bei einer Unterbrechung, etwa durch Regen, nicht mehr ausgelöst."
+    },
+    "1.1.41": {
+      "en": "Fixed the live position feed going silent until the app was restarted: the MQTT broker password is the account access token, which is rotated about every two hours, but a reconnect still replayed the token captured at app start. Any reconnect after a rotation therefore failed to authenticate permanently. Reconnects now always use the current token, a rejected login triggers one immediate token refresh instead of a 40-minute retry ladder, and a healthy live connection is no longer disturbed by a rotation. Garage Mode reliability (community contribution): maintenance-point arrivals are now confirmed by the mower firmware or by stable stationary telemetry after the native command; a missing maintenance point is learned automatically after a confirmed arrival, and confirmed changes made in the official MOVA/Dreame app are synchronized. The departure to the maintenance point follows the same phases as a normal garage start (departure, adjusting, positioning, transit) and the gate can no longer close during any of them. Door sensor: a missed open/close confirmation now falls back to the configured gate runtime instead of blocking, a late sensor contact counts as a valid confirmation, and a movement timeout no longer marks the sensor itself as failed. The danger marker can no longer be captured accidentally at the charging station, and switching Garage Mode off during a maintenance trip no longer leaves the status stuck. New experimental setting: Permanent Slow Motion (native LOW mode all day). Upgrade fix: verified maintenance points stored by previous versions are migrated, so existing installations keep their learned point. The app settings page now shows a loading screen while the device list is fetched, and the installed app is about 9 MB smaller because build-only tooling is no longer shipped.",
+      "de": "Behoben: die Live-Positionsanzeige verstummte bis zum App-Neustart. Das MQTT-Passwort ist das Konto-Zugriffstoken, das etwa alle zwei Stunden erneuert wird — beim Wiederverbinden wurde aber weiterhin das beim App-Start gemerkte Token verwendet. Jeder Verbindungsabbruch nach einer Token-Erneuerung führte daher zu dauerhaftem Anmeldefehler. Neuverbindungen nutzen jetzt immer das aktuelle Token, eine abgelehnte Anmeldung löst eine sofortige Token-Erneuerung statt einer 40-minütigen Wiederholungskette aus, und eine funktionierende Live-Verbindung wird durch eine Token-Erneuerung nicht mehr gestört. Garagenmodus-Zuverlässigkeit (Community-Beitrag): Wartungspunkt-Ankünfte werden jetzt durch die Mäher-Firmware oder durch stabile stationäre Telemetrie nach dem nativen Befehl bestätigt; ein fehlender Wartungspunkt wird nach einer bestätigten Ankunft automatisch gelernt, und bestätigte Änderungen aus der offiziellen MOVA/Dreame-App werden übernommen. Die Ausfahrt zum Wartungspunkt folgt denselben Phasen wie ein normaler Garagenstart (Ausfahrt, Justieren, Positionieren, Fahrt) und das Tor kann während keiner dieser Phasen mehr schließen. Torsensor: eine verpasste Öffnungs-/Schließbestätigung fällt jetzt auf die konfigurierte Torlaufzeit zurück statt zu blockieren, ein verspäteter Sensorkontakt zählt als gültige Bestätigung, und ein Bewegungs-Timeout markiert den Sensor selbst nicht mehr als defekt. Der Gefahren-Marker kann nicht mehr versehentlich an der Ladestation gesetzt werden, und das Ausschalten des Garagenmodus während einer Wartungsfahrt lässt den Status nicht mehr hängen. Neue experimentelle Einstellung: Dauerhafte Langsamfahrt (nativer LOW-Modus ganztägig). Upgrade-Fix: verifizierte Wartungspunkte aus früheren Versionen werden migriert, sodass bestehende Installationen ihren gelernten Punkt behalten. Die App-Einstellungsseite zeigt jetzt einen Ladebildschirm, während die Geräteliste abgerufen wird, und die installierte App ist rund 9 MB kleiner, weil reine Build-Werkzeuge nicht mehr mitgeliefert werden."
+    },
+    "1.1.39": {
+      "en": "Garage Mode reliability improvements (community contribution): maintenance-point arrivals are now confirmed by the mower firmware (status 75) or by stable stationary telemetry after the native command; a missing maintenance point is learned automatically after a confirmed arrival; confirmed point changes made in the official MOVA/Dreame app are synchronized; the departure to the maintenance point follows the same phases as a normal garage start (departure, adjusting, positioning, transit) and the gate can no longer close during any of these phases. Door sensor handling: a missed open/close confirmation now falls back to the configured gate runtime instead of blocking, a late sensor contact counts as valid confirmation, and a movement timeout no longer marks the sensor itself as failed. The danger marker can no longer be captured accidentally at the charging station. New experimental setting: Permanent Slow Motion (native LOW mode all day). Upgrade fix: verified maintenance points stored by previous versions (schema v2) are migrated so existing installations keep their learned point. The app settings page now shows a loading screen while the device list is being fetched.",
+      "de": "Garagenmodus-Zuverlässigkeitsverbesserungen (Community-Beitrag): Wartungspunkt-Ankünfte werden jetzt durch die Mäher-Firmware (Status 75) oder durch stabile stationäre Telemetrie nach dem nativen Befehl bestätigt; ein fehlender Wartungspunkt wird nach einer bestätigten Ankunft automatisch gelernt; bestätigte Punktänderungen aus der offiziellen MOVA/Dreame-App werden synchronisiert; die Ausfahrt zum Wartungspunkt folgt denselben Phasen wie ein normaler Garagenstart (Ausfahrt, Justieren, Positionieren, Fahrt) und das Tor kann während keiner dieser Phasen mehr schließen. Torsensor: eine verpasste Öffnungs-/Schließbestätigung fällt jetzt auf die konfigurierte Torlaufzeit zurück statt zu blockieren, ein verspäteter Sensorkontakt zählt als gültige Bestätigung, und ein Bewegungs-Timeout markiert den Sensor selbst nicht mehr als defekt. Der Gefahren-Marker kann nicht mehr versehentlich an der Ladestation gesetzt werden. Neue experimentelle Einstellung: Dauerhafte Langsamfahrt (nativer LOW-Modus ganztägig). Upgrade-Fix: verifizierte Wartungspunkte aus früheren Versionen (Schema v2) werden migriert, sodass bestehende Installationen ihren gelernten Punkt behalten. Die App-Einstellungsseite zeigt jetzt einen Ladebildschirm, während die Geräteliste abgerufen wird."
+    },
+    "1.1.38": {
+      "en": "Fixed spurious Homey flow-card recreation (flowcardaction.create / flowcardtrigger.create) on every mowing start/stop and on every app restart. Three causes removed: (1) the command buttons no longer write a 'disabled' flag via setCapabilityOptions() on status transitions; (2) the dynamic button labels ('Mowing started', 'Returning', 'Driving to maintenance point') are replaced by static titles — every label change forced Homey to reinitialise all flow cards; (3) after an app restart the first options write per button fired even when nothing had changed — the guard now compares against the options Homey already has persisted before writing. Functional button protection is unchanged (enforced in _commandUnavailableReason). The Pause button still toggles between Pause and Resume. Added missing English translation pair.email_placeholder.",
+      "de": "Unerwünschte Homey-Flow-Karten-Neuinitialisierung (flowcardaction.create / flowcardtrigger.create) bei jedem Mähstart/-stopp und bei jedem App-Neustart behoben. Drei Ursachen beseitigt: (1) die Befehlsschaltflächen schreiben kein 'disabled'-Flag mehr via setCapabilityOptions() bei Statuswechseln; (2) die dynamischen Schaltflächen-Beschriftungen ('Mähen gestartet', 'Rückkehr läuft', 'Wartungspunkt läuft') wurden durch statische Titel ersetzt — jede Beschriftungsänderung zwang Homey, alle Flow-Karten neu zu erstellen; (3) nach einem App-Neustart wurde der erste Options-Schreibvorgang pro Schaltfläche auch ohne Änderung ausgeführt — der Guard vergleicht jetzt zuerst mit den von Homey bereits gespeicherten Optionen. Der funktionale Schutz der Schaltflächen bleibt unverändert (_commandUnavailableReason). Die Pause-Taste wechselt weiterhin zwischen Pause und Fortsetzen. Fehlende englische Übersetzung pair.email_placeholder ergänzt."
+    },
+    "1.1.37": {
+      "en": "Map widget: the Edit button (for repositioning Garage Mode safety markers) is now hidden when Garage Mode is not active.",
+      "de": "Karten-Widget: der Edit-Button (zum Verschieben der Garagenmodus-Sicherheitsmarker) wird jetzt ausgeblendet wenn der Garagenmodus nicht aktiv ist."
+    },
+    "1.1.36": {
+      "en": "Fixed map widget showing a zoomed-in view of the dock/starting position after ~5 minutes: the periodic MAPI refresh (every 5 min) could overwrite the cached map with a zone-less response (wrong index or transient cloud state), causing the widget to zoom into just the robot position. The cache is now protected against zone-less downgrades; the viewBox also falls back to the full boundary whenever no mowing zones are present. Added all missing English translations (settings, status, charging_status, mower_mode, task_status, mower_pattern, mowing_speed, mow_efficiency, and missing pair/error keys). History widget and map widget UI strings are now bilingual (English default, German for de-* browser locale); history widget html lang corrected to en.",
+      "de": "Karten-Widget zeigte nach ~5 Minuten eine reingezoomte Ansicht der Station: die periodische MAPI-Aktualisierung (alle 5 Min.) konnte den Cache mit einer zonenleeren Antwort überschreiben, wodurch das Widget nur noch auf die Roboter-Position zoomte. Der Cache ist jetzt gegen zonenarme Downgrades geschützt; der ViewBox fällt auch dann auf die volle Gartengrenze zurück wenn keine Mähzonen vorhanden sind. Alle fehlenden englischen Übersetzungen ergänzt (settings, status, charging_status, mower_mode, task_status, mower_pattern, mowing_speed, mow_efficiency sowie fehlende pair/error-Schlüssel). UI-Texte im History- und Map-Widget sind jetzt zweisprachig (Englisch als Standard, Deutsch für de-* Browser-Locale); html lang-Attribut im History-Widget auf en korrigiert."
+    },
+    "1.1.35": {
+      "en": "Fixed map widget showing a zoomed-in view of the dock/starting position after ~5 minutes: the periodic MAPI refresh (every 5 min) could overwrite the cached map with a zone-less response (wrong index or transient cloud state), causing the widget to zoom into just the robot position. The cache is now protected against zone-less downgrades; the viewBox also falls back to the full boundary whenever no mowing zones are present. Fixed Homey flow-card recreation loop caused by setCapabilityOptions() calls on every poll. Added all missing English translations (settings, status, charging_status, mower_mode, task_status, mower_pattern, mowing_speed, mow_efficiency, and missing pair/error keys). History widget and map widget UI strings are now bilingual (English default, German for de-* browser locale); history widget html lang corrected to en.",
+      "de": "Karten-Widget zeigte nach ~5 Minuten eine reingezoomte Ansicht der Station: die periodische MAPI-Aktualisierung (alle 5 Min.) konnte den Cache mit einer zonenleeren Antwort überschreiben, wodurch das Widget nur noch auf die Roboter-Position zoomte. Der Cache ist jetzt gegen zonenarme Downgrades geschützt; der ViewBox fällt auch dann auf die volle Gartengrenze zurück wenn keine Mähzonen vorhanden sind. Endlosschleife bei Homey-Flow-Karten durch setCapabilityOptions()-Aufrufe bei jedem Poll behoben. Alle fehlenden englischen Übersetzungen ergänzt (settings, status, charging_status, mower_mode, task_status, mower_pattern, mowing_speed, mow_efficiency sowie fehlende pair/error-Schlüssel). UI-Texte im History- und Map-Widget sind jetzt zweisprachig (Englisch als Standard, Deutsch für de-* Browser-Locale); html lang-Attribut im History-Widget auf en korrigiert."
+    },
+    "1.1.34": {
+      "en": "Map widget reliability improvements: fixed maintenance point marker disappearing when existing stored points used the old key format (backward-compatible isCurrent check). Widget session recovery: page now reloads automatically after being hidden for more than 5 minutes (e.g. phone locked) so the Homey session is refreshed; consecutive API failures also trigger a reload. Fixed widget showing a zoomed-in view on the mower after a Homey app restart: the map API fetch now uses a mutex to prevent concurrent requests from flooding the cloud API; telemetry fallback renders use the full boundary instead of a tight bbox around the mower position; the widget waits up to 2 minutes for real map data before falling back to the telemetry view.",
+      "de": "Map-Widget Zuverlässigkeitsverbesserungen: Wartungspunkt-Marker verschwand wenn gespeicherte Punkte das alte Schlüsselformat verwendeten (abwärtskompatible isCurrent-Prüfung). Widget-Session-Wiederherstellung: Seite lädt automatisch neu wenn sie länger als 5 Minuten verdeckt war (z.B. Telefon gesperrt), sodass die Homey-Session erneuert wird; aufeinanderfolgende API-Fehler lösen ebenfalls einen Neustart aus. Behoben: Widget zeigte nach Homey-App-Neustart eine auf den Mäher gezoomte Ansicht — der Karten-API-Abruf verwendet jetzt einen Mutex um gleichzeitige Anfragen zu verhindern; Telemetrie-Fallback-Ansichten verwenden die volle Kartengrenze statt einer engen Bbox um die Mäherposition; das Widget wartet bis zu 2 Minuten auf echte Kartendaten bevor es auf die Telemetrie-Ansicht zurückfällt."
+    },
+    "1.1.33": {
+      "en": "Fixed widget map not loading after app restart when the mower is mowing but MAP chunks have not yet arrived in the first poll. Three safety improvements from PR #7: maintenance point marker no longer disappears after editing the map in the MOVA app (map key now based on map index, not md5sum); gate-motion interlock now counts only independent live-position updates (prevents a cached position from triggering a false emergency); opening an emergency reversal now requires two independent position confirmations instead of one.",
+      "de": "Karte im Widget wird nach App-Neustart nicht mehr geladen wenn der Mäher mäht aber die Kartendaten noch nicht im ersten Poll ankamen — behoben. Drei Sicherheitsverbesserungen aus PR #7: Wartungspunkt-Marker verschwindet nicht mehr nach einer Kartenbearbeitung in der MOVA-App (Karten-Schlüssel basiert jetzt auf dem Karten-Index statt dem md5sum); Gate-Motion-Interlock zählt nur noch wirklich unabhängige Positions-Updates (verhindert dass ein gecachter Wert einen falschen Emergency auslöst); Notfall-Umkehr beim Öffnen erfordert jetzt zwei unabhängige Positionsbestätigungen statt einer."
+    },
+    "1.1.32": {
+      "en": "Code cleanup and robustness fixes in GarageSafetyEngine: removed duplicate constructor field assignments, initialised internal maps and timers eagerly, degraded-dock watchdog timer is now cancellable, duplicate state-reset blocks removed. Garage marker buttons (Save danger area, Save safety lines A/B) are now reliably stripped from existing installations when Garage Mode is disabled — they are removed on every app start via the standard capability cleanup and re-added only when Garage Mode is enabled.",
+      "de": "Code-Bereinigung und Robustheitsfixes in der GarageSafetyEngine: doppelte Konstruktor-Feldzuweisungen entfernt, interne Maps und Timer werden jetzt direkt initialisiert, der Degraded-Dock-Watchdog-Timer ist jetzt abbrechbar, doppelte Zustandsreset-Blöcke entfernt. Garage-Marker-Schaltflächen (Gefahrenbereich, Sicherheitslinie A/B speichern) werden bei bestehenden Installationen jetzt zuverlässig entfernt wenn der Garagenmodus deaktiviert ist — sie werden beim App-Start bereinigt und nur wieder hinzugefügt wenn der Garagenmodus aktiviert ist."
+    },
     "1.1.31": {
       "en": "Garage marker buttons (Save danger area centre, Save safety line A/B) are now hidden on the device card when Garage Mode is disabled — they appear automatically when Garage Mode is enabled.",
       "de": "Garage-Marker-Schaltflächen (Gefahrenbereich-Mitte speichern, Sicherheitslinie A/B speichern) werden auf der Gerätekarte ausgeblendet wenn der Garagenmodus deaktiviert ist — sie erscheinen automatisch wenn der Garagenmodus aktiviert wird."
@@ -71,8 +120,8 @@
       "de": "Garagenmodus-Capabilities (Schaltflächen, Torstatus, Sicherheitsstatus, Sensorstatus) werden auf der Gerätekarte ausgeblendet wenn der Garagenmodus in den Einstellungen deaktiviert ist — sie erscheinen automatisch wenn der Garagenmodus aktiviert wird."
     },
     "1.1.24": {
-      "en": "Fixed 'Mowing completed' Flow trigger firing twice on mowers with automatic edge-mowing: the trigger no longer fires when the mower briefly returns between the main area and edge phase — it now waits until the mower reaches a true resting state (docked / charging / idle).",
-      "de": "Flow-Auslöser 'Mähen abgeschlossen' feuerte zweimal bei Mähern mit automatischer Kantenmahd: Der Auslöser feuert nicht mehr wenn der Mäher zwischen Haupt- und Kantenphase kurz zurückfährt — er wartet nun bis der Mäher tatsächlich eine Ruheposition erreicht (angedockt / lädt / bereit)."
+      "en": "Added optional Garage Mode with safe automatic gate control, configurable A-B safety line, danger and caution areas, maintenance waypoint routing, editable live-map overlays, robust pause/resume handling, safe external returns and recovery after interrupted starts. Garage Mode is disabled by default and does not affect standard mower behaviour unless configured. Fixed 'Mowing completed' Flow trigger firing twice on mowers with automatic edge-mowing.",
+      "de": "Optionalen Garagenmodus hinzugefügt mit sicherer Torsteuerung, A-B-Sicherheitslinie, Gefahrenbereich, Wartungspunkt-Routing, bearbeitbaren Karten-Overlays und stabiler Pause-/Fortsetzen-Logik. Standardmäßig deaktiviert. Flow-Auslöser 'Mähen abgeschlossen' feuerte zweimal bei Mähern mit automatischer Kantenmahd — behoben."
     },
     "1.1.23": {
       "en": "Updated App Store description. Replaced widget preview images with simplified, guideline-compliant versions (no text, transparent background, distinct designs for Map and History widgets).",
@@ -413,5 +462,4485 @@
       "Automatisierung",
       "Rasenmäh-Roboter"
     ]
+  },
+  "contributors": {
+    "developers": [
+      {
+        "name": "EvotecIT"
+      }
+    ]
+  },
+  "flow": {
+    "triggers": [
+      {
+        "title": {
+          "en": "Active map changed",
+          "de": "Aktive Karte gewechselt"
+        },
+        "tokens": [
+          {
+            "name": "map_name",
+            "type": "string",
+            "title": {
+              "en": "Map name",
+              "de": "Kartenname"
+            }
+          },
+          {
+            "name": "map_index",
+            "type": "number",
+            "title": {
+              "en": "Map index",
+              "de": "Kartenindex"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "active_map_changed"
+      },
+      {
+        "title": {
+          "en": "Mower battery is low",
+          "de": "Mähroboter Akku ist niedrig"
+        },
+        "titleFormatted": {
+          "en": "Mower battery drops below [[threshold]]%",
+          "de": "Mähroboter Akku fällt unter [[threshold]]%"
+        },
+        "hint": {
+          "en": "Triggers once per mowing session when the battery drops below the set percentage.",
+          "de": "Wird einmalig pro Mähvorgang ausgelöst wenn der Akkustand unter den eingestellten Prozentsatz fällt."
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "threshold",
+            "type": "number",
+            "title": {
+              "en": "Below (%)",
+              "de": "Unter (%)"
+            },
+            "min": 1,
+            "max": 100,
+            "step": 1,
+            "placeholder": {
+              "en": "20",
+              "de": "20"
+            }
+          }
+        ],
+        "id": "battery_low"
+      },
+      {
+        "title": {
+          "en": "Go to Maintenance Point button pressed",
+          "de": "Knopf 'Gehe zum Wartungspunkt' gedrückt"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "btn_maintenance_point"
+      },
+      {
+        "title": {
+          "en": "Pause button pressed",
+          "de": "Knopf 'Mähen pausieren' gedrückt"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "btn_pause"
+      },
+      {
+        "title": {
+          "en": "Resume Mowing button pressed",
+          "de": "Knopf 'Mähen fortsetzen' gedrückt"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "btn_resume"
+      },
+      {
+        "title": {
+          "en": "Return to Dock button pressed",
+          "de": "Knopf 'Zurück zur Station' gedrückt"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "btn_return_to_dock"
+      },
+      {
+        "title": {
+          "en": "Start Mowing button pressed",
+          "de": "Knopf 'Mähen starten' gedrückt"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "btn_start_mowing"
+      },
+      {
+        "title": {
+          "en": "Start Spot Mowing button pressed",
+          "de": "Knopf 'Spot mähen starten' gedrückt"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "btn_start_spot_mowing"
+      },
+      {
+        "title": {
+          "en": "Stop button pressed",
+          "de": "Knopf 'Mähen beenden' gedrückt"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "btn_stop"
+      },
+      {
+        "title": {
+          "en": "Charging status changed",
+          "de": "Ladestatus geändert"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "tokens": [
+          {
+            "name": "status",
+            "type": "string",
+            "title": {
+              "en": "Charging Status",
+              "de": "Ladestatus"
+            }
+          }
+        ],
+        "id": "charging_status_changed"
+      },
+      {
+        "title": {
+          "en": "Consumable needs replacement",
+          "de": "Verbrauchsmaterial muss ersetzt werden"
+        },
+        "titleFormatted": {
+          "en": "Consumable drops below [[threshold]]%",
+          "de": "Verbrauchsmaterial fällt unter [[threshold]]%"
+        },
+        "hint": {
+          "en": "Triggers when blade, brush, or robot life drops below the set percentage.",
+          "de": "Wird ausgelöst wenn die Restlebensdauer von Messer, Bürste oder Roboter unter den eingestellten Wert fällt."
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "threshold",
+            "type": "number",
+            "title": {
+              "en": "Below (%)",
+              "de": "Unter (%)"
+            },
+            "min": 1,
+            "max": 100,
+            "step": 1,
+            "placeholder": {
+              "en": "20",
+              "de": "20"
+            }
+          }
+        ],
+        "tokens": [
+          {
+            "name": "consumable_type",
+            "type": "string",
+            "title": {
+              "en": "Consumable",
+              "de": "Verbrauchsmaterial"
+            }
+          },
+          {
+            "name": "remaining_pct",
+            "type": "number",
+            "title": {
+              "en": "Remaining (%)",
+              "de": "Verbleibend (%)"
+            }
+          }
+        ],
+        "id": "consumable_needs_replacement"
+      },
+      {
+        "title": {
+          "en": "Firmware update available",
+          "de": "Firmware-Update verfügbar"
+        },
+        "hint": {
+          "en": "Fires when a new firmware update is available for the mower.",
+          "de": "Wird ausgelöst, wenn ein neues Firmware-Update für den Mähroboter verfügbar ist."
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "firmware_update_available"
+      },
+      {
+        "title": {
+          "en": "Garage door close requested",
+          "de": "Garagentor schließen angefordert"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "titleFormatted": {
+          "en": "Garage door close requested",
+          "de": "Garagentor schließen angefordert"
+        },
+        "hint": {
+          "en": "Triggered by the mower when the garage safety logic requests the gate action.",
+          "de": "Wird vom Mäher ausgelöst, wenn die Garagenlogik diese Torbewegung anfordert."
+        },
+        "id": "garage_close_requested"
+      },
+      {
+        "title": {
+          "en": "Garage danger area entered",
+          "de": "Gefahrenbereich betreten"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_danger_area_entered"
+      },
+      {
+        "title": {
+          "en": "Garage danger area left",
+          "de": "Gefahrenbereich verlassen"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_danger_area_left"
+      },
+      {
+        "title": {
+          "en": "Garage door stable open",
+          "de": "Garagentor stabil offen"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_door_stable_open"
+      },
+      {
+        "title": {
+          "en": "Garage emergency",
+          "de": "Garage Notfall"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          },
+          {
+            "name": "action",
+            "type": "string",
+            "title": {
+              "en": "Action",
+              "de": "Aktion"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_emergency",
+        "deprecated": true
+      },
+      {
+        "title": {
+          "en": "External start blocked by garage safety",
+          "de": "Externer Start durch Garage blockiert"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_external_start_blocked"
+      },
+      {
+        "title": {
+          "en": "Mower is home",
+          "de": "Mäher ist zuhause"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_home_confirmed"
+      },
+      {
+        "title": {
+          "en": "Garage maintenance point reached",
+          "de": "Garage Wartungspunkt erreicht"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_maintenance_point_reached"
+      },
+      {
+        "title": {
+          "en": "Mower / garage notice",
+          "de": "Mäher-/Garagen-Hinweis"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "tokens": [
+          {
+            "name": "kind",
+            "type": "string",
+            "title": {
+              "en": "Type",
+              "de": "Typ"
+            }
+          },
+          {
+            "name": "message",
+            "type": "string",
+            "title": {
+              "en": "Message",
+              "de": "Meldung"
+            }
+          },
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "id": "garage_mower_notice"
+      },
+      {
+        "title": {
+          "en": "Garage door open requested",
+          "de": "Garagentor öffnen angefordert"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "titleFormatted": {
+          "en": "Garage door open requested",
+          "de": "Garagentor öffnen angefordert"
+        },
+        "hint": {
+          "en": "Triggered by the mower when the garage safety logic requests the gate action.",
+          "de": "Wird vom Mäher ausgelöst, wenn die Garagenlogik diese Torbewegung anfordert."
+        },
+        "id": "garage_open_requested"
+      },
+      {
+        "title": {
+          "en": "Garage position uncertain",
+          "de": "Garage Position unsicher"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_position_uncertain"
+      },
+      {
+        "title": {
+          "en": "Garage safe return completed",
+          "de": "Garage sichere Rückkehr abgeschlossen"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_safe_return_completed"
+      },
+      {
+        "title": {
+          "en": "Garage safe return started",
+          "de": "Garage sichere Rückkehr gestartet"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_safe_return_started"
+      },
+      {
+        "title": {
+          "en": "Garage safety block",
+          "de": "Garage Safety Block"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          },
+          {
+            "name": "severity",
+            "type": "string",
+            "title": {
+              "en": "Severity",
+              "de": "Schweregrad"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_safety_block",
+        "deprecated": true
+      },
+      {
+        "title": {
+          "en": "Garage safety line crossed to lawn",
+          "de": "Sicherheitslinie Richtung Rasen überfahren"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_safety_line_lawn"
+      },
+      {
+        "title": {
+          "en": "Garage sensor battery low",
+          "de": "Garagensensor Batterie schwach"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_sensor_battery_low"
+      },
+      {
+        "title": {
+          "en": "Garage sensor unavailable",
+          "de": "Garagensensor nicht verfügbar"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_sensor_unavailable"
+      },
+      {
+        "title": {
+          "de": "Garagentor stoppen angefordert",
+          "en": "Garage door stop requested"
+        },
+        "tokens": [
+          {
+            "name": "reason",
+            "type": "string",
+            "title": {
+              "en": "Reason",
+              "de": "Grund"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "titleFormatted": {
+          "de": "Garagentor stoppen angefordert",
+          "en": "Garage door stop requested"
+        },
+        "hint": {
+          "de": "Mit der echten STOP-Aktion des Torantriebs verknüpfen. Ein Auf/Zu-Umschalter ist keine verlässliche STOP-Aktion.",
+          "en": "Connect to the actual gate motor STOP action. A toggle is not a reliable stop action."
+        },
+        "id": "garage_stop_requested"
+      },
+      {
+        "title": {
+          "en": "Mower docked at station",
+          "de": "Mähroboter an Ladestation"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "mower_docked"
+      },
+      {
+        "title": {
+          "en": "Mower error occurred",
+          "de": "Mähroboter Fehler aufgetreten"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "tokens": [
+          {
+            "name": "error_code",
+            "type": "number",
+            "title": {
+              "en": "Error Code",
+              "de": "Fehlercode"
+            }
+          },
+          {
+            "name": "error_description",
+            "type": "string",
+            "title": {
+              "en": "Error Description",
+              "de": "Fehlerbeschreibung"
+            }
+          }
+        ],
+        "id": "mower_error"
+      },
+      {
+        "title": {
+          "en": "Mower returning to dock",
+          "de": "Mäher fährt zur Station zurück"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "mower_returning"
+      },
+      {
+        "title": {
+          "en": "Mower status changed",
+          "de": "Mähroboter Status geändert"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "tokens": [
+          {
+            "name": "status",
+            "type": "string",
+            "title": {
+              "en": "Status",
+              "de": "Status"
+            }
+          }
+        ],
+        "id": "mower_status_changed"
+      },
+      {
+        "title": {
+          "en": "Mowing completed",
+          "de": "Mähen abgeschlossen"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "mowing_completed"
+      },
+      {
+        "title": {
+          "en": "Mowing started",
+          "de": "Mähen gestartet"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "mowing_started"
+      }
+    ],
+    "conditions": [
+      {
+        "title": {
+          "en": "Active map !{{is|is not}}",
+          "de": "Aktive Karte !{{ist|ist nicht}}"
+        },
+        "titleFormatted": {
+          "en": "Active map !{{is|is not}} [[map_name]]",
+          "de": "Aktive Karte !{{ist|ist nicht}} [[map_name]]"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "map_name",
+            "type": "autocomplete",
+            "title": {
+              "en": "Map",
+              "de": "Karte"
+            },
+            "placeholder": {
+              "en": "Search map…",
+              "de": "Karte suchen…"
+            }
+          }
+        ],
+        "id": "active_map_is"
+      },
+      {
+        "title": {
+          "en": "Battery !{{is above|is below}} a set percentage",
+          "de": "Akku !{{ist über|ist unter}} einem eingestellten Wert"
+        },
+        "titleFormatted": {
+          "en": "Battery !{{is above|is below}} [[percentage]]%",
+          "de": "Akku !{{ist über|ist unter}} [[percentage]]%"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "percentage",
+            "type": "number",
+            "title": {
+              "en": "Percentage (%)",
+              "de": "Prozentsatz (%)"
+            },
+            "min": 1,
+            "max": 100,
+            "step": 1,
+            "placeholder": {
+              "en": "20",
+              "de": "20"
+            }
+          }
+        ],
+        "id": "battery_level_is"
+      },
+      {
+        "title": {
+          "en": "Mower is at maintenance point",
+          "de": "Mäher ist am Wartungspunkt"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_at_maintenance_point"
+      },
+      {
+        "title": {
+          "en": "Garage door is open",
+          "de": "Garagentor ist offen"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_door_is_open"
+      },
+      {
+        "title": {
+          "en": "Garage mode is enabled",
+          "de": "Garagenmodus ist aktiv"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_mode_is_enabled"
+      },
+      {
+        "title": {
+          "en": "Mower !{{is|is not}} charging",
+          "de": "Mähroboter !{{lädt|lädt nicht}}"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "is_charging"
+      },
+      {
+        "title": {
+          "en": "Mower !{{is|is not}} docked",
+          "de": "Mähroboter !{{ist|ist nicht}} gedockt"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "is_docked"
+      },
+      {
+        "title": {
+          "en": "Mow efficiency !{{is|is not}} set to efficient",
+          "de": "Mäheffizienz !{{ist|ist nicht}} auf Effizient gesetzt"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "is_efficient_mode"
+      },
+      {
+        "title": {
+          "en": "Mower !{{is|is not}} mowing",
+          "de": "Mähroboter mäht !{{gerade|gerade nicht}}"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "is_mowing"
+      },
+      {
+        "title": {
+          "en": "Mower !{{has|has no}} error",
+          "de": "Mähroboter hat !{{einen|keinen}} Fehler"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "mower_has_error"
+      },
+      {
+        "title": {
+          "en": "Mowing mode !{{is|is not}}",
+          "de": "Mähmodus !{{ist|ist nicht}}"
+        },
+        "titleFormatted": {
+          "en": "Mowing mode !{{is|is not}} [[mode]]",
+          "de": "Mähmodus !{{ist|ist nicht}} [[mode]]"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "mode",
+            "type": "dropdown",
+            "title": {
+              "en": "Mode",
+              "de": "Modus"
+            },
+            "values": [
+              {
+                "id": "all_area",
+                "label": {
+                  "en": "All Area",
+                  "de": "Alle"
+                }
+              },
+              {
+                "id": "zone",
+                "label": {
+                  "en": "Zone",
+                  "de": "Zone"
+                }
+              },
+              {
+                "id": "edge",
+                "label": {
+                  "en": "Edge",
+                  "de": "Kante"
+                }
+              },
+              {
+                "id": "spot",
+                "label": {
+                  "en": "Spot",
+                  "de": "Spot"
+                }
+              },
+              {
+                "id": "manual",
+                "label": {
+                  "en": "Manual",
+                  "de": "Manuell"
+                }
+              }
+            ]
+          }
+        ],
+        "id": "mowing_mode_is"
+      }
+    ],
+    "actions": [
+      {
+        "title": {
+          "en": "Find mower with audible alert",
+          "de": "Mähroboter mit Signalton suchen"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "find_bot"
+      },
+      {
+        "title": {
+          "en": "Garage safe return",
+          "de": "Garage sichere Rückkehr"
+        },
+        "titleFormatted": {
+          "en": "Start garage safe return",
+          "de": "Garage sichere Rückkehr starten"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "garage_safe_return"
+      },
+      {
+        "title": {
+          "en": "Set garage door state",
+          "de": "Garagentorstatus setzen"
+        },
+        "titleFormatted": {
+          "en": "Set garage door state to [[state]]",
+          "de": "Garagentorstatus auf [[state]] setzen"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "type": "dropdown",
+            "name": "state",
+            "title": {
+              "en": "State",
+              "de": "Status"
+            },
+            "values": [
+              {
+                "id": "open",
+                "title": {
+                  "en": "Open",
+                  "de": "Offen"
+                }
+              },
+              {
+                "id": "closed",
+                "title": {
+                  "en": "Closed",
+                  "de": "Geschlossen"
+                }
+              },
+              {
+                "id": "unknown",
+                "title": {
+                  "en": "Unknown",
+                  "de": "Unbekannt"
+                }
+              }
+            ]
+          }
+        ],
+        "id": "garage_set_door_state"
+      },
+      {
+        "title": {
+          "en": "Set garage sensor availability",
+          "de": "Garagensensor-Verfügbarkeit setzen"
+        },
+        "titleFormatted": {
+          "en": "Set garage sensor availability to [[available]]",
+          "de": "Garagensensor-Verfügbarkeit auf [[available]] setzen"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "type": "dropdown",
+            "name": "available",
+            "title": {
+              "en": "Availability",
+              "de": "Verfügbarkeit"
+            },
+            "values": [
+              {
+                "id": "online",
+                "title": {
+                  "en": "Online",
+                  "de": "Online"
+                }
+              },
+              {
+                "id": "offline",
+                "title": {
+                  "en": "Offline",
+                  "de": "Offline"
+                }
+              },
+              {
+                "id": "unknown",
+                "title": {
+                  "en": "Unknown",
+                  "de": "Unbekannt"
+                }
+              }
+            ]
+          }
+        ],
+        "id": "garage_set_sensor_available"
+      },
+      {
+        "title": {
+          "en": "Set garage sensor battery",
+          "de": "Garagensensor-Batterie setzen"
+        },
+        "titleFormatted": {
+          "en": "Set garage sensor battery to [[battery]] %",
+          "de": "Garagensensor-Batterie auf [[battery]] % setzen"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "type": "number",
+            "name": "battery",
+            "title": {
+              "en": "Battery %",
+              "de": "Batterie %"
+            },
+            "min": 0,
+            "max": 100
+          }
+        ],
+        "id": "garage_set_sensor_battery"
+      },
+      {
+        "id": "go_to_maintenance_point",
+        "title": {
+          "en": "Go to maintenance point",
+          "de": "Wartungspunkt anfahren"
+        },
+        "titleFormatted": {
+          "en": "Go to maintenance point [[maintenance_point]]",
+          "de": "Wartungspunkt [[maintenance_point]] anfahren"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "maintenance_point",
+            "type": "autocomplete",
+            "required": false,
+            "title": {
+              "en": "Maintenance point (optional)",
+              "de": "Wartungspunkt (optional)"
+            },
+            "placeholder": {
+              "en": "Primary maintenance point (default)",
+              "de": "Hauptwartungspunkt (Standard)"
+            }
+          }
+        ],
+        "hint": {
+          "de": "Ohne Auswahl fährt der Flow immer zum aktuellen Hauptwartungspunkt. Eine feste Auswahl P1–P5 behält ihre Punktnummer bei Namens- und Hauptpunktwechsel. Die Option „Rotation“ erscheint nur, wenn Garagenmodus und automatischer Wartungspunktwechsel aktiv sind. Wird die Rotation später deaktiviert, stoppt der Flow mit einer Meldung statt einen anderen Punkt anzufahren.",
+          "en": "With no selection, the Flow always goes to the currently configured primary maintenance point. A fixed P1–P5 choice retains its point number after renaming and primary changes. Rotation appears only while Garage Mode and automatic point rotation are enabled. If rotation is later disabled, the Flow reports an error rather than driving to another point."
+        }
+      },
+      {
+        "title": {
+          "en": "Pause mowing",
+          "de": "Mähen pausieren"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "pause_mowing"
+      },
+      {
+        "title": {
+          "en": "Refresh all data",
+          "de": "Alle Daten aktualisieren"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "refresh_data"
+      },
+      {
+        "title": {
+          "en": "Resume mowing",
+          "de": "Mähen fortsetzen"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "resume_mowing"
+      },
+      {
+        "title": {
+          "en": "Return to dock",
+          "de": "Zur Ladestation zurückkehren"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "return_to_dock"
+      },
+      {
+        "title": {
+          "en": "Set active map",
+          "de": "Aktive Karte setzen"
+        },
+        "titleFormatted": {
+          "en": "Set active map to [[map_name]]",
+          "de": "Aktive Karte auf [[map_name]] setzen"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "map_name",
+            "type": "autocomplete",
+            "title": {
+              "en": "Map",
+              "de": "Karte"
+            },
+            "placeholder": {
+              "en": "Search map…",
+              "de": "Karte suchen…"
+            }
+          }
+        ],
+        "id": "set_active_map"
+      },
+      {
+        "title": {
+          "en": "Set child lock",
+          "de": "Kindersicherung setzen"
+        },
+        "titleFormatted": {
+          "en": "Set child lock [[enabled]]",
+          "de": "Kindersicherung [[enabled]]"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "enabled",
+            "type": "dropdown",
+            "title": {
+              "en": "State",
+              "de": "Zustand"
+            },
+            "values": [
+              {
+                "id": "true",
+                "label": {
+                  "en": "On",
+                  "de": "Ein"
+                }
+              },
+              {
+                "id": "false",
+                "label": {
+                  "en": "Off",
+                  "de": "Aus"
+                }
+              }
+            ]
+          }
+        ],
+        "id": "set_child_lock"
+      },
+      {
+        "title": {
+          "en": "Set cutting height",
+          "de": "Schnitthöhe setzen"
+        },
+        "titleFormatted": {
+          "en": "Set cutting height to [[height]] mm",
+          "de": "Schnitthöhe auf [[height]] mm setzen"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "height",
+            "type": "number",
+            "title": {
+              "en": "Height (mm)",
+              "de": "Höhe (mm)"
+            },
+            "min": 30,
+            "max": 100,
+            "step": 5,
+            "placeholder": {
+              "en": "40",
+              "de": "40"
+            }
+          }
+        ],
+        "id": "set_cutting_height"
+      },
+      {
+        "title": {
+          "en": "Set mow efficiency mode",
+          "de": "Mäheffizienz-Modus setzen"
+        },
+        "titleFormatted": {
+          "en": "Set mow efficiency to [[mode]]",
+          "de": "Mäheffizienz auf [[mode]] setzen"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "mode",
+            "type": "dropdown",
+            "title": {
+              "en": "Mode",
+              "de": "Modus"
+            },
+            "values": [
+              {
+                "id": "standard",
+                "label": {
+                  "en": "Standard",
+                  "de": "Standard"
+                }
+              },
+              {
+                "id": "efficient",
+                "label": {
+                  "en": "Efficient",
+                  "de": "Effizient"
+                }
+              }
+            ]
+          }
+        ],
+        "id": "set_efficiency_mode"
+      },
+      {
+        "title": {
+          "en": "Set lift alarm",
+          "de": "Hebealarm setzen"
+        },
+        "titleFormatted": {
+          "en": "Set lift alarm [[enabled]]",
+          "de": "Hebealarm [[enabled]]"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "enabled",
+            "type": "dropdown",
+            "title": {
+              "en": "State",
+              "de": "Zustand"
+            },
+            "values": [
+              {
+                "id": "true",
+                "label": {
+                  "en": "On",
+                  "de": "Ein"
+                }
+              },
+              {
+                "id": "false",
+                "label": {
+                  "en": "Off",
+                  "de": "Aus"
+                }
+              }
+            ]
+          }
+        ],
+        "id": "set_lift_alarm"
+      },
+      {
+        "title": {
+          "en": "Set mowing mode",
+          "de": "Mähmodus setzen"
+        },
+        "titleFormatted": {
+          "en": "Set mowing mode to [[mode]]",
+          "de": "Mähmodus auf [[mode]] setzen"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "mode",
+            "type": "dropdown",
+            "title": {
+              "en": "Mode",
+              "de": "Modus"
+            },
+            "values": [
+              {
+                "id": "all_area",
+                "label": {
+                  "en": "All Area",
+                  "de": "Alle"
+                }
+              },
+              {
+                "id": "zone",
+                "label": {
+                  "en": "Zone",
+                  "de": "Zone"
+                }
+              },
+              {
+                "id": "edge",
+                "label": {
+                  "en": "Edge",
+                  "de": "Kante"
+                }
+              },
+              {
+                "id": "spot",
+                "label": {
+                  "en": "Spot",
+                  "de": "Spot"
+                }
+              },
+              {
+                "id": "manual",
+                "label": {
+                  "en": "Manual",
+                  "de": "Manuell"
+                }
+              }
+            ]
+          }
+        ],
+        "id": "set_mowing_mode"
+      },
+      {
+        "title": {
+          "en": "Start border patrol for zone",
+          "de": "Randpatrouille für Zone starten"
+        },
+        "titleFormatted": {
+          "en": "Start border patrol for zone [[zone]]",
+          "de": "Randpatrouille für Zone [[zone]] starten"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "zone",
+            "type": "number",
+            "title": {
+              "en": "Zone number",
+              "de": "Zonennummer"
+            },
+            "placeholder": {
+              "en": "1",
+              "de": "1"
+            },
+            "min": 1,
+            "max": 5,
+            "step": 1
+          }
+        ],
+        "id": "start_border_patrol"
+      },
+      {
+        "title": {
+          "en": "Start edge mowing",
+          "de": "Kantenmähen starten"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "start_edge_mowing"
+      },
+      {
+        "title": {
+          "en": "Start edge mowing for zone",
+          "de": "Kantenmähen für Zone starten"
+        },
+        "titleFormatted": {
+          "en": "Start edge mowing for zone [[zone]]",
+          "de": "Kantenmähen für Zone [[zone]] starten"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "zone",
+            "type": "number",
+            "title": {
+              "en": "Zone number",
+              "de": "Zonennummer"
+            },
+            "placeholder": {
+              "en": "1",
+              "de": "1"
+            },
+            "min": 1,
+            "max": 5,
+            "step": 1
+          }
+        ],
+        "id": "start_edge_zone_mowing"
+      },
+      {
+        "title": {
+          "en": "Start mowing",
+          "de": "Mähen starten"
+        },
+        "hint": {
+          "en": "Starts mowing using the mode configured with 'Set mowing mode'. Use 'Set mowing mode' before this action to choose all area, zone, edge, or spot. This action does not use the Zone or Spot picker on the device card.",
+          "de": "Startet das Mähen mit dem Modus, der mit 'Mähmodus setzen' festgelegt wurde. Vorher 'Mähmodus setzen' verwenden um Gesamtfläche, Zone, Kante oder Spot auszuwählen. Diese Aktion nutzt nicht den Zonen- oder Spot-Picker auf der Gerätekarte."
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "start_mowing"
+      },
+      {
+        "title": {
+          "en": "Start spot mowing",
+          "de": "Punktmähen starten"
+        },
+        "titleFormatted": {
+          "en": "Start mowing spots [[spots]]",
+          "de": "Punkte [[spots]] mähen"
+        },
+        "hint": {
+          "en": "Enter the spot IDs as configured in the MOVA or Dreame app, separated by commas (e.g. 1,2).",
+          "de": "Punkt-IDs wie in der MOVA- oder Dreame-App vergeben, kommagetrennt (z.B. 1,2)."
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "spots",
+            "type": "text",
+            "title": {
+              "en": "Spot IDs (comma-separated)",
+              "de": "Punkt-IDs (kommagetrennt)"
+            },
+            "placeholder": {
+              "en": "1,2",
+              "de": "1,2"
+            }
+          }
+        ],
+        "id": "start_spot_mowing"
+      },
+      {
+        "title": {
+          "en": "Start zone mowing",
+          "de": "Zonenmähen starten"
+        },
+        "titleFormatted": {
+          "en": "Start mowing zones [[zones]]",
+          "de": "Zonen [[zones]] mähen"
+        },
+        "hint": {
+          "en": "Enter the zone IDs as configured in the MOVA or Dreame app, separated by commas (e.g. 1,2,3).",
+          "de": "Zonen-IDs wie in der MOVA- oder Dreame-App vergeben, kommagetrennt (z.B. 1,2,3)."
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          },
+          {
+            "name": "zones",
+            "type": "text",
+            "title": {
+              "en": "Zone IDs (comma-separated)",
+              "de": "Zonen-IDs (kommagetrennt)"
+            },
+            "placeholder": {
+              "en": "1,2,3",
+              "de": "1,2,3"
+            }
+          }
+        ],
+        "id": "start_zone_mowing"
+      },
+      {
+        "title": {
+          "en": "Stop mowing",
+          "de": "Mähen stoppen"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "stop_mowing"
+      },
+      {
+        "title": {
+          "en": "Clear recoverable error",
+          "de": "Behebbaren Fehler quittieren"
+        },
+        "hint": {
+          "en": "Dismisses a recoverable error so the mower can resume operation. Only works if the underlying issue (e.g. stuck wheel) has been resolved. Note: not supported on all MOVA models — the mower may ignore the command.",
+          "de": "Quittiert einen behebbaren Fehler damit der Mähroboter weitermähen kann. Funktioniert nur wenn die Ursache (z.B. eingeklemmtes Rad) beseitigt wurde. Hinweis: Wird von einigen MOVA-Modellen nicht unterstützt — der Befehl könnte ignoriert werden."
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=mower"
+          }
+        ],
+        "id": "suppress_fault"
+      }
+    ]
+  },
+  "drivers": [
+    {
+      "name": {
+        "en": "Robotic Lawn Mower",
+        "de": "Mähroboter"
+      },
+      "class": "lawnmower",
+      "capabilities": [
+        "cmd_start_mowing",
+        "cmd_start_spot_mowing",
+        "cmd_pause",
+        "cmd_resume",
+        "cmd_stop",
+        "cmd_dock",
+        "cmd_maintenance_point",
+        "cmd_maintenance_point_1",
+        "cmd_refresh",
+        "mower_status",
+        "mow_map",
+        "mow_zone",
+        "cutting_height",
+        "mower_volume",
+        "mow_spot",
+        "charging_status",
+        "measure_battery",
+        "alarm_generic",
+        "mower_error",
+        "mow_efficiency",
+        "collision_avoidance",
+        "firmware_update",
+        "measure_duration",
+        "meter_area_total",
+        "meter_time_total",
+        "meter_count_total",
+        "child_lock",
+        "consumable_blade",
+        "consumable_brush",
+        "consumable_robot",
+        "cmd_garage_pause_mode",
+        "cmd_garage_test_exit",
+        "garage_door_status",
+        "garage_safety_status",
+        "garage_sensor_available_status",
+        "garage_sensor_battery"
+      ],
+      "capabilitiesOptions": {
+        "alarm_generic": {
+          "title": {
+            "en": "Error",
+            "de": "Fehler"
+          }
+        },
+        "measure_battery": {
+          "title": {
+            "en": "Battery",
+            "de": "Akku"
+          }
+        },
+        "cutting_height": {
+          "preventInsights": true,
+          "preventTag": true
+        },
+        "mower_volume": {
+          "preventInsights": true,
+          "preventTag": true
+        },
+        "charging_status": {
+          "preventInsights": true,
+          "preventTag": true
+        },
+        "child_lock": {
+          "preventInsights": true,
+          "preventTag": true
+        },
+        "collision_avoidance": {
+          "preventInsights": true,
+          "preventTag": true
+        },
+        "mow_efficiency": {
+          "preventInsights": true,
+          "preventTag": true
+        },
+        "firmware_update": {
+          "preventInsights": true,
+          "preventTag": true
+        },
+        "garage_door_status": {
+          "preventInsights": true,
+          "preventTag": false
+        },
+        "garage_sensor_available_status": {
+          "preventInsights": true,
+          "preventTag": false
+        },
+        "garage_sensor_battery": {
+          "preventInsights": true,
+          "preventTag": false
+        },
+        "garage_safety_status": {
+          "preventInsights": true,
+          "preventTag": false
+        }
+      },
+      "energy": {
+        "batteries": [
+          "INTERNAL"
+        ]
+      },
+      "images": {
+        "small": "/drivers/mower/assets/images/small.png",
+        "large": "/drivers/mower/assets/images/large.png",
+        "xlarge": "/drivers/mower/assets/images/xlarge.png"
+      },
+      "pair": [
+        {
+          "id": "pair"
+        }
+      ],
+      "repair": [
+        {
+          "id": "repair"
+        },
+        {
+          "id": "map_editor"
+        },
+        {
+          "id": "garage_settings"
+        },
+        {
+          "id": "maintenance_settings"
+        },
+        {
+          "id": "reauth"
+        }
+      ],
+      "settings": [
+        {
+          "type": "group",
+          "label": {
+            "en": "Device Info",
+            "de": "Geräteinformationen"
+          },
+          "children": [
+            {
+              "id": "device_model",
+              "type": "label",
+              "label": {
+                "en": "Model",
+                "de": "Modell"
+              },
+              "value": ""
+            },
+            {
+              "id": "device_model_id",
+              "type": "label",
+              "label": {
+                "en": "Device Model ID",
+                "de": "Gerätemodell-ID"
+              },
+              "value": "",
+              "hint": {
+                "en": "Technical model identifier (e.g. mova.mower.g2529d)",
+                "de": "Technische Modellkennung (z.B. mova.mower.g2529d)"
+              }
+            },
+            {
+              "id": "firmware_version",
+              "type": "label",
+              "label": {
+                "en": "Firmware Version",
+                "de": "Firmware-Version"
+              },
+              "value": ""
+            },
+            {
+              "id": "serial_number",
+              "type": "label",
+              "label": {
+                "en": "Serial Number",
+                "de": "Seriennummer"
+              },
+              "value": ""
+            },
+            {
+              "id": "mac_address",
+              "type": "label",
+              "label": {
+                "en": "MAC Address",
+                "de": "MAC-Adresse"
+              },
+              "value": ""
+            },
+            {
+              "id": "username",
+              "type": "label",
+              "label": {
+                "en": "Email",
+                "de": "E-Mail"
+              },
+              "value": ""
+            },
+            {
+              "id": "brand",
+              "type": "label",
+              "label": {
+                "en": "Brand",
+                "de": "Marke"
+              },
+              "value": ""
+            },
+            {
+              "id": "region",
+              "type": "label",
+              "label": {
+                "en": "Region",
+                "de": "Region"
+              },
+              "value": ""
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Zones",
+            "de": "Zonen"
+          },
+          "children": [
+            {
+              "id": "num_zones",
+              "type": "label",
+              "label": {
+                "en": "Number of zones",
+                "de": "Anzahl Zonen"
+              },
+              "value": "",
+              "hint": {
+                "en": "Auto-detected from map data. Zone and spot options appear in the Zone and Spot pickers on the device card.",
+                "de": "Wird automatisch aus den Kartendaten erkannt. Zonen und Spots erscheinen in den Auswahl-Pickers auf der Gerätekarte."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Cutting Height",
+            "de": "Schnitthöhe"
+          },
+          "children": [
+            {
+              "id": "cutting_height_min",
+              "type": "number",
+              "label": {
+                "en": "Minimum (mm)",
+                "de": "Minimum (mm)"
+              },
+              "value": 20,
+              "min": 20,
+              "max": 50,
+              "step": 5,
+              "hint": {
+                "en": "Lower bound of the cutting height slider.",
+                "de": "Unterer Grenzwert des Schnitthöhen-Schiebereglers."
+              }
+            },
+            {
+              "id": "cutting_height_max",
+              "type": "number",
+              "label": {
+                "en": "Maximum (mm)",
+                "de": "Maximum (mm)"
+              },
+              "value": 70,
+              "min": 50,
+              "max": 100,
+              "step": 5,
+              "hint": {
+                "en": "Upper bound of the cutting height slider.",
+                "de": "Oberer Grenzwert des Schnitthöhen-Schiebereglers."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Edge Mowing",
+            "de": "Randmähen"
+          },
+          "children": [
+            {
+              "id": "edge_mowing_auto",
+              "type": "checkbox",
+              "label": {
+                "en": "Automatic Edge Mowing",
+                "de": "Automatisches Randmähen"
+              },
+              "value": true,
+              "hint": {
+                "en": "The robot automatically mows edges after finishing the main area.",
+                "de": "Der Roboter mäht die Ränder automatisch nach dem Gesamtflächen-Mähen."
+              }
+            },
+            {
+              "id": "edge_mowing_safe",
+              "type": "checkbox",
+              "label": {
+                "en": "Safe Edge Mowing",
+                "de": "Sicheres Randmähen"
+              },
+              "value": true,
+              "hint": {
+                "en": "Keeps a small distance from the lawn boundary to avoid damage.",
+                "de": "Hält einen kleinen Abstand zur Rasengrenze, um Schäden zu vermeiden."
+              }
+            },
+            {
+              "id": "edge_mowing_ultratrim",
+              "type": "checkbox",
+              "label": {
+                "en": "UltraTrim™ 1.0",
+                "de": "UltraTrim™ 1.0"
+              },
+              "value": true,
+              "hint": {
+                "en": "Shifts the cutter disc outward on the last edge pass, leaving a 3 cm grass strip.",
+                "de": "Verschiebt die Schneidscheibe auf der letzten Randmahd seitlich und lässt eine Grashöhe von 3 cm."
+              }
+            },
+            {
+              "id": "edge_mowing_obstacle",
+              "type": "checkbox",
+              "label": {
+                "en": "Obstacle Avoidance at Edges",
+                "de": "Hindernisvermeidung an Kanten"
+              },
+              "value": true,
+              "hint": {
+                "en": "Actively navigates around obstacles at edges (may leave some uncut grass).",
+                "de": "Navigiert aktiv um Hindernisse an Kanten herum (kann ungeschnittenes Gras hinterlassen)."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Obstacle Avoidance",
+            "de": "Hindernisvermeidung"
+          },
+          "children": [
+            {
+              "id": "obstacle_lidar",
+              "type": "checkbox",
+              "label": {
+                "en": "LiDAR Obstacle Detection",
+                "de": "LiDAR-Hinderniserkennung"
+              },
+              "value": true,
+              "hint": {
+                "en": "Detects and avoids obstacles automatically without contact.",
+                "de": "Erkennt und umfährt Hindernisse automatisch ohne Kontakt."
+              }
+            },
+            {
+              "id": "obstacle_height",
+              "type": "dropdown",
+              "label": {
+                "en": "Obstacle Avoidance Height",
+                "de": "Höhe zur Vermeidung von Hindernissen"
+              },
+              "value": "15",
+              "hint": {
+                "en": "Avoids obstacles taller than this threshold.",
+                "de": "Weicht Hindernissen aus, die höher als dieser Wert sind."
+              },
+              "values": [
+                {
+                  "id": "5",
+                  "label": {
+                    "en": "5 cm",
+                    "de": "5 cm"
+                  }
+                },
+                {
+                  "id": "10",
+                  "label": {
+                    "en": "10 cm",
+                    "de": "10 cm"
+                  }
+                },
+                {
+                  "id": "15",
+                  "label": {
+                    "en": "15 cm",
+                    "de": "15 cm"
+                  }
+                },
+                {
+                  "id": "20",
+                  "label": {
+                    "en": "20 cm",
+                    "de": "20 cm"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "obstacle_distance",
+              "type": "dropdown",
+              "label": {
+                "en": "Obstacle Avoidance Distance",
+                "de": "Abstand bei Hindernisvermeidung"
+              },
+              "value": "15",
+              "hint": {
+                "en": "Distance at which the robot starts avoiding an obstacle.",
+                "de": "Entfernung, ab der der Roboter Hindernissen ausweicht."
+              },
+              "values": [
+                {
+                  "id": "10",
+                  "label": {
+                    "en": "10 cm",
+                    "de": "10 cm"
+                  }
+                },
+                {
+                  "id": "15",
+                  "label": {
+                    "en": "15 cm",
+                    "de": "15 cm"
+                  }
+                },
+                {
+                  "id": "20",
+                  "label": {
+                    "en": "20 cm",
+                    "de": "20 cm"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "obstacle_ai",
+              "type": "dropdown",
+              "label": {
+                "en": "AI Obstacle Detection",
+                "de": "AI-Hinderniserkennung"
+              },
+              "value": "7",
+              "hint": {
+                "en": "Object types the robot detects and avoids using AI.",
+                "de": "Hindernistypen, die der Roboter per KI erkennt und umfährt."
+              },
+              "values": [
+                {
+                  "id": "0",
+                  "label": {
+                    "en": "Off",
+                    "de": "Aus"
+                  }
+                },
+                {
+                  "id": "1",
+                  "label": {
+                    "en": "People",
+                    "de": "Personen"
+                  }
+                },
+                {
+                  "id": "2",
+                  "label": {
+                    "en": "Animals",
+                    "de": "Tiere"
+                  }
+                },
+                {
+                  "id": "3",
+                  "label": {
+                    "en": "People + Animals",
+                    "de": "Personen + Tiere"
+                  }
+                },
+                {
+                  "id": "4",
+                  "label": {
+                    "en": "Objects",
+                    "de": "Objekte"
+                  }
+                },
+                {
+                  "id": "5",
+                  "label": {
+                    "en": "People + Objects",
+                    "de": "Personen + Objekte"
+                  }
+                },
+                {
+                  "id": "6",
+                  "label": {
+                    "en": "Animals + Objects",
+                    "de": "Tiere + Objekte"
+                  }
+                },
+                {
+                  "id": "7",
+                  "label": {
+                    "en": "All (People + Animals + Objects)",
+                    "de": "Alle (Personen + Tiere + Objekte)"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Child Lock",
+            "de": "Kindersicherung"
+          },
+          "children": [
+            {
+              "id": "cls_enabled",
+              "type": "checkbox",
+              "label": {
+                "en": "Enabled",
+                "de": "Aktiviert"
+              },
+              "value": false,
+              "hint": {
+                "en": "Locks physical buttons on the mower so it cannot be started manually.",
+                "de": "Sperrt die physischen Tasten am Mähroboter, damit er nicht manuell gestartet werden kann."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Frost Protection",
+            "de": "Frostschutz"
+          },
+          "children": [
+            {
+              "id": "fdp_enabled",
+              "type": "checkbox",
+              "label": {
+                "en": "Enabled",
+                "de": "Aktiviert"
+              },
+              "value": false,
+              "hint": {
+                "en": "The mower will not mow when frost is detected.",
+                "de": "Der Mähroboter mäht nicht, wenn Frost erkannt wird."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Rain Protection",
+            "de": "Regenschutz"
+          },
+          "children": [
+            {
+              "id": "wrp_enabled",
+              "type": "checkbox",
+              "label": {
+                "en": "Enabled",
+                "de": "Aktiviert"
+              },
+              "value": false
+            },
+            {
+              "id": "wrp_sensitivity",
+              "type": "number",
+              "label": {
+                "en": "Sensitivity",
+                "de": "Empfindlichkeit"
+              },
+              "value": 1,
+              "min": 1,
+              "max": 3,
+              "step": 1,
+              "hint": {
+                "en": "Rain detection sensitivity (1 = low, 3 = high).",
+                "de": "Regenerkennungs-Empfindlichkeit (1 = niedrig, 3 = hoch)."
+              }
+            },
+            {
+              "id": "wrp_wait_time",
+              "type": "number",
+              "label": {
+                "en": "Wait time (h)",
+                "de": "Wartezeit (Std.)"
+              },
+              "value": 7,
+              "min": 1,
+              "max": 24,
+              "step": 1,
+              "hint": {
+                "en": "Hours to wait after rain before resuming mowing.",
+                "de": "Stunden Wartezeit nach dem Regen, bevor das Mähen fortgesetzt wird."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Lighting",
+            "de": "Beleuchtung"
+          },
+          "children": [
+            {
+              "id": "lit_enabled",
+              "type": "checkbox",
+              "label": {
+                "en": "Custom LED activation time window",
+                "de": "Benutzerdefinierter LED-Aktivierungszeitraum"
+              },
+              "value": false,
+              "hint": {
+                "en": "When enabled, the mower only turns on the light during the specified time window.",
+                "de": "Wenn aktiviert, schaltet der Roboter das Licht nur während des angegebenen Zeitraums ein."
+              }
+            },
+            {
+              "id": "lit_time_start",
+              "type": "number",
+              "label": {
+                "en": "Start (h)",
+                "de": "Start (Uhr)"
+              },
+              "value": 8,
+              "min": 0,
+              "max": 23,
+              "step": 1,
+              "hint": {
+                "en": "Start of the LED activation window (e.g. 8 = 08:00).",
+                "de": "Beginn des LED-Aktivierungszeitraums (z. B. 8 = 08:00 Uhr)."
+              }
+            },
+            {
+              "id": "lit_time_end",
+              "type": "number",
+              "label": {
+                "en": "End (h)",
+                "de": "Ende (Uhr)"
+              },
+              "value": 20,
+              "min": 1,
+              "max": 24,
+              "step": 1,
+              "hint": {
+                "en": "End of the LED activation window (e.g. 20 = 20:00).",
+                "de": "Ende des LED-Aktivierungszeitraums (z. B. 20 = 20:00 Uhr)."
+              }
+            },
+            {
+              "id": "lit_standby",
+              "type": "checkbox",
+              "label": {
+                "en": "Light in standby",
+                "de": "Licht im Standby"
+              },
+              "value": false,
+              "hint": {
+                "en": "Turn on the LED when the mower is in standby.",
+                "de": "LED leuchtet, wenn der Mähroboter im Standby ist."
+              }
+            },
+            {
+              "id": "lit_working",
+              "type": "checkbox",
+              "label": {
+                "en": "Light while mowing",
+                "de": "Licht während des Mähens"
+              },
+              "value": false,
+              "hint": {
+                "en": "Turn on the LED while the mower is working.",
+                "de": "LED leuchtet, während der Mähroboter mäht."
+              }
+            },
+            {
+              "id": "lit_charging",
+              "type": "checkbox",
+              "label": {
+                "en": "Light while charging",
+                "de": "Licht beim Laden"
+              },
+              "value": false,
+              "hint": {
+                "en": "Turn on the LED while the mower is charging.",
+                "de": "LED leuchtet, während der Mähroboter geladen wird."
+              }
+            },
+            {
+              "id": "lit_error",
+              "type": "checkbox",
+              "label": {
+                "en": "Light on error",
+                "de": "Licht bei Fehler"
+              },
+              "value": false,
+              "hint": {
+                "en": "Turn on the LED when the mower reports an error.",
+                "de": "LED leuchtet, wenn der Mähroboter einen Fehler meldet."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Battery",
+            "de": "Akku"
+          },
+          "children": [
+            {
+              "id": "bat_return_pct",
+              "type": "number",
+              "label": {
+                "en": "Return charging threshold (%)",
+                "de": "Ladestand für automatisches Aufladen (%)"
+              },
+              "value": 15,
+              "min": 5,
+              "max": 90,
+              "step": 5,
+              "hint": {
+                "en": "The mower returns to the dock automatically when the battery drops to this level.",
+                "de": "Der Mähroboter kehrt automatisch zur Station zurück, wenn der Akkustand auf diesen Wert sinkt."
+              }
+            },
+            {
+              "id": "bat_resume_pct",
+              "type": "number",
+              "label": {
+                "en": "Resume task threshold (%)",
+                "de": "Ladestand für Wiederaufnahme der Aufgaben (%)"
+              },
+              "value": 100,
+              "min": 10,
+              "max": 100,
+              "step": 5,
+              "hint": {
+                "en": "After charging, the mower resumes its task automatically once the battery reaches this level.",
+                "de": "Nach dem Aufladen setzt der Mähroboter die Aufgabe automatisch fort, sobald der Akku diesen Ladestand erreicht hat."
+              }
+            },
+            {
+              "id": "bat_auto_resume",
+              "type": "checkbox",
+              "label": {
+                "en": "Resume mowing after charging",
+                "de": "Mähen nach dem Laden fortsetzen"
+              },
+              "value": false,
+              "hint": {
+                "en": "When enabled, the mower automatically resumes its unfinished task after charging is complete.",
+                "de": "Wenn aktiviert, setzt der Roboter die unerledigte Aufgabe nach Abschluss der Ladezeit automatisch fort."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Low Speed at Night",
+            "de": "Niedrige Geschwindigkeit in der Nacht"
+          },
+          "children": [
+            {
+              "id": "low_enabled",
+              "type": "checkbox",
+              "label": {
+                "en": "Enabled",
+                "de": "Aktiviert"
+              },
+              "value": false,
+              "hint": {
+                "en": "When enabled, the mower automatically slows down during the set time window to protect animals active at night.",
+                "de": "Wenn aktiviert, verlangsamt sich der Roboter automatisch während des festgelegten Zeitraums, um Tiere zu schützen."
+              }
+            },
+            {
+              "id": "slow_motion_enabled",
+              "type": "checkbox",
+              "label": {
+                "en": "Permanent Slow Motion (experimental)",
+                "de": "Dauerhafte Langsamfahrt (experimentell)"
+              },
+              "value": false,
+              "hint": {
+                "en": "Uses the mower's native low-speed mode for the full day. This does not directly control wheel torque or prevent every wheel-spin recovery attempt. When disabled, the normal night schedule above is restored.",
+                "de": "Verwendet den nativen Langsamfahrmodus des Mähers ganztägig. Dies steuert nicht direkt das Raddrehmoment und verhindert nicht jeden Freifahrversuch mit durchdrehenden Rädern. Nach dem Ausschalten wird der normale Nachtzeitplan oben wiederhergestellt."
+              }
+            },
+            {
+              "id": "low_start",
+              "type": "number",
+              "label": {
+                "en": "Start (h)",
+                "de": "Start (Uhr)"
+              },
+              "value": 20,
+              "min": 0,
+              "max": 23,
+              "step": 1,
+              "hint": {
+                "en": "Start of the low-speed window (e.g. 20 = 20:00).",
+                "de": "Beginn des Langsamfahr-Zeitraums (z. B. 20 = 20:00 Uhr)."
+              }
+            },
+            {
+              "id": "low_end",
+              "type": "number",
+              "label": {
+                "en": "End (h)",
+                "de": "Ende (Uhr)"
+              },
+              "value": 8,
+              "min": 0,
+              "max": 23,
+              "step": 1,
+              "hint": {
+                "en": "End of the low-speed window (e.g. 8 = 08:00 next day).",
+                "de": "Ende des Langsamfahr-Zeitraums (z. B. 8 = 08:00 Uhr nächsten Tag)."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Do Not Disturb",
+            "de": "Bitte nicht stören"
+          },
+          "children": [
+            {
+              "id": "dnd_enabled",
+              "type": "checkbox",
+              "label": {
+                "en": "Enabled",
+                "de": "Aktiviert"
+              },
+              "value": false,
+              "hint": {
+                "en": "When enabled, the mower will not start automatically during the set time window. If it is already mowing it will stop and return to the dock.",
+                "de": "Wenn aktiviert, beginnt der Mähroboter innerhalb des eingestellten Zeitraums nicht automatisch. Wenn er bereits mäht, unterbricht er die Arbeit und kehrt zur Station zurück."
+              }
+            },
+            {
+              "id": "dnd_start",
+              "type": "number",
+              "label": {
+                "en": "Start (h)",
+                "de": "Start (Uhr)"
+              },
+              "value": 22,
+              "min": 0,
+              "max": 23,
+              "step": 1,
+              "hint": {
+                "en": "Start of the Do Not Disturb window (e.g. 22 = 22:00).",
+                "de": "Beginn des Bitte-nicht-stören-Zeitraums (z. B. 22 = 22:00 Uhr)."
+              }
+            },
+            {
+              "id": "dnd_end",
+              "type": "number",
+              "label": {
+                "en": "End (h)",
+                "de": "Ende (Uhr)"
+              },
+              "value": 8,
+              "min": 0,
+              "max": 23,
+              "step": 1,
+              "hint": {
+                "en": "End of the Do Not Disturb window (e.g. 8 = 08:00 next day).",
+                "de": "Ende des Bitte-nicht-stören-Zeitraums (z. B. 8 = 08:00 Uhr nächsten Tag)."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Voice Announcements",
+            "de": "Sprachansagemodi"
+          },
+          "children": [
+            {
+              "id": "voice_notification",
+              "type": "checkbox",
+              "label": {
+                "en": "Regular notification",
+                "de": "Regelmäßige Benachrichtigungsansage"
+              },
+              "value": false,
+              "hint": {
+                "en": "The mower announces regular status notifications.",
+                "de": "Der Mähroboter gibt regelmäßige Benachrichtigungsansagen aus."
+              }
+            },
+            {
+              "id": "voice_work_status",
+              "type": "checkbox",
+              "label": {
+                "en": "Work status",
+                "de": "Arbeitsstatusansage"
+              },
+              "value": false,
+              "hint": {
+                "en": "The mower announces work status changes (e.g. mowing started, returning to dock).",
+                "de": "Der Mähroboter gibt Arbeitsstatusänderungen aus (z. B. Mähen gestartet, Rückkehr zur Station)."
+              }
+            },
+            {
+              "id": "voice_special_status",
+              "type": "checkbox",
+              "label": {
+                "en": "Special status",
+                "de": "Spezialstatusansage"
+              },
+              "value": false,
+              "hint": {
+                "en": "The mower announces special status events.",
+                "de": "Der Mähroboter gibt Ansagen zu besonderen Statusereignissen aus."
+              }
+            },
+            {
+              "id": "voice_error_status",
+              "type": "checkbox",
+              "label": {
+                "en": "Error status",
+                "de": "Fehlerstatusansage"
+              },
+              "value": false,
+              "hint": {
+                "en": "The mower announces error conditions.",
+                "de": "Der Mähroboter gibt Fehlermeldungen als Sprachansage aus."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Anti-Theft Alarm",
+            "de": "Anti-Diebstahl-Alarm"
+          },
+          "children": [
+            {
+              "id": "ata_lift",
+              "type": "checkbox",
+              "label": {
+                "en": "Lift alarm",
+                "de": "Hebealarm"
+              },
+              "value": false,
+              "hint": {
+                "en": "When enabled, the mower locks itself and triggers an alarm immediately when lifted.",
+                "de": "Wenn aktiviert, wird der Roboter gesperrt und der Alarm wird sofort ausgelöst, wenn er angehoben wird."
+              }
+            },
+            {
+              "id": "ata_map_alarm",
+              "type": "checkbox",
+              "label": {
+                "en": "Alarm when leaving the map",
+                "de": "Alarm bei Verlassen der Karte"
+              },
+              "value": false,
+              "hint": {
+                "en": "Triggers an alarm when the mower leaves the mapped area. Requires the Link module.",
+                "de": "Löst einen Alarm aus, wenn der Mähroboter die kartierte Fläche verlässt. Erfordert das Link-Modul."
+              }
+            },
+            {
+              "id": "ata_realtime",
+              "type": "checkbox",
+              "label": {
+                "en": "Real-time location",
+                "de": "Standort in Echtzeit"
+              },
+              "value": false,
+              "hint": {
+                "en": "Enables real-time GPS location tracking. Requires the Link module.",
+                "de": "Aktiviert die GPS-Echtzeit-Standortverfolgung. Erfordert das Link-Modul."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "AI Obstacle Detection",
+            "de": "KI-Hinderniserkennung"
+          },
+          "children": [
+            {
+              "id": "aop_enabled",
+              "type": "checkbox",
+              "label": {
+                "en": "Capture photos of AI-detected obstacles",
+                "de": "Fotos von KI-erkannten Hindernissen aufnehmen"
+              },
+              "value": false,
+              "hint": {
+                "en": "When enabled, the mower photographs obstacles detected by AI. You can then tap the obstacle icons on the map in the manufacturer app to view the actual photos.",
+                "de": "Wenn aktiviert, fotografiert der Mähroboter erkannte Hindernisse. Die Fotos können in der Hersteller-App durch Tippen auf die Hindernissymbole auf der Karte angezeigt werden."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Consumable Max Life",
+            "de": "Verbrauchsmaterial Maximalwerte"
+          },
+          "children": [
+            {
+              "id": "cms_blade_max",
+              "type": "number",
+              "label": {
+                "en": "Blade max (hours)",
+                "de": "Klinge max (Stunden)"
+              },
+              "value": 100,
+              "min": 10,
+              "max": 500,
+              "step": 10,
+              "hint": {
+                "en": "Maximum blade life in hours. Default: 100h. Adjust if the percentage doesn't match the manufacturer app.",
+                "de": "Maximale Klingenlebensdauer in Stunden. Standard: 100h. Anpassen, falls der Prozentwert nicht mit der Hersteller-App übereinstimmt."
+              }
+            },
+            {
+              "id": "cms_brush_max",
+              "type": "number",
+              "label": {
+                "en": "Brush max (hours)",
+                "de": "Bürste max (Stunden)"
+              },
+              "value": 500,
+              "min": 50,
+              "max": 2000,
+              "step": 50,
+              "hint": {
+                "en": "Maximum brush life in hours. Default: 500h.",
+                "de": "Maximale Bürstenlebensdauer in Stunden. Standard: 500h."
+              }
+            },
+            {
+              "id": "cms_robot_max",
+              "type": "number",
+              "label": {
+                "en": "Robot maintenance max (hours)",
+                "de": "Roboterwartung max (Stunden)"
+              },
+              "value": 60,
+              "min": 10,
+              "max": 200,
+              "step": 10,
+              "hint": {
+                "en": "Maximum robot maintenance interval in hours. Default: 60h. Some models use 42h or 50h — adjust if the percentage doesn't match the manufacturer app.",
+                "de": "Maximales Roboter-Wartungsintervall in Stunden. Standard: 60h. Einige Modelle verwenden 42h oder 50h — anpassen, falls der Prozentwert nicht mit der Hersteller-App übereinstimmt."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Connection",
+            "de": "Verbindung"
+          },
+          "children": [
+            {
+              "id": "poll_interval",
+              "type": "number",
+              "label": {
+                "en": "Poll Interval (seconds)",
+                "de": "Abfrageintervall (Sekunden)"
+              },
+              "value": 30,
+              "min": 10,
+              "max": 300,
+              "step": 5,
+              "hint": {
+                "en": "How often the mower status is polled.",
+                "de": "Wie oft der Status abgefragt wird."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Garage Safety",
+            "de": "Garagensicherheit"
+          },
+          "children": [
+            {
+              "id": "garage_mode_enabled",
+              "type": "checkbox",
+              "label": {
+                "en": "Enable garage mode",
+                "de": "Garagenmodus aktivieren"
+              },
+              "value": false,
+              "hint": {
+                "en": "Enable or disable Garage Mode. Additional garage settings (door, sensor, safety line, danger area and map overlays) are under Mower device → Repair (Manage mower) → Garage Mode. Maintenance points remain available there even with Garage Mode off. Camera settings remain below.",
+                "de": "Aktiviert oder deaktiviert den Garagenmodus. Weitere Garageneinstellungen (Tor, Sensor, Sicherheitslinie, Gefahrenbereich und Kartenanzeige) findest du unter Mähergerät → Reparieren (Mäher verwalten) → Garagenmodus. Wartungspunkte bleiben dort auch ohne Garagenmodus verfügbar. Kameraeinstellungen bleiben hier."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Mowing map",
+            "de": "Mähkarte"
+          },
+          "children": [
+            {
+              "id": "map_safe_mowing",
+              "type": "checkbox",
+              "label": {
+                "en": "Safe mowing: allow pylon exclusion zones",
+                "de": "Sicher mähen: Sperrzonen an Pylonen zulassen"
+              },
+              "value": false,
+              "hint": {
+                "en": "Enable native square exclusion zones around detected pylons in the map editor. Existing manufacturer zones remain separate.",
+                "de": "Quadratische Sperrzonen um erkannte Pylonen einzeln im Karteneditor anlegen. Vorhandene Sperrzonen der Original-App bleiben getrennt."
+              }
+            },
+            {
+              "id": "map_show_robot_position",
+              "type": "checkbox",
+              "label": {
+                "en": "Show mower position on map",
+                "de": "Mäherposition auf Karte anzeigen"
+              },
+              "value": true
+            },
+            {
+              "id": "map_show_direction",
+              "type": "checkbox",
+              "label": {
+                "en": "Show alternating mowing pattern on map",
+                "de": "Mähmuster hell/dunkel auf Karte anzeigen"
+              },
+              "value": true,
+              "hint": {
+                "en": "Shows recorded mowing passes light/dark by travel direction. The complete driven route remains until the next mowing job.",
+                "de": "Zeigt aufgezeichnete Mähbahnen je Fahrtrichtung hell/dunkel. Die vollständige gefahrene Route bleibt bis zum nächsten Mähvorgang erhalten."
+              }
+            },
+            {
+              "id": "map_show_route",
+              "type": "checkbox",
+              "label": {
+                "en": "Show driven route on map",
+                "de": "Gefahrene Route auf Karte anzeigen"
+              },
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Live Video",
+            "de": "Live Video"
+          },
+          "children": [
+            {
+              "id": "video_enabled",
+              "type": "checkbox",
+              "label": {
+                "en": "Enable Live Video",
+                "de": "Live Video aktivieren"
+              },
+              "value": false,
+              "hint": {
+                "en": "Optional, unofficial camera feature; Dreame does not support or endorse this integration. It starts only after you enable this setting and open Live Video. Camera provisioning is fetched for that session through your signed-in device account and is not saved by the camera module. Tencent XP2P may process network IP addresses for NAT traversal (see the app's camera privacy note). A fresh random access URL is generated for each local relay session, which listens only on Homey's selected private LAN address. Video only; audio is discarded. Setup may contact vendor/Tencent services; this app does not operate a third-party video relay. Use at your own responsibility. Dreame provides no compatibility certification or written authorization and states that resulting software, hardware or security problems are not covered under its warranty. Community safeguards are not manufacturer permission; see the manufacturer-response note before enabling. The project provides no guarantee or assurance of error-free operation, continued availability of vendor services or future compatibility. On first Live Video use after enabling this setting, the Tencent XP2P SDK is downloaded from Maven Central, verified against pinned hashes and executed locally on Homey. Enabling Live Video also requires checking the separate privacy/risk acknowledgment below; an unconfirmed enable request is rejected.",
+                "de": "Optionale, inoffizielle Kamerafunktion; Dreame unterstützt oder empfiehlt diese Integration nicht. Sie startet erst, wenn du diese Einstellung aktivierst und Live Video öffnest. Die Kamera-Provisionierung wird für diese Sitzung über dein angemeldetes Gerätekonto abgerufen und vom Kameramodul nicht gespeichert. Tencent XP2P kann Netzwerk-IP-Adressen zur NAT-Durchquerung verarbeiten (siehe Datenschutzhinweis der App). Für jede lokale Relay-Sitzung wird eine neue zufällige Zugriffs-URL erzeugt; der Server lauscht nur an der ausgewählten privaten Homey-LAN-Adresse. Nur Video; Audio wird verworfen. Der Verbindungsaufbau kann Hersteller-/Tencent-Dienste kontaktieren; diese App betreibt keinen Drittanbieter-Video-Relay. Nutzung auf eigene Verantwortung. Dreame erteilt keine Kompatibilitätszertifizierung oder schriftliche Genehmigung und erklärt, dass daraus verursachte Software-, Hardware- oder Sicherheitsprobleme nicht von seiner Garantie gedeckt sind. Community-Schutzmaßnahmen sind keine Herstellerfreigabe; bitte vor Aktivierung die Herstellerantwort lesen. Das Projekt übernimmt keine Garantie oder Zusicherung für eine fehlerfreie Funktion, dauerhafte Verfügbarkeit der Herstellerdienste oder künftige Kompatibilität. Bei der ersten Live-Video-Nutzung nach Aktivierung wird das Tencent-XP2P-SDK von Maven Central heruntergeladen, anhand gepinnter Hashes geprüft und lokal auf Homey ausgeführt. Zum Einschalten muss außerdem der separate Datenschutz-/Risiko-Bestätigungshaken darunter gesetzt werden; ohne Bestätigung wird das Einschalten abgelehnt."
+              }
+            },
+            {
+              "id": "video_privacy_acknowledged",
+              "type": "checkbox",
+              "label": {
+                "en": "I have read and acknowledge the camera privacy and risk notice",
+                "de": "Ich habe die Kamera-Datenschutz- und Risikohinweise gelesen und bestätige sie"
+              },
+              "value": false,
+              "hint": {
+                "en": "Required before enabling Live Video. This is an independent, unofficial community integration: Dreame/MOVA has not approved, certified or supported it. Setup can contact Dreame/MOVA and Tencent services and may involve network/IP data; the app provides a local video viewer but does not operate its own cloud recording service. The camera may capture other people; observe applicable privacy obligations. Dreame states that resulting software, hardware or security problems are not covered by its manufacturer warranty; mandatory statutory rights remain unaffected. Operation and future compatibility are not guaranteed. This acknowledgment is NOT permission from Dreame/Tencent and does not settle outstanding third-party SDK licensing. To withdraw acknowledgment, first switch Live Video off and then uncheck this box (you can switch both off in one save). Live Video is off by default. Only relevant when Live Video is enabled; ignored while it is off. Standard Homey Advanced Settings always display this field, including when the camera is off; it has no effect then.",
+                "de": "Vor dem Einschalten von Live Video erforderlich. Dies ist eine unabhängige, inoffizielle Community-Integration; Dreame/MOVA hat sie nicht genehmigt, zertifiziert oder offiziell unterstützt. Beim Verbindungsaufbau können Dreame-/MOVA- und Tencent-Dienste kontaktiert und Netzwerk-/IP-Daten verarbeitet werden. Die App bietet eine lokale Videoanzeige, aber keinen eigenen Cloud-Aufzeichnungsdienst. Die Kamera kann andere Personen erfassen; geltende Datenschutzpflichten sind zu beachten. Laut Dreame sind dadurch verursachte Software-, Hardware- oder Sicherheitsprobleme nicht von der Herstellergarantie gedeckt; zwingende gesetzliche Rechte bleiben unberührt. Für Funktion und zukünftige Kompatibilität besteht keine Zusicherung. Diese Bestätigung ist KEINE Erlaubnis von Dreame/Tencent und ersetzt keine offenen SDK-Lizenznachweise. Zum Zurückziehen der Bestätigung zuerst Live Video ausschalten und danach den Haken entfernen (beides kann gleichzeitig gespeichert werden). Live Video ist standardmäßig aus. Nur bei aktivierter Kamera erforderlich; bei ausgeschalteter Kamera hat der Haken keine Wirkung. In Homeys Standardansicht bleibt dieses Feld auch bei deaktivierter Kamera sichtbar, hat dann aber keine Funktion."
+              }
+            }
+          ]
+        }
+      ],
+      "id": "mower"
+    }
+  ],
+  "widgets": {
+    "history": {
+      "name": {
+        "en": "Mowing History",
+        "de": "Mähverlauf"
+      },
+      "height": "100%",
+      "devices": {
+        "type": "app",
+        "singular": true
+      },
+      "settings": [],
+      "api": {
+        "getSessions": {
+          "method": "GET",
+          "path": "/sessions"
+        },
+        "getPhotos": {
+          "method": "GET",
+          "path": "/photos"
+        },
+        "getPhoto": {
+          "method": "GET",
+          "path": "/photo"
+        }
+      },
+      "id": "history"
+    },
+    "map": {
+      "name": {
+        "en": "Mower Map",
+        "de": "Mäherkarte"
+      },
+      "height": "100%",
+      "devices": {
+        "type": "app",
+        "singular": true
+      },
+      "settings": [
+        {
+          "id": "show_zones",
+          "type": "checkbox",
+          "label": {
+            "en": "Show mowing zones",
+            "de": "Mähzonen anzeigen"
+          },
+          "value": true
+        },
+        {
+          "id": "show_forbidden",
+          "type": "checkbox",
+          "label": {
+            "en": "Show forbidden areas",
+            "de": "Verbotsbereiche anzeigen"
+          },
+          "value": true
+        },
+        {
+          "id": "show_spots",
+          "type": "checkbox",
+          "label": {
+            "en": "Show spot areas",
+            "de": "Spotbereiche anzeigen"
+          },
+          "value": true
+        },
+        {
+          "id": "show_robot",
+          "type": "checkbox",
+          "label": {
+            "en": "Show robot position",
+            "de": "Mäherposition anzeigen"
+          },
+          "value": true
+        },
+        {
+          "id": "show_obstacles",
+          "type": "checkbox",
+          "label": {
+            "en": "Show obstacles",
+            "de": "Hindernisse anzeigen"
+          },
+          "value": true
+        },
+        {
+          "id": "show_path",
+          "type": "checkbox",
+          "label": {
+            "en": "Show driven route",
+            "de": "Gefahrene Route anzeigen"
+          },
+          "value": true
+        },
+        {
+          "id": "show_direction",
+          "type": "checkbox",
+          "label": {
+            "en": "Show alternating mowing pattern",
+            "de": "Mähmuster hell/dunkel anzeigen"
+          },
+          "value": true,
+          "hint": {
+            "en": "Shows the recorded mowing lanes as a persistent light/dark pattern: one travel direction bright, the opposite direction darker. Turns stay neutral. No instantaneous heading arrow is shown.",
+            "de": "Zeigt die aufgezeichneten Mähbahnen dauerhaft als Hell/Dunkel-Muster: eine Fahrtrichtung hell, die Gegenrichtung dunkler. Wendungen bleiben neutral. Es wird kein momentaner Richtungspfeil angezeigt."
+          }
+        },
+        {
+          "id": "show_maintenance_point",
+          "type": "checkbox",
+          "label": {
+            "en": "Show maintenance point",
+            "de": "Wartungspunkt anzeigen"
+          },
+          "value": true,
+          "hint": {
+            "en": "Shows the mower maintenance point independently of Garage Mode.",
+            "de": "Zeigt den Wartungspunkt des Mähers unabhängig vom Garagenmodus."
+          }
+        },
+        {
+          "id": "show_garage_overlay",
+          "type": "checkbox",
+          "label": {
+            "en": "Show garage overlay",
+            "de": "Garagen-Overlay anzeigen"
+          },
+          "value": true,
+          "hint": {
+            "en": "Shows the safety line, danger/caution areas, garage/dock marker and related garage labels. Only effective while Garage Mode is enabled.",
+            "de": "Zeigt Sicherheitslinie, Gefahren-/Vorsichtsbereiche, Garage-/Dock-Markierung und zugehörige Garagenbeschriftungen. Nur bei aktiviertem Garagenmodus wirksam."
+          }
+        }
+      ],
+      "api": {
+        "getMapData": {
+          "method": "GET",
+          "path": "/"
+        },
+        "updateGarageMarkers": {
+          "method": "PUT",
+          "path": "/garage-markers"
+        },
+        "updateMaintenancePointName": {
+          "method": "PUT",
+          "path": "/maintenance-point-name"
+        },
+        "updateObstacleRule": {
+          "method": "PUT",
+          "path": "/obstacle-rule"
+        }
+      },
+      "id": "map"
+    },
+    "overview": {
+      "name": {
+        "de": "Mäher Totalübersicht",
+        "en": "Mower Overview"
+      },
+      "height": 980,
+      "devices": {
+        "type": "app",
+        "singular": true
+      },
+      "settings": [],
+      "api": {
+        "getOverview": {
+          "method": "GET",
+          "path": "/overview"
+        },
+        "camera": {
+          "method": "POST",
+          "path": "/camera"
+        },
+        "getMapData": {
+          "method": "GET",
+          "path": "/"
+        },
+        "updateGarageMarkers": {
+          "method": "PUT",
+          "path": "/garage-markers"
+        },
+        "updateMaintenancePointName": {
+          "method": "PUT",
+          "path": "/maintenance-point-name"
+        },
+        "updateObstacleRule": {
+          "method": "PUT",
+          "path": "/obstacle-rule"
+        },
+        "command": {
+          "method": "POST",
+          "path": "/command"
+        },
+        "getMapSnapshot": {
+          "method": "GET",
+          "path": "/map-snapshot"
+        }
+      },
+      "id": "overview"
+    }
+  },
+  "capabilities": {
+    "charging_status": {
+      "type": "enum",
+      "title": {
+        "en": "Charging Status",
+        "de": "Ladestatus"
+      },
+      "values": [
+        {
+          "id": "not_docked",
+          "title": {
+            "en": "Not Docked",
+            "de": "Nicht angedockt"
+          }
+        },
+        {
+          "id": "charging",
+          "title": {
+            "en": "Charging",
+            "de": "Lädt"
+          }
+        },
+        {
+          "id": "not_charging",
+          "title": {
+            "en": "Docked (Standby)",
+            "de": "Angedockt (Standby)"
+          }
+        },
+        {
+          "id": "charging_completed",
+          "title": {
+            "en": "Fully Charged",
+            "de": "Vollständig geladen"
+          }
+        },
+        {
+          "id": "docked",
+          "title": {
+            "en": "Fully Charged (legacy)",
+            "de": "Vollständig geladen (alt)"
+          }
+        },
+        {
+          "id": "returning",
+          "title": {
+            "en": "Returning to Charge",
+            "de": "Kehrt zurück"
+          }
+        },
+        {
+          "id": "paused_cold",
+          "title": {
+            "en": "Charging Paused (Cold)",
+            "de": "Laden pausiert (Kälte)"
+          }
+        },
+        {
+          "id": "paused_hot",
+          "title": {
+            "en": "Charging Paused (Hot)",
+            "de": "Laden pausiert (Hitze)"
+          }
+        }
+      ],
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/charging_status.svg"
+    },
+    "child_lock": {
+      "type": "boolean",
+      "title": {
+        "en": "Child Lock",
+        "de": "Kindersicherung"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/child_lock.svg"
+    },
+    "cmd_all_area": {
+      "type": "boolean",
+      "title": {
+        "en": "Start Mowing",
+        "de": "Mähen starten"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "hint": {
+        "en": "Starts full-area mowing → sendAction(5, 1)",
+        "de": "Startet das Mähen der gesamten Fläche → sendAction(5, 1)"
+      }
+    },
+    "cmd_dock": {
+      "type": "boolean",
+      "title": {
+        "en": "Return to Station",
+        "de": "Zurück zur Station"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_dock.svg",
+      "hint": {
+        "en": "Sends the mower back to the charging station → dock()",
+        "de": "Schickt den Mähroboter zurück zur Ladestation → dock()"
+      }
+    },
+    "cmd_edge_mowing": {
+      "type": "boolean",
+      "title": {
+        "en": "Edge Mowing",
+        "de": "Kantenmähen"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "hint": {
+        "en": "Starts edge mowing along map boundaries → sendAction(2, 50, {m:'a', o:101, d:{edge:[[0,0]]}})",
+        "de": "Startet Kantenmähen entlang der Kartengrenzen → sendAction(2, 50, {m:'a', o:101, d:{edge:[[0,0]]}})"
+      }
+    },
+    "cmd_edge_zone_1": {
+      "type": "boolean",
+      "title": {
+        "en": "Edge Mowing Zone 1",
+        "de": "Kantenmähen Zone 1"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button"
+    },
+    "cmd_edge_zone_2": {
+      "type": "boolean",
+      "title": {
+        "en": "Edge Mowing Zone 2",
+        "de": "Kantenmähen Zone 2"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button"
+    },
+    "cmd_edge_zone_3": {
+      "type": "boolean",
+      "title": {
+        "en": "Edge Mowing Zone 3",
+        "de": "Kantenmähen Zone 3"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button"
+    },
+    "cmd_edge_zone_4": {
+      "type": "boolean",
+      "title": {
+        "en": "Edge Mowing Zone 4",
+        "de": "Kantenmähen Zone 4"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button"
+    },
+    "cmd_edge_zone_5": {
+      "type": "boolean",
+      "title": {
+        "en": "Edge Mowing Zone 5",
+        "de": "Kantenmähen Zone 5"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button"
+    },
+    "cmd_garage_pause_mode": {
+      "type": "boolean",
+      "title": {
+        "en": "Pause/resume garage mode",
+        "de": "Garagenmodus pausieren/fortsetzen"
+      },
+      "getable": false,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_dock.svg",
+      "insights": false
+    },
+    "cmd_garage_save_danger_center": {
+      "type": "boolean",
+      "title": {
+        "en": "Save danger area centre",
+        "de": "Gefahrenbereich-Mitte speichern"
+      },
+      "getable": false,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_dock.svg",
+      "insights": false
+    },
+    "cmd_garage_save_safety_line_a": {
+      "type": "boolean",
+      "title": {
+        "en": "Save safety line point A",
+        "de": "Sicherheitslinie Punkt A speichern"
+      },
+      "getable": false,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_dock.svg",
+      "insights": false
+    },
+    "cmd_garage_save_safety_line_b": {
+      "type": "boolean",
+      "title": {
+        "en": "Save safety line point B",
+        "de": "Sicherheitslinie Punkt B speichern"
+      },
+      "getable": false,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_dock.svg",
+      "insights": false
+    },
+    "cmd_garage_test_exit": {
+      "type": "boolean",
+      "title": {
+        "en": "Garage test exit",
+        "de": "Garage-Testausfahrt"
+      },
+      "getable": false,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_dock.svg",
+      "insights": false
+    },
+    "cmd_maintenance_point": {
+      "type": "boolean",
+      "title": {
+        "en": "Go to Maintenance Point",
+        "de": "Gehe zum Wartungspunkt"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_maintenance_point.svg",
+      "hint": {
+        "en": "Sends the mower to its configured maintenance point.",
+        "de": "Fährt den Mähroboter zu seinem konfigurierten Wartungspunkt."
+      }
+    },
+    "cmd_maintenance_point_1": {
+      "type": "boolean",
+      "title": {
+        "en": "Go to Maintenance Point 1",
+        "de": "Wartungspunkt 1 anfahren"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_maintenance_point_1.svg",
+      "hint": {
+        "en": "Goes to native maintenance point P1 when it is not the current main point.",
+        "de": "Fährt zum nativen Wartungspunkt P1, wenn dieser nicht der aktuelle Hauptpunkt ist."
+      }
+    },
+    "cmd_maintenance_point_2": {
+      "type": "boolean",
+      "title": {
+        "en": "Go to Maintenance Point 2",
+        "de": "Wartungspunkt 2 anfahren"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_maintenance_point_2.svg",
+      "hint": {
+        "en": "Sends the mower to native maintenance point 2 configured in the MOVA/Dreame app. This point is not used for automatic garage returns.",
+        "de": "Fährt den Mäher zum nativen Wartungspunkt 2 aus der MOVA/Dreame-App. Dieser Punkt wird nicht für automatische Garagenrückfahrten verwendet."
+      }
+    },
+    "cmd_maintenance_point_3": {
+      "type": "boolean",
+      "title": {
+        "en": "Go to Maintenance Point 3",
+        "de": "Wartungspunkt 3 anfahren"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_maintenance_point_3.svg",
+      "hint": {
+        "en": "Sends the mower to native maintenance point 3 configured in the MOVA/Dreame app. This point is not used for automatic garage returns.",
+        "de": "Fährt den Mäher zum nativen Wartungspunkt 3 aus der MOVA/Dreame-App. Dieser Punkt wird nicht für automatische Garagenrückfahrten verwendet."
+      }
+    },
+    "cmd_maintenance_point_4": {
+      "type": "boolean",
+      "title": {
+        "en": "Go to Maintenance Point 4",
+        "de": "Wartungspunkt 4 anfahren"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_maintenance_point_4.svg",
+      "hint": {
+        "en": "Sends the mower to native maintenance point 4 configured in the MOVA/Dreame app. This point is not used for automatic garage returns.",
+        "de": "Fährt den Mäher zum nativen Wartungspunkt 4 aus der MOVA/Dreame-App. Dieser Punkt wird nicht für automatische Garagenrückfahrten verwendet."
+      }
+    },
+    "cmd_maintenance_point_5": {
+      "type": "boolean",
+      "title": {
+        "en": "Go to Maintenance Point 5",
+        "de": "Wartungspunkt 5 anfahren"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_maintenance_point_5.svg",
+      "hint": {
+        "en": "Sends the mower to native maintenance point 5 configured in the MOVA/Dreame app. This point is not used for automatic garage returns.",
+        "de": "Fährt den Mäher zum nativen Wartungspunkt 5 aus der MOVA/Dreame-App. Dieser Punkt wird nicht für automatische Garagenrückfahrten verwendet."
+      }
+    },
+    "cmd_pause": {
+      "type": "boolean",
+      "title": {
+        "en": "Pause Mowing",
+        "de": "Mähen pausieren"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_pause.svg"
+    },
+    "cmd_refresh": {
+      "type": "boolean",
+      "title": {
+        "en": "Refresh",
+        "de": "Aktualisieren"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_refresh.svg",
+      "hint": {
+        "en": "Forces a full data refresh: status, map, zones, spots, settings, and all pickers are updated immediately.",
+        "de": "Erzwingt eine vollständige Datenaktualisierung: Status, Karte, Zonen, Spots, Einstellungen und alle Picker werden sofort aktualisiert."
+      }
+    },
+    "cmd_resume": {
+      "type": "boolean",
+      "title": {
+        "en": "Resume Mowing",
+        "de": "Mähen fortsetzen"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_resume.svg"
+    },
+    "cmd_start_mowing": {
+      "type": "boolean",
+      "title": {
+        "en": "Start Mowing (Zone Selection)",
+        "de": "Mähen starten (Zonenauswahl)"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_start_mowing.svg",
+      "hint": {
+        "en": "Starts mowing based on the current Zone Selection. Select a zone first, then press this button.",
+        "de": "Startet das Mähen basierend auf der aktuellen Zonenauswahl. Erst eine Zone auswählen, dann diesen Knopf drücken."
+      }
+    },
+    "cmd_start_spot_mowing": {
+      "type": "boolean",
+      "title": {
+        "en": "Start Spot Mowing (Spot Selection)",
+        "de": "Spot mähen starten (Spotauswahl)"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_start_spot_mowing.svg",
+      "hint": {
+        "en": "Starts mowing based on the current Spot Selection. Select a spot first, then press this button.",
+        "de": "Startet das Mähen basierend auf der aktuellen Spotauswahl. Erst einen Spot auswählen, dann diesen Knopf drücken."
+      }
+    },
+    "cmd_stop": {
+      "type": "boolean",
+      "title": {
+        "en": "Stop Mowing",
+        "de": "Mähen beenden"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_stop.svg"
+    },
+    "cmd_zone_1": {
+      "type": "boolean",
+      "title": {
+        "en": "Mow Zone 1",
+        "de": "Zone 1 mähen"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "hint": {
+        "en": "Starts zone mowing for segment ID 1 → sendAction(2, 50, {m:'a', o:102, d:{region:[1]}})",
+        "de": "Startet Zonenmähen für Segment-ID 1 → sendAction(2, 50, {m:'a', o:102, d:{region:[1]}})"
+      }
+    },
+    "cmd_zone_2": {
+      "type": "boolean",
+      "title": {
+        "en": "Mow Zone 2",
+        "de": "Zone 2 mähen"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "hint": {
+        "en": "Starts zone mowing for segment ID 2 → sendAction(2, 50, {m:'a', o:102, d:{region:[2]}})",
+        "de": "Startet Zonenmähen für Segment-ID 2 → sendAction(2, 50, {m:'a', o:102, d:{region:[2]}})"
+      }
+    },
+    "cmd_zone_3": {
+      "type": "boolean",
+      "title": {
+        "en": "Mow Zone 3",
+        "de": "Zone 3 mähen"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "hint": {
+        "en": "Starts zone mowing for segment ID 3 → sendAction(2, 50, {m:'a', o:102, d:{region:[3]}})",
+        "de": "Startet Zonenmähen für Segment-ID 3 → sendAction(2, 50, {m:'a', o:102, d:{region:[3]}})"
+      }
+    },
+    "cmd_zone_4": {
+      "type": "boolean",
+      "title": {
+        "en": "Mow Zone 4",
+        "de": "Zone 4 mähen"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "hint": {
+        "en": "Starts zone mowing for segment ID 4 → sendAction(2, 50, {m:'a', o:102, d:{region:[4]}})",
+        "de": "Startet Zonenmähen für Segment-ID 4 → sendAction(2, 50, {m:'a', o:102, d:{region:[4]}})"
+      }
+    },
+    "cmd_zone_5": {
+      "type": "boolean",
+      "title": {
+        "en": "Mow Zone 5",
+        "de": "Zone 5 mähen"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "hint": {
+        "en": "Starts zone mowing for segment ID 5 → sendAction(2, 50, {m:'a', o:102, d:{region:[5]}})",
+        "de": "Startet Zonenmähen für Segment-ID 5 → sendAction(2, 50, {m:'a', o:102, d:{region:[5]}})"
+      }
+    },
+    "collision_avoidance": {
+      "type": "boolean",
+      "title": {
+        "en": "Collision Avoidance",
+        "de": "Kollisionsvermeidung"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/collision_avoidance.svg"
+    },
+    "consumable_blade": {
+      "type": "number",
+      "title": {
+        "en": "Blade life",
+        "de": "Klingen-Lebensdauer"
+      },
+      "units": "%",
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "decimals": 0,
+      "min": 0,
+      "max": 100,
+      "icon": "/assets/capabilities/consumable_blade.svg"
+    },
+    "consumable_brush": {
+      "type": "number",
+      "title": {
+        "en": "Cleaning brush life",
+        "de": "Reinigungsbürste-Lebensdauer"
+      },
+      "units": "%",
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "decimals": 0,
+      "min": 0,
+      "max": 100,
+      "icon": "/assets/capabilities/consumable_brush.svg"
+    },
+    "consumable_robot": {
+      "type": "number",
+      "title": {
+        "en": "Robot maintenance",
+        "de": "Wartung des Roboters"
+      },
+      "units": "%",
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "decimals": 0,
+      "min": 0,
+      "max": 100,
+      "icon": "/assets/capabilities/consumable_robot.svg"
+    },
+    "cutting_height": {
+      "type": "number",
+      "title": {
+        "en": "Cutting Height",
+        "de": "Mähhöhe"
+      },
+      "units": "mm",
+      "decimals": 0,
+      "min": 20,
+      "max": 100,
+      "step": 5,
+      "getable": true,
+      "setable": true,
+      "uiComponent": "slider",
+      "icon": "/assets/capabilities/cutting_height.svg"
+    },
+    "firmware_update": {
+      "type": "enum",
+      "title": {
+        "en": "Firmware Status",
+        "de": "Firmware-Status"
+      },
+      "values": [
+        {
+          "id": "up_to_date",
+          "title": {
+            "en": "Up to Date",
+            "de": "Aktuell"
+          }
+        },
+        {
+          "id": "available",
+          "title": {
+            "en": "Update Available",
+            "de": "Update verfügbar"
+          }
+        },
+        {
+          "id": "installing",
+          "title": {
+            "en": "Installing…",
+            "de": "Wird installiert…"
+          }
+        },
+        {
+          "id": "download_failed",
+          "title": {
+            "en": "Download Failed",
+            "de": "Download fehlgeschlagen"
+          }
+        }
+      ],
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/firmware_update.svg"
+    },
+    "garage_door_status": {
+      "type": "enum",
+      "title": {
+        "en": "Garage door",
+        "de": "Garagentor"
+      },
+      "getable": true,
+      "setable": false,
+      "values": [
+        {
+          "id": "unknown",
+          "title": {
+            "en": "Unknown",
+            "de": "Unbekannt"
+          }
+        },
+        {
+          "id": "open",
+          "title": {
+            "en": "Open",
+            "de": "Offen"
+          }
+        },
+        {
+          "id": "closed",
+          "title": {
+            "en": "Closed",
+            "de": "Geschlossen"
+          }
+        },
+        {
+          "id": "opening",
+          "title": {
+            "en": "Opening",
+            "de": "Öffnet"
+          }
+        },
+        {
+          "id": "closing",
+          "title": {
+            "en": "Closing",
+            "de": "Schließt"
+          }
+        }
+      ],
+      "icon": "/assets/capabilities/garage_door.svg",
+      "insights": false,
+      "uiComponent": "sensor"
+    },
+    "garage_home_status": {
+      "type": "enum",
+      "title": {
+        "en": "Home",
+        "de": "Zuhause"
+      },
+      "getable": true,
+      "setable": false,
+      "values": [
+        {
+          "id": "unknown",
+          "title": {
+            "en": "Unknown",
+            "de": "Unbekannt"
+          }
+        },
+        {
+          "id": "away",
+          "title": {
+            "en": "Away",
+            "de": "Unterwegs"
+          }
+        },
+        {
+          "id": "adjusting",
+          "title": {
+            "en": "Adjusting",
+            "de": "Justieren"
+          }
+        },
+        {
+          "id": "home",
+          "title": {
+            "en": "Home",
+            "de": "Zuhause"
+          }
+        }
+      ],
+      "icon": "/assets/capabilities/mower_status.svg",
+      "insights": false,
+      "uiComponent": "sensor"
+    },
+    "garage_safety_status": {
+      "type": "enum",
+      "title": {
+        "en": "Garage safety",
+        "de": "Garagensicherheit"
+      },
+      "getable": true,
+      "setable": false,
+      "values": [
+        {
+          "id": "ok",
+          "title": {
+            "en": "OK",
+            "de": "OK"
+          }
+        },
+        {
+          "id": "warning",
+          "title": {
+            "en": "Warning",
+            "de": "Warnung"
+          }
+        },
+        {
+          "id": "blocked",
+          "title": {
+            "en": "Blocked",
+            "de": "Blockiert"
+          }
+        },
+        {
+          "id": "emergency",
+          "title": {
+            "en": "Emergency",
+            "de": "Notfall"
+          }
+        }
+      ],
+      "icon": "/assets/capabilities/sensor_status.svg",
+      "insights": false,
+      "uiComponent": "sensor"
+    },
+    "garage_sensor_available_status": {
+      "type": "enum",
+      "title": {
+        "en": "Garage sensor",
+        "de": "Garagensensor"
+      },
+      "getable": true,
+      "setable": false,
+      "values": [
+        {
+          "id": "unknown",
+          "title": {
+            "en": "Unknown",
+            "de": "Unbekannt"
+          }
+        },
+        {
+          "id": "online",
+          "title": {
+            "en": "Online",
+            "de": "Online"
+          }
+        },
+        {
+          "id": "timeout",
+          "title": {
+            "en": "Timeout",
+            "de": "Timeout"
+          }
+        },
+        {
+          "id": "offline",
+          "title": {
+            "en": "Offline",
+            "de": "Offline"
+          }
+        }
+      ],
+      "icon": "/assets/capabilities/sensor_status.svg",
+      "insights": false,
+      "uiComponent": "sensor"
+    },
+    "garage_sensor_battery": {
+      "type": "number",
+      "title": {
+        "en": "Garage sensor battery",
+        "de": "Garagensensor Batterie"
+      },
+      "getable": true,
+      "setable": false,
+      "units": "%",
+      "min": 0,
+      "max": 100,
+      "decimals": 0,
+      "icon": "/assets/capabilities/measure_battery.svg",
+      "insights": false
+    },
+    "garage_sensor_contact_status": {
+      "type": "enum",
+      "title": {
+        "en": "Garage sensor contact",
+        "de": "Garagensensor-Kontakt"
+      },
+      "getable": true,
+      "setable": false,
+      "values": [
+        {
+          "id": "unknown",
+          "title": {
+            "en": "Unknown",
+            "de": "Unbekannt"
+          }
+        },
+        {
+          "id": "open",
+          "title": {
+            "en": "Open",
+            "de": "Offen"
+          }
+        },
+        {
+          "id": "closed",
+          "title": {
+            "en": "Closed",
+            "de": "Geschlossen"
+          }
+        }
+      ],
+      "icon": "/assets/capabilities/garage_door.svg",
+      "insights": false,
+      "uiComponent": "sensor"
+    },
+    "garage_sensor_mode_status": {
+      "type": "enum",
+      "title": {
+        "en": "Garage sensor mode",
+        "de": "Torsensor-Modus"
+      },
+      "getable": true,
+      "setable": false,
+      "values": [
+        {
+          "id": "disabled",
+          "title": {
+            "en": "Disabled",
+            "de": "Deaktiviert"
+          }
+        },
+        {
+          "id": "enabled",
+          "title": {
+            "en": "Enabled",
+            "de": "Aktiviert"
+          }
+        }
+      ],
+      "icon": "/assets/capabilities/sensor_status.svg",
+      "insights": false,
+      "uiComponent": "sensor"
+    },
+    "lawn_care_mode": {
+      "type": "boolean",
+      "title": {
+        "en": "Lawn Care Turning",
+        "de": "Rasenpflege"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "toggle",
+      "insights": false
+    },
+    "measure_duration": {
+      "type": "number",
+      "title": {
+        "en": "Session Duration",
+        "de": "Sitzungsdauer"
+      },
+      "units": {
+        "en": "min",
+        "de": "min"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "decimals": 0,
+      "min": 0,
+      "icon": "/assets/capabilities/measure_duration.svg"
+    },
+    "meter_area_total": {
+      "type": "number",
+      "title": {
+        "en": "Total Mowed Area",
+        "de": "Gesamte gemähte Fläche"
+      },
+      "units": {
+        "en": "m²",
+        "de": "m²"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "decimals": 0,
+      "min": 0,
+      "icon": "/assets/capabilities/meter_area_total.svg"
+    },
+    "meter_count_total": {
+      "type": "number",
+      "title": {
+        "en": "Total Mowing Sessions",
+        "de": "Mähsessions gesamt"
+      },
+      "units": {
+        "en": "",
+        "de": ""
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "decimals": 0,
+      "min": 0,
+      "icon": "/assets/capabilities/meter_count_total.svg"
+    },
+    "meter_time_total": {
+      "type": "number",
+      "title": {
+        "en": "Total Mowing Time",
+        "de": "Gesamte Mähzeit"
+      },
+      "units": {
+        "en": "h",
+        "de": "h"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "decimals": 1,
+      "min": 0,
+      "icon": "/assets/capabilities/measure_duration.svg"
+    },
+    "mow_efficiency": {
+      "type": "enum",
+      "title": {
+        "en": "Mow Mode",
+        "de": "Mähmodus"
+      },
+      "values": [
+        {
+          "id": "standard",
+          "title": {
+            "en": "Standard",
+            "de": "Standard"
+          }
+        },
+        {
+          "id": "efficient",
+          "title": {
+            "en": "Efficient",
+            "de": "Effizient"
+          }
+        }
+      ],
+      "getable": true,
+      "setable": true,
+      "uiComponent": "picker",
+      "icon": "/assets/capabilities/mow_efficiency.svg"
+    },
+    "mow_map": {
+      "type": "enum",
+      "title": {
+        "en": "Map Selection",
+        "de": "Kartenauswahl"
+      },
+      "values": [
+        {
+          "id": "map_0",
+          "title": {
+            "en": "Map 1",
+            "de": "Karte 1"
+          }
+        }
+      ],
+      "getable": true,
+      "setable": true,
+      "uiComponent": "picker"
+    },
+    "mow_spot": {
+      "type": "enum",
+      "title": {
+        "en": "Spot Selection",
+        "de": "Spotauswahl"
+      },
+      "values": [
+        {
+          "id": "none",
+          "title": {
+            "en": "— Select spot —",
+            "de": "— Spot auswählen —"
+          }
+        }
+      ],
+      "getable": true,
+      "setable": true,
+      "uiComponent": "picker"
+    },
+    "mow_zone": {
+      "type": "enum",
+      "title": {
+        "en": "Zone Selection",
+        "de": "Zonenauswahl"
+      },
+      "values": [
+        {
+          "id": "none",
+          "title": {
+            "en": "— Select —",
+            "de": "— Auswählen —"
+          }
+        },
+        {
+          "id": "all",
+          "title": {
+            "en": "All areas",
+            "de": "Alle Flächen"
+          }
+        }
+      ],
+      "getable": true,
+      "setable": true,
+      "uiComponent": "picker"
+    },
+    "mower_error": {
+      "type": "string",
+      "title": {
+        "en": "Error",
+        "de": "Fehler"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/mower_error.svg"
+    },
+    "mower_status": {
+      "type": "enum",
+      "title": {
+        "en": "Mower Status",
+        "de": "Mähroboter Status"
+      },
+      "values": [
+        {
+          "id": "idle",
+          "title": {
+            "en": "Idle",
+            "de": "Bereit"
+          }
+        },
+        {
+          "id": "mowing",
+          "title": {
+            "en": "Mowing",
+            "de": "Mähen"
+          }
+        },
+        {
+          "id": "standby",
+          "title": {
+            "en": "Standby",
+            "de": "Standby"
+          }
+        },
+        {
+          "id": "paused",
+          "title": {
+            "en": "Paused",
+            "de": "Pausiert"
+          }
+        },
+        {
+          "id": "error",
+          "title": {
+            "en": "Error",
+            "de": "Fehler"
+          }
+        },
+        {
+          "id": "returning",
+          "title": {
+            "en": "Returning to Dock",
+            "de": "Kehrt zurück"
+          }
+        },
+        {
+          "id": "charging",
+          "title": {
+            "en": "Charging",
+            "de": "Lädt"
+          }
+        },
+        {
+          "id": "mapping",
+          "title": {
+            "en": "Mapping",
+            "de": "Kartierung"
+          }
+        },
+        {
+          "id": "docked",
+          "title": {
+            "en": "Docked",
+            "de": "Angedockt"
+          }
+        },
+        {
+          "id": "updating",
+          "title": {
+            "en": "Updating",
+            "de": "Aktualisierung"
+          }
+        },
+        {
+          "id": "remote_control",
+          "title": {
+            "en": "Remote Control",
+            "de": "Fernsteuerung"
+          }
+        },
+        {
+          "id": "garage_home",
+          "title": {
+            "en": "Home",
+            "de": "Zuhause"
+          }
+        },
+        {
+          "id": "garage_zone_removing",
+          "title": {
+            "en": "Hiding no-go zones",
+            "de": "Sperrzonen ausblenden"
+          }
+        },
+        {
+          "id": "garage_zone_restoring",
+          "title": {
+            "en": "Restoring no-go zones",
+            "de": "Sperrzonen einblenden"
+          }
+        },
+        {
+          "id": "garage_start_pending",
+          "title": {
+            "en": "Starting mower",
+            "de": "Startbefehl wird ausgeführt"
+          }
+        },
+        {
+          "id": "garage_exiting",
+          "title": {
+            "en": "Exiting garage",
+            "de": "Ausfahrt"
+          }
+        },
+        {
+          "id": "garage_adjusting",
+          "title": {
+            "en": "Adjusting",
+            "de": "Justieren"
+          }
+        },
+        {
+          "id": "garage_opening",
+          "title": {
+            "en": "Garage opening",
+            "de": "Garage öffnet"
+          }
+        },
+        {
+          "id": "garage_closing",
+          "title": {
+            "en": "Garage closing",
+            "de": "Garage schließt"
+          }
+        },
+        {
+          "id": "garage_maintenance_transit",
+          "title": {
+            "en": "Going to maintenance point",
+            "de": "Fährt zum Wartungspunkt"
+          }
+        },
+        {
+          "id": "garage_maintenance_reached",
+          "title": {
+            "en": "Maintenance point reached",
+            "de": "Wartungspunkt erreicht"
+          }
+        },
+        {
+          "id": "garage_free_drive",
+          "title": {
+            "en": "Garage transit",
+            "de": "Garagenfahrt"
+          }
+        },
+        {
+          "id": "garage_positioning",
+          "title": {
+            "en": "Positioning",
+            "de": "Positionierung"
+          }
+        },
+        {
+          "id": "garage_app_control",
+          "title": {
+            "en": "App control",
+            "de": "App-Steuerung"
+          }
+        }
+      ],
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/mower_status.svg"
+    },
+    "mower_volume": {
+      "type": "number",
+      "title": {
+        "en": "Volume",
+        "de": "Lautstärke"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "slider",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "icon": "/assets/capabilities/mower_volume.svg"
+    },
+    "turning_method": {
+      "type": "enum",
+      "title": {
+        "en": "Turning Mode",
+        "de": "Wendemodus"
+      },
+      "values": [
+        {
+          "id": "efficient",
+          "title": {
+            "en": "Efficient",
+            "de": "Effizient"
+          }
+        },
+        {
+          "id": "lawn_care",
+          "title": {
+            "en": "Lawn Care",
+            "de": "Rasenpflege"
+          }
+        }
+      ],
+      "getable": true,
+      "setable": true,
+      "uiComponent": "picker",
+      "insights": false
+    }
   }
 }

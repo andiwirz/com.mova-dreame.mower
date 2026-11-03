@@ -186,12 +186,17 @@
   var _homey, _deviceId, _sessions = [], _photoCache = {};
   var _photos = [], _photoIdx = 0;
 
-  // Returns the German string when the user's browser language is German, English otherwise.
+  // Homey language takes precedence; browser language is only a fallback.
+  function activeLanguage() {
+    try { if (_homey && typeof _homey.getLanguage === 'function') return String(_homey.getLanguage() || 'en').toLowerCase(); }
+    catch (_) {}
+    return String(navigator.language || 'en').toLowerCase();
+  }
   function t(en, de) {
-    return (navigator.language || '').toLowerCase().startsWith('de') ? de : en;
+    return activeLanguage().startsWith('de') ? de : en;
   }
 
-  var _locale = (navigator.language || 'en').toLowerCase().startsWith('de') ? 'de-CH' : undefined;
+  var _locale = undefined;
 
   function fmtDate(ts) {
     if (!ts) return '—';
@@ -667,6 +672,14 @@
 
   function onHomeyReady(Homey) {
     _homey    = Homey;
+    // MODE_LABELS was initially built before the Homey language became available.
+    MODE_LABELS = t(MODE_LABELS_EN, MODE_LABELS_DE);
+    document.documentElement.lang = activeLanguage().startsWith('de') ? 'de' : 'en';
+    document.title = t('Mowing history', 'Mähverlauf');
+    _locale = activeLanguage().startsWith('de') ? 'de-DE' : 'en-GB';
+    // The first loading label must follow Homey's selected language as well.
+    var loadingOption = document.querySelector('#session-select option');
+    if (loadingOption) loadingOption.textContent = t('Loading…','Laden …');
     var ids   = Homey.getDeviceIds();
     _deviceId = ids && ids[0];
 

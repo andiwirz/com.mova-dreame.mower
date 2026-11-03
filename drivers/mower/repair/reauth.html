@@ -1,0 +1,296 @@
+
+
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #fff;
+      color: #1a1a1a;
+      padding: 24px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    .info-box {
+      background: #f0faff;
+      border: 1px solid #b3e0f7;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #0070a0;
+      padding: 10px 12px;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #444;
+      margin-bottom: 6px;
+    }
+
+    select, input[type="email"], input[type="password"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      font-size: 15px;
+      background: #fafafa;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    select:focus, input:focus {
+      border-color: #00A8E0;
+      background: #fff;
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .row .field { flex: 1; }
+
+    button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: #00A8E0;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.15s, opacity 0.15s;
+    }
+
+    button:hover  { background: #0091c2; }
+    button:active { background: #0080ab; }
+    button:disabled { opacity: 0.5; cursor: default; }
+
+    .error {
+      background: #fff0f0;
+      border: 1px solid #ffcdd2;
+      border-radius: 8px;
+      color: #c62828;
+      font-size: 13px;
+      padding: 10px 12px;
+      margin-top: 12px;
+    }
+
+    .success {
+      background: #f0fff4;
+      border: 1px solid #b2dfdb;
+      border-radius: 8px;
+      color: #2e7d32;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 12px;
+      margin-top: 12px;
+      text-align: center;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2.5px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .hidden { display: none !important; }
+  </style>
+<h2>Re-authenticate</h2>
+  <p class="subtitle">Enter your MOVA or Dreame credentials to restore the connection.</p>
+
+  <div class="info-box">
+    ✓ Your device, all settings and flows remain unchanged — only the login token is updated.
+  </div>
+
+  <div class="row">
+    <div class="field">
+      <label>Brand</label>
+      <select id="brand">
+        <option value="mova">MOVA</option>
+        <option value="dreame">Dreame</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Region</label>
+      <select id="region">
+        <option value="eu">Europe (EU)</option>
+        <option value="us">USA (US)</option>
+        <option value="cn">China (CN)</option>
+        <option value="sg">Asia (SG)</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Email</label>
+    <input type="email" id="username" autocomplete="email" />
+  </div>
+
+  <div class="field">
+    <label>Password</label>
+    <input type="password" id="password" autocomplete="current-password" />
+  </div>
+
+  <div id="error-msg" class="error hidden"></div>
+  <div id="success-msg" class="success hidden">✓ Authentication successful — connection restored.</div>
+
+  <button id="btn-repair" onclick="onRepair()">Sign In & Restore Connection</button>
+
+  <script>
+    const rawLanguage = (typeof Homey.getLanguage==='function' && Homey.getLanguage()) || (typeof navigator==='undefined'?'en':navigator.language) || 'en';
+    let de = /^de(?:[-_]|$)/i.test(String(rawLanguage));
+    const t = (en,deText) => de ? deText : en;
+    function translateRepairLogin() {
+      const pairs = [
+        ['Re-authenticate','Erneut anmelden'],
+        ['Enter your MOVA or Dreame credentials to restore the connection.','MOVA- oder Dreame-Zugangsdaten eingeben, um die Verbindung wiederherzustellen.'],
+        ['✓ Your device, all settings and flows remain unchanged — only the login token is updated.','✓ Gerät, Einstellungen und Flows bleiben unverändert – nur das Anmeldetoken wird erneuert.'],
+        ['Brand','Marke'],
+        ['Europe (EU)','Europa (EU)'],
+        ['Asia (SG)','Asien (SG)'],
+        ['Email','E-Mail'],
+        ['Password','Passwort'],
+        ['Enter your MOVA or Dreame credentials to restore the connection.','MOVA-/Dreame-Zugangsdaten eingeben, um die Verbindung wiederherzustellen.'],
+        ['✓ Your device, all settings and flows remain unchanged — only the login token is updated.','✓ Gerät, Einstellungen und Flows bleiben unverändert – nur das Anmeldetoken wird aktualisiert.'],
+        ['Brand','Marke'],['Region','Region'],['Email','E-Mail'],['Password','Passwort'],
+        ['Europe (EU)','Europa (EU)'],['China (CN)','China (CN)'],['Asia (SG)','Asien (SG)'],
+        ['✓ Authentication successful — connection restored.','✓ Anmeldung erfolgreich – Verbindung wiederhergestellt.'],
+        ['Sign In & Restore Connection','Anmelden und Verbindung wiederherstellen']
+      ];
+      document.documentElement.lang=de?'de':'en';
+      if (de) {
+        const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT); let node;
+        while((node=walker.nextNode())) {
+          if (!node.parentElement || /^(SCRIPT|STYLE)$/.test(node.parentElement.tagName)) continue;
+          const text=node.nodeValue;
+          for (const [en,deText] of pairs) if(text.trim()===en) { node.nodeValue=text.replace(en,deText); break; }
+        }
+      }
+      try { Homey.setTitle(t('Re-authenticate','Erneut anmelden')); } catch (_) {}
+    }
+    // Do not use navigator.language as the final authority inside Homey Repair.
+    let localized=false;
+    let languageTimer;
+    function applyRepairLoginLanguage(language){
+      if(localized)return;localized=true;clearTimeout(languageTimer);
+      let localeOverride=null;try{localeOverride=localStorage.getItem('mova.repair.uiLanguage')}catch(_){}
+      de=/^de(?:[-_]|$)/i.test(String(localeOverride||(typeof Homey.getLanguage==='function'&&Homey.getLanguage())||language||document.documentElement?.lang||rawLanguage));
+      translateRepairLogin();
+    }
+    languageTimer=setTimeout(()=>applyRepairLoginLanguage(null),1500);
+    try{
+      const answer=Homey.emit('get_repair_ui_language',{},(err,lang)=>{if(!err&&typeof lang==='string')applyRepairLoginLanguage(lang);else applyRepairLoginLanguage(null)});
+      if(answer&&typeof answer.then==='function')answer.then(applyRepairLoginLanguage,()=>applyRepairLoginLanguage(null));
+    }catch(_){applyRepairLoginLanguage(null)}
+
+    // ── Pre-fill brand / region from current device store ─────────────────────
+
+    async function init() {
+      try {
+        const settings = await Homey.emit('get_repair_settings');
+        if (settings.brand)  document.getElementById('brand').value  = settings.brand;
+        if (settings.region) document.getElementById('region').value = settings.region;
+      } catch {
+        // Non-fatal — defaults already set in HTML
+      }
+    }
+
+    // ── UI helpers ────────────────────────────────────────────────────────────
+
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+
+    function hideError() {
+      document.getElementById('error-msg').classList.add('hidden');
+    }
+
+    function setLoading(loading) {
+      const btn = document.getElementById('btn-repair');
+      if (loading) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> '+t('Signing in…','Anmeldung läuft …');
+      } else {
+        btn.disabled = false;
+        btn.textContent = t('Sign In & Restore Connection','Anmelden und Verbindung wiederherstellen');
+      }
+    }
+
+    // ── Repair flow ───────────────────────────────────────────────────────────
+
+    async function onRepair() {
+      hideError();
+
+      const brand    = document.getElementById('brand').value;
+      const region   = document.getElementById('region').value;
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!username || !password) {
+        showError(t('Please enter your email and password.','Bitte E-Mail-Adresse und Passwort eingeben.'));
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        await Homey.emit('login', { brand, region, username, password });
+        await Homey.emit('repair_credentials');
+
+        // Show success briefly, then close the repair view.
+        document.getElementById('success-msg').classList.remove('hidden');
+        document.getElementById('btn-repair').classList.add('hidden');
+        setTimeout(() => Homey.done(), 1500);
+      } catch (err) {
+        showError(err.message || t('Login failed. Please check your credentials.','Anmeldung fehlgeschlagen. Bitte Zugangsdaten prüfen.'));
+        setLoading(false);
+      }
+    }
+
+    // ── Password field: submit on Enter ───────────────────────────────────────
+
+    setTimeout(() => {
+      document.getElementById('password').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') onRepair();
+      });
+      init();
+      try { if (Homey.ready) Homey.ready(); } catch (e) {}
+    }, 0);
+  </script>

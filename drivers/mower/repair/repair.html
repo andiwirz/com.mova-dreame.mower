@@ -1,257 +1,112 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #fff;
-      color: #1a1a1a;
-      padding: 24px;
-      max-width: 480px;
-      margin: 0 auto;
-    }
 
-    h2 {
-      font-size: 20px;
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-
-    .subtitle {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 24px;
-      line-height: 1.5;
-    }
-
-    .info-box {
-      background: #f0faff;
-      border: 1px solid #b3e0f7;
-      border-radius: 8px;
-      font-size: 13px;
-      color: #0070a0;
-      padding: 10px 12px;
-      margin-bottom: 20px;
-      line-height: 1.5;
-    }
-
-    .field {
-      margin-bottom: 16px;
-    }
-
-    label {
-      display: block;
-      font-size: 13px;
-      font-weight: 500;
-      color: #444;
-      margin-bottom: 6px;
-    }
-
-    select, input[type="email"], input[type="password"] {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1.5px solid #ddd;
-      border-radius: 8px;
-      font-size: 15px;
-      background: #fafafa;
-      outline: none;
-      transition: border-color 0.15s;
-    }
-
-    select:focus, input:focus {
-      border-color: #00A8E0;
-      background: #fff;
-    }
-
-    .row {
-      display: flex;
-      gap: 12px;
-    }
-
-    .row .field { flex: 1; }
-
-    button {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      background: #00A8E0;
-      color: #fff;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 8px;
-      transition: background 0.15s, opacity 0.15s;
-    }
-
-    button:hover  { background: #0091c2; }
-    button:active { background: #0080ab; }
-    button:disabled { opacity: 0.5; cursor: default; }
-
-    .error {
-      background: #fff0f0;
-      border: 1px solid #ffcdd2;
-      border-radius: 8px;
-      color: #c62828;
-      font-size: 13px;
-      padding: 10px 12px;
-      margin-top: 12px;
-    }
-
-    .success {
-      background: #f0fff4;
-      border: 1px solid #b2dfdb;
-      border-radius: 8px;
-      color: #2e7d32;
-      font-size: 14px;
-      font-weight: 500;
-      padding: 12px;
-      margin-top: 12px;
-      text-align: center;
-    }
-
-    .spinner {
-      display: inline-block;
-      width: 18px;
-      height: 18px;
-      border: 2.5px solid rgba(255,255,255,0.4);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      flex-shrink: 0;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .hidden { display: none !important; }
+<style>
+    * { box-sizing:border-box; }
+    html,body { margin:0; min-height:100%; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--homey-background-color,#f5f5f7); color:var(--homey-text-color,#1a1a1a); }
+    body { padding:24px 18px 32px; }
+    .wrap { max-width:540px; margin:0 auto; }
+    h1 { margin:0 0 8px; font-size:24px; }
+    .lead { opacity:.66; line-height:1.45; margin:0 0 22px; }
+    .card { width:100%; border:0; border-radius:16px; padding:18px; margin:0 0 14px; text-align:left; background:rgba(127,127,127,.10); color:inherit; box-shadow:0 1px 3px rgba(0,0,0,.08); cursor:pointer; }
+    .card:active { transform:scale(.992); }
+    .title { font-size:18px; font-weight:700; display:flex; align-items:center; gap:10px; }
+    .desc { display:block; margin-top:7px; font-size:13px; line-height:1.45; opacity:.62; }
+    .badge { display:inline-flex; align-items:center; padding:4px 8px; border-radius:999px; margin-top:10px; font-size:11px; font-weight:700; background:rgba(39,117,76,.15); color:#27754c; }
   </style>
-</head>
-<body>
-
-  <h2>Re-authenticate</h2>
-  <p class="subtitle">Enter your MOVA or Dreame credentials to restore the connection.</p>
-
-  <div class="info-box">
-    ✓ Your device, all settings and flows remain unchanged — only the login token is updated.
+<div class="wrap">
+  <div id="repair-language-choice" role="group" aria-label="Language / Sprache" style="display:flex;align-items:center;justify-content:flex-end;gap:6px;margin:0 0 10px;font-size:12px;opacity:.88">
+    <span id="repair-language-label">Sprache</span>
+    <button id="repair-language-de" type="button" aria-pressed="false" style="border:1px solid #999;border-radius:6px;padding:6px 10px;background:transparent;color:inherit">DE</button>
+    <button id="repair-language-en" type="button" aria-pressed="false" style="border:1px solid #999;border-radius:6px;padding:6px 10px;background:transparent;color:inherit">EN</button>
   </div>
 
-  <div class="row">
-    <div class="field">
-      <label>Brand</label>
-      <select id="brand">
-        <option value="mova">MOVA</option>
-        <option value="dreame">Dreame</option>
-      </select>
-    </div>
-    <div class="field">
-      <label>Region</label>
-      <select id="region">
-        <option value="eu">Europe (EU)</option>
-        <option value="us">USA (US)</option>
-        <option value="cn">China (CN)</option>
-        <option value="sg">Asia (SG)</option>
-      </select>
-    </div>
-  </div>
+  <h1 id="headline">Mähroboter verwalten</h1>
+  <p id="lead" class="lead">Mähkarte bearbeiten, Garagensteuerung konfigurieren oder Cloud-Verbindung reparieren. Wartungspunkte bleiben unabhängig vom Garagenmodus verwaltbar.</p>
 
-  <div class="field">
-    <label>Email</label>
-    <input type="email" id="username" autocomplete="email" />
-  </div>
+  <button class="card" onclick="Homey.showView('map_editor')">
+    <span class="title">🗺️ <span id="map-title">Mähkarte bearbeiten</span></span>
+    <span class="desc" id="map-desc">Zum Bearbeiten zuerst „Bearbeiten“ wählen. Dann Marker, Sperrzonen oder Wartungspunkte antippen; native Wartungspunkt-Positionen bleiben unverändert.</span>
+    <span class="badge" id="map-badge">Ohne Widget nutzbar</span>
+  </button>
 
-  <div class="field">
-    <label>Password</label>
-    <input type="password" id="password" autocomplete="current-password" />
-  </div>
+  <button class="card" id="maintenance-config" onclick="Homey.showView('maintenance_settings')">
+    <span class="title">📍 <span id="maintenance-title">Wartungspunkte</span></span>
+    <span class="desc" id="maintenance-desc">P1–P5 anzeigen, benennen und Hauptpunkt zuweisen. Unabhängig vom Garagenmodus.</span>
+  </button>
+  <button class="card" id="garage-config" hidden onclick="Homey.showView('garage_settings')">
+    <span class="title">🏠 <span id="garage-title">Garagenmodus</span></span>
+    <span class="desc" id="garage-desc">Tor, Sensor, Sicherheitsabstände, Karteneinblendungen und automatischen Punktwechsel konfigurieren.</span>
+  </button>
 
-  <div id="error-msg" class="error hidden"></div>
-  <div id="success-msg" class="success hidden">✓ Authentication successful — connection restored.</div>
-
-  <button id="btn-repair" onclick="onRepair()">Sign In & Restore Connection</button>
-
-  <script>
-    // ── Pre-fill brand / region from current device store ─────────────────────
-
-    async function init() {
-      try {
-        const settings = await Homey.emit('get_repair_settings');
-        if (settings.brand)  document.getElementById('brand').value  = settings.brand;
-        if (settings.region) document.getElementById('region').value = settings.region;
-      } catch {
-        // Non-fatal — defaults already set in HTML
+  <button class="card" onclick="Homey.showView('reauth')">
+    <span class="title">🔐 <span id="auth-title">Verbindung neu anmelden</span></span>
+    <span class="desc" id="auth-desc">MOVA-/Dreame-Zugangsdaten erneut anmelden, falls die Cloud-Verbindung abgelaufen ist.</span>
+  </button>
+  <p id="ui-build" class="desc" style="text-align:right;margin:8px 2px 0">UI 1.2.0 · 02.11.2026</p>
+  <button id="finish-repair" class="card" type="button" onclick="Homey.done()" style="font-weight:700;text-align:center" >Fertig</button>
+</div>
+<script>
+  (function(){
+    // Start in the best available local language, then adopt Homey's own locale.
+    // The embedded iOS WebView can report English while Homey is set to German.
+    const fallback=(typeof Homey.getLanguage==='function' && Homey.getLanguage()) ||
+      (typeof navigator!=='undefined'?navigator.language:'en') || 'en';
+    const texts={
+      'headline':['Manage mower','Mäher verwalten'],
+      'lead':['Manage maintenance points even without Garage Mode, edit the map, configure garage safety or reconnect your account.','Wartungspunkte unabhängig vom Garagenmodus verwalten, Karte bearbeiten, Garagensicherheit einstellen oder das Konto erneut verbinden.'],
+      'map-title':['Edit mowing map','Mähkarte bearbeiten'],
+      'map-desc':['Select Edit first. Then tap markers, no-go zones or maintenance points; native waypoint positions remain unchanged.','Zum Bearbeiten zuerst „Bearbeiten“ wählen. Dann Marker, Sperrzonen oder Wartungspunkte antippen; native Wartungspunkt-Positionen bleiben unverändert.'],
+      'map-badge':['Works without a widget','Ohne Widget nutzbar'],
+      'maintenance-title':['Maintenance points','Wartungspunkte'],
+      'maintenance-desc':['View, name and select primary point P1–P5 even when Garage Mode is off.','P1–P5 anzeigen, benennen und Hauptpunkt zuweisen – auch ohne Garagenmodus.'],
+      'garage-title':['Garage Mode','Garagenmodus'],
+      'garage-desc':['Configure door, sensor, safety distances, map overlays and automatic point rotation.','Tor, Sensor, Sicherheitsabstände, Karteneinblendungen und automatischen Wartungspunktwechsel einstellen.'],
+      'auth-title':['Reconnect account','Verbindung neu anmelden'],
+      'auth-desc':['Sign in to MOVA/Dreame again if the cloud session has expired.','MOVA-/Dreame-Zugangsdaten erneut anmelden, falls die Cloud-Verbindung abgelaufen ist.'],
+      'finish-repair':['Done – close management','Fertig – Verwaltung schließen'],
+      'repair-language-label':['Language','Sprache']
+    };
+    const hostDocumentLanguage=document.documentElement?.lang||null;
+    function preferredLanguage(serverLanguage){
+      let override=null;
+      try{override=localStorage.getItem('mova.repair.uiLanguage')}catch(_){}
+      const homeyLanguage=(typeof Homey.getLanguage==='function'&&Homey.getLanguage())||null;
+      const documentLanguage=hostDocumentLanguage;
+      return override||homeyLanguage||serverLanguage||documentLanguage||fallback;
+    }
+    function setUserLanguage(locale){
+      try{localStorage.setItem('mova.repair.uiLanguage',locale)}catch(_){}
+      try{const result=Homey.emit('set_repair_ui_language',{language:locale});if(result?.catch)result.catch(()=>{});}catch(_){}
+      applyLanguage(locale);
+    }
+    document.getElementById('repair-language-de').addEventListener('click',()=>setUserLanguage('de'));
+    document.getElementById('repair-language-en').addEventListener('click',()=>setUserLanguage('en'));
+    function applyLanguage(language){
+      const de=/^de(?:[-_]|$)/i.test(String(language||'en'));
+      if (!document.getElementById('headline')) return;
+      if(document.documentElement) document.documentElement.lang=de?'de':'en';
+      for(const locale of ['de','en']){const button=document.getElementById('repair-language-'+locale); if(button)button.setAttribute('aria-pressed',String((de?'de':'en')===locale));}
+      for(const [id,pair] of Object.entries(texts)){
+        const element=document.getElementById(id);if(element)element.textContent=pair[de?1:0];
       }
+      try{Homey.setTitle(de?'Mäher verwalten':'Manage mower');document.getElementById('headline').hidden=true}catch(_){}
     }
-
-    // ── UI helpers ────────────────────────────────────────────────────────────
-
-    function showError(msg) {
-      const el = document.getElementById('error-msg');
-      el.textContent = msg;
-      el.classList.remove('hidden');
-    }
-
-    function hideError() {
-      document.getElementById('error-msg').classList.add('hidden');
-    }
-
-    function setLoading(loading) {
-      const btn = document.getElementById('btn-repair');
-      if (loading) {
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span> Signing in…';
-      } else {
-        btn.disabled = false;
-        btn.textContent = 'Sign In & Restore Connection';
-      }
-    }
-
-    // ── Repair flow ───────────────────────────────────────────────────────────
-
-    async function onRepair() {
-      hideError();
-
-      const brand    = document.getElementById('brand').value;
-      const region   = document.getElementById('region').value;
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
-
-      if (!username || !password) {
-        showError('Please enter your email and password.');
-        return;
-      }
-
-      setLoading(true);
-
-      try {
-        await Homey.emit('login', { brand, region, username, password });
-        await Homey.emit('repair_credentials');
-
-        // Show success briefly, then close the repair view.
-        document.getElementById('success-msg').classList.remove('hidden');
-        document.getElementById('btn-repair').classList.add('hidden');
-        setTimeout(() => Homey.done(), 1500);
-      } catch (err) {
-        showError(err.message || 'Login failed. Please check your credentials.');
-        setLoading(false);
-      }
-    }
-
-    // ── Password field: submit on Enter ───────────────────────────────────────
-
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('password').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') onRepair();
-      });
-      init();
-    });
-  </script>
-</body>
-</html>
+    applyLanguage(preferredLanguage(null));
+    try{
+      let accepted=false;
+      const received=(error, language)=>{
+        if(accepted||error||typeof language!=='string')return;
+        accepted=true;applyLanguage(preferredLanguage(language));
+      };
+      const result=Homey.emit('get_repair_ui_language',{},received);
+      if(result && typeof result.then==='function')result.then(lang=>received(null,lang),()=>{});
+    }catch(_){}
+    // Maintenance remains usable without Garage Mode. Do not change the
+    // visibility when the independent point-config request fails.
+    try { Homey.emit('get_maintenance_point_config',{},function(error,config){
+      if(!error && config && document.getElementById('garage-config'))
+        document.getElementById('garage-config').hidden=!config.garageEnabled;
+    }); }catch(_){}
+    try{Homey.ready?.()}catch(_){}
+  })();
+</script>
