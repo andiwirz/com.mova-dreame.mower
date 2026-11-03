@@ -1,0 +1,31 @@
+{
+  "title": {
+    "de": "Garagentor stoppen angefordert",
+    "en": "Garage door stop requested"
+  },
+  "tokens": [
+    {
+      "name": "reason",
+      "type": "string",
+      "title": {
+        "en": "Reason",
+        "de": "Grund"
+      }
+    }
+  ],
+  "args": [
+    {
+      "name": "device",
+      "type": "device",
+      "filter": "driver_id=mower"
+    }
+  ],
+  "titleFormatted": {
+    "de": "Garagentor stoppen angefordert",
+    "en": "Garage door stop requested"
+  },
+  "hint": {
+    "de": "Mit der echten STOP-Aktion des Torantriebs verknüpfen. Ein Auf/Zu-Umschalter ist keine verlässliche STOP-Aktion.",
+    "en": "Connect to the actual gate motor STOP action. A toggle is not a reliable stop action."
+  }
+}

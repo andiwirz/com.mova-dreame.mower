@@ -1,4 +1,34 @@
 {
-  "title": { "en": "Go to maintenance point", "de": "Zum Wartungspunkt fahren" },
-  "args": [{ "name": "device", "type": "device", "filter": "driver_id=mower" }]
+  "title": {
+    "en": "Go to maintenance point",
+    "de": "Wartungspunkt anfahren"
+  },
+  "titleFormatted": {
+    "en": "Go to maintenance point [[maintenance_point]]",
+    "de": "Wartungspunkt [[maintenance_point]] anfahren"
+  },
+  "args": [
+    {
+      "name": "device",
+      "type": "device",
+      "filter": "driver_id=mower"
+    },
+    {
+      "name": "maintenance_point",
+      "type": "autocomplete",
+      "required": false,
+      "title": {
+        "en": "Maintenance point (optional)",
+        "de": "Wartungspunkt (optional)"
+      },
+      "placeholder": {
+        "en": "Primary maintenance point (default)",
+        "de": "Hauptwartungspunkt (Standard)"
+      }
+    }
+  ],
+  "hint": {
+    "de": "Ohne Auswahl fährt der Flow immer zum aktuellen Hauptwartungspunkt. Eine feste Auswahl P1–P5 behält ihre Punktnummer bei Namens- und Hauptpunktwechsel. Die Option „Rotation“ erscheint nur, wenn Garagenmodus und automatischer Wartungspunktwechsel aktiv sind. Wird die Rotation später deaktiviert, stoppt der Flow mit einer Meldung statt einen anderen Punkt anzufahren.",
+    "en": "With no selection, the Flow always goes to the currently configured primary maintenance point. A fixed P1–P5 choice retains its point number after renaming and primary changes. Rotation appears only while Garage Mode and automatic point rotation are enabled. If rotation is later disabled, the Flow reports an error rather than driving to another point."
+  }
 }

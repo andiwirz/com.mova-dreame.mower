@@ -90,6 +90,27 @@
       }
     },
     {
+      "id": "garage_zone_removing",
+      "title": {
+        "en": "Hiding no-go zones",
+        "de": "Sperrzonen ausblenden"
+      }
+    },
+    {
+      "id": "garage_zone_restoring",
+      "title": {
+        "en": "Restoring no-go zones",
+        "de": "Sperrzonen einblenden"
+      }
+    },
+    {
+      "id": "garage_start_pending",
+      "title": {
+        "en": "Starting mower",
+        "de": "Startbefehl wird ausgeführt"
+      }
+    },
+    {
       "id": "garage_exiting",
       "title": {
         "en": "Exiting garage",

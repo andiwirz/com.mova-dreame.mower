@@ -1,0 +1,133 @@
+<style>
+*{box-sizing:border-box}body{font:15px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0;padding:20px 16px 32px;background:var(--homey-background-color,#f8f9fb);color:var(--homey-text-color,#222)}main{max-width:650px;margin:auto}h1{font-size:22px;margin:0 0 8px}.small{font-size:12px;line-height:1.5;opacity:.76}.panel{padding:16px;border-radius:13px;background:rgba(125,125,125,.10);margin:14px 0}label{display:block;font-size:14px;font-weight:650;margin:14px 0 6px}input:not([type=checkbox]),select{width:100%;border-radius:9px;padding:10px;font:inherit;background:var(--homey-background-color,#fff);color:var(--homey-text-color,#111);border:1px solid rgba(125,125,125,.5)}button{border:0;border-radius:9px;padding:11px 13px;font:inherit;font-weight:650;cursor:pointer;background:#218554;color:#fff}button.secondary{background:rgba(127,127,127,.22);color:inherit}button:disabled,input:disabled,select:disabled{opacity:.5;cursor:default}.row{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}.status{white-space:pre-wrap;font-size:13px;line-height:1.5}.check{display:flex;align-items:center;gap:8px}.check input{width:21px;height:21px}#loading[hidden],#editor[hidden],#busy[hidden]{display:none}#point-list p{margin:6px 0}
+</style>
+<main>
+<h1 id="title">Maintenance points</h1>
+<p class="small" id="intro"></p>
+<div class="panel" id="loading" role="status">Loading maintenance points…</div>
+<section class="panel" id="editor" hidden>
+ <h2 style="font-size:17px;margin:0 0 5px" id="point-list-title"></h2>
+ <div id="point-list" class="status"></div>
+ <label id="number-label" for="index"></label>
+ <select id="index"><option value="1">P1</option><option value="2">P2</option><option value="3">P3</option><option value="4">P4</option><option value="5">P5</option></select>
+ <label id="name-label" for="name"></label>
+ <input id="name" maxlength="40" autocomplete="off" type="text">
+ <label class="check"><input type="checkbox" id="primary"><span id="primary-label"></span></label>
+ <p class="small" id="primary-hint"></p>
+ <p class="small" id="native-hint"></p>
+ <div class="panel" id="busy" hidden></div>
+ <div class="row"><button id="save" type="button"></button><button id="remove" class="secondary" type="button"></button></div>
+ <div id="message" class="status" role="status" aria-live="polite"></div>
+</section>
+<div class="row"><button id="back" type="button" class="secondary"></button><button id="done" class="secondary" type="button"></button></div>
+</main>
+<script>
+(function boot(attempt=0){
+ const loading=document.getElementById('loading');
+ if(typeof Homey==='undefined'||typeof Homey.emit!=='function'||!loading||!document.getElementById('index')){
+  if(attempt<50)return setTimeout(()=>boot(attempt+1),80);
+  if(loading)loading.textContent=(String(typeof navigator==='undefined'?'en':navigator.language).toLowerCase().startsWith('de')?'Wartungspunktverwaltung konnte nicht gestartet werden.':'Could not start maintenance points.');
+  try{Homey?.ready?.()}catch(_){} return;
+ }
+ const $=id=>document.getElementById(id);
+ function initMaintenance(serverLanguage){
+ let localeOverride=null;try{localeOverride=localStorage.getItem('mova.repair.uiLanguage')}catch(_){}
+ const lang=localeOverride||(typeof Homey.getLanguage==='function'&&Homey.getLanguage())||serverLanguage||document.documentElement?.lang||(typeof navigator!=='undefined'&&navigator.language)||'en';
+ const de=String(lang).toLowerCase().startsWith('de');
+ if(document.documentElement)document.documentElement.lang=de?'de':'en';
+ const t=(en,deText)=>de?deText:en;
+ const labels={
+  title:t('Maintenance points','Wartungspunkte'),
+  intro:t('Name P1–P5, select one primary point and manage entries even when Garage Mode is off. Homey naming does not create a native waypoint or change its position.','P1–P5 benennen, einen Hauptpunkt festlegen und Punkte verwalten – auch bei ausgeschaltetem Garagenmodus. Ein Homey-Name erstellt keinen nativen Fahrpunkt und verschiebt keine Position.'),
+  points:t('Points and native confirmation','Punkte und native Bestätigung'),
+  index:t('Choose point','Wartungspunkt auswählen'),
+  name:t('Name in Homey','Name in Homey'),
+  primary:t('Primary point','Hauptpunkt'),
+  primaryHint:t('A lost main point can be deselected or its name removed. Homey falls back to fixed P1 as a preference; an unconfirmed destination still blocks driving.','Ein verlorener Hauptpunkt kann abgewählt oder sein Name entfernt werden. Homey wählt festes P1 als Vorgabe; ohne bestätigte Position bleibt die Fahrt gesperrt.'),
+  nativeHint:t('Driving to P2–P5 is allowed only after a native destination has been confirmed. Names alone never enable movement.','P2–P5 dürfen erst nach Bestätigung eines nativen Fahrziels angefahren werden. Ein Name allein gibt keine Fahrt frei.'),
+  save:t('Save','Speichern'),
+  remove:t('Remove Homey name','Homey-Namen entfernen'),
+  back:t('Back to management','Zurück zur Verwaltung'),
+  done:t('Done – close management','Fertig – Verwaltung schließen'),
+  confirmed:t('native position confirmed','native Position bestätigt'),
+  notConfirmed:t('native position not confirmed','native Position nicht bestätigt'),
+  unnamed:t('(unnamed)','(ohne Namen)'),
+  saved:t('Changes saved.','Änderungen gespeichert.'),
+  removed:t('Homey name removed. Native coordinates were not modified.','Homey-Name entfernt. Native Koordinaten wurden nicht verändert.'),
+  busy:t('Changes are locked during mower or door movement.','Während Mäher- oder Torbewegungen sind Änderungen gesperrt.'),
+  saving:t('Saving…','Speichere …'),
+  invalid:t('Give P2–P5 a name before saving or making one primary.','P2–P5 vor dem Speichern oder Festlegen als Hauptpunkt benennen.'),
+  primaryRequired:t('Choose another primary point before deselecting the current one.','Vor dem Abwählen zuerst einen anderen Hauptpunkt festlegen.'),
+  error:t('Could not save: ','Speichern fehlgeschlagen: '),
+  loadError:t('Could not load: ','Laden fehlgeschlagen: ')
+ };
+ for(const [id,value] of Object.entries({title:labels.title,intro:labels.intro,'point-list-title':labels.points,'number-label':labels.index,'name-label':labels.name,'primary-label':labels.primary,'primary-hint':labels.primaryHint,'native-hint':labels.nativeHint,save:labels.save,remove:labels.remove,back:labels.back,done:labels.done,busy:labels.busy})) $(id).textContent=value;
+ try{Homey.setTitle(labels.title);$('title').hidden=true}catch(_){}
+ function emit(name,payload){return new Promise((resolve,reject)=>{
+  let completed=false;
+  const timeout=setTimeout(()=>{if(completed)return;completed=true;reject(new Error(t('No reply from Homey within 20 seconds.','Keine Antwort von Homey innerhalb von 20 Sekunden.')))},20000);
+  try{Homey.emit(name,payload,(error,data)=>{if(completed)return;completed=true;clearTimeout(timeout);error?reject(error):resolve(data)})}
+  catch(error){if(completed)return;completed=true;clearTimeout(timeout);reject(error)}
+ })}
+ let cfg=null;
+ const nameOf=index=>String(cfg?.names?.[String(index)]||'').trim();
+ function setPoint(){if(!cfg)return;
+  const index=Number($('index').value);
+  $('name').value=nameOf(index);
+  $('primary').checked=Number(cfg.selected||1)===index;
+  $('message').textContent='';
+  $('remove').disabled=!!cfg.busy||index===1||!nameOf(index);
+ }
+ function render(c){cfg=c;
+  $('loading').hidden=true;$('editor').hidden=false;
+  $('busy').hidden=!c.busy;
+  const list=$('point-list');list.replaceChildren();
+  for(let index=1;index<=5;index++){
+   const row=document.createElement('p');
+   const nativeConfirmed=Array.isArray(c.available)&&c.available.includes(index);
+   const selected=Number(c.selected||1)===index;
+   row.textContent=`P${index}${selected?' ★':''} – ${nameOf(index)||labels.unnamed} · ${nativeConfirmed?labels.confirmed:labels.notConfirmed}`;
+   list.appendChild(row);
+  }
+  setPoint();
+  $('index').disabled=!!c.busy;$('name').disabled=!!c.busy;$('primary').disabled=!!c.busy;
+  $('save').disabled=!!c.busy;
+ }
+ async function load(index){try{
+  const state=await emit('get_maintenance_point_config',{});
+  render(state);
+  if(index>=1&&index<=5){$('index').value=String(index);setPoint()}
+ }catch(error){$('loading').textContent=labels.loadError+String(error.message||error)}}
+ $('index').addEventListener('change',setPoint);
+ $('save').addEventListener('click',async()=>{
+  const index=Number($('index').value),name=String($('name').value||'').trim();
+  if(index>1&&!name&&$('primary').checked&&Number(cfg.selected||1)!==index){$('message').textContent=labels.invalid;return}
+  // An orphaned current primary may always be deselected: backend selects fixed P1.
+  $('save').disabled=true;$('message').textContent=labels.saving;
+  try{await emit('save_maintenance_point_name',{index,name,primary:$('primary').checked});await load(index);$('message').textContent=labels.saved;}
+  catch(error){$('message').textContent=labels.error+String(error.message||error);$('save').disabled=!!cfg?.busy}
+ });
+ $('remove').addEventListener('click',async()=>{
+  const index=Number($('index').value);
+  // A stranded primary P2-P5 can be removed; backend switches to fixed P1.
+  if(index===1)return;
+  $('remove').disabled=true;
+  try{await emit('save_maintenance_point_name',{index,name:'',primary:false});await load(index);$('message').textContent=labels.removed;}
+  catch(error){$('message').textContent=labels.error+String(error.message||error);$('remove').disabled=!!cfg?.busy}
+ });
+ $('back').addEventListener('click',()=>Homey.showView('repair'));
+ $('done').addEventListener('click',()=>Homey.done());
+ try{Homey.ready?.()}catch(_){}
+ load();
+ } // initMaintenance
+ // Give the Homey backend the first chance to supply the authoritative locale.
+ let started=false;
+ let fallbackTimer;
+ function start(lang){if(started)return;started=true;clearTimeout(fallbackTimer);initMaintenance(lang)}
+ fallbackTimer=setTimeout(()=>start(null),1500);
+ try{
+  const result=Homey.emit('get_repair_ui_language',{},(error,lang)=>{if(!error&&typeof lang==='string')start(lang);else start(null)});
+  if(result&&typeof result.then==='function')result.then(start,()=>start(null));
+ }catch(_){start(null)}
+})();
+</script>

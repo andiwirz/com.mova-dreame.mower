@@ -1,0 +1,162 @@
+*{box-sizing:border-box}html,body{width:100%;max-width:100%;overflow:hidden;touch-action:auto}body{margin:0;font:14px system-ui,-apple-system,sans-serif;background:#f3f5f2;color:#19251e;padding:14px}header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}h1{font-size:19px;margin:0}small,.muted{color:#65736a}.badge{border-radius:20px;background:#e1eadf;padding:6px 10px;font-weight:650}section{background:white;border:1px solid #e0e6e0;border-radius:16px;padding:12px;margin-bottom:12px}button{touch-action:manipulation;font:inherit;border:1px solid #dce4dd;border-radius:11px;background:#f0f4ef;color:inherit;padding:12px 8px;cursor:pointer;min-height:44px}button.stop{background:#9b322e;color:white;border-color:#9b322e}button:disabled{opacity:.45}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.title{font-weight:700;margin-bottom:9px}.door{font-size:23px;font-weight:750}.meta{display:flex;justify-content:space-between;gap:10px;margin:7px 0 12px}.error{color:#9b322e;min-height:1.2em;font-size:13px;margin-top:8px}.map-static{width:100%;height:270px;border-radius:12px 12px 0 0;background:#eef4e7;overflow:hidden;pointer-events:none;touch-action:auto;display:flex;align-items:center;justify-content:center}.map-static svg{width:100%;height:100%;display:block;pointer-events:none;touch-action:auto}.map-loading{font-size:12px;color:#65736a;text-align:center;padding:12px}.map-static .pylon-pending-ring{fill:none;stroke:#42a5f5;stroke-width:4;stroke-dasharray:12 7;stroke-linecap:round;vector-effect:non-scaling-stroke;animation:pylon-pending-dash .75s linear infinite,pylon-pending-pulse 1.4s ease-in-out infinite;pointer-events:none}.map-static .pylon-pending-zone{fill:rgba(66,165,245,.14);stroke:#42a5f5;stroke-width:4;stroke-dasharray:12 7;stroke-linecap:round;vector-effect:non-scaling-stroke;animation:pylon-pending-dash .75s linear infinite,pylon-pending-pulse 1.4s ease-in-out infinite;pointer-events:none}@keyframes pylon-pending-dash{to{stroke-dashoffset:-32}}@keyframes pylon-pending-pulse{50%{opacity:.45}}
+.action-status{min-height:1.3em;margin-top:9px;font-size:12px;font-weight:650;color:#3d6650}.action-status.error-state{color:#9b322e}.note{font-size:12px;color:#65736a;margin-top:8px}@media(prefers-color-scheme:dark){body{background:#121a16;color:#eff4ed}section{background:#1c2720;border-color:#334337}button{background:#2a3b30;color:#eff4ed;border-color:#435848}.badge{background:#304b36}.muted,small,.note{color:#b1bdb3}.map-loading{color:#b1bdb3}.action-status{color:#a8d5b6}.action-status.error-state{color:#ffb9b4}.error{color:#ffb9b4}}.overview-map-footer{font-size:10px;color:#65736a;display:flex;align-items:center;justify-content:space-between;padding:3px 4px 2px 6px;white-space:nowrap;overflow:hidden;background:#fff}.overview-map-actions{display:flex;align-items:center;gap:4px;flex-shrink:0}.overview-map-action{border:0;border-radius:0;padding:3px 5px;font-size:10px;cursor:pointer;background:none;color:inherit;min-height:24px}.overview-map-refresh{background:none;border:0;color:inherit;cursor:pointer;font-size:13px;line-height:1;padding:2px 4px;min-height:24px;opacity:.7}.overview-map-refresh.loading{animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+@media(prefers-color-scheme:dark){.overview-map-footer{color:#b1bdb3;background:#1c2720}.overview-map-action{background:none}}
+
+.map-editor-inline{width:100%;height:300px;min-height:270px;border-radius:12px;overflow:hidden;background:#112315}.map-editor-inline[hidden]{display:none}.map-editor-frame{display:block;width:100%;height:100%;border:0;background:#112315}.map-static[hidden],.overview-map-footer[hidden]{display:none}
+
+.overview-map-stage{position:relative;isolation:isolate}.overview-map-expand{position:absolute;z-index:3;top:8px;right:8px;min-height:34px;width:38px;padding:4px;border:1px solid rgba(255,255,255,.7);border-radius:9px;background:rgba(20,30,24,.84);color:#fff;font-size:18px;line-height:1;box-shadow:0 2px 8px rgba(0,0,0,.22)}.overview-map-expand[aria-expanded="true"]{background:rgba(37,105,67,.94)}.overview-map-expand:focus-visible{outline:2px solid #78c58c;outline-offset:2px}.overview-map-stage.expanded .map-static{height:480px}.overview-map-stage.expanded .map-editor-inline{height:510px}
+
+.overview-map-stage .map-static{transition:height .18s ease}
+
+/* Narrow Homey dashboard tiles: keep action buttons and labels inside the card. */
+.overview-map-footer{white-space:normal;overflow:visible;flex-wrap:wrap;gap:3px}
+#overviewMapMeta{min-width:0;overflow-wrap:anywhere;flex:1}
+.overview-map-actions{flex-shrink:0}
+
+/* Manual recovery confirmation is visible even without a toast. */
+#manualRecoverySection [data-action="recovery_confirm_open"][aria-pressed="true"]{color:#206942!important;background:#e4eee7!important;border-color:#89b99b!important;font-weight:700;cursor:pointer}
+@media(prefers-color-scheme:dark){#manualRecoverySection [data-action="recovery_confirm_open"][aria-pressed="true"]{color:#b7ebc5!important;background:#224833!important;border-color:#588e69!important}}
+
+/* 1.2.22: standalone information glyph in the STATIC mini-map footer (no button plate). */
+.overview-map-info{min-width:28px;min-height:28px;font-size:17px;line-height:1;padding:2px 5px;background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0;color:inherit;}
+.overview-map-info:hover{text-decoration:underline;}
+.overview-map-info:focus-visible{outline:2px solid #278a50;outline-offset:1px;}
+.overview-map-status{margin:0;padding:7px 9px;font-size:11px;line-height:1.45;color:#435047;background:rgba(70,110,83,.10);white-space:pre-wrap;overflow-wrap:anywhere;border-radius:0 0 8px 8px;}
+.overview-map-status[hidden]{display:none!important;}
+@media(prefers-color-scheme:dark){.overview-map-status{color:#d4dfd7;background:rgba(100,152,110,.13)}.overview-map-info{color:inherit;}}
+
+
+/* Explicit action outcomes; an accepted API command is not the same as verified hardware state. */
+[data-action][data-ui-state="pending"]{outline:2px solid #9a8733;outline-offset:1px;opacity:.75}
+[data-action][data-ui-state="requested"]{border-color:#b09b55;box-shadow:inset 0 0 0 1px #b09b55}
+[data-action][data-ui-state="confirmed"]{border-color:#278a50;box-shadow:inset 0 0 0 1px #278a50;font-weight:700}
+[data-action][data-ui-state="failed"]{border-color:#b3423e;box-shadow:inset 0 0 0 1px #b3423e}
+
+/* Read-only emergency release shown next to the otherwise blocked mower buttons. */
+.emergency-fast-rearm{margin-top:12px;padding:10px;border:1px solid #c2cec4;border-radius:11px;background:#f7faf7}
+.emergency-fast-rearm[hidden]{display:none!important}
+.emergency-fast-title{font-weight:700;font-size:13px}
+.emergency-fast-rearm button{width:100%;font-weight:650;margin-top:6px}
+#emergencyDockEvidence{overflow-wrap:anywhere;line-height:1.5}
+@media(prefers-color-scheme:dark){.emergency-fast-rearm{background:#253328;border-color:#526352}}
+
+/* 1.2.38: guided recovery never disappears just because automatic garage mode is OFF. */
+#recoveryWizardSection{border-color:#b6cbb9}
+#recoveryWizardPanel[hidden],#recoveryWizardProgress[hidden],#recoveryWizardBack[hidden],#recoveryWizardReset[hidden]{display:none!important}
+.recovery-wizard-start{width:100%;font-weight:700;background:#e1ede2;border-color:#a6c4a9}
+.recovery-wizard-choices{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.recovery-wizard-choices button{width:100%;text-align:left;padding:12px;white-space:normal;line-height:1.35}
+.recovery-wizard-choices button.selected{border-color:#2d8651;box-shadow:inset 0 0 0 1px #2d8651}
+#recoveryWizardHeading{font-size:15px;line-height:1.4;margin:14px 0 5px}
+.recovery-wizard-progress{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere;border-left:3px solid #83ad90;padding:8px;background:#f3f7f3;line-height:1.5}
+.recovery-wizard-message{font-size:13px;line-height:1.45;min-height:1.5em;color:#287142;font-weight:650;overflow-wrap:anywhere}
+.recovery-wizard-message.error-state{color:#a62a27}
+.recovery-wizard-nav{display:flex;gap:8px}
+.recovery-wizard-nav button{flex:1}
+@media(prefers-color-scheme:dark){.recovery-wizard-start{background:#26402d;border-color:#648e6d}.recovery-wizard-progress{background:#26372a}.recovery-wizard-message{color:#a4e1b4}.recovery-wizard-message.error-state{color:#ffb7ae}}
+
+/* 1.2.39: one clearly visible recovery status instead of two repeated warnings. */
+.recovery-status-card{border:1px solid #b4cabc;background:#f3f8f3;border-radius:12px;padding:12px;margin:12px 0}
+.recovery-status-card[hidden],#recoveryPrimaryActions[hidden]{display:none!important}
+#recoverySummaryTitle{display:block;font-size:15px;line-height:1.35}
+#recoverySummaryText{line-height:1.45;margin:6px 0 10px}
+.recovery-primary-actions{display:grid;gap:8px}
+.recovery-primary-actions [data-action="recovery_rearm"]{background:#e0efe1;border-color:#8ebba0;font-weight:750;min-height:51px}
+.recovery-primary-actions [data-action="recovery_operator_dock"]{background:transparent;font-size:13px;min-height:42px}
+.recovery-inline-result{font-size:12px;font-weight:600;line-height:1.45;margin:8px 0 0;white-space:normal;overflow-wrap:anywhere}
+.recovery-inline-result:empty{display:none}
+.recovery-inline-result.error-state{color:#a3332b}
+.recovery-advanced{margin-top:7px;border-top:1px solid #dee7df;padding-top:10px}
+.recovery-advanced>summary{cursor:pointer;font-size:13px;font-weight:650;padding:7px 0;touch-action:manipulation}
+.recovery-advanced .grid{margin-top:8px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.recovery-advanced .grid button{font-size:12px;line-height:1.35;min-height:48px;overflow-wrap:anywhere}
+#garageNote{line-height:1.35}
+@media(prefers-color-scheme:dark){.recovery-status-card{background:#223329;border-color:#4a6d53}.recovery-primary-actions [data-action="recovery_rearm"]{background:#275737;border-color:#558c60}.recovery-inline-result.error-state{color:#ffb8a9}.recovery-advanced{border-color:#3a5842}}
+
+/* 1.2.40: one independent, read-only docking diagnostic; all recovery actions remain separate. */
+.dock-diagnostics{border-top:1px solid #dfe6df;margin:12px 0 8px;padding-top:11px}
+.dock-diagnostics-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.dock-diagnostics-label{display:flex;min-width:0;flex:1;flex-direction:column;gap:3px}
+.dock-diagnostics-label small{font-size:12px;line-height:1.35;overflow-wrap:anywhere}
+.dock-diagnostics-row button{flex:0 0 auto;padding:9px 12px;font-weight:650}
+.dock-check-detail{font-size:12px;line-height:1.45;margin:5px 0 0;overflow-wrap:anywhere}
+.dock-check-detail:empty{display:none}
+.dock-check-detail.failed{color:#a33429}
+.dock-diagnostics-row button[data-ui-state="confirmed"]{border-color:#278a50}
+.recovery-primary-actions [data-action="recovery_rearm"]{background:#e6f1e8}
+.recovery-primary-actions [data-action="recovery_operator_dock"]{font-weight:500;color:#52655b}
+#recoveryWizardSection{border-color:#e0e6e0}
+#recoveryWizardTeaser{margin:2px 0 10px}
+@media (max-width:350px){.dock-diagnostics-row{flex-direction:column;align-items:stretch}.dock-diagnostics-row button{width:100%}}
+@media (prefers-color-scheme:dark){.dock-diagnostics{border-color:#415548}.dock-check-detail.failed{color:#ffb8a9}.recovery-primary-actions [data-action="recovery_rearm"]{background:#275737}.recovery-primary-actions [data-action="recovery_operator_dock"]{color:#bdcfc1}}
+
+/* 1.2.41: two-click normal restoration; long recovery flow stays optional. */
+.normal-restore{margin:12px 0 8px;padding:12px;border:1px solid #a8c5ac;border-radius:12px;background:#f5faf5}
+.normal-restore[hidden]{display:none!important}
+.normal-restore strong{font-size:15px}
+.normal-restore .note{line-height:1.4;margin:7px 0 9px}
+.normal-restore button{width:100%;min-height:49px;font-weight:750;background:#deefdf;border-color:#96bb9c}
+#normalRestoreResult{font-size:12px;font-weight:650;line-height:1.4;margin:8px 0 0;overflow-wrap:anywhere;color:#236b41}
+#normalRestoreResult:empty{display:none}
+#normalRestoreResult.error-state{color:#ad352c}
+.recovery-optional{margin:8px 0 3px}
+.recovery-optional>summary{font-size:12px;font-weight:600;cursor:pointer;color:#586d5f;padding:9px 4px;list-style:disclosure-closed}
+.recovery-optional[open]>summary{list-style:disclosure-open}
+#recoveryWizardDetails>section{margin-top:8px}
+@media(prefers-color-scheme:dark){.normal-restore{background:#1c2f22;border-color:#54775b}.normal-restore button{background:#254f30;border-color:#678f6d}#normalRestoreResult{color:#a8dec0}#normalRestoreResult.error-state{color:#ffafa7}}
+
+/* 1.2.42: two explicit, reversible visual checks, followed by one release button. */
+.normal-visual-checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0}
+.normal-restore .normal-visual-checks button{min-height:54px;font-size:13px;font-weight:600;background:#f6f8f5;border-color:#becac0;white-space:normal;line-height:1.3;padding:9px 7px}
+.normal-restore .normal-visual-checks button[aria-pressed="true"]{background:#e0f2e5;border-color:#2e8f56;color:#17532d;font-weight:750}
+.normal-restore .normal-visual-checks button:disabled{opacity:.75}
+@media(max-width:370px){.normal-visual-checks{grid-template-columns:1fr}}
+@media(prefers-color-scheme:dark){.normal-restore .normal-visual-checks button{background:#24342a;border-color:#546a58;color:#e0eadd}.normal-restore .normal-visual-checks button[aria-pressed="true"]{background:#285339;border-color:#72b888;color:#d9f4df}}
+
+/* 1.2.43: concise gate sight check, independent of sensor evidence. */
+.gate-visual-check{margin:10px 0 8px;padding:9px 0;border-top:1px solid #dce6dd}
+.visual-check-label{font-size:12px;font-weight:650;color:#586e60;margin-bottom:7px}
+.gate-visual-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.gate-visual-actions button{font-size:12px;font-weight:650;min-height:48px;padding:8px 5px;white-space:normal}
+.gate-visual-actions button[aria-pressed="true"]{background:#e1f2e7;border-color:#258451;color:#185631}
+#gateVisualResult{min-height:1.2em;margin-top:6px}
+@media(prefers-color-scheme:dark){.gate-visual-check{border-color:#405b48}.visual-check-label{color:#b3c9b7}.gate-visual-actions button[aria-pressed="true"]{background:#28543a;color:#d5f5e0;border-color:#74bf8c}}
+
+/* Compact, evidence-aware garage overview; layout only, never an interlock. */
+.garage-summary{margin:0 0 12px;padding:9px 11px;border:1px solid #dce6dd;border-left:4px solid #749982;border-radius:10px;background:#f5f8f5;display:flex;flex-direction:column;gap:3px;min-width:0}
+.garage-summary strong{font-size:13px;line-height:1.3}
+.garage-summary small{font-size:11px;line-height:1.4;overflow-wrap:anywhere}
+.garage-summary[data-state="paused"],.garage-summary[data-state="attention"]{border-left-color:#ae944c}
+.garage-summary[data-state="emergency"]{border-left-color:#b54e47}
+.garage-pause-button{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.recovery-optional>summary,.recovery-advanced>summary{min-height:40px;display:list-item;align-content:center}
+@media(prefers-color-scheme:dark){.garage-summary{background:#25342b;border-color:#415748;border-left-color:#82b392}.garage-summary[data-state="paused"],.garage-summary[data-state="attention"]{border-left-color:#cbb466}.garage-summary[data-state="emergency"]{border-left-color:#e37a71}}
+
+/* 1.2.48: display-only local verification for inconsistent status, responsive on iPhone. */
+.gate-visual-actions button[data-action="dock_visual_docked"]{grid-column:1 / -1}
+.gate-visual-check .visual-check-label{line-height:1.4}
+.garage-summary[data-state="attention"]{border-left-color:#ae944c}
+
+/* Context-sensitive, supervised recovery, shown only for a held return or rescue. */
+.contextual-return{margin:12px 0;padding:12px;border:1px solid #b8cdbb;border-radius:12px;background:#f4f8f3}
+.contextual-return[hidden]{display:none!important}
+.contextual-return strong{display:block;font-size:14px;margin-bottom:5px}
+.contextual-return .note{font-size:12px;line-height:1.5;margin:5px 0 9px}
+.contextual-return-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.contextual-return-grid button{font-size:13px;font-weight:650;min-height:53px;padding:8px;line-height:1.35;overflow-wrap:anywhere}
+@media(max-width:370px){.contextual-return-grid{grid-template-columns:1fr}}
+@media(prefers-color-scheme:dark){.contextual-return{background:#24352a;border-color:#536e59}}
+
+/* 1.2.65: only the next usable rescue actions; no duplicated P1..P5 buttons. */
+.recovery-quick-controls {display:grid;grid-template-columns:1fr;gap:8px;margin:12px 0}
+.recovery-point-choose {display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.recovery-point-choose label {font-weight:600}
+.recovery-point-choose select {flex:1;min-width:74px;border:1px solid #a6b5ad;border-radius:9px;padding:9px;background:#fff;color:#14251d}
+.recovery-quick-controls button {min-height:45px}
+
+#recoveryQuickControls[hidden], .recovery-point-choose[hidden] { display:none !important; }
+
+/* 1.2.66: hidden controls must not occupy space even when grid/flex sets display. */
+[hidden]{display:none!important}
+
+#garageDoorActionHint{line-height:1.45;margin-top:6px}

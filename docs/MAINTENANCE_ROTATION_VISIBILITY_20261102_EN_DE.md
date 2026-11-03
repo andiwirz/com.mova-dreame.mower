@@ -1,0 +1,5 @@
+# Maintenance point visibility / Sichtbarkeit Wartungspunkte
+
+EN: P1–P5 management, naming, manufacturer-app learning and manual device-card access remain independent of Garage Mode. Garage-specific automatic rotation is offered only with enabled Garage Mode and two currently eligible, named and independently confirmed native waypoint coordinates. If a waypoint loses its proof, rotation is suspended and its configuration is hidden until eligibility returns; no substitute native destination is dispatched. Saved point labels remain visible for relearning. State may be refreshed by reopening Repair.
+
+DE: P1–P5-Verwaltung, Benennung, Original-App-Anlernen und manuelle Bedientasten funktionieren unabhängig vom Garagenmodus. Die spezielle automatische Garagenrotation wird ausschließlich bei eingeschaltetem Garagenmodus und zwei aktuell verfügbaren, nativ bestätigten Punkten angezeigt. Fehlt die Bestätigung eines Punktes, wird Rotation ausgesetzt und ausgeblendet; eine Fahrt zu einem Ersatzpunkt wird nicht ausgelöst. Der Name bleibt für die erneute Anlernung sichtbar. Zum Aktualisieren Reparaturansicht erneut öffnen.

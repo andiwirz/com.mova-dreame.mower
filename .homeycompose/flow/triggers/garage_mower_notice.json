@@ -1,0 +1,39 @@
+{
+  "title": {
+    "en": "Mower / garage notice",
+    "de": "Mäher-/Garagen-Hinweis"
+  },
+  "args": [
+    {
+      "name": "device",
+      "type": "device",
+      "filter": "driver_id=mower"
+    }
+  ],
+  "tokens": [
+    {
+      "name": "kind",
+      "type": "string",
+      "title": {
+        "en": "Type",
+        "de": "Typ"
+      }
+    },
+    {
+      "name": "message",
+      "type": "string",
+      "title": {
+        "en": "Message",
+        "de": "Meldung"
+      }
+    },
+    {
+      "name": "reason",
+      "type": "string",
+      "title": {
+        "en": "Reason",
+        "de": "Grund"
+      }
+    }
+  ]
+}
