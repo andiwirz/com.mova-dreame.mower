@@ -68,6 +68,11 @@ test('no mutation after map/token shift or absent accepted task legs',async()=>{
   const {d,g}=editing();
   assert.equal(await d._nonReturnNativeZoneMutationAuthorized(1,acknowledged),false);
   assert.equal(await d._nonReturnNativeZoneMutationAuthorized(0,{legs:[]}),false);
+  const capturedMapGuard=d._pylonMapEditTaskOptions();
+  d._activeMapIndex=1;
+  assert.equal(await capturedMapGuard.canMutate(acknowledged),false,
+    'old map editor cannot edit after a map switch');
+  d._activeMapIndex=0;
   g._readNativeStationaryPositionForGarage=async()=>{
     g._commandToken++;
     return {x:100,y:200,ts:Date.now()};
