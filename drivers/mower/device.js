@@ -689,7 +689,9 @@ class MowerDevice extends Homey.Device {
     this._interruption            = null;  // { code, type, reason, at } of the current/last run
     this._lastInfoCode            = 0;     // last telemetry fault/info code (change detection)
     this._pendingInterruptionCode = null;  // code seen while still mowing, awaiting status
-    this._trgDocked           = this.homey.flow.getDeviceTriggerCard('mower_docked');
+    this._interruptionStopped     = false; // mower reached a home/stopped status since the interruption
+    this._mowingSince             = null;  // start of the current continuous 'mowing' stretch
+    this._trgDocked          = this.homey.flow.getDeviceTriggerCard('mower_docked');
     this._trgFirmwareUpdate   = this.homey.flow.getDeviceTriggerCard('firmware_update_available');
     this._trgBatteryLow       = this.homey.flow.getDeviceTriggerCard('battery_low');
     this._trgConsumable       = this.homey.flow.getDeviceTriggerCard('consumable_needs_replacement');
@@ -3193,9 +3195,37 @@ class MowerDevice extends Homey.Device {
 
     const reason = this.homey.__(`error_codes.${pending}`) || `Code ${pending}`;
     this._interruption = { code: pending, type: INTERRUPTION_CODES.get(pending), reason, at: Date.now() };
+    this._interruptionStopped = false;
     this.log(`[interruption] ${this._interruption.type} (code ${pending}): ${reason}`);
     this._trgInterrupted.trigger(this, this._interruptionTokens(), {})
       .catch((e) => this.error('mowing_interrupted trigger:', e.message));
+  }
+
+  /**
+   * Forget the interruption reason once a genuinely new run is under way, so it
+   * doesn't leak into that run's return/dock tokens or suppress its "completed".
+   *
+   * A single 'mowing' sample is not enough: on the way home some firmware
+   * briefly reports 'mowing' again (and the MQTT and poll paths can disagree
+   * for a moment). Clearing on that flicker made the following dock fire
+   * "Mowing completed" after "Mowing interrupted". The reason is therefore
+   * kept until the mower has been home/stopped since the interruption, or has
+   * kept mowing for two minutes (e.g. resuming on the lawn after a rain pause).
+   */
+  _clearInterruptionOnNewRun(status, isMowing) {
+    if (!isMowing) {
+      this._mowingSince = null;
+      if (this._interruption && HOME_STATUSES.has(status)) this._interruptionStopped = true;
+      return;
+    }
+    if (this._mowingSince == null) this._mowingSince = Date.now();
+    if (!this._interruption) return;
+    const mowingFor = Date.now() - this._mowingSince;
+    if (!this._interruptionStopped && mowingFor < 120000) return;
+    this.log(`[interruption] cleared (${this._interruption.type}, code ${this._interruption.code}) — new run: `
+      + (this._interruptionStopped ? 'started after the mower was home/stopped' : `mowing for ${Math.round(mowingFor / 1000)}s`));
+    this._interruption = null;
+    this._interruptionStopped = false;
   }
 
   async _applyStatus(status, faultCode = 0) {
@@ -3289,10 +3319,9 @@ class MowerDevice extends Homey.Device {
       .catch((e) => this.error('status_changed trigger:', e.message));
 
     // Session duration tracking
+    this._clearInterruptionOnNewRun(status, isMowing);
+
     if (isMowing && !this._wasMowing) {
-      // A new or resumed run starts without a reason; the previous stop's reason
-      // must not leak into this run's return/dock tokens.
-      this._interruption = null;
       // RC82: keep the last accepted native position until a fresh consistent
       // update arrives. Clearing it here caused the marker to jump to the dock or
       // to a lower-priority fallback at every new mowing session.
@@ -3399,6 +3428,7 @@ class MowerDevice extends Homey.Device {
         // reported via "Mowing interrupted" and must not also read as "completed".
         this.log(`[trigger] mowing_completed suppressed — interrupted (${this._interruption.type}, code ${this._interruption.code})`);
       } else if (!isChargeBreak) {
+        this.log(`[trigger] mowing_completed (status=${status}, battery=${battery}%, last info code=${this._lastInfoCode})`);
         this._trgMowingCompleted.trigger(this, {}, {})
           .catch((e) => this.error('mowing_completed trigger:', e.message));
       } else {
