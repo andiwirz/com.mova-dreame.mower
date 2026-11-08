@@ -27,5 +27,6 @@
       "type": "device",
       "filter": "driver_id=mower"
     }
-  ]
+  ],
+  "deprecated": true
 }

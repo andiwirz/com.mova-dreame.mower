@@ -1,0 +1,15 @@
+{
+  "type": "boolean",
+  "title": {
+    "en": "Go to Maintenance Point 1",
+    "de": "Wartungspunkt 1 anfahren"
+  },
+  "getable": true,
+  "setable": true,
+  "uiComponent": "button",
+  "icon": "/assets/capabilities/cmd_maintenance_point_1.svg",
+  "hint": {
+    "en": "Goes to native maintenance point P1 when it is not the current main point.",
+    "de": "Fährt zum nativen Wartungspunkt P1, wenn dieser nicht der aktuelle Hauptpunkt ist."
+  }
+}

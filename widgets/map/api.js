@@ -13,8 +13,6 @@ function findDevice(homey, requestedDeviceId) {
       if (requestedDeviceId && ids.includes(String(requestedDeviceId))) return device;
     }
   }
-  // A stale deviceId (mower removed and re-added) must not fall through to another
-  // mower — marker edits would otherwise be saved on the wrong device.
   return requestedDeviceId ? null : firstDevice;
 }
 
@@ -22,6 +20,11 @@ module.exports = {
   async getMapData({ homey, query }) {
     const device = findDevice(homey, query && query.deviceId);
     if (!device) return null;
+    const forceRefresh = ['1', 'true', 'yes'].includes(String(query?.refresh || '').toLowerCase());
+    const hardRefresh = ['1', 'true', 'yes'].includes(String(query?.hard || '').toLowerCase());
+    if (forceRefresh && typeof device.refreshMapData === 'function') {
+      return await Promise.resolve(device.refreshMapData({ hard: hardRefresh })) ?? null;
+    }
     return await Promise.resolve(device.getMapData()) ?? null;
   },
 
@@ -31,5 +34,36 @@ module.exports = {
       throw new Error('Mower device does not support garage marker editing');
     }
     return device.updateGarageOverlayMarkers(body || {});
+  },
+
+  async updateMaintenancePointName({ homey, query, body }) {
+    const device = findDevice(homey, query && query.deviceId);
+    if (!device || typeof device.updateMaintenancePointName !== 'function') {
+      throw new Error('Mower device does not support maintenance point names');
+    }
+    return device.updateMaintenancePointName(body?.index, body?.name, body?.primary);
+  },
+
+  async updateObstacleRule({ homey, query, body }) {
+    const device = findDevice(homey, query && query.deviceId);
+    if (!device || typeof device.updateObstacleRule !== 'function') {
+      throw new Error('Mower device does not support obstacle rule editing');
+    }
+    device.log?.('[widget-map] pylon rule request',
+      body?.deleteForbidden ? 'delete' : body?.remove ? 'hide' : body?.action === 'label' ? 'save-native-label' : body?.action === 'avoid' ? 'save-zone' : 'observe',
+      `id=${String(body?.id || '').slice(0,64)}`);
+    try {
+      // Public widget body cannot claim trusted lifecycle identity.
+      const safe = { ...(body || {}) };
+      for (const key of ['lifecycleInternal','lifecyclePhase','lifecycleDeadlineAt',
+        'lifecycleRetryAllowed','preserveNativeMetadata','retryGeometry']) delete safe[key];
+      const result = await device.updateObstacleRule(safe);
+      device.log?.('[widget-map] pylon rule result', `pending=${!!result?.pending}`,
+        `nativeId=${result?.rule?.nativeId ?? 'none'}`, `verification=${result?.rule?.verification || 'none'}`);
+      return result;
+    } catch (err) {
+      device.error?.('[widget-map] pylon rule failed:', err.message);
+      throw err;
+    }
   }
 };
