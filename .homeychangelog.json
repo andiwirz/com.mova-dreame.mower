@@ -1,4 +1,8 @@
 {
+  "1.1.45": {
+    "en": "The Flow action \"Go to maintenance point\" can now choose a maintenance point P1–P5 (community contribution by daCream87). Without a selection it drives to P1 as before, so existing Flows are unchanged. With Garage Mode active, only P1 is supported for now; choosing another point shows a clear message instead of silently driving to P1. A trip to P2–P5 no longer overwrites the learned maintenance point used by Garage Mode and the map.",
+    "de": "Die Flow-Aktion „Zum Wartungspunkt fahren“ kann jetzt einen Wartungspunkt P1–P5 wählen (Community-Beitrag von daCream87). Ohne Auswahl fährt sie wie bisher zu P1, bestehende Flows bleiben also unverändert. Mit aktivem Garagenmodus wird vorerst nur P1 unterstützt; bei einem anderen Punkt erscheint eine klare Meldung, statt stillschweigend P1 anzufahren. Eine Fahrt zu P2–P5 überschreibt den gelernten Wartungspunkt für Garagenmodus und Karte nicht mehr."
+  },
   "1.1.44": {
     "en": "Fixed \"Mowing completed\" firing at the dock after a run that was interrupted (e.g. by rain): if the mower briefly reported \"mowing\" again on its way home, the interruption reason was forgotten. The reason is now kept until a genuinely new run starts. The diagnostic log now also records when \"Mowing completed\" fires and when an interruption reason is cleared.",
     "de": "Behoben: „Mähen abgeschlossen“ wurde an der Station ausgelöst, obwohl der Lauf unterbrochen worden war (z. B. durch Regen). Meldete der Mäher auf dem Heimweg kurz wieder „Mähen“, ging der Unterbrechungsgrund verloren. Er bleibt jetzt erhalten, bis wirklich ein neuer Lauf beginnt. Das Diagnoseprotokoll zeigt zudem, wann „Mähen abgeschlossen“ ausgelöst und wann ein Unterbrechungsgrund gelöscht wird."
