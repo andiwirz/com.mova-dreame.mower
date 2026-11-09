@@ -628,6 +628,7 @@ class MowerDevice extends Homey.Device {
     this._maintenancePointCandidate = null;
     this._maintenancePointLogAt = 0;
     this._nativeMaintenanceCommandAt = 0;
+    this._nativeMaintenanceCommandPoint = null;  // point index of the last Homey 109 command
     this._pendingNativeMaintenanceArrival = null;
     this._nativeMaintenanceArrivalLatched = false;
     this._nativeMaintenanceStableArrival = null;
@@ -3661,6 +3662,9 @@ class MowerDevice extends Homey.Device {
     const mapIdx = this._activeMapIndex ?? 0;
     const pointIndex = requestedPoint ?? this._maintenancePointIndex();
     this._nativeMaintenanceCommandAt = Date.now();
+    // Arrival learning stores ONE point (the garage/map maintenance point, P1).
+    // A trip to P2–P5 must not overwrite it with that point's coordinates.
+    this._nativeMaintenanceCommandPoint = pointIndex;
     this._pendingNativeMaintenanceArrival = null;
     this._nativeMaintenanceArrivalLatched = false;
     this._nativeMaintenanceStableArrival = null;
@@ -3672,11 +3676,15 @@ class MowerDevice extends Homey.Device {
     // An omitted argument preserves existing Flows (native P1).
     const point = requestedPoint == null || requestedPoint === '' ? 1 : Number(requestedPoint);
     if (!Number.isInteger(point) || point < 1 || point > 5) {
-      throw new Error('Invalid maintenance point (expected P1–P5)');
+      throw new Error(this.homey.__('error.maintenance_point_invalid'));
     }
     this.log(`[cmd] goToMaintenancePoint P${point}`);
     // Garage safety workflows continue using the proven P1 path for now.
-    if (this.getSetting('garage_mode_enabled')) {
+    // Use the engine's own notion of "active" (setting AND not paused), the
+    // same one maintenanceRequested() applies.
+    if (this._garageSafety?.enabled?.()) {
+      // Never substitute P1 silently for an explicitly chosen other point.
+      if (point !== 1) throw new Error(this.homey.__('error.maintenance_point_garage_p1'));
       return this._garageSafety.maintenanceRequested('flow_maintenance',
         async () => this._goToMaintenancePointGuarded('flow_maintenance'));
     }
@@ -4559,6 +4567,14 @@ class MowerDevice extends Homey.Device {
       this._pendingNativeMaintenanceArrival = null;
       return false;
     }
+    // The stored point is P1. Arrival at P2–P5 after a Homey command is not
+    // learned; the marker is kept until the mower leaves for mowing/home.
+    if (Number(this._nativeMaintenanceCommandPoint || 1) !== 1) {
+      this.log(`[maintenance] arrival at P${this._nativeMaintenanceCommandPoint} not stored — only P1 is learned`);
+      this._pendingNativeMaintenanceArrival = null;
+      this._nativeMaintenanceStableArrival = null;
+      return false;
+    }
 
     const live = typeof this._getBufferedLivePosition === 'function'
       ? this._getBufferedLivePosition(20000)
@@ -4586,6 +4602,7 @@ class MowerDevice extends Homey.Device {
     this._pendingNativeMaintenanceArrival = null;
     this._nativeMaintenanceStableArrival = null;
     this._nativeMaintenanceCommandAt = 0;
+    this._nativeMaintenanceCommandPoint = null;
     this._maintenancePointCandidate = null;
     // Make the new physically verified point visible immediately, without waiting
     // for another map request or for the old visual marker to disappear upstream.
@@ -4613,6 +4630,11 @@ class MowerDevice extends Homey.Device {
     const now = Date.now();
     const raw75 = Number(rawStatusCode) === 75;
     const status = String(effectiveStatus || '').toLowerCase();
+    // A P2–P5 trip ends once the mower mows or heads home; later arrivals are
+    // original-app trips to P1 again and may be learned as before.
+    if (this._nativeMaintenanceCommandPoint && ['mowing', 'returning', 'docked', 'charging'].includes(status)) {
+      this._nativeMaintenanceCommandPoint = null;
+    }
     const commandAge = this._nativeMaintenanceCommandAt
       ? now - Number(this._nativeMaintenanceCommandAt)
       : Number.POSITIVE_INFINITY;

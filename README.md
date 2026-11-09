@@ -195,7 +195,7 @@ Open the Homey app, add a new device and select MOVA or Dreame as brand and your
 | Set mowing mode | Sets the default mode used by "Start mowing" (all area / edge / zone / spot / manual) |
 | Set cutting height | Sets the blade height in mm via flow |
 | Set mow efficiency mode | Switches between Standard and Efficient mowing mode via flow |
-| Go to maintenance point | Drives the mower to its configured maintenance point |
+| Go to maintenance point | Drives the mower to a maintenance point. Optional P1–P5 selection (default P1); with Garage Mode active only P1 is supported for now |
 | Set lift alarm | Enables or disables the lift alarm (anti-theft) via flow |
 | Set child lock | Enables or disables the child lock via flow |
 | Set active map | Switches the active map (autocomplete with map names) |

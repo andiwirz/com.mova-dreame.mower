@@ -1750,6 +1750,52 @@
             "name": "device",
             "type": "device",
             "filter": "driver_id=mower"
+          },
+          {
+            "name": "maintenance_point",
+            "type": "dropdown",
+            "required": false,
+            "title": {
+              "en": "Maintenance point (optional)",
+              "de": "Wartungspunkt (optional)"
+            },
+            "values": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "P1",
+                  "de": "P1"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "P2",
+                  "de": "P2"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "P3",
+                  "de": "P3"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "P4",
+                  "de": "P4"
+                }
+              },
+              {
+                "id": "5",
+                "label": {
+                  "en": "P5",
+                  "de": "P5"
+                }
+              }
+            ]
           }
         ],
         "id": "go_to_maintenance_point"

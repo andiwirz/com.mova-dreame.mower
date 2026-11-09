@@ -19,7 +19,9 @@
     "unreachable": "Mähroboter nicht erreichbar",
     "device_offline": "Mähroboter ist offline",
     "device_not_found": "Mähroboter im Konto nicht gefunden — Gerät neu hinzufügen",
-    "auth_failed": "Authentifizierung fehlgeschlagen — Gerät neu hinzufügen"
+    "auth_failed": "Authentifizierung fehlgeschlagen — Gerät neu hinzufügen",
+    "maintenance_point_invalid": "Ungültiger Wartungspunkt (erwartet P1–P5).",
+    "maintenance_point_garage_p1": "Mit aktivem Garagenmodus wird vorerst nur Wartungspunkt P1 unterstützt."
   },
   "error_codes": {
     "0":  "Normaler Betrieb",

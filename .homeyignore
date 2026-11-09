@@ -12,3 +12,6 @@ scripts/
 # Developer documentation. The App Store reads readme.txt / readme.de.txt.
 docs/
 README.md
+
+# Developer regression tests
+tests/

@@ -79,7 +79,9 @@
     "device_not_found": "Mower not found in account — re-add the device",
     "auth_failed": "Authentication failed — re-add the device",
     "cutting_height_range": "The minimum cutting height must be less than the maximum.",
-    "cutting_height_bounds": "Cutting height must be between __min__mm and __max__mm."
+    "cutting_height_bounds": "Cutting height must be between __min__mm and __max__mm.",
+    "maintenance_point_invalid": "Invalid maintenance point (expected P1–P5).",
+    "maintenance_point_garage_p1": "With Garage Mode active, only maintenance point P1 is supported for now."
   },
   "charging_status": {
     "not_docked": "Not docked",
