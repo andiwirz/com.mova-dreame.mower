@@ -21,7 +21,8 @@
     "device_not_found": "Mower not found in account — re-add the device",
     "auth_failed": "Authentication failed — re-add the device",
     "maintenance_point_invalid": "Invalid maintenance point (expected P1–P5).",
-    "maintenance_point_garage_p1": "With Garage Mode active, only maintenance point P1 is supported for now."
+    "maintenance_point_garage_p1": "With Garage Mode active, only maintenance point P1 is supported for now.",
+    "maintenance_point_rejected": "The mower did not accept the command for maintenance point __point__. Check that this point exists in the MOVA/Dreame app."
   },
   "error_codes": {
     "0":  "Normal operation",

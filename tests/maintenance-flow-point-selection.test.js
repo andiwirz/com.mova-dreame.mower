@@ -36,5 +36,8 @@ function fake(garage) {
   await assert.rejects(cmd.call(fake(true),'5'), /maintenance_point_garage_p1/);
   await assert.rejects(cmd.call(fake(false),'6'), /maintenance_point_invalid/);
   await assert.rejects(cmd.call(fake(false),'invalid'), /maintenance_point_invalid/);
+  // A command the API rejected (_safeWrite → false) must fail the Flow.
+  const rejected = { ...fake(false), _goToMaintenancePointGuarded: async () => false };
+  await assert.rejects(cmd.call(rejected,'4'), /maintenance_point_rejected/);
   console.log('PASS: optional argument, P1–P5, garage P1-only, invalid IDs');
 })().catch(err => { console.error(err); process.exitCode = 1; });

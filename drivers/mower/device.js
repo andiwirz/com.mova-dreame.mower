@@ -629,6 +629,7 @@ class MowerDevice extends Homey.Device {
     this._maintenancePointLogAt = 0;
     this._nativeMaintenanceCommandAt = 0;
     this._nativeMaintenanceCommandPoint = null;  // point index of the last Homey 109 command
+    this._nativeMaintenanceSkipLogged = false;   // "not stored" logged for the current P2–P5 trip
     this._pendingNativeMaintenanceArrival = null;
     this._nativeMaintenanceArrivalLatched = false;
     this._nativeMaintenanceStableArrival = null;
@@ -3665,6 +3666,7 @@ class MowerDevice extends Homey.Device {
     // Arrival learning stores ONE point (the garage/map maintenance point, P1).
     // A trip to P2–P5 must not overwrite it with that point's coordinates.
     this._nativeMaintenanceCommandPoint = pointIndex;
+    this._nativeMaintenanceSkipLogged = false;
     this._pendingNativeMaintenanceArrival = null;
     this._nativeMaintenanceArrivalLatched = false;
     this._nativeMaintenanceStableArrival = null;
@@ -3688,7 +3690,11 @@ class MowerDevice extends Homey.Device {
       return this._garageSafety.maintenanceRequested('flow_maintenance',
         async () => this._goToMaintenancePointGuarded('flow_maintenance'));
     }
-    return this._goToMaintenancePointGuarded('flow_maintenance', point);
+    // _safeWrite() swallows the API error; surface it so the Flow fails visibly
+    // (e.g. a point that doesn't exist on this mower).
+    const sent = await this._goToMaintenancePointGuarded('flow_maintenance', point);
+    if (sent === false) throw new Error(this.homey.__('error.maintenance_point_rejected', { point: `P${point}` }));
+    return true;
   }
 
   async cmdSetEfficiencyMode(mode) {
@@ -4570,7 +4576,11 @@ class MowerDevice extends Homey.Device {
     // The stored point is P1. Arrival at P2–P5 after a Homey command is not
     // learned; the marker is kept until the mower leaves for mowing/home.
     if (Number(this._nativeMaintenanceCommandPoint || 1) !== 1) {
-      this.log(`[maintenance] arrival at P${this._nativeMaintenanceCommandPoint} not stored — only P1 is learned`);
+      // Status 75 repeats on every poll while the mower waits at the point: log once per trip.
+      if (!this._nativeMaintenanceSkipLogged) {
+        this._nativeMaintenanceSkipLogged = true;
+        this.log(`[maintenance] arrival at P${this._nativeMaintenanceCommandPoint} not stored — only P1 is learned`);
+      }
       this._pendingNativeMaintenanceArrival = null;
       this._nativeMaintenanceStableArrival = null;
       return false;
