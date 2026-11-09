@@ -3656,10 +3656,10 @@ class MowerDevice extends Homey.Device {
     return pointIndex;
   }
 
-  async _goToMaintenancePointGuarded(label = 'maintenance') {
+  async _goToMaintenancePointGuarded(label = 'maintenance', requestedPoint = null) {
     const did = this.getData().id;
     const mapIdx = this._activeMapIndex ?? 0;
-    const pointIndex = this._maintenancePointIndex();
+    const pointIndex = requestedPoint ?? this._maintenancePointIndex();
     this._nativeMaintenanceCommandAt = Date.now();
     this._pendingNativeMaintenanceArrival = null;
     this._nativeMaintenanceArrivalLatched = false;
@@ -3668,9 +3668,19 @@ class MowerDevice extends Homey.Device {
     return this._safeWrite(`${label}:maintenance:${pointIndex}`, () => this._api.goToMaintenancePoint(did, mapIdx, pointIndex));
   }
 
-  async cmdGoToMaintenancePoint() {
-    this.log('[cmd] goToMaintenancePoint');
-    await this._garageSafety.maintenanceRequested('flow_maintenance', async () => this._goToMaintenancePointGuarded('flow_maintenance'));
+  async cmdGoToMaintenancePoint(requestedPoint = null) {
+    // An omitted argument preserves existing Flows (native P1).
+    const point = requestedPoint == null || requestedPoint === '' ? 1 : Number(requestedPoint);
+    if (!Number.isInteger(point) || point < 1 || point > 5) {
+      throw new Error('Invalid maintenance point (expected P1–P5)');
+    }
+    this.log(`[cmd] goToMaintenancePoint P${point}`);
+    // Garage safety workflows continue using the proven P1 path for now.
+    if (this.getSetting('garage_mode_enabled')) {
+      return this._garageSafety.maintenanceRequested('flow_maintenance',
+        async () => this._goToMaintenancePointGuarded('flow_maintenance'));
+    }
+    return this._goToMaintenancePointGuarded('flow_maintenance', point);
   }
 
   async cmdSetEfficiencyMode(mode) {
