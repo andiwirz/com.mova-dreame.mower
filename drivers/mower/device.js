@@ -1239,16 +1239,33 @@ class MowerDevice extends Homey.Device {
     this._disconnectMqtt();
   }
 
+  // Homey persists newSettings only after onSettings() resolves; until then
+  // getSetting() returns the old values. Overlay the pending values so every
+  // read during the settings change (garage engine, capability sync, polls)
+  // sees the new configuration instead of the stale one.
+  getSetting(key) {
+    const pending = this._pendingSettings;
+    if (pending && Object.prototype.hasOwnProperty.call(pending, key)) return pending[key];
+    return super.getSetting(key);
+  }
+
   async onSettings({ changedKeys, newSettings }) {
+    this._pendingSettings = newSettings;
+    try {
+      await this._applySettingsChange(changedKeys, newSettings);
+    } finally {
+      this._pendingSettings = null;
+    }
+  }
+
+  async _applySettingsChange(changedKeys, newSettings) {
     this.log('[settings] changed:', changedKeys.join(', '));
     const did = this.getData().id;
 
-    if (this._garageSafety && typeof this._garageSafety.onSettings === 'function') {
-      await this._garageSafety.onSettings(newSettings, changedKeys).catch((e) => this.error('[garage] settings hook:', e.message));
-    }
-
     if (changedKeys.includes('garage_mode_enabled')) {
-      // Read the new value directly; getSetting() may still be stale here.
+      // Same order as onInit: show/hide all garage capabilities first, then let
+      // the garage engine prune what the configuration does not need (sensor
+      // tiles without a door sensor, buttons of already saved markers).
       await this._applyGarageCapabilityVisibility(!!newSettings.garage_mode_enabled);
       if (newSettings.garage_mode_enabled) {
         this._startGarageFastPoll();
@@ -1256,6 +1273,10 @@ class MowerDevice extends Homey.Device {
         this.homey.clearInterval(this._garageFastPollTimer);
         this._garageFastPollTimer = null;
       }
+    }
+
+    if (this._garageSafety && typeof this._garageSafety.onSettings === 'function') {
+      await this._garageSafety.onSettings(newSettings, changedKeys).catch((e) => this.error('[garage] settings hook:', e.message));
     }
 
     if (changedKeys.includes('poll_interval')) {
