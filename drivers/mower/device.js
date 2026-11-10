@@ -580,6 +580,12 @@ class MowerDevice extends Homey.Device {
     this._pollTimer            = null;
     this._garageFastPollTimer = null;
     this._garageFastPollBusy = false;
+    // Keep asynchronous garage capability updates in the same order.
+    this._garageVisibilityQueue = Promise.resolve();
+    this._garageVisibilityTarget = null;
+    this._garageVisibilityRevision = 0;
+    this._garageVisibilityRetry = null;
+    this._garageVisibilityRetryCount = 0;
     // Initialise from persisted state so the session timer survives app restarts.
     // If the mower was already mowing before the restart, _wasMowing stays true and
     // _sessionStartTime is restored from the store (falls back to now if not stored yet).
@@ -1225,6 +1231,10 @@ class MowerDevice extends Homey.Device {
   }
 
   async onDeleted() {
+    if (this._garageVisibilityRetry) {
+      this.homey.clearTimeout(this._garageVisibilityRetry);
+      this._garageVisibilityRetry = null;
+    }
     this._stopPolling();
     this._disconnectMqtt();
   }
@@ -1238,7 +1248,8 @@ class MowerDevice extends Homey.Device {
     }
 
     if (changedKeys.includes('garage_mode_enabled')) {
-      await this._applyGarageCapabilityVisibility();
+      // Read the new value directly; getSetting() may still be stale here.
+      await this._applyGarageCapabilityVisibility(!!newSettings.garage_mode_enabled);
       if (newSettings.garage_mode_enabled) {
         this._startGarageFastPoll();
       } else if (this._garageFastPollTimer) {
@@ -1395,15 +1406,57 @@ class MowerDevice extends Homey.Device {
 
   // ─── Migration ─────────────────────────────────────────────────────────────
 
-  async _applyGarageCapabilityVisibility() {
-    const enabled = !!this.getSetting('garage_mode_enabled');
-    for (const cap of GARAGE_DISPLAY_CAPS) {
-      if (enabled && !this.hasCapability(cap)) {
-        await this.addCapability(cap).catch((e) => this.error(`[garage] addCapability ${cap}:`, e.message));
-      } else if (!enabled && this.hasCapability(cap)) {
-        await this.removeCapability(cap).catch((e) => this.error(`[garage] removeCapability ${cap}:`, e.message));
-      }
+  async _applyGarageCapabilityVisibility(enabled = !!this.getSetting('garage_mode_enabled')) {
+    // Reconcile with the latest setting even if several Homey SDK operations
+    // overlap. This also prevents old queued updates from undoing new changes.
+    this._garageVisibilityTarget = !!enabled;
+    const revision = ++this._garageVisibilityRevision;
+    if (this._garageVisibilityRetry) {
+      this.homey.clearTimeout(this._garageVisibilityRetry);
+      this._garageVisibilityRetry = null;
     }
+
+    this._garageVisibilityQueue = this._garageVisibilityQueue.catch((err) => {
+      this.error('[garage] previous capability sync failed:', err.message);
+    }).then(async () => {
+      let failures = [];
+      let observedRevision;
+      do {
+        observedRevision = this._garageVisibilityRevision;
+        const target = this._garageVisibilityTarget;
+        failures = [];
+        for (const cap of GARAGE_DISPLAY_CAPS) {
+          if (observedRevision !== this._garageVisibilityRevision) break;
+          if (this.hasCapability(cap) === target) continue;
+          try {
+            if (target) await this.addCapability(cap);
+            else await this.removeCapability(cap);
+            if (this.hasCapability(cap) !== target) {
+              throw new Error('capability state did not change');
+            }
+          } catch (e) {
+            failures.push(cap);
+            this.error(`[garage] ${target ? 'add' : 'remove'}Capability ${cap}:`, e.message);
+          }
+        }
+      } while (observedRevision !== this._garageVisibilityRevision);
+
+      if (failures.length) {
+        this.error(`[garage] capability sync incomplete: ${failures.join(', ')}`);
+        // One bounded retry instead of an endless loop on invalid metadata.
+        if (this._garageVisibilityRetryCount < 1) {
+          this._garageVisibilityRetryCount++;
+          this._garageVisibilityRetry = this.homey.setTimeout(() => {
+            this._garageVisibilityRetry = null;
+            this._applyGarageCapabilityVisibility(this._garageVisibilityTarget)
+              .catch((e) => this.error('[garage] capability retry:', e.message));
+          }, 2000);
+        }
+      } else {
+        this._garageVisibilityRetryCount = 0;
+      }
+    });
+    return this._garageVisibilityQueue;
   }
 
   async _migrate() {
