@@ -3,6 +3,10 @@
     "en": "Go to maintenance point",
     "de": "Zum Wartungspunkt fahren"
   },
+  "titleFormatted": {
+    "en": "Go to maintenance point [[maintenance_point]]",
+    "de": "Zum Wartungspunkt [[maintenance_point]] fahren"
+  },
   "args": [
     {
       "name": "device",
