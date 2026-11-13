@@ -1,0 +1,12 @@
+{
+  "type": "boolean",
+  "title": { "en": "Go to Maintenance Point 5", "de": "Wartungspunkt 5 anfahren" },
+  "getable": true,
+  "setable": true,
+  "uiComponent": "button",
+  "icon": "/assets/capabilities/cmd_maintenance_point_5.svg",
+  "hint": {
+    "en": "Sends the mower to native maintenance point 5 configured in the MOVA/Dreame app. This point is not used for automatic garage returns.",
+    "de": "Fährt den Mäher zum nativen Wartungspunkt 5 aus der MOVA/Dreame-App. Dieser Punkt wird nicht für automatische Garagenrückfahrten verwendet."
+  }
+}

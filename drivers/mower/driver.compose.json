@@ -38,6 +38,7 @@
     "cmd_garage_test_exit",
     "garage_door_status",
     "garage_safety_status",
+    "maintenance_learning_status",
     "garage_sensor_available_status",
     "garage_sensor_battery"
   ],
@@ -117,6 +118,12 @@
   "repair": [
     {
       "id": "repair"
+    },
+    {
+      "id": "reauth"
+    },
+    {
+      "id": "maintenance_settings"
     }
   ],
   "settings": [
@@ -1369,8 +1376,8 @@
           },
           "value": false,
           "hint": {
-            "en": "Shows normal, user-relevant garage events in the Homey timeline.",
-            "de": "Zeigt normale, benutzerrelevante Garagenereignisse in der Homey-Zeitleiste."
+            "de": "Normale Garagenereignisse nur bei aktiviertem Garagenmodus.",
+            "en": "Normal garage events only while Garage Mode is enabled."
           }
         },
         {
@@ -1382,8 +1389,8 @@
           },
           "value": false,
           "hint": {
-            "en": "Adds detailed internal garage states and diagnostic decisions to the timeline. Requires garage logging to be enabled.",
-            "de": "Ergänzt detaillierte interne Garagenzustände und Diagnoseentscheidungen in der Zeitleiste. Garagen-Logging muss dafür aktiviert sein."
+            "de": "Unabhängiges Debug-Logging auch bei ausgeschaltetem Garagenmodus, inklusive Windows-Logger.",
+            "en": "Independent debug logging with Garage Mode on or off, including Windows log capture."
           }
         },
         {

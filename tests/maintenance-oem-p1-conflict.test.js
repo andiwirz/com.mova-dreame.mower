@@ -1,0 +1,13 @@
+'use strict';
+const assert=require('node:assert/strict');
+const {taskAnyTarget,taskTarget}=require('../lib/garage/NativeAdditionalMaintenanceEvidence');
+const {MaintenancePointCoordinator}=require('../lib/garage/MaintenancePointCoordinator');
+assert.equal(taskAnyTarget({o:109,exe:true,point_index:1}),1);
+assert.equal(taskTarget({o:109,exe:true,point_index:1}),null);
+const d={_activeMapIndex:0,homey:{i18n:{getLanguage:()=> 'de'}},_resolveStableMaintenancePoint:async()=>({x:0,y:0})};
+const c=new MaintenancePointCoordinator(d,()=>{});
+c.operatorAssociation={index:2,mapIndex:0,at:Date.now()};
+assert.equal(c.observeTask({o:109,exe:true,status:true,point_index:1},0),false);
+assert.equal(c.operatorAssociation,null);
+assert.equal(c.pending,null);
+console.log('PASS: explicit OEM P1 cannot be rebound to an armed P2');

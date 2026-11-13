@@ -1,257 +1,128 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{padding:20px 16px 32px;font:15px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--homey-background-color,#f8f9fb);color:var(--homey-text-color,#222)}
+main{max-width:650px;margin:0 auto}
+h1{font-size:22px;line-height:1.25;margin:0 0 9px;font-weight:700}
+h2{font-size:17px;margin:0 0 10px;font-weight:700}
+p{line-height:1.5}.small{font-size:12px;line-height:1.5;opacity:.76}
+.panel{padding:16px;border-radius:13px;background:rgba(125,125,125,.10);margin:14px 0}
+.card{display:block;width:100%;border:0;border-radius:16px;padding:18px;margin:0 0 14px;background:rgba(127,127,127,.10);color:inherit;text-align:left;box-shadow:0 1px 3px rgba(0,0,0,.08);cursor:pointer;transition:transform .12s ease,background .12s ease}
+.card:active{transform:scale(.992)}.card:focus-visible{outline:2px solid #218554;outline-offset:2px}
+.card strong{display:block;font-size:18px;margin-bottom:7px;font-weight:700}.card span{font-size:13px;line-height:1.45;opacity:.7}
+button{font:inherit;font-weight:650;cursor:pointer;transition:background .15s ease,opacity .15s ease}
+button.action{border:0;border-radius:9px;background:#218554;color:#fff;padding:11px 15px;min-height:42px}
+button.action:hover{background:#1c7147}button.action:active{background:#175d3c}
+button.secondary{background:rgba(127,127,127,.22);color:inherit}
+button.secondary:hover{background:rgba(127,127,127,.30)}
+button:disabled{opacity:.5;cursor:default}
+label{display:block;font-size:14px;font-weight:650;margin:14px 0 6px}
+input,select{font:inherit;width:100%;border:1px solid rgba(125,125,125,.5);border-radius:9px;padding:10px;background:var(--homey-background-color,#fff);color:var(--homey-text-color,#222)}
+input:focus-visible,select:focus-visible{outline:2px solid #218554;outline-offset:1px}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.row button{flex:1 1 150px}
+.language{display:flex;align-items:center;justify-content:flex-end;gap:7px;margin:0 0 15px;font-size:12px}
+.language button{width:auto;min-height:34px;border:1px solid rgba(125,125,125,.5);border-radius:8px;background:transparent;color:inherit;padding:6px 11px;font-size:12px}
+.language button[aria-pressed=true]{background:#218554;color:#fff;border-color:#218554}
+.message{font-size:13px;white-space:pre-wrap;line-height:1.5;margin:12px 0}.error{color:#bd3030}.success{color:#218554}
+.point{border-bottom:1px solid rgba(127,127,127,.23);padding:9px 0;font-size:13px;line-height:1.5}.point:last-child{border:0}
+.repair-tabs{display:flex;gap:9px;margin:0 0 18px;border-bottom:1px solid rgba(125,125,125,.22);padding-bottom:10px}
+.repair-tabs button{flex:1;min-height:43px;border:1px solid rgba(125,125,125,.38);border-radius:9px;padding:11px 8px;background:rgba(125,125,125,.08);color:inherit;font-size:14px;font-weight:650}
+.repair-tabs button[aria-current=page]{background:#218554;color:#fff;border-color:#218554}
+.repair-tabs button:focus-visible{outline:2px solid #218554;outline-offset:2px}
+@media(max-width:380px){body{padding:15px 12px 26px}.panel{padding:13px}.card{padding:15px}.repair-tabs{gap:6px}.repair-tabs button{font-size:13px;padding:10px 5px}}
+</style></head><body><main data-repair-root="repair"><div class="language" role="group" aria-label="Language / Sprache"><span data-de="Sprache" data-en="Language">Sprache</span><button id="repair-lang-de" type="button" aria-pressed="false" >DE</button><button id="repair-lang-en" type="button" aria-pressed="false" >EN</button></div><nav class="repair-tabs" aria-label="Repair sections"><button type="button" data-repair-view="reauth" data-de="Verbindung" data-en="Connection">Verbindung</button><button type="button" data-repair-view="maintenance_settings" data-de="Wartungspunkte" data-en="Maintenance points">Wartungspunkte</button></nav><h1 data-de="Mäher verwalten" data-en="Manage mower">Mäher verwalten</h1><p class="small" data-de="Verbindung reparieren oder Wartungspunkte verwalten. Weitere Funktionen folgen später." data-en="Repair the connection or manage maintenance points. More functions will follow later."></p>
+<button class="card" type="button" data-repair-view="reauth"><strong data-de="🔐 Verbindung" data-en="🔐 Connection">🔐 Verbindung</strong><span data-de="MOVA-/Dreame-Anmeldung erneuern, ohne Geräte oder Flows zu entfernen." data-en="Reconnect your MOVA/Dreame account without removing devices or flows."></span></button>
+<button class="card" type="button" data-repair-view="maintenance_settings"><strong data-de="📍 Wartungspunkte" data-en="📍 Maintenance points">📍 Wartungspunkte</strong><span data-de="P1–P5 anzeigen und P2–P5 benennen. Zum Einlernen später den Punkt in der Original-App anfahren." data-en="View P1–P5 and name P2–P5. To teach a point, subsequently drive to it using the original app."></span></button>
+<div class="row"><button type="button" class="action secondary" onclick="Homey.done()" data-de="Fertig" data-en="Done">Fertig</button></div></main><script>
+(()=>{
+// Homey may keep earlier repair views mounted in the same document.
+// Scope every DOM lookup and listener to THIS view, never a stale view's IDs.
+const repairRoot = Array.from(document.querySelectorAll?.('main[data-repair-root="repair"]') || []).at(-1) || document;
+const viewEl = id => repairRoot.querySelector?.('[id="' + id + '"]') || document.getElementById(id);
+const viewAll = selector => repairRoot.querySelectorAll?.(selector) || document.querySelectorAll(selector);
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #fff;
-      color: #1a1a1a;
-      padding: 24px;
-      max-width: 480px;
-      margin: 0 auto;
-    }
+// Homey repair views may use separate WebViews: localStorage alone is not a
+// reliable cross-view channel. Wait for the repair session to acknowledge writes.
+function locale(){
+  let saved=null;
+  try{saved=localStorage.getItem('mova.repair.uiLanguage')}catch(_){}
+  return saved||(typeof Homey!=='undefined'&&typeof Homey.getLanguage==='function'?Homey.getLanguage():null)||(typeof navigator!=='undefined'?navigator.language:'en')||'en';
+}
+let lang=String(locale()).toLowerCase().startsWith('de')?'de':'en';
+let languageRevision=0;
+let languagePending=Promise.resolve();
+function t(de,en){return lang==='de'?de:en}
+function commitLanguage(l){
+  if(l!=='de'&&l!=='en')return;
+  lang=l;
+  try{localStorage.setItem('mova.repair.uiLanguage',l)}catch(_){}
+  renderLanguage();
+}
+function repairEmit(event,payload){
+  return new Promise((resolve,reject)=>{
+    if(typeof Homey==='undefined'||typeof Homey.emit!=='function')return reject(new Error('Homey unavailable'));
+    let settled=false;
+    const watchdog=setTimeout(()=>finish(new Error('Homey repair request timed out')),3500);
+    function finish(error,value){if(settled)return;settled=true;clearTimeout(watchdog);error?reject(error):resolve(value)}
+    try{
+      // Homey versions/WebViews vary: some resolve the returned Promise, others
+      // invoke the callback. Listen to BOTH; the first completed result wins.
+      const result=Homey.emit(event,payload,(error,value)=>finish(error,value));
+      if(result&&typeof result.then==='function')result.then(value=>finish(null,value),finish);
+    }catch(error){finish(error)}
+  });
+}
+function setLang(l){
+  if(l!=='de'&&l!=='en')return languagePending;
+  ++languageRevision;
+  commitLanguage(l); // synchronous in-place repaint; no navigation or form reset
+  // Serialize updates, so rapid EN/DE taps cannot reorder the session state.
+  languagePending=languagePending.catch(()=>{}).then(()=>repairEmit('set_repair_ui_language',{language:l}));
+  languagePending.catch(error=>console.warn('Repair language sync:',error));
+  return languagePending;
+}
+async function restoreRepairLanguage(){
+  const revision=languageRevision;
+  try{
+    const value=await repairEmit('get_repair_ui_language',{});
+    // Ignore a stale reply if the user clicked DE/EN while the request was pending.
+    if(revision===languageRevision&&(value==='de'||value==='en'))commitLanguage(value);
+  }catch(error){console.warn('Repair language restore:',error)}
+}
+async function navigateRepairView(view){
+  try{
+    await languagePending;
+    Homey.showView(view);
+  }catch(error){
+    console.warn('Repair language before navigation:',error);
+    const indicator=repairRoot.querySelector?.('.language span');
+    if(indicator)indicator.textContent=t('Sprache konnte nicht übernommen werden.','Could not apply language.');
+  }
+}
+function initRepairNavigation(){
+  viewAll('[data-repair-view]').forEach(button=>{
+    button.addEventListener('click',()=>navigateRepairView(button.getAttribute('data-repair-view')));
+  });
+}
+function renderLanguage(){document.documentElement.lang=lang;viewAll('[data-de]').forEach(e=>{e.textContent=t(e.getAttribute('data-de'),e.getAttribute('data-en'))});for(const l of ['de','en'])viewEl('repair-lang-'+l)?.setAttribute('aria-pressed',String(lang===l));if(typeof renderSpecific==='function')renderSpecific()}
 
-    h2 {
-      font-size: 20px;
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
+renderLanguage();try{Homey.ready?.()}catch(_){}
+(function bootLanguage(attempt=0){
+  if(typeof Homey==='undefined'||typeof Homey.emit!=='function'){
+    if(attempt<50)setTimeout(()=>bootLanguage(attempt+1),80);
+    return;
+  }
+  restoreRepairLanguage();
+})();
 
-    .subtitle {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 24px;
-      line-height: 1.5;
-    }
+initRepairNavigation();
+// Install language events before Homey.ready(); every click repaints immediately.
+for(const code of ['de','en']){
+  viewEl('repair-lang-'+code).addEventListener('click',event=>{
+    event?.preventDefault?.();
+    setLang(code);
+  });
+}
 
-    .info-box {
-      background: #f0faff;
-      border: 1px solid #b3e0f7;
-      border-radius: 8px;
-      font-size: 13px;
-      color: #0070a0;
-      padding: 10px 12px;
-      margin-bottom: 20px;
-      line-height: 1.5;
-    }
-
-    .field {
-      margin-bottom: 16px;
-    }
-
-    label {
-      display: block;
-      font-size: 13px;
-      font-weight: 500;
-      color: #444;
-      margin-bottom: 6px;
-    }
-
-    select, input[type="email"], input[type="password"] {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1.5px solid #ddd;
-      border-radius: 8px;
-      font-size: 15px;
-      background: #fafafa;
-      outline: none;
-      transition: border-color 0.15s;
-    }
-
-    select:focus, input:focus {
-      border-color: #00A8E0;
-      background: #fff;
-    }
-
-    .row {
-      display: flex;
-      gap: 12px;
-    }
-
-    .row .field { flex: 1; }
-
-    button {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      background: #00A8E0;
-      color: #fff;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 8px;
-      transition: background 0.15s, opacity 0.15s;
-    }
-
-    button:hover  { background: #0091c2; }
-    button:active { background: #0080ab; }
-    button:disabled { opacity: 0.5; cursor: default; }
-
-    .error {
-      background: #fff0f0;
-      border: 1px solid #ffcdd2;
-      border-radius: 8px;
-      color: #c62828;
-      font-size: 13px;
-      padding: 10px 12px;
-      margin-top: 12px;
-    }
-
-    .success {
-      background: #f0fff4;
-      border: 1px solid #b2dfdb;
-      border-radius: 8px;
-      color: #2e7d32;
-      font-size: 14px;
-      font-weight: 500;
-      padding: 12px;
-      margin-top: 12px;
-      text-align: center;
-    }
-
-    .spinner {
-      display: inline-block;
-      width: 18px;
-      height: 18px;
-      border: 2.5px solid rgba(255,255,255,0.4);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      flex-shrink: 0;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .hidden { display: none !important; }
-  </style>
-</head>
-<body>
-
-  <h2>Re-authenticate</h2>
-  <p class="subtitle">Enter your MOVA or Dreame credentials to restore the connection.</p>
-
-  <div class="info-box">
-    ✓ Your device, all settings and flows remain unchanged — only the login token is updated.
-  </div>
-
-  <div class="row">
-    <div class="field">
-      <label>Brand</label>
-      <select id="brand">
-        <option value="mova">MOVA</option>
-        <option value="dreame">Dreame</option>
-      </select>
-    </div>
-    <div class="field">
-      <label>Region</label>
-      <select id="region">
-        <option value="eu">Europe (EU)</option>
-        <option value="us">USA (US)</option>
-        <option value="cn">China (CN)</option>
-        <option value="sg">Asia (SG)</option>
-      </select>
-    </div>
-  </div>
-
-  <div class="field">
-    <label>Email</label>
-    <input type="email" id="username" autocomplete="email" />
-  </div>
-
-  <div class="field">
-    <label>Password</label>
-    <input type="password" id="password" autocomplete="current-password" />
-  </div>
-
-  <div id="error-msg" class="error hidden"></div>
-  <div id="success-msg" class="success hidden">✓ Authentication successful — connection restored.</div>
-
-  <button id="btn-repair" onclick="onRepair()">Sign In & Restore Connection</button>
-
-  <script>
-    // ── Pre-fill brand / region from current device store ─────────────────────
-
-    async function init() {
-      try {
-        const settings = await Homey.emit('get_repair_settings');
-        if (settings.brand)  document.getElementById('brand').value  = settings.brand;
-        if (settings.region) document.getElementById('region').value = settings.region;
-      } catch {
-        // Non-fatal — defaults already set in HTML
-      }
-    }
-
-    // ── UI helpers ────────────────────────────────────────────────────────────
-
-    function showError(msg) {
-      const el = document.getElementById('error-msg');
-      el.textContent = msg;
-      el.classList.remove('hidden');
-    }
-
-    function hideError() {
-      document.getElementById('error-msg').classList.add('hidden');
-    }
-
-    function setLoading(loading) {
-      const btn = document.getElementById('btn-repair');
-      if (loading) {
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span> Signing in…';
-      } else {
-        btn.disabled = false;
-        btn.textContent = 'Sign In & Restore Connection';
-      }
-    }
-
-    // ── Repair flow ───────────────────────────────────────────────────────────
-
-    async function onRepair() {
-      hideError();
-
-      const brand    = document.getElementById('brand').value;
-      const region   = document.getElementById('region').value;
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
-
-      if (!username || !password) {
-        showError('Please enter your email and password.');
-        return;
-      }
-
-      setLoading(true);
-
-      try {
-        await Homey.emit('login', { brand, region, username, password });
-        await Homey.emit('repair_credentials');
-
-        // Show success briefly, then close the repair view.
-        document.getElementById('success-msg').classList.remove('hidden');
-        document.getElementById('btn-repair').classList.add('hidden');
-        setTimeout(() => Homey.done(), 1500);
-      } catch (err) {
-        showError(err.message || 'Login failed. Please check your credentials.');
-        setLoading(false);
-      }
-    }
-
-    // ── Password field: submit on Enter ───────────────────────────────────────
-
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('password').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') onRepair();
-      });
-      init();
-    });
-  </script>
-</body>
-</html>
+})();
+</script></body></html>

@@ -1,0 +1,12 @@
+{
+  "type": "string",
+  "title": {
+    "en": "Maintenance learning",
+    "de": "Wartungspunkt anlernen"
+  },
+  "getable": true,
+  "setable": false,
+  "insights": false,
+  "uiComponent": "sensor",
+  "icon": "/assets/capabilities/sensor_status.svg"
+}

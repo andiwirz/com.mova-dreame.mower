@@ -165,6 +165,67 @@ class MowerDriver extends Homey.Driver {
       region: await device.getStoreValue('region') || 'eu',
     }));
 
+    // Share the explicit DE/EN choice across Repair subviews. Homey may mount each
+    // view in an isolated WebView where localStorage is unavailable or separate.
+    // This override lives only for the current repair session.
+    let repairUiLanguage = null;
+    session.setHandler('set_repair_ui_language', ({ language } = {}) => {
+      if (language !== 'de' && language !== 'en') throw new Error('Unsupported repair UI language');
+      repairUiLanguage = language;
+      return repairUiLanguage;
+    });
+    session.setHandler('get_repair_ui_language', () => {
+      if (repairUiLanguage) return repairUiLanguage;
+      const homeyLanguage = String(this.homey?.i18n?.getLanguage?.() || 'en');
+      return /^de(?:[-_]|$)/i.test(homeyLanguage) ? 'de' : 'en';
+    });
+
+    // Maintenance names are managed exclusively in Repair > Maintenance points.
+    // Stable keys are stored in device store, not in visible device settings.
+    const POINT_NAMES_STORE = 'maintenance_point_names_v1';
+    const readMaintenanceNames = async () => {
+      const stored = await device.getStoreValue(POINT_NAMES_STORE);
+      return Object.fromEntries([2, 3, 4, 5].map(i => {
+        const key = `maintenance_point_${i}_name`;
+        return [key, String(stored?.[key] || '')];
+      }));
+    };
+
+    session.setHandler('get_maintenance_settings', readMaintenanceNames);
+
+    session.setHandler('save_maintenance_settings', async (values = {}) => {
+      const names = await readMaintenanceNames();
+      let changed = false;
+      for (let i = 2; i <= 5; i++) {
+        const key = `maintenance_point_${i}_name`;
+        if (!Object.prototype.hasOwnProperty.call(values, key)) continue;
+        if (typeof values[key] !== 'string' || values[key].length > 80) {
+          throw new Error(`Invalid name for maintenance point P${i}`);
+        }
+        names[key] = values[key].trim();
+        changed = true;
+      }
+      if (!changed) return true;
+      await device.setStoreValue(POINT_NAMES_STORE, names);
+      const readBack = await readMaintenanceNames();
+      for (let i=2;i<=5;i++) {
+        const key=`maintenance_point_${i}_name`;
+        if (readBack[key] !== names[key]) throw new Error(`Maintenance name P${i} could not be verified after saving`);
+      }
+      await device._additionalMaintenanceEvidence?.reloadNames?.();
+      return readBack;
+    });
+
+    session.setHandler('get_maintenance_point_state', async ({index}={}) => {
+      return device._additionalMaintenanceEvidence.repairPointState(Number(index));
+    });
+    session.setHandler('learn_maintenance_point', async ({index}={}) => {
+      return device._additionalMaintenanceEvidence.prepareOriginalApp(Number(index));
+    });
+    session.setHandler('delete_maintenance_point_position', async ({index}={}) => {
+      return device._additionalMaintenanceEvidence.removeRepairPoint(Number(index));
+    });
+
     session.setHandler('login', async ({ brand, region, username, password }) => {
       api = new MovaApi({ brand, region, log: (...a) => this.log(...a) });
       await api.login(username, password);

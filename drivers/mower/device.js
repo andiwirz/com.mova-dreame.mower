@@ -6,7 +6,11 @@ const mqtt   = require('mqtt');
 const Homey = require('homey');
 const MovaApi = require('../../lib/MovaApi');
 const GarageSafetyEngine = require('../../lib/garage/GarageSafetyEngine');
+const { CoreExternalStartRecovery } = require('../../lib/garage/CoreExternalStartRecovery');
 const { resolveMaintenancePointIndex } = require('../../lib/garage/MaintenancePointResolver');
+const { checkMaintenancePoint } = require('../../lib/garage/MaintenancePointPreflight');
+const { taskTarget, maintenanceTaskShape, STORE_KEY: ADDITIONAL_POINT_STORE } = require('../../lib/garage/NativeAdditionalMaintenanceEvidence');
+const { MaintenancePointCoordinator } = require('../../lib/garage/MaintenancePointCoordinator');
 
 function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
 
@@ -651,6 +655,10 @@ class MowerDevice extends Homey.Device {
     this._cachedArMapPos         = null; // last parsed ARMap robot/charger position from binary blob
     this._mqttErrorCode          = null; // latest native MQTT device/error code
     this._garageSafety          = new GarageSafetyEngine(this);
+    this._coreExternalStart = new CoreExternalStartRecovery({
+      device:this, garage:this._garageSafety, log:(...parts)=>this.log(...parts),
+    });
+    this._additionalMaintenanceEvidence = new MaintenancePointCoordinator(this, (...parts) => this.log(...parts));
     this._commandGeneration      = 0;
     this._resumeGuardUntil       = 0; // suppress garage external-start detection after Pause→Resume
     this._resumeSemanticUntil    = 0; // RC112: treat stale cloud 'paused' as mowing after an explicit resume
@@ -675,6 +683,8 @@ class MowerDevice extends Homey.Device {
     }
 
     await this._garageSafety.init();
+    await this._additionalMaintenanceEvidence.load();
+    await this._coreExternalStart.restoreAbort();
 
     // Homey persists momentary command capabilities. Clear stale button values
     // before listeners are registered, especially cmd_maintenance_point after a
@@ -1279,6 +1289,10 @@ class MowerDevice extends Homey.Device {
       await this._garageSafety.onSettings(newSettings, changedKeys).catch((e) => this.error('[garage] settings hook:', e.message));
     }
 
+    if (changedKeys.some(key => /^maintenance_point_[2-5]_name$/.test(key))) {
+      await this._additionalMaintenanceEvidence.syncButtons();
+    }
+
     if (changedKeys.includes('poll_interval')) {
       this.log(`[settings] poll_interval → ${newSettings.poll_interval}s`);
       this._stopPolling();
@@ -1686,7 +1700,18 @@ class MowerDevice extends Homey.Device {
       // carry the interruption reason as tokens.
       this._trackInterruption(mowerStatus, effectiveFaultCode);
       await this._applyStatus(mowerStatus, effectiveFaultCode);
-      await this._observeNativeMaintenanceArrival(this._latestNativeStatusCode, mowerStatus, effectiveFaultCode).catch((e) => this.error('[maintenance] native arrival observer:', e.message));
+      if (this.getSetting('garage_debug_verbose') && this._additionalMaintenanceEvidence?.isPending?.()) {
+        this.log(`[maintenance-learn] native latestStatus=${this._latestNativeStatusCode} fault=${effectiveFaultCode} pending-indexed-109=true`);
+      }
+      const additionalTaskHandled = await this._additionalMaintenanceEvidence?.observeStatus(
+        this._latestNativeStatusCode, effectiveFaultCode).catch((e) => {
+          this.error('[maintenance] native additional point observer:', e.message);
+          return true; // Never treat an uncertain P2 arrival as P1.
+        });
+      if (!additionalTaskHandled) {
+        await this._observeNativeMaintenanceArrival(this._latestNativeStatusCode, mowerStatus, effectiveFaultCode)
+          .catch((e) => this.error('[maintenance] native arrival observer:', e.message));
+      }
 
       // Derive charging_status from mower status.
       const chargingCode =
@@ -1865,6 +1890,9 @@ class MowerDevice extends Homey.Device {
       });
 
       if (mapiRaw) {
+        // Core parity: a zone-less MAPI response must not replace the garden
+        // geometry, but its maintenance metadata remains independently readable.
+        this._lastMaintenanceMAPI = { mapIndex: Number(this._activeMapIndex), raw: mapiRaw, at: Date.now() };
         const incomingHash = mapiRaw?.d?.hash ?? null;
         const cachedHash   = this._cachedMapData?.md5sum ?? null;
         const mapChanged   = !incomingHash || incomingHash !== cachedHash;
@@ -1884,6 +1912,8 @@ class MowerDevice extends Homey.Device {
           }
         }
         this._cachedMAPI = directMap ? null : mapiRaw;
+        // Never use _cachedMAPI alone for service points: it can be cleared
+        // even when the last MAPI contains a valid manufacturer point list.
 
         if (mapChanged) {
           const [aiobsRes, obsRes] = await Promise.allSettled([
@@ -3384,11 +3414,18 @@ class MowerDevice extends Homey.Device {
     await this._setCap('mower_status', displayStatus);
     const resumeGuardActive = this._resumeGuardUntil && Date.now() < this._resumeGuardUntil;
     if (status === 'mowing' && prev !== 'mowing' && !resumeGuardActive) {
-      this._garageSafety.onExternalMowingDetected().catch((e) => this.error('[garage] external start guard:', e.message));
+      if (this._coreExternalStart.armed && !this._coreExternalStart.active
+          && !this._garageSafety._outbound && !this._garageSafety._missionOutside) {
+        this._coreExternalStart.suppressMissingNativeEdge(prev).catch(e=>this.error('[core-external-start] fallback:',e.message));
+      } else if (!this._coreExternalStart.active && !(this._coreExternalStart.armed && Date.now()<this._coreExternalStart.abortUntil)) {
+        this._garageSafety.onExternalMowingDetected().catch((e)=>this.error('[garage] external start guard:',e.message));
+      }
     } else if (status === 'mowing' && prev !== 'mowing' && resumeGuardActive) {
       this.log('[garage] mowing after resume accepted without garage start flow');
     }
-    this._garageSafety.onStatus(status, prev).catch((e) => this.error('[garage] status hook:', e.message));
+    if (!this._coreExternalStart.active) {
+      this._garageSafety.onStatus(status, prev).catch((e) => this.error('[garage] status hook:', e.message));
+    }
 
     this._trgStatusChanged
       .trigger(this, { status }, {})
@@ -3754,13 +3791,50 @@ class MowerDevice extends Homey.Device {
     if (!Number.isInteger(point) || point < 1 || point > 5) {
       throw new Error(this.homey.__('error.maintenance_point_invalid'));
     }
-    this.log(`[cmd] goToMaintenancePoint P${point}`);
+    // Reject missing/unverifiable native P2-P5 targets *before* any garage
+    // opening, command state mutation, or opcode 109. P1 keeps prior behavior.
+    const learned = point > 1
+      ? await Promise.resolve(this.getStoreValue?.(ADDITIONAL_POINT_STORE)).catch(() => null)
+      : null;
+    // P2-P5 availability is checked before ANY native movement command,
+    // regardless of Garage Mode. Never send an unverifiable target to the mower.
+    const preflight = await checkMaintenancePoint({
+      point,
+      mapIndex: this._activeMapIndex ?? 0,
+      getMAPI: async (mapIndex) => this._api.getMAPI(this.getData().id, mapIndex),
+      learned,
+    });
+    if (!preflight.allowed) {
+      const message = this.homey.__('error.maintenance_point_preflight_' + preflight.reason,
+        { point: `P${point}` });
+      this.log(`[maintenance] Flow rejected before opcode 109: P${point} reason=${preflight.reason} map=${this._activeMapIndex ?? 0} mapiSchema=${preflight.shape || 'unavailable'}`);
+      // Existing Flow fails visibly. PR 1 has no notice router yet; log a
+      // concise Homey timeline event without creating a direct push.
+      if (typeof this._emitMowerNotice === 'function') {
+        this._emitMowerNotice('maintenance_unavailable', message, `maintenance_${preflight.reason}_P${point}`);
+      } else {
+        this._garageSafety?._timeline?.(message, `maintenance:${preflight.reason}_P${point}`);
+      }
+      throw new Error(message);
+    }
+    this.log(`[cmd] goToMaintenancePoint P${point} proof=${preflight.reason}`);
     // Garage safety workflows continue using the proven P1 path for now.
     // Use the engine's own notion of "active" (setting AND not paused), the
     // same one maintenanceRequested() applies.
+    // A deliberately paused Garage Mode is not the same as Garage Mode OFF.
+    if (this.getSetting?.('garage_mode_enabled') === true && !this._garageSafety?.enabled?.()) {
+      throw new Error('Garage Mode ist pausiert / Garage Mode is paused');
+    }
     if (this._garageSafety?.enabled?.()) {
-      // Never substitute P1 silently for an explicitly chosen other point.
-      if (point !== 1) throw new Error(this.homey.__('error.maintenance_point_garage_p1'));
+      // P2–P5 do not use the P1 marker/calibration watcher. The same native
+      // target is passed on unchanged after gate-open safety has completed.
+      if (point !== 1) {
+        const accepted = await this._garageSafety.additionalMaintenanceRequested(
+          'flow_additional_maintenance', point,
+          () => this._goToMaintenancePointGuarded('flow_additional_maintenance', point));
+        if (accepted === false) throw new Error(this.homey.__('error.maintenance_point_rejected', {point:`P${point}`}));
+        return true;
+      }
       return this._garageSafety.maintenanceRequested('flow_maintenance',
         async () => this._goToMaintenancePointGuarded('flow_maintenance'));
     }
@@ -4222,6 +4296,14 @@ class MowerDevice extends Homey.Device {
 
     if (parsed.data?.method === 'properties_changed' && Array.isArray(parsed.data.params)) {
       for (const prop of parsed.data.params) {
+        if (Number(prop.siid)===1 && Number(prop.piid)===1) {
+          const native = this._coreExternalStart.onNativeFrame(prop.value);
+          if (native?.type==='native-undock-edge' && this._coreExternalStart.eligible()) {
+            this._coreExternalStart.onUndockingEdge().catch(e=>this.error('[core-external-start] failed:',e.message));
+          } else if (native?.type==='native-undock-edge' && Date.now()<this._coreExternalStart.abortUntil) {
+            this._coreExternalStart.suppressReplay().catch(e=>this.error('[core-external-start] replay:',e.message));
+          }
+        }
         if (prop.siid === 1 && prop.piid === 4) {
           const val = prop.value;
           const buf = Array.isArray(val) ? Buffer.from(val) : null;
@@ -4241,6 +4323,18 @@ class MowerDevice extends Homey.Device {
             }
           } else {
             this.log(`[mqtt] siid:1 piid:4 value: ${JSON.stringify(val)?.substring(0, 200)}`);
+          }
+        } else if (prop.siid === 2 && prop.piid === 50) {
+          this._coreExternalStart.onTask(prop.value);
+          if (prop.value?.t === 'TASK') this._additionalMaintenanceEvidence?.observeTask(prop.value.d, this._activeMapIndex ?? 0);
+          // Diagnostic only. The original MOVA app can expose the native
+          // maintenance index in TASK 109 even when MAPI omits the marker list.
+          // Never convert an observed index into navigation authorization here.
+          const task = prop.value?.t === 'TASK' ? prop.value.d : null;
+          if (this.getSetting('garage_debug_verbose') && Number(task?.o) === 109) {
+            const index = taskTarget(task);
+            this.log(`[maintenance-native] original-app TASK109 index=${index == null ? 'unknown' : 'P'+index} map=${this._activeMapIndex ?? 0} exe=${task.exe === true} status=${task.status === true} schema=${maintenanceTaskShape(task)}`);
+            if (index == null) this.log('[maintenance-native] Target still unconfirmed; no P2-P5 target will be inferred from status or coordinate alone.');
           }
         } else if (prop.siid === 2 && prop.piid === 1) {
           this.log(`[mqtt] status: ${prop.value}`);
@@ -4823,7 +4917,10 @@ class MowerDevice extends Homey.Device {
     if (!effectiveOverlay.cautionRadius) effectiveOverlay.cautionRadius = Number(this.getSetting('garage_caution_radius_mm') || 0) || undefined;
 
     const robot = this._livePos || safetyPos || null;
-    const points = [robot, this._dockPos, this._cachedMapData?.livePath,
+    // Include learned additional points even in a map-less fallback.
+    // These are display-only; never change safety geometry or destination commands.
+    const learnedPoints = await this._additionalMaintenanceEvidence?.visiblePoints?.() || [];
+    const points = [robot, this._dockPos, this._cachedMapData?.livePath, ...learnedPoints,
       effectiveOverlay.dangerCenter, effectiveOverlay.lineA, effectiveOverlay.lineB, effectiveOverlay.maintenancePoint];
     let boundary = this._normalizeBoundary(null, points);
     if (!boundary) return null;
@@ -4844,6 +4941,7 @@ class MowerDevice extends Homey.Device {
       livePath: this._cachedMapData?.livePath || [],
       robotPos: robot ? [robot.x, robot.y] : null,
       garageOverlay: Object.keys(effectiveOverlay).length ? effectiveOverlay : null,
+      maintenancePoints: learnedPoints,
       mapFallbackReason: 'no_official_map_payload',
     };
   }
@@ -5356,8 +5454,19 @@ class MowerDevice extends Homey.Device {
       merged.push(...telemetryTrail);
       effectiveLivePath = merged.slice(-1000);
     }
+    const additionalPoints = await this._additionalMaintenanceEvidence.visiblePoints();
+    // Production telemetry: distinguish stored-but-not-delivered markers from a
+    // widget visibility/render problem without changing any mowing command.
+    if (additionalPoints.length) {
+      const stamp = additionalPoints.map(p => `${p.index}:${Math.round(p.x)},${Math.round(p.y)}:${p.confirmed?'verified':'observed'}`).join('|');
+      if (stamp !== this._lastAdditionalMarkerDeliveryStamp) {
+        this._lastAdditionalMarkerDeliveryStamp = stamp;
+        this.log(`[maintenance-map] API points map=${this._activeMapIndex ?? 0} ${stamp} show=${showMaintenancePoint}`);
+      }
+    }
     const base = {
       ...this._cachedMapData,
+      maintenancePoints: additionalPoints,
       livePath: effectiveLivePath,
       mapRotation: this._dockYaw ?? 0,
       robotAngle: this._cachedArMapPos?.robot?.angle ?? null,
