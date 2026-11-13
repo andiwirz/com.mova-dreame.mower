@@ -1,0 +1,153 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{padding:20px 16px 32px;font:15px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--homey-background-color,#f8f9fb);color:var(--homey-text-color,#222)}
+main{max-width:650px;margin:0 auto}
+h1{font-size:22px;line-height:1.25;margin:0 0 9px;font-weight:700}
+h2{font-size:17px;margin:0 0 10px;font-weight:700}
+p{line-height:1.5}.small{font-size:12px;line-height:1.5;opacity:.76}
+.panel{padding:16px;border-radius:13px;background:rgba(125,125,125,.10);margin:14px 0}
+.card{display:block;width:100%;border:0;border-radius:16px;padding:18px;margin:0 0 14px;background:rgba(127,127,127,.10);color:inherit;text-align:left;box-shadow:0 1px 3px rgba(0,0,0,.08);cursor:pointer;transition:transform .12s ease,background .12s ease}
+.card:active{transform:scale(.992)}.card:focus-visible{outline:2px solid #218554;outline-offset:2px}
+.card strong{display:block;font-size:18px;margin-bottom:7px;font-weight:700}.card span{font-size:13px;line-height:1.45;opacity:.7}
+button{font:inherit;font-weight:650;cursor:pointer;transition:background .15s ease,opacity .15s ease}
+button.action{border:0;border-radius:9px;background:#218554;color:#fff;padding:11px 15px;min-height:42px}
+button.action:hover{background:#1c7147}button.action:active{background:#175d3c}
+button.secondary{background:rgba(127,127,127,.22);color:inherit}
+button.secondary:hover{background:rgba(127,127,127,.30)}
+button:disabled{opacity:.5;cursor:default}
+label{display:block;font-size:14px;font-weight:650;margin:14px 0 6px}
+input,select{font:inherit;width:100%;border:1px solid rgba(125,125,125,.5);border-radius:9px;padding:10px;background:var(--homey-background-color,#fff);color:var(--homey-text-color,#222)}
+input:focus-visible,select:focus-visible{outline:2px solid #218554;outline-offset:1px}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.row button{flex:1 1 150px}
+.language{display:flex;align-items:center;justify-content:flex-end;gap:7px;margin:0 0 15px;font-size:12px}
+.language button{width:auto;min-height:34px;border:1px solid rgba(125,125,125,.5);border-radius:8px;background:transparent;color:inherit;padding:6px 11px;font-size:12px}
+.language button[aria-pressed=true]{background:#218554;color:#fff;border-color:#218554}
+.message{font-size:13px;white-space:pre-wrap;line-height:1.5;margin:12px 0}.error{color:#bd3030}.success{color:#218554}
+.point{border-bottom:1px solid rgba(127,127,127,.23);padding:9px 0;font-size:13px;line-height:1.5}.point:last-child{border:0}
+.repair-tabs{display:flex;gap:9px;margin:0 0 18px;border-bottom:1px solid rgba(125,125,125,.22);padding-bottom:10px}
+.repair-tabs button{flex:1;min-height:43px;border:1px solid rgba(125,125,125,.38);border-radius:9px;padding:11px 8px;background:rgba(125,125,125,.08);color:inherit;font-size:14px;font-weight:650}
+.repair-tabs button[aria-current=page]{background:#218554;color:#fff;border-color:#218554}
+.repair-tabs button:focus-visible{outline:2px solid #218554;outline-offset:2px}
+@media(max-width:380px){body{padding:15px 12px 26px}.panel{padding:13px}.card{padding:15px}.repair-tabs{gap:6px}.repair-tabs button{font-size:13px;padding:10px 5px}}
+</style></head><body><main data-repair-root="reauth"><div class="language" role="group" aria-label="Language / Sprache"><span data-de="Sprache" data-en="Language">Sprache</span><button id="reauth-lang-de" type="button" aria-pressed="false" >DE</button><button id="reauth-lang-en" type="button" aria-pressed="false" >EN</button></div><nav class="repair-tabs" aria-label="Repair sections"><button type="button" id="nav-connection" data-repair-view="reauth" data-de="Verbindung" data-en="Connection">Verbindung</button><button type="button" id="nav-maintenance" data-repair-view="maintenance_settings" data-de="Wartungspunkte" data-en="Maintenance points">Wartungspunkte</button></nav><h1 data-de="Verbindung" data-en="Connection">Verbindung</h1><p class="small" data-de="MOVA-/Dreame-Konto erneut verbinden. Gerät, Einstellungen und Flows bleiben erhalten." data-en="Reconnect the MOVA/Dreame account. Device, settings and flows remain unchanged."></p>
+<div class="panel"><label for="brand" data-de="Marke" data-en="Brand">Marke</label><select id="brand"><option value="mova">MOVA</option><option value="dreame">Dreame</option></select><label for="region" data-de="Region" data-en="Region">Region</label><select id="region"><option value="eu">Europe (EU)</option><option value="us">USA (US)</option><option value="cn">China (CN)</option><option value="sg">Asia (SG)</option></select><label for="username" data-de="E-Mail" data-en="Email">E-Mail</label><input id="username" type="email" autocomplete="email"><label for="password" data-de="Passwort" data-en="Password">Passwort</label><input id="password" type="password" autocomplete="current-password"></div><div id="msg" class="message" role="status"></div><div class="row"><button type="button" class="action secondary" data-repair-view="repair" data-de="Zurück" data-en="Back">Zurück</button><button id="connect" type="button" class="action"  data-de="Verbindung reparieren" data-en="Repair connection">Verbindung reparieren</button></div></main><script>
+(()=>{
+// Homey may keep earlier repair views mounted in the same document.
+// Scope every DOM lookup and listener to THIS view, never a stale view's IDs.
+const repairRoot = Array.from(document.querySelectorAll?.('main[data-repair-root="reauth"]') || []).at(-1) || document;
+const viewEl = id => repairRoot.querySelector?.('[id="' + id + '"]') || document.getElementById(id);
+const viewAll = selector => repairRoot.querySelectorAll?.(selector) || document.querySelectorAll(selector);
+
+// Homey repair views may use separate WebViews: localStorage alone is not a
+// reliable cross-view channel. Wait for the repair session to acknowledge writes.
+function locale(){
+  let saved=null;
+  try{saved=localStorage.getItem('mova.repair.uiLanguage')}catch(_){}
+  return saved||(typeof Homey!=='undefined'&&typeof Homey.getLanguage==='function'?Homey.getLanguage():null)||(typeof navigator!=='undefined'?navigator.language:'en')||'en';
+}
+let lang=String(locale()).toLowerCase().startsWith('de')?'de':'en';
+let languageRevision=0;
+let languagePending=Promise.resolve();
+function t(de,en){return lang==='de'?de:en}
+function commitLanguage(l){
+  if(l!=='de'&&l!=='en')return;
+  lang=l;
+  try{localStorage.setItem('mova.repair.uiLanguage',l)}catch(_){}
+  renderLanguage();
+}
+function repairEmit(event,payload){
+  return new Promise((resolve,reject)=>{
+    if(typeof Homey==='undefined'||typeof Homey.emit!=='function')return reject(new Error('Homey unavailable'));
+    let settled=false;
+    const watchdog=setTimeout(()=>finish(new Error('Homey repair request timed out')),3500);
+    function finish(error,value){if(settled)return;settled=true;clearTimeout(watchdog);error?reject(error):resolve(value)}
+    try{
+      // Homey versions/WebViews vary: some resolve the returned Promise, others
+      // invoke the callback. Listen to BOTH; the first completed result wins.
+      const result=Homey.emit(event,payload,(error,value)=>finish(error,value));
+      if(result&&typeof result.then==='function')result.then(value=>finish(null,value),finish);
+    }catch(error){finish(error)}
+  });
+}
+function setLang(l){
+  if(l!=='de'&&l!=='en')return languagePending;
+  ++languageRevision;
+  commitLanguage(l); // synchronous in-place repaint; no navigation or form reset
+  // Serialize updates, so rapid EN/DE taps cannot reorder the session state.
+  languagePending=languagePending.catch(()=>{}).then(()=>repairEmit('set_repair_ui_language',{language:l}));
+  languagePending.catch(error=>console.warn('Repair language sync:',error));
+  return languagePending;
+}
+async function restoreRepairLanguage(){
+  const revision=languageRevision;
+  try{
+    const value=await repairEmit('get_repair_ui_language',{});
+    // Ignore a stale reply if the user clicked DE/EN while the request was pending.
+    if(revision===languageRevision&&(value==='de'||value==='en'))commitLanguage(value);
+  }catch(error){console.warn('Repair language restore:',error)}
+}
+async function navigateRepairView(view){
+  try{
+    await languagePending;
+    Homey.showView(view);
+  }catch(error){
+    console.warn('Repair language before navigation:',error);
+    const indicator=repairRoot.querySelector?.('.language span');
+    if(indicator)indicator.textContent=t('Sprache konnte nicht übernommen werden.','Could not apply language.');
+  }
+}
+function initRepairNavigation(){
+  viewAll('[data-repair-view]').forEach(button=>{
+    button.addEventListener('click',()=>navigateRepairView(button.getAttribute('data-repair-view')));
+  });
+}
+function renderLanguage(){document.documentElement.lang=lang;viewAll('[data-de]').forEach(e=>{e.textContent=t(e.getAttribute('data-de'),e.getAttribute('data-en'))});for(const l of ['de','en'])viewEl('reauth-lang-'+l)?.setAttribute('aria-pressed',String(lang===l));if(typeof renderSpecific==='function')renderSpecific()}
+
+function emitReply(name,payload){return new Promise((resolve,reject)=>{
+  let completed=false;
+  const timeout=setTimeout(()=>finish(new Error(t('Keine Antwort von Homey innerhalb von 20 Sekunden.','No reply from Homey within 20 seconds.'))),20000);
+  function finish(error,value){if(completed)return;completed=true;clearTimeout(timeout);error?reject(error):resolve(value)}
+  try{
+    const result=Homey.emit(name,payload,(error,value)=>finish(error,value));
+    if(result&&typeof result.then==='function')result.then(value=>finish(null,value),finish);
+  }catch(error){finish(error)}
+})}
+let statusMessage=null;
+function showStatus(de,en=de,error=false){
+  statusMessage={de,en,error};
+  renderStatus();
+}
+function renderStatus(){
+  if(!statusMessage)return;
+  const e=viewEl('msg');
+  e.textContent=t(statusMessage.de,statusMessage.en);
+  e.className='message '+(statusMessage.error?'error':'success');
+}
+function renderSpecific(){renderStatus()}
+async function load(){try{const s=await emitReply('get_repair_settings',{});if(s?.brand)viewEl('brand').value=s.brand;if(s?.region)viewEl('region').value=s.region}catch(_){}}
+async function connect(){const username=viewEl('username').value.trim(),password=viewEl('password').value;if(!username||!password){showStatus('E-Mail und Passwort eingeben.','Enter email and password.',true);return}const button=viewEl('connect');button.disabled=true;showStatus('Verbindung wird geprüft …','Checking connection …');try{await emitReply('login',{brand:viewEl('brand').value,region:viewEl('region').value,username,password});await emitReply('repair_credentials',{});showStatus('Verbindung repariert.','Connection repaired.');Homey.done()}catch(e){showStatus('Verbindung fehlgeschlagen: '+(e.message||e),'Connection failed: '+(e.message||e),true)}finally{button.disabled=false}}
+renderLanguage();viewEl('nav-connection')?.setAttribute('aria-current','page');function boot(attempt=0){
+  if(typeof Homey==='undefined'||typeof Homey.emit!=='function'){
+    if(attempt<50)return setTimeout(()=>boot(attempt+1),80);
+    const status=viewEl('msg');if(status){status.textContent=t('Homey ist nicht bereit.','Homey is not ready.');status.className='message error'}
+    return;
+  }
+  try{Homey.ready?.()}catch(_){}
+  restoreRepairLanguage();
+  load();
+}
+
+initRepairNavigation();
+// Install language events before Homey.ready(); every click repaints immediately.
+for(const code of ['de','en']){
+  viewEl('reauth-lang-'+code).addEventListener('click',event=>{
+    event?.preventDefault?.();
+    setLang(code);
+  });
+}
+viewEl('connect').addEventListener('click',connect);
+boot();
+
+})();
+</script></body></html>

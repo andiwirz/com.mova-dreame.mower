@@ -2354,7 +2354,8 @@
         "garage_door_status",
         "garage_safety_status",
         "garage_sensor_available_status",
-        "garage_sensor_battery"
+        "garage_sensor_battery",
+        "maintenance_learning_status"
       ],
       "capabilitiesOptions": {
         "alarm_generic": {
@@ -2432,6 +2433,12 @@
       "repair": [
         {
           "id": "repair"
+        },
+        {
+          "id": "reauth"
+        },
+        {
+          "id": "maintenance_settings"
         }
       ],
       "settings": [
@@ -3684,8 +3691,8 @@
               },
               "value": false,
               "hint": {
-                "en": "Shows normal, user-relevant garage events in the Homey timeline.",
-                "de": "Zeigt normale, benutzerrelevante Garagenereignisse in der Homey-Zeitleiste."
+                "de": "Normale Garagenereignisse nur bei aktiviertem Garagenmodus.",
+                "en": "Normal garage events only while Garage Mode is enabled."
               }
             },
             {
@@ -3697,8 +3704,8 @@
               },
               "value": false,
               "hint": {
-                "en": "Adds detailed internal garage states and diagnostic decisions to the timeline. Requires garage logging to be enabled.",
-                "de": "Ergänzt detaillierte interne Garagenzustände und Diagnoseentscheidungen in der Zeitleiste. Garagen-Logging muss dafür aktiviert sein."
+                "de": "Unabhängiges Debug-Logging auch bei ausgeschaltetem Garagenmodus, inklusive Windows-Logger.",
+                "en": "Independent debug logging with Garage Mode on or off, including Windows log capture."
               }
             },
             {
@@ -5029,6 +5036,78 @@
       "max": 100,
       "step": 1,
       "icon": "/assets/capabilities/mower_volume.svg"
+    },
+    "cmd_maintenance_point_2": {
+      "type": "boolean",
+      "title": {
+        "en": "Go to Maintenance Point 2",
+        "de": "Wartungspunkt 2 anfahren"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_maintenance_point_2.svg",
+      "hint": {
+        "en": "Sends the mower to native maintenance point 2 configured in the MOVA/Dreame app. This point is not used for automatic garage returns.",
+        "de": "Fährt den Mäher zum nativen Wartungspunkt 2 aus der MOVA/Dreame-App. Dieser Punkt wird nicht für automatische Garagenrückfahrten verwendet."
+      }
+    },
+    "cmd_maintenance_point_3": {
+      "type": "boolean",
+      "title": {
+        "en": "Go to Maintenance Point 3",
+        "de": "Wartungspunkt 3 anfahren"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_maintenance_point_3.svg",
+      "hint": {
+        "en": "Sends the mower to native maintenance point 3 configured in the MOVA/Dreame app. This point is not used for automatic garage returns.",
+        "de": "Fährt den Mäher zum nativen Wartungspunkt 3 aus der MOVA/Dreame-App. Dieser Punkt wird nicht für automatische Garagenrückfahrten verwendet."
+      }
+    },
+    "cmd_maintenance_point_4": {
+      "type": "boolean",
+      "title": {
+        "en": "Go to Maintenance Point 4",
+        "de": "Wartungspunkt 4 anfahren"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_maintenance_point_4.svg",
+      "hint": {
+        "en": "Sends the mower to native maintenance point 4 configured in the MOVA/Dreame app. This point is not used for automatic garage returns.",
+        "de": "Fährt den Mäher zum nativen Wartungspunkt 4 aus der MOVA/Dreame-App. Dieser Punkt wird nicht für automatische Garagenrückfahrten verwendet."
+      }
+    },
+    "cmd_maintenance_point_5": {
+      "type": "boolean",
+      "title": {
+        "en": "Go to Maintenance Point 5",
+        "de": "Wartungspunkt 5 anfahren"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "button",
+      "icon": "/assets/capabilities/cmd_maintenance_point_5.svg",
+      "hint": {
+        "en": "Sends the mower to native maintenance point 5 configured in the MOVA/Dreame app. This point is not used for automatic garage returns.",
+        "de": "Fährt den Mäher zum nativen Wartungspunkt 5 aus der MOVA/Dreame-App. Dieser Punkt wird nicht für automatische Garagenrückfahrten verwendet."
+      }
+    },
+    "maintenance_learning_status": {
+      "type": "string",
+      "title": {
+        "en": "Maintenance learning",
+        "de": "Wartungspunkt anlernen"
+      },
+      "getable": true,
+      "setable": false,
+      "insights": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/sensor_status.svg"
     }
   }
 }

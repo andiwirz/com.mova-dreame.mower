@@ -1,0 +1,279 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{padding:20px 16px 32px;font:15px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--homey-background-color,#f8f9fb);color:var(--homey-text-color,#222)}
+main{max-width:650px;margin:0 auto}
+h1{font-size:22px;line-height:1.25;margin:0 0 9px;font-weight:700}
+h2{font-size:17px;margin:0 0 10px;font-weight:700}
+p{line-height:1.5}.small{font-size:12px;line-height:1.5;opacity:.76}
+.panel{padding:16px;border-radius:13px;background:rgba(125,125,125,.10);margin:14px 0}
+.card{display:block;width:100%;border:0;border-radius:16px;padding:18px;margin:0 0 14px;background:rgba(127,127,127,.10);color:inherit;text-align:left;box-shadow:0 1px 3px rgba(0,0,0,.08);cursor:pointer;transition:transform .12s ease,background .12s ease}
+.card:active{transform:scale(.992)}.card:focus-visible{outline:2px solid #218554;outline-offset:2px}
+.card strong{display:block;font-size:18px;margin-bottom:7px;font-weight:700}.card span{font-size:13px;line-height:1.45;opacity:.7}
+button{font:inherit;font-weight:650;cursor:pointer;transition:background .15s ease,opacity .15s ease}
+button.action{border:0;border-radius:9px;background:#218554;color:#fff;padding:11px 15px;min-height:42px}
+button.action:hover{background:#1c7147}button.action:active{background:#175d3c}
+button.secondary{background:rgba(127,127,127,.22);color:inherit}
+button.secondary:hover{background:rgba(127,127,127,.30)}
+button:disabled{opacity:.5;cursor:default}
+label{display:block;font-size:14px;font-weight:650;margin:14px 0 6px}
+input,select{font:inherit;width:100%;border:1px solid rgba(125,125,125,.5);border-radius:9px;padding:10px;background:var(--homey-background-color,#fff);color:var(--homey-text-color,#222)}
+input:focus-visible,select:focus-visible{outline:2px solid #218554;outline-offset:1px}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.row button{flex:1 1 150px}
+.language{display:flex;align-items:center;justify-content:flex-end;gap:7px;margin:0 0 15px;font-size:12px}
+.language button{width:auto;min-height:34px;border:1px solid rgba(125,125,125,.5);border-radius:8px;background:transparent;color:inherit;padding:6px 11px;font-size:12px}
+.language button[aria-pressed=true]{background:#218554;color:#fff;border-color:#218554}
+.message{font-size:13px;white-space:pre-wrap;line-height:1.5;margin:12px 0}.error{color:#bd3030}.success{color:#218554}
+.point{border-bottom:1px solid rgba(127,127,127,.23);padding:9px 0;font-size:13px;line-height:1.5}.point:last-child{border:0}
+.repair-tabs{display:flex;gap:9px;margin:0 0 18px;border-bottom:1px solid rgba(125,125,125,.22);padding-bottom:10px}
+.repair-tabs button{flex:1;min-height:43px;border:1px solid rgba(125,125,125,.38);border-radius:9px;padding:11px 8px;background:rgba(125,125,125,.08);color:inherit;font-size:14px;font-weight:650}
+.repair-tabs button[aria-current=page]{background:#218554;color:#fff;border-color:#218554}
+.repair-tabs button:focus-visible{outline:2px solid #218554;outline-offset:2px}
+@media(max-width:380px){body{padding:15px 12px 26px}.panel{padding:13px}.card{padding:15px}.repair-tabs{gap:6px}.repair-tabs button{font-size:13px;padding:10px 5px}}
+</style></head><body><main data-repair-root="maintenance_settings"><div class="language" role="group" aria-label="Language / Sprache"><span data-de="Sprache" data-en="Language">Sprache</span><button id="maintenance_settings-lang-de" type="button" aria-pressed="false" >DE</button><button id="maintenance_settings-lang-en" type="button" aria-pressed="false" >EN</button></div><nav class="repair-tabs" aria-label="Repair sections"><button type="button" id="nav-connection" data-repair-view="reauth" data-de="Verbindung" data-en="Connection">Verbindung</button><button type="button" id="nav-maintenance" data-repair-view="maintenance_settings" data-de="Wartungspunkte" data-en="Maintenance points">Wartungspunkte</button></nav><h1 data-de="Wartungspunkte" data-en="Maintenance points">Wartungspunkte</h1>
+<p class="small" data-de="P1 ist der feste Standardwartungspunkt. P2–P5 kannst du benennen. Ein Name allein erzeugt noch keinen anfahrbaren Punkt." data-en="P1 is the fixed default point. You can name P2–P5. A name alone does not create a driveable point."></p>
+<section class="panel"><h2 data-de="Wartungspunkte" data-en="Maintenance points">Wartungspunkte</h2><div id="points"></div></section>
+<section class="panel"><label for="point-select" data-de="Wartungspunkt auswählen" data-en="Select maintenance point">Wartungspunkt auswählen</label><select id="point-select"><option value="1">P1</option><option value="2">P2</option><option value="3">P3</option><option value="4">P4</option><option value="5">P5</option></select><label for="point-name" data-de="Name in Homey" data-en="Name in Homey">Name in Homey</label><input id="point-name" type="text" maxlength="80" autocomplete="off"><p id="hint" class="small"></p>
+<div id="point-position" class="small" role="status"></div>
+<div id="delete-confirm" class="panel" style="display:none" role="group" aria-label="Confirm deletion"><p id="delete-confirm-text" class="small"></p><div class="row"><button type="button" class="action secondary" id="cancel-delete" data-de="Abbrechen" data-en="Cancel">Abbrechen</button><button type="button" class="action" id="confirm-delete" data-de="Position endgültig löschen" data-en="Delete position now">Position endgültig löschen</button></div></div>
+<div class="row" id="point-actions"><button type="button" class="action" id="learn-point">Anlernen</button><button type="button" class="action secondary" id="delete-point" data-de="Position löschen" data-en="Delete position">Position löschen</button></div>
+</section>
+<p class="small" data-de="Einlernen: Unbestätigten P2–P5 in Homey auswählen und anschließend denselben Punkt in der MOVA-App anfahren. Nur eine überprüfte native Ankunft ermöglicht die spätere direkte Anfahrt. Keine Rotation oder Mehrkartenverwaltung in dieser Version." data-en="Learning: Select the unconfirmed P2–P5 in Homey, then drive to that point in the MOVA app. Only a verified native arrival enables later direct trips. No rotation or multi-map settings in this version."></p>
+<div id="msg" class="message" role="status" aria-live="polite">Lade Wartungspunkte …</div><button id="retry-load" class="action secondary" type="button" style="display:none" data-de="Erneut laden" data-en="Retry loading">Erneut laden</button><div class="row"><button class="action secondary" id="back" type="button" data-repair-view="repair" data-de="Zurück" data-en="Back">Zurück</button><button class="action" id="save" type="button"  data-de="Speichern & beenden" data-en="Save & close">Speichern & beenden</button></div></main><script>
+(()=>{
+// Homey may keep earlier repair views mounted in the same document.
+// Scope every DOM lookup and listener to THIS view, never a stale view's IDs.
+const repairRoot = Array.from(document.querySelectorAll?.('main[data-repair-root="maintenance_settings"]') || []).at(-1) || document;
+const viewEl = id => repairRoot.querySelector?.('[id="' + id + '"]') || document.getElementById(id);
+const viewAll = selector => repairRoot.querySelectorAll?.(selector) || document.querySelectorAll(selector);
+
+// Homey repair views may use separate WebViews: localStorage alone is not a
+// reliable cross-view channel. Wait for the repair session to acknowledge writes.
+function locale(){
+  let saved=null;
+  try{saved=localStorage.getItem('mova.repair.uiLanguage')}catch(_){}
+  return saved||(typeof Homey!=='undefined'&&typeof Homey.getLanguage==='function'?Homey.getLanguage():null)||(typeof navigator!=='undefined'?navigator.language:'en')||'en';
+}
+let lang=String(locale()).toLowerCase().startsWith('de')?'de':'en';
+let languageRevision=0;
+let languagePending=Promise.resolve();
+function t(de,en){return lang==='de'?de:en}
+function commitLanguage(l){
+  if(l!=='de'&&l!=='en')return;
+  lang=l;
+  try{localStorage.setItem('mova.repair.uiLanguage',l)}catch(_){}
+  renderLanguage();
+}
+function repairEmit(event,payload){
+  return new Promise((resolve,reject)=>{
+    if(typeof Homey==='undefined'||typeof Homey.emit!=='function')return reject(new Error('Homey unavailable'));
+    let settled=false;
+    const watchdog=setTimeout(()=>finish(new Error('Homey repair request timed out')),3500);
+    function finish(error,value){if(settled)return;settled=true;clearTimeout(watchdog);error?reject(error):resolve(value)}
+    try{
+      // Homey versions/WebViews vary: some resolve the returned Promise, others
+      // invoke the callback. Listen to BOTH; the first completed result wins.
+      const result=Homey.emit(event,payload,(error,value)=>finish(error,value));
+      if(result&&typeof result.then==='function')result.then(value=>finish(null,value),finish);
+    }catch(error){finish(error)}
+  });
+}
+function setLang(l){
+  if(l!=='de'&&l!=='en')return languagePending;
+  ++languageRevision;
+  commitLanguage(l); // synchronous in-place repaint; no navigation or form reset
+  // Serialize updates, so rapid EN/DE taps cannot reorder the session state.
+  languagePending=languagePending.catch(()=>{}).then(()=>repairEmit('set_repair_ui_language',{language:l}));
+  languagePending.catch(error=>console.warn('Repair language sync:',error));
+  return languagePending;
+}
+async function restoreRepairLanguage(){
+  const revision=languageRevision;
+  try{
+    const value=await repairEmit('get_repair_ui_language',{});
+    // Ignore a stale reply if the user clicked DE/EN while the request was pending.
+    if(revision===languageRevision&&(value==='de'||value==='en'))commitLanguage(value);
+  }catch(error){console.warn('Repair language restore:',error)}
+}
+async function navigateRepairView(view){
+  try{
+    await languagePending;
+    Homey.showView(view);
+  }catch(error){
+    console.warn('Repair language before navigation:',error);
+    const indicator=repairRoot.querySelector?.('.language span');
+    if(indicator)indicator.textContent=t('Sprache konnte nicht übernommen werden.','Could not apply language.');
+  }
+}
+function initRepairNavigation(){
+  viewAll('[data-repair-view]').forEach(button=>{
+    button.addEventListener('click',()=>navigateRepairView(button.getAttribute('data-repair-view')));
+  });
+}
+function renderLanguage(){document.documentElement.lang=lang;viewAll('[data-de]').forEach(e=>{e.textContent=t(e.getAttribute('data-de'),e.getAttribute('data-en'))});for(const l of ['de','en'])viewEl('maintenance_settings-lang-'+l)?.setAttribute('aria-pressed',String(lang===l));if(typeof renderSpecific==='function')renderSpecific();if(deleteAwaitingConfirmation&&deleteConfirmedIndex>=2){const i=deleteConfirmedIndex;viewEl('delete-confirm-text').textContent=t(`P${i}: Nur die gespeicherte Position und den Kartenmarker löschen? Der Name und P1 bleiben erhalten.`,`P${i}: Delete only the saved position and map marker? Name and P1 stay unchanged.`)}}
+
+const keys=[2,3,4,5];let names={},loaded=false,busy=false,currentPoint=1,pointState=null,pointRequestId=0;const select=viewEl('point-select');const input=viewEl('point-name');
+let deleteAwaitingConfirmation=false;
+let deleteConfirmedIndex=null;
+let learningMonitor=null, learningGeneration=0;
+let statusMessage=null; // {de,en,error}; survives DE/EN changes during requests
+function emitReply(name,payload,timeoutMs=12000){return new Promise((resolve,reject)=>{
+  let completed=false;
+  const timeout=setTimeout(()=>finish(new Error(t('Keine Antwort von Homey innerhalb von 12 Sekunden.','No reply from Homey within 12 seconds.'))),timeoutMs);
+  function finish(error,value){if(completed)return;completed=true;clearTimeout(timeout);error?reject(error):resolve(value)}
+  try{
+    const result=Homey.emit(name,payload,(error,value)=>finish(error,value));
+    if(result&&typeof result.then==='function')result.then(value=>finish(null,value),finish);
+  }catch(error){finish(error)}
+})}function msg(de,en=de,error=false){
+  statusMessage={de:String(de),en:String(en),error};
+  paintStatus();
+}
+function paintStatus(){
+  if(!statusMessage)return;
+  const e=viewEl('msg');
+  e.textContent=t(statusMessage.de,statusMessage.en);
+  e.className='message '+(statusMessage.error?'error':'success');
+}
+function snapshot(){if(currentPoint>1)names[`maintenance_point_${currentPoint}_name`]=input.value}
+function paintPointState(){
+  const i=Number(select.value), position=viewEl('point-position'), learn=viewEl('learn-point'),del=viewEl('delete-point');
+  const available=loaded && i>=2;
+  if(learn.style)learn.style.display=available?'inline-block':'none'; if(del.style)del.style.display=available?'inline-block':'none';
+  if(!available){position.textContent='';return}
+  const hasPosition=pointState?.index===i && pointState.hasPosition===true;
+  learn.textContent=hasPosition?t('Erneut anlernen','Learn again'):t('Anlernen','Learn');
+  // Keep the delete action usable even if Homey has not yet returned the position.
+  // The backend is authoritative; never leave the UI silently inert.
+  del.disabled=busy;
+  if(!hasPosition && pointState?.index===i) del.textContent=t('Position zurücksetzen','Reset position');
+  else del.textContent=t('Position löschen','Delete position');
+  position.textContent=pointState?.index!==i?t('Lade Positionsstatus …','Loading position status …'):
+    hasPosition?t('Position gespeichert','Position saved')+` (${pointState.x}, ${pointState.y})`:
+    t('Noch keine Position angelernt.','No position learned yet.');
+}
+async function fetchPointState(){
+  const i=Number(select.value), request=++pointRequestId;
+  pointState=null;paintPointState();
+  if(i<2||!loaded)return;
+  try {const info=await emitReply('get_maintenance_point_state',{index:i});if(request!==pointRequestId)return;pointState=info;paintPointState()}
+  catch(e){if(request!==pointRequestId)return;viewEl('point-position').textContent=t('Positionsstatus nicht verfügbar: ','Position status unavailable: ')+(e.message||e)}
+}
+async function persistNames(){
+  snapshot();await emitReply('save_maintenance_settings',names);
+  // The device's coordinator reloads names after saving through the handler.
+}
+function stopLearningMonitor(){
+  learningGeneration++;
+  if(learningMonitor){clearInterval(learningMonitor);learningMonitor=null;}
+}
+function watchLearning(index, baselineAt){
+  stopLearningMonitor();
+  const gen=learningGeneration, begun=Date.now();
+  let polling=false;
+  if(typeof setInterval !== 'function') return; // Embedded hosts without polling timers keep the initial prompt.
+  learningMonitor=setInterval(async()=>{
+    if(gen!==learningGeneration||polling)return;
+    if(Date.now()-begun>15*60*1000){
+      stopLearningMonitor();
+      if(Number(select.value)===index)msg(`P${index}: Keine bestätigte Ankunft innerhalb von 15 Minuten. Bitte Log prüfen.`,
+        `P${index}: No verified arrival within 15 minutes. Check the log.`,true);
+      return;
+    }
+    polling=true;
+    try{
+      const state=await emitReply('get_maintenance_point_state',{index},8000);
+      if(gen!==learningGeneration||Number(select.value)!==index)return;
+      if(state?.confirmed===true && state.hasPosition===true
+          && Number(state.learnedAt)>Number(baselineAt||0)){
+        pointState=state;paintPointState();stopLearningMonitor();
+        msg(`P${index} erfolgreich angelernt und gespeichert. Sie können dieses Fenster jetzt schließen.`,
+          `P${index} learned and saved successfully. You can now close this window.`);
+      }
+    }catch(_){/* Poll errors should not hide the running learning procedure. */}
+    finally{polling=false;}
+  },2500);
+}
+async function learnPoint(){
+  const i=Number(select.value);if(i<2||busy||!loaded)return;
+  busy=true;viewEl('learn-point').disabled=true;
+  msg(`P${i}: Bereite Anlernen vor …`,`P${i}: Preparing learning …`);
+  try{
+    await persistNames();
+    // Capture existing confirmation before starting, so a pre-existing P2
+    // cannot falsely count as completion of a new learning attempt.
+    const before=await emitReply('get_maintenance_point_state',{index:i});
+    const accepted=await emitReply('learn_maintenance_point',{index:i},60000);
+    if(accepted!==true)throw new Error(t('Tor nicht freigegeben oder Anlernen blockiert.','Gate not cleared or learning blocked.'));
+    msg(`P${i}: Jetzt in der Original-MOVA-App Wartungspunkt P${i} anfahren. Homey überwacht die Ankunft.`,
+      `P${i}: Now select maintenance point P${i} in the original MOVA app. Homey will monitor arrival.`);
+    watchLearning(i, Number(before?.learnedAt||0));
+  }catch(e){msg('Anlernen fehlgeschlagen: '+(e.message||e),'Learning failed: '+(e.message||e),true)}
+  finally{busy=false;viewEl('learn-point').disabled=false;fetchPointState()}
+}
+function hideDeleteConfirmation(){
+  deleteAwaitingConfirmation=false;deleteConfirmedIndex=null;
+  if(viewEl('delete-confirm')?.style)viewEl('delete-confirm').style.display='none';
+}
+function showDeleteConfirmation(){
+  const i=Number(select.value);
+  if(i<2||busy||!loaded)return;
+  deleteAwaitingConfirmation=true;deleteConfirmedIndex=i;
+  if(viewEl('delete-confirm')?.style)viewEl('delete-confirm').style.display='block';
+  viewEl('delete-confirm-text').textContent=t(
+    `P${i}: Nur die gespeicherte Position und den Kartenmarker löschen? Der Name und P1 bleiben erhalten.`,
+    `P${i}: Delete only the saved position and map marker? Name and P1 stay unchanged.`);
+  msg(`P${i}: Bitte Löschung unten bestätigen.`,`P${i}: Confirm deletion below.`);
+}
+async function deletePoint(){
+  stopLearningMonitor();
+  const i=Number(select.value);
+  if(!deleteAwaitingConfirmation||deleteConfirmedIndex!==i||i<2||busy||!loaded)return;
+  hideDeleteConfirmation();
+  busy=true;viewEl('delete-point').disabled=true;viewEl('confirm-delete').disabled=true;
+  msg(`P${i}: Lösche Position …`,`P${i}: Deleting position …`);
+  try{
+    const result=await emitReply('delete_maintenance_point_position',{index:i});
+    if(result?.ok!==true||Number(result.index)!==i)throw new Error(t('Löschung wurde von Homey nicht bestätigt.','Homey did not confirm deletion.'));
+    const verify=await emitReply('get_maintenance_point_state',{index:i});
+    if(!verify||verify.hasPosition!==false)throw new Error(t('Position ist nach dem Löschen noch gespeichert.','Position is still saved after deletion.'));
+    pointState=verify;paintPointState();
+    msg(`P${i}: Position und Marker gelöscht. Der Name bleibt erhalten.`,`P${i}: Position and marker deleted. Name retained.`);
+  }catch(e){msg('Löschen fehlgeschlagen: '+(e.message||e),'Deletion failed: '+(e.message||e),true);await fetchPointState()}
+  finally{busy=false;viewEl('confirm-delete').disabled=false;paintPointState()}
+}
+
+function changePoint(){stopLearningMonitor();hideDeleteConfirmation();const i=Number(select.value);currentPoint=i;pointState=null;input.disabled=i===1||!loaded;input.value=i===1?t('Standard-Wartungspunkt','Default maintenance point'):(names[`maintenance_point_${i}_name`]||'');viewEl('hint').textContent=i===1?t('P1 kann in dieser Version nicht umbenannt werden.','P1 cannot be renamed in this version.'):t('Name und Position werden getrennt verwaltet.','Name and position are managed separately.');fetchPointState()}
+function pointRows(){const e=viewEl('points');e.replaceChildren();for(let i=1;i<=5;i++){const row=document.createElement('div');row.className='point';row.textContent=`P${i} — ${i===1?t('Standard-Wartungspunkt','Default maintenance point'):(names[`maintenance_point_${i}_name`]||t('(ohne Namen)','(unnamed)'))}`;e.appendChild(row)}}
+function renderSpecific(){paintStatus();pointRows();const i=Number(select.value);if(i===1)input.value=t('Standard-Wartungspunkt','Default maintenance point');viewEl('hint').textContent=i===1?t('P1 kann nicht umbenannt werden.','P1 cannot be renamed.'):t('Name und Position werden getrennt verwaltet.','Name and position are managed separately.');paintPointState()}
+select.addEventListener('change',()=>{snapshot();changePoint()});input.addEventListener('input',()=>{snapshot();pointRows()});
+function setRetryVisible(visible){const button=viewEl('retry-load');if(button?.style)button.style.display=visible?'inline-block':'none'}
+async function load(){setRetryVisible(false);msg('Lade Wartungspunkte …','Loading maintenance points …');viewEl('save').disabled=true;try{const values=await emitReply('get_maintenance_settings',{});names={};for(const i of keys){const k=`maintenance_point_${i}_name`;names[k]=String(values?.[k]||'')}loaded=true;changePoint();pointRows();msg('','')}catch(e){msg('Laden fehlgeschlagen: '+(e.message||e),'Loading failed: '+(e.message||e),true);setRetryVisible(true)}finally{viewEl('save').disabled=!loaded}}
+async function save(){if(!loaded||busy)return;busy=true;snapshot();const btn=viewEl('save');btn.disabled=true;msg('Speichere …','Saving …');try{await emitReply('save_maintenance_settings',names);const verify=await emitReply('get_maintenance_settings',{});for(const i of keys){const key=`maintenance_point_${i}_name`;if(String(verify?.[key]||'')!==String(names[key]||'').trim())throw new Error(t('Speicherung konnte nicht bestätigt werden.','Could not confirm persisted data.'))}msg('Erfolgreich gespeichert.','Saved successfully.');Homey.done()}catch(e){msg('Speichern fehlgeschlagen: '+(e.message||e),'Save failed: '+(e.message||e),true)}finally{busy=false;btn.disabled=false}}
+statusMessage={de:'Lade Wartungspunkte …',en:'Loading maintenance points …',error:false};
+renderLanguage();viewEl('nav-maintenance')?.setAttribute('aria-current','page');function boot(attempt=0){
+  if(typeof Homey==='undefined'||typeof Homey.emit!=='function'){
+    if(attempt<50)return setTimeout(()=>boot(attempt+1),80);
+    const status=viewEl('msg');if(status){status.textContent=t('Homey ist nicht bereit.','Homey is not ready.');status.className='message error'}
+    return;
+  }
+  try{Homey.ready?.()}catch(_){}
+  // Never block loading maintenance names on the unrelated locale request.
+  restoreRepairLanguage();
+  load();
+}
+
+initRepairNavigation();
+viewEl('retry-load').addEventListener('click',load);viewEl('learn-point').addEventListener('click',learnPoint);viewEl('delete-point').addEventListener('click',showDeleteConfirmation);viewEl('confirm-delete').addEventListener('click',deletePoint);viewEl('cancel-delete').addEventListener('click',hideDeleteConfirmation);
+// Install language events before Homey.ready(); every click repaints immediately.
+for(const code of ['de','en']){
+  viewEl('maintenance_settings-lang-'+code).addEventListener('click',event=>{
+    event?.preventDefault?.();
+    setLang(code);
+  });
+}
+viewEl('save').addEventListener('click',save);
+boot();
+
+})();
+</script></body></html>

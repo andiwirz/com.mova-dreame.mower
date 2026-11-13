@@ -82,7 +82,10 @@
     "device_not_found": "Mähroboter im Konto nicht gefunden — Gerät neu hinzufügen",
     "maintenance_point_invalid": "Ungültiger Wartungspunkt (erwartet P1–P5).",
     "maintenance_point_garage_p1": "Mit aktivem Garagenmodus wird vorerst nur Wartungspunkt P1 unterstützt.",
-    "maintenance_point_rejected": "Der Mäher hat den Befehl für Wartungspunkt __point__ nicht angenommen. Prüfe, ob dieser Punkt in der MOVA/Dreame-App angelegt ist."
+    "maintenance_point_rejected": "Der Mäher hat den Befehl für Wartungspunkt __point__ nicht angenommen. Prüfe, ob dieser Punkt in der MOVA/Dreame-App angelegt ist.",
+    "maintenance_point_preflight_invalid": "Ungültiger Wartungspunkt __point__. Der Mäher wurde nicht gestartet.",
+    "maintenance_point_preflight_not_configured": "Wartungspunkt __point__ ist auf der aktiven MOVA-Karte nicht eingerichtet. Der Mäher wurde nicht gestartet.",
+    "maintenance_point_preflight_unverifiable": "Wartungspunkt __point__ konnte in den aktuellen MOVA-Kartendaten nicht bestätigt werden. Aus Sicherheitsgründen wurde der Mäher nicht gestartet."
   },
   "charging_status": {
     "not_docked": "Nicht angedockt",

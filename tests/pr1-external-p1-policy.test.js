@@ -1,0 +1,12 @@
+'use strict';
+const a=require('node:assert/strict');
+const {externalP1Preflight,dockAllowed}=require('../lib/garage/PR1ExternalP1Policy');
+const base={garageEnabled:true,sensorEnabled:true,sensorHealthy:true,home:false,marker:{x:120,y:240},returnBusy:false};
+a.deepEqual(externalP1Preflight(base),{allowed:true,point:1});
+for (const key of ['sensorEnabled','sensorHealthy']) a.equal(externalP1Preflight({...base,[key]:false}).allowed,false);
+a.equal(externalP1Preflight({...base,marker:null}).allowed,false);
+a.equal(externalP1Preflight({...base,returnBusy:true}).allowed,false);
+const proof={p1Reached:true,sensorEnabled:true,realOpenContact:true,stableOpen:true,gateProof:true};
+a.equal(dockAllowed(proof),true);
+for(const key of Object.keys(proof)) a.equal(dockAllowed({...proof,[key]:false}),false,`missing ${key} must block DOCK`);
+console.log('PASS: fixed P1 preflight and independent physical gate proof');

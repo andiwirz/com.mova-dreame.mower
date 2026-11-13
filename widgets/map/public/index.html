@@ -126,6 +126,9 @@
       merged.contours = Array.isArray(base.contours) ? base.contours : [];
       merged.mapObstacles = Array.isArray(base.mapObstacles) ? base.mapObstacles : [];
       merged.livePath = Array.isArray(incoming.livePath) && incoming.livePath.length ? incoming.livePath : base.livePath;
+      // Marker data is independent of mowing-zone geometry. A partial/fallback
+      // update must not make already stored additional points disappear.
+      if (!Array.isArray(incoming.maintenancePoints)) merged.maintenancePoints = base.maintenancePoints || [];
       return merged;
     }
 
@@ -313,6 +316,21 @@
           if (data.chargerPos && data.chargerPos.x != null) expandPointObj(data.chargerPos, 350);
         }
         if (showMaintenancePoint) expandPointObj(go.maintenancePoint, 400);
+      }
+      // P2-P5 are independent of the primary garage maintenance point. They
+      // must participate in the viewBox even if the garage overlay is disabled;
+      // otherwise valid markers can be clipped outside the visible SVG.
+      if (showMaintenancePoint && Array.isArray(data.maintenancePoints)) {
+        for (var additional of data.maintenancePoints) {
+          if (!additional || !Number.isFinite(Number(additional.x)) || !Number.isFinite(Number(additional.y))) continue;
+          if (Number(additional.index) < 2 || Number(additional.index) > 5) continue;
+          var extraX = tx(Number(additional.x)), extraY = ty(Number(additional.y));
+          var extraR = 180;
+          featureMinX = Math.min(featureMinX, extraX - extraR);
+          featureMaxX = Math.max(featureMaxX, extraX + extraR);
+          featureMinY = Math.min(featureMinY, extraY - extraR);
+          featureMaxY = Math.max(featureMaxY, extraY + extraR);
+        }
       }
       var vbX, vbY, vbW, vbH;
       const W0 = bx2 - bx1, H0 = by2 - by1;
@@ -605,6 +623,20 @@
             + ' L ' + (mpx + mr * 0.38).toFixed(1) + ' ' + (mpy - mr * 0.35).toFixed(1)
             + ' L ' + (mpx + mr * 0.43).toFixed(1) + ' ' + (mpy - mr * 0.02).toFixed(1)
             + '" fill="none" stroke="#fff" stroke-width="' + (lw * 1.45) + '" stroke-linecap="round" stroke-linejoin="round"/>';
+        }
+      }
+
+      // Native additional maintenance points. Verified source is enforced by the
+      // Homey device coordinator; these markers are display only, never commands.
+      if (showMaintenancePoint && Array.isArray(data.maintenancePoints)) {
+        for (var v of data.maintenancePoints) {
+          if (!v || !Number.isFinite(Number(v.x)) || !Number.isFinite(Number(v.y))) continue;
+          var no = Number(v.index);
+          if (no < 2 || no > 5) continue;
+          var px = Number(tx(v.x)), py = Number(ty(v.y));
+          var rr = Math.max(refSize * 0.017, 5);
+          g += '<circle cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="' + rr.toFixed(1) + '" fill="' + (v.confirmed ? '#7955b3' : '#8a8a8a') + '" stroke="white" stroke-width="' + sw.toFixed(1) + '"/>';
+          g += '<text x="' + px.toFixed(1) + '" y="' + py.toFixed(1) + '" dominant-baseline="middle" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="700" font-size="' + (rr * 0.85).toFixed(0) + '" fill="white">' + no + '</text>';
         }
       }
 

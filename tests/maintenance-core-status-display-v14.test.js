@@ -1,0 +1,38 @@
+'use strict';
+const assert = require('node:assert/strict');
+const { MaintenancePointCoordinator } = require('../lib/garage/MaintenancePointCoordinator');
+const GarageSafetyEngine = require('../lib/garage/GarageSafetyEngine');
+const now = Date.now();
+const dev = { _activeMapIndex:0, getCapabilityValue: () => 'mowing' };
+const learner = new MaintenancePointCoordinator(dev);
+dev._additionalMaintenanceEvidence = learner;
+const safety = Object.create(GarageSafetyEngine.prototype);
+safety.device = dev;
+safety.enabled = () => false;
+safety.isDoorOpenStable = () => true;
+safety._returnContext = 'idle';
+safety.isDockedHomeStatus = () => false;
+// No OEM task: arbitrary mowing telemetry must stay mowing.
+assert.equal(safety.getTileStatus('mowing'), 'mowing');
+learner.operatorAssociation = {index:2,mapIndex:0,at:now};
+assert.equal(safety.getTileStatus('mowing'),'mowing','armed learning is not an OEM waypoint trip');
+learner.pending = {index:2,mapIndex:0,at:now,sawTransit:true};
+assert.equal(safety.getTileStatus('mowing'),'garage_maintenance_transit');
+assert.equal(safety.getTileStatus('paused'),'garage_maintenance_transit');
+assert.equal(safety.getTileStatus('idle'),'idle','unverified arrival must not appear confirmed');
+// A return already in progress still owns the tile status.
+safety.enabled = () => true;
+safety._safeReturnInProgress = true;
+assert.equal(safety.getTileStatus('mowing'),'returning');
+safety._safeReturnInProgress = false;
+learner.pending = null;
+learner._lastConfirmedTravel={index:2,at:Date.now()};
+safety.enabled = () => false;
+assert.equal(safety.getTileStatus('idle'),'garage_maintenance_reached');
+learner._lastConfirmedTravel={index:2,at:Date.now()-15000};
+assert.equal(safety.getTileStatus('idle'),'garage_maintenance_reached');
+learner._lastConfirmedTravel={index:2,at:Date.now()-91000};
+assert.equal(safety.getTileStatus('idle'),'idle');
+learner.pending={index:4,mapIndex:1,at:now,sawTransit:true};
+assert.equal(safety.getTileStatus('mowing'),'mowing','wrong map cannot hijack mowing display');
+console.log('PASS: CORE waypoint tile states distinguish native 109 transit from mowing, keep safety native and return priority');

@@ -1,0 +1,10 @@
+'use strict';const assert=require('node:assert/strict');
+const {CoreExternalStartRecovery}=require('../lib/garage/CoreExternalStartRecovery');
+const mk=(u,d=0)=>{const a=Array(20).fill(0);a[0]=a[19]=206;a[14]=(d<<2)|(u<<6);return a};
+let now=1000;const c=new CoreExternalStartRecovery({device:{getSetting:()=>false},garage:{enabled:()=>false},now:()=>now});
+assert.equal(c.onNativeFrame(mk(0)).type,'sample');
+now+=100;assert.equal(c.onNativeFrame(mk(1)).type,'native-undock-edge');
+now+=100;assert.equal(c.onNativeFrame(mk(1)).type,'sample');
+now+=40000;c.onNativeFrame(mk(0));now+=40000;assert.equal(c.onNativeFrame(mk(1)).type,'sample');
+assert.equal(c.onNativeFrame([1,2,3]),null);
+console.log('PASS: native undocking edge, duplicate, stale, invalid frames');

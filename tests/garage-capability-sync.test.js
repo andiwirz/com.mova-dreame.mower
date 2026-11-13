@@ -13,6 +13,7 @@ const capMatch = source.match(/const GARAGE_DISPLAY_CAPS = (\[[\s\S]*?\]);/);
 assert(capMatch, 'garage capability list exists');
 const caps = vm.runInNewContext(capMatch[1]);
 const Factory = vm.runInNewContext(`(function(CAPS) {
+  const GARAGE_DISPLAY_CAPS = CAPS;
   return class Device {
     constructor() {
       this.capabilities = new Set();
